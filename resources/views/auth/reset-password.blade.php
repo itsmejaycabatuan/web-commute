@@ -38,11 +38,11 @@
                 </div>
                 <span class="ml-3 text-2xl italic font-bold tracking-wider"> SmartCommute</span>
             </div>
-            <h2 class="text-2xl font-bold tracking-tight">Create Account</h2>
-            <p class="mt-1 text-xs opacity-60">Optimize your commute today</p>
+            <h2 class="text-2xl font-bold tracking-tight">Reset Password</h2>
+            <p class="mt-1 text-xs opacity-60">Enter your new credentials</p>
         </div>
 
-        <form action="{{ route('users.register') }}" method="POST" class="space-y-4">
+        <form action="{{ route('password.update') }}" method="POST" class="space-y-4">
             @csrf
             <div>
                 <label class="block mb-1 ml-1 font-bold tracking-widest uppercase opacity-50 text-[10px]">Email</label>
@@ -54,6 +54,15 @@
                 <div class="alert alert-danger">
                     <ul>
                         @foreach ($errors->get('email') as $message)
+                            <li>{{ $message }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul>
+                        @foreach ($errors->all() as $message)
                             <li>{{ $message }}</li>
                         @endforeach
                     </ul>
@@ -94,35 +103,14 @@
                 </div>
             @endif
 
-            <div class="flex items-start pt-1 space-x-2">
-                <input type="checkbox" id="terms" name="terms"
-                    class="mt-0.5 bg-transparent rounded focus:ring-0 border-white/20">
-                <label for="terms" class="leading-tight opacity-60 text-[10px]">I agree to the Terms of Service and
-                    Privacy Policy.</label>
-            </div>
-
-            @if ($errors->any())
-                <div class="alert alert-danger">
-                    <ul>
-                        @foreach ($errors->get('terms') as $message)
-                            <li>{{ $message }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+            <input type="text" name="token" value="{{ $token }}"
+                class="py-2.5 hidden px-4 w-full text-sm rounded-xl border focus:ring-2 focus:outline-none bg-white/5 border-white/10 focus:ring-white/30">
 
             <button type="submit"
                 class="py-3 mt-4 w-full text-xs font-bold tracking-widest text-black uppercase bg-white rounded-xl transition-all hover:bg-gray-200 active:scale-95">
-                Sign up
+                Reset Password
             </button>
         </form>
-
-        <div class="pt-6 mt-8 text-center border-t border-white/10">
-            <p class="text-xs opacity-60">
-                Already have an account?
-                <a href="{{ url('/login') }}" class="font-bold text-white hover:underline">Log in</a>
-            </p>
-        </div>
     </div>
 
 </body>
