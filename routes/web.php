@@ -1,4 +1,4 @@
-<?php
+    <?php
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -29,14 +29,25 @@ Route::get('/', function (Request $request) {
 })->name('home');
 
 
-Route::get('/register', function () {
-    return view('register');
-})->name('register');
+    Route::get('/register', function () {
+        return view('register');
+    })->name('register');
 
-Route::get('/login',function (){
-    return view('login');
-})->name('login');
+    Route::get('/login',function (){
+        return view('login');
+    })->name('login');
 
+    Route::get('/dashboard/commuter', function () {
+        return view('commuter.dashboard');
+    })->name('commuter.dashboard');
+
+    Route::get('/commuter/commuter', function () {
+        return view('commuter.commuter');
+    })->name('commuter.commuter');
+
+    Route::get('/profile', function () {
+        return view('profile');
+    })->name('profile');
 Route::post('/users/logout', [UserController::class, 'logout'])->name('users.logout');
 Route::post('/users/register', [UserController::class,'register'])->name('users.register');
 Route::post('/users/login', [UserController::class, 'login'])->name('users.login');
