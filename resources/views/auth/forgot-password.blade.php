@@ -19,13 +19,13 @@
 
 <body class="flex relative justify-center items-center p-6 min-h-screen login-bg">
 
-    <a href="{{ url('/') }}"
+    <a href="{{ route('login') }}"
         class="flex absolute top-8 left-8 items-center space-x-2 transition hover:text-white text-white/70 group">
         <div
             class="flex justify-center items-center w-10 h-10 rounded-full border border-white/20 bg-white/10 backdrop-blur-md group-hover:bg-white/20">
             <i class="text-sm fa-solid fa-arrow-left"></i>
         </div>
-        <span class="text-xs font-bold tracking-widest uppercase">Back to Home</span>
+        <span class="text-xs font-bold tracking-widest uppercase">Back to Login</span>
     </a>
 
     <div
@@ -38,11 +38,11 @@
                 </div>
                 <span class="ml-3 text-2xl italic font-bold tracking-wider">SmartCommute</span>
             </div>
-            <h2 class="text-2xl font-bold tracking-tight">Welcome Back</h2>
-            <p class="mt-1 text-xs opacity-60">Please enter your details</p>
+            <h2 class="text-2xl font-bold tracking-tight">Reset Password</h2>
+            <p class="mt-1 text-xs opacity-60">Please enter your email address to reset your password</p>
         </div>
 
-        <form action="{{ route('users.login') }}" method="POST" class="space-y-5">
+        <form action="{{ route('password.email') }}" method="POST" class="space-y-5">
             @csrf
             <div>
                 <label class="block mb-1 ml-1 font-bold tracking-widest uppercase opacity-50 text-[10px]">Email
@@ -61,57 +61,11 @@
                 </div>
             @endif
 
-            <div>
-                <label
-                    class="block mb-1 ml-1 font-bold tracking-widest uppercase opacity-50 text-[10px]">Password</label>
-
-                <input type="password" placeholder="••••••••" name="password" value="{{ old('password') }}"
-                    class="py-2.5 px-4 w-full text-sm rounded-xl border transition focus:ring-2 focus:outline-none bg-white/5 border-white/10 focus:ring-white/30">
-
-                <div class="flex justify-end mt-1 mr-1">
-                    <a href="{{ route('password.request') }}"
-                        class="opacity-40 transition hover:opacity-100 text-[10px]">Forgot Password?</a>
-                </div>
-            </div>
-
-            @if ($errors->any())
-                <div class="alert alert-danger">
-                    <ul>
-                        @foreach ($errors->get('password') as $message)
-                            <li>{{ $message }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            @if ($errors->any())
-                <div class="alert alert-danger">
-                    <ul>
-                        @foreach ($errors->get('credentials') as $message)
-                            <li>{{ $message }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            <div class="flex items-center space-x-2">
-                <input type="checkbox" id="remember"
-                    class="w-3 h-3 rounded cursor-pointer focus:ring-0 bg-white/10 border-white/20">
-                <label for="remember" class="opacity-60 cursor-pointer text-[10px]">Remember me for 30 days</label>
-            </div>
-
             <button type="submit"
                 class="py-3 mt-2 w-full text-xs font-bold tracking-widest text-black uppercase bg-white rounded-xl transition-all hover:bg-gray-200 active:scale-95">
-                Log In
+                Send Reset Password Link
             </button>
         </form>
-
-        <div class="pt-6 mt-8 text-center border-t border-white/10">
-            <p class="text-xs opacity-60">
-                Don't have an account?
-                <a href="{{ url('/register') }}" class="font-bold text-white hover:underline">Register now</a>
-            </p>
-        </div>
     </div>
 
 </body>
