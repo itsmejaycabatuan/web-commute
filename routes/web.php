@@ -11,8 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
-use Spatie\Permission\Models\Role;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -25,13 +23,13 @@ use Spatie\Permission\Models\Role;
 */
 
 // Changed from /home to / so that the landing page will automatically show up upon starting the server
-Route::get('/', function () {
+Route::get('/', function (Request $request) {
+    // dd(Auth::user());
     return view('home');
 })->name('home');
 
 
 Route::get('/register', function () {
-    Role::create(['name' => 'commuter']);
     return view('register');
 })->name('register');
 

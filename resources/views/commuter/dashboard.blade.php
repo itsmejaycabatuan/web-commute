@@ -7,6 +7,8 @@
     <title>SmartCommute | Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.18.0/dist/maplibre-gl.css' />
+    <script src='https://unpkg.com/maplibre-gl@5.18.0/dist/maplibre-gl.js'></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
 
@@ -151,8 +153,7 @@
                     </div>
                 </div>
             </aside>
-
-            <section class="lg:col-span-2">
+            {{-- <section class="lg:col-span-2">
                 <div
                     class="relative h-[550px] glass rounded-[3rem] overflow-hidden border border-white/10 shadow-inner group">
                     <div class="absolute inset-0 bg-[#0f172a] group-hover:bg-[#1e293b] transition duration-700">
@@ -200,7 +201,13 @@
                         </div>
                     </div>
                 </div>
-            </section>
+            </section> --}}
+
+            <div id="map"
+                class="lg:col-span-2 relative h-[550px] glass rounded-[3rem] overflow-hidden border border-white/10 shadow-inner group">
+            </div>
+            {{--
+            <pre id="info"></pre> --}}
 
             <aside class="lg:col-span-1 space-y-8">
                 <a href="/tutorial"
@@ -260,6 +267,65 @@
         </main>
     </div>
 
+    <script>
+        maplibregl.setRTLTextPlugin(
+            'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js'
+        );
+
+        const map = new maplibregl.Map({
+            container: 'map', // container id
+            style: 'https://tiles.openfreemap.org/styles/bright', // style URL
+            center: [123.79, 10.24], // starting position [lng, lat]
+            zoom: 13, // starting zoom
+            rollEnabled: true
+        });
+
+        map.on('load', () => {
+            map.setLayoutProperty('label_country', 'text-field', [
+                'format',
+                ['get', 'name_en'],
+                { 'font-scale': 1.2 },
+                '\n',
+                {},
+                ['get', 'name'],
+                {
+                    'font-scale': 0.8,
+                    'text-font': [
+                        'literal',
+                        ['Noto Sans Regular']
+                    ]
+                }
+            ]);
+        });
+
+        // Add zoom and rotation controls to the map.
+        map.addControl(new maplibregl.NavigationControl({
+            visualizePitch: true,
+            visualizeRoll: true,
+            showZoom: true,
+            showCompass: true
+        }));
+
+        // Add geolocate control to the map.
+        map.addControl(
+            new maplibregl.GeolocateControl({
+                positionOptions: {
+                    enableHighAccuracy: true
+                },
+                trackUserLocation: true
+            })
+        );
+
+        // map.on('mousemove', (e) => {
+        //     document.getElementById('info').innerHTML =
+        //         // e.point is the x, y coordinates of the mousemove event relative
+        //         // to the top-left corner of the map
+        //         `${JSON.stringify(e.point)
+        //         }<br />${
+        //         // e.lngLat is the longitude, latitude geographical position of the event
+        //         JSON.stringify(e.lngLat.wrap())}`;
+        // });
+    </script>
 </body>
 
 </html>

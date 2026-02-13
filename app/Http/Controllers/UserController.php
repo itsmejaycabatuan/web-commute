@@ -10,6 +10,7 @@ use App\Mail\EmailVerification;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\Password;
 
 class UserController extends Controller
 {
@@ -153,4 +154,5 @@ class UserController extends Controller
         Mail::to($userEmail)->send(new EmailVerification());
         return view('activate');
     }
+
 }
