@@ -26,14 +26,6 @@
         return view('login');
     })->name('login');
 
-    Route::get('/dashboard/commuter', function () {
-        return view('commuter.dashboard');
-    })->name('commuter.dashboard');
-
-    Route::get('/commuter/commuter', function () {
-        return view('commuter.commuter');
-    })->name('commuter.commuter');
-
     Route::get('/profile', function () {
         return view('profile');
     })->name('profile');
