@@ -1,6 +1,6 @@
     <?php
 
-use Illuminate\Support\Facades\Route;
+  use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
@@ -37,9 +37,20 @@ Route::get('/', function (Request $request) {
         return view('login');
     })->name('login');
 
-    Route::get('/profile', function () {
-        return view('profile');
-    })->name('profile');
+    Route::get('/driverprofile', function () {
+        return view('driverprofile');
+    })->name('driverprofile');
+       Route::get('/adminprofile', function () {
+        return view('adminprofile');
+    })->name('adminprofile');
+    Route::get('/admindashboard',function (){
+        return view('admindashboard');
+    })->name('admindashboard');
+
+     Route::get('/driverdashboard',function (){
+        return view('driverdashboard');
+    })->name('driverdashboard');
+
 Route::post('/users/logout', [UserController::class, 'logout'])->name('users.logout');
 Route::post('/users/register', [UserController::class,'register'])->name('users.register');
 Route::post('/users/login', [UserController::class, 'login'])->name('users.login');
@@ -54,7 +65,7 @@ Route::post('/email/verification-notification', function(Request $request) {
 })->middleware(['auth', 'throttle:6.1'])->name('verification.send');
 
 Route::get('/email/verify/{id}/{hash}', function(EmailVerificationRequest $request) {
-    $request->fulfill();    
+    $request->fulfill();
     return view('commuter.dashboard');
 })->middleware(['auth','signed'])->name('verification.verify');
 

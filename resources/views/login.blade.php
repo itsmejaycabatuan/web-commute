@@ -32,15 +32,17 @@
         class="p-8 w-full max-w-sm text-white rounded-3xl border shadow-2xl bg-white/10 backdrop-blur-xl border-white/20">
 
         <div class="mb-8 text-center">
-            <div class="flex justify-center items-center mb-4">
-                <div class="flex justify-center items-center w-10 h-10 rounded-full border-2 border-white">
-                    <div class="w-5 h-5 bg-white rounded-full"></div>
-                </div>
-                <span class="ml-3 text-2xl italic font-bold tracking-wider">SmartCommute</span>
-            </div>
-            <h2 class="text-2xl font-bold tracking-tight">Welcome Back</h2>
-            <p class="mt-1 text-xs opacity-60">Please enter your details</p>
+    <div class="flex flex-col items-center justify-center mb-4">
+        <div class="flex items-center justify-center w-12 h-12 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20 mb-3">
+            <i class="fa-solid fa-bus text-white text-xl"></i>
         </div>
+        <span class="text-2xl font-bold tracking-wider italic text-white">
+            Smart<span class="text-blue-500">Commute</span>
+        </span>
+    </div>
+    <h2 class="text-2xl font-bold tracking-tight">Create Account</h2>
+    <p class="mt-1 text-xs opacity-60">Optimize your commute today</p>
+</div>
 
         <form action="{{ route('users.login') }}" method="POST" class="space-y-5">
             @csrf
@@ -62,11 +64,16 @@
             @endif
 
             <div>
-                <label
-                    class="block mb-1 ml-1 font-bold tracking-widest uppercase opacity-50 text-[10px]">Password</label>
+                <label class="block mb-1 ml-1 font-bold tracking-widest uppercase opacity-50 text-[10px]">Password</label>
 
-                <input type="password" placeholder="••••••••" name="password" value="{{ old('password') }}"
-                    class="py-2.5 px-4 w-full text-sm rounded-xl border transition focus:ring-2 focus:outline-none bg-white/5 border-white/10 focus:ring-white/30">
+                <div class="relative">
+                    <input type="password" id="password" placeholder="••••••••" name="password" value="{{ old('password') }}"
+                        class="py-2.5 px-4 w-full text-sm rounded-xl border transition focus:ring-2 focus:outline-none bg-white/5 border-white/10 focus:ring-white/30 pr-10">
+
+                    <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-3 flex items-center text-white/40 hover:text-white transition">
+                        <i id="eye-icon" class="fa-solid fa-eye text-xs"></i>
+                    </button>
+                </div>
 
                 <div class="flex justify-end mt-1 mr-1">
                     <a href="{{ route('password.request') }}"
@@ -113,6 +120,23 @@
             </p>
         </div>
     </div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        }
+    </script>
 
 </body>
 

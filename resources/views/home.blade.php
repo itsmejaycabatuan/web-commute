@@ -28,9 +28,9 @@
     <section class="relative h-screen w-full hero-bg flex flex-col justify-between p-8 md:p-12">
 
         <nav class="flex justify-between items-center w-full">
-            <div class="flex items-center space-x-2">
-                <div class="w-8 h-8 border-2 border-white rounded-full flex items-center justify-center">
-                    <div class="w-4 h-4 bg-white rounded-full"></div>
+           <div class="flex items-center gap-3 px-2 mb-10 overflow-hidden whitespace-nowrap">
+                <div class="min-w-[40px] h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
+                    <i class="fa-solid fa-bus text-white"></i>
                 </div>
                 <span class="text-2xl font-bold tracking-wider italic">SmartCommute</span>
             </div>
@@ -61,14 +61,6 @@
             @endif --}}
 
 
-            <div class="flex items-center space-x-6">
-                <i class="fa-solid fa-magnifying-glass cursor-pointer"></i>
-                <div class="flex items-center space-x-1 cursor-pointer">
-                    <i class="fa-solid fa-globe"></i>
-                    <i class="fa-solid fa-chevron-down text-xs"></i>
-                </div>
-                <i class="fa-solid fa-bars text-xl cursor-pointer"></i>
-            </div>
         </nav>
 
         <div class="max-w-4xl">
@@ -85,7 +77,7 @@
 
         <div class="flex flex-col md:flex-row justify-between items-end md:items-center space-y-6 md:space-y-0">
 
-            <a href="/services"
+            <a href="{{  url('/register') }}"
                 class="group flex items-center space-x-4 border border-white/50 rounded-full px-2 py-2 pr-6 hover:bg-white hover:text-black transition duration-300">
                 <div class="bg-white text-black w-10 h-10 rounded-full flex items-center justify-center">
                     <i class="fa-solid fa-arrow-right"></i>
