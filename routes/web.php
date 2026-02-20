@@ -1,5 +1,7 @@
     <?php
 
+use App\Http\Controllers\RateController;
+use App\Http\Controllers\RouteController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Models\User;
@@ -11,6 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -28,29 +32,7 @@ Route::get('/', function (Request $request) {
     return view('home');
 })->name('home');
 
-
-    Route::get('/register', function () {
-        return view('register');
-    })->name('register');
-
-    Route::get('/login',function (){
-        return view('login');
-    })->name('login');
-
-    Route::get('/dashboard/commuter', function () {
-        return view('commuter.dashboard');
-    })->name('commuter.dashboard');
-
-    Route::get('/commuter/commuter', function () {
-        return view('commuter.commuter');
-    })->name('commuter.commuter');
-
-    Route::get('/profile', function () {
-        return view('profile');
-    })->name('profile');
-Route::post('/users/logout', [UserController::class, 'logout'])->name('users.logout');
-Route::post('/users/register', [UserController::class,'register'])->name('users.register');
-Route::post('/users/login', [UserController::class, 'login'])->name('users.login');
+Route::post('/users/logout', [UserController::class, 'logout'])->middleware('auth')->name('users.logout');
 
 Route::get('/email/verify', function() {
     return view('auth.verify-email');
@@ -66,59 +48,97 @@ Route::get('/email/verify/{id}/{hash}', function(EmailVerificationRequest $reque
     return view('commuter.dashboard');
 })->middleware(['auth','signed'])->name('verification.verify');
 
-Route::get('/forgot-password', function() {
-    return view('auth.forgot-password');
-})->middleware('guest')->name('password.request');
 
-Route::post('/forgot-password', function(Request $request) {
-    $request->validate(['email' => 'required|email']);
+Route::middleware('guest')->group(function() {
 
-    $status = Password::sendResetLink(
-        $request->only('email')
-    );
+    Route::post('/users/register', [UserController::class,'register'])->name('users.register');
+    Route::post('/users/login', [UserController::class, 'login'])->name('users.login');
 
-    return $status === Password::RESET_LINK_SENT ? back()->with(['status' => __($status)]) : back()->withErrors(['email' => __($status)]);
-})->middleware('guest')->name('password.email');
+    Route::get('/register', function () {
+        return view('register');
+    })->name('register');
 
-Route::get('/reset-password/{token}', function(string $token) {
-    return view('auth.reset-password', ['token' => $token]);
-})->middleware('guest')->name('password.reset');
+    Route::get('/login',function (){
+        return view('login');
+    })->name('login');
 
-Route::post('/reset-password', function(Request $request) {
-    $request->validate([
-        'token' => 'required',
-        'email' => 'required|email',
-        'password' => 'required|min:8',
-        'confirm-password' => 'required|same:password'
-    ]);
-
-    $status = Password::reset(
-        $request->only('email', 'password', 'confirm-password', 'token'),
-        function (User $user, string $password) {
-            $user->forceFill([
-                'password' => Hash::make($password)
-            ])->setRememberToken(Str::random(60));
-
-            $user->save();
-
-            event(new PasswordReset($user));
-        }
-    );
-
-    return $status === Password::PASSWORD_RESET ? redirect()->route('login')->with('status', __($status)) : back()->withErrors(['email' => [__($status)]]);
-})->middleware('guest')->name('password.update');
+    Route::get('/forgot-password', function() {
+        return view('auth.forgot-password');
+    })->name('password.request');
+    
+    Route::post('/forgot-password', function(Request $request) {
+        $request->validate(['email' => 'required|email']);
+    
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
+    
+        return $status === Password::RESET_LINK_SENT ? back()->with(['status' => __($status)]) : back()->withErrors(['email' => __($status)]);
+    })->name('password.email');
+    
+    Route::get('/reset-password/{token}', function(string $token) {
+        return view('auth.reset-password', ['token' => $token]);
+    })->name('password.reset');
+    
+    Route::post('/reset-password', function(Request $request) {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8',
+            'confirm-password' => 'required|same:password'
+        ]);
+    
+        $status = Password::reset(
+            $request->only('email', 'password', 'confirm-password', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(Str::random(60));
+    
+                $user->save();
+    
+                event(new PasswordReset($user));
+            }
+        );
+    
+        return $status === Password::PASSWORD_RESET ? redirect()->route('login')->with('status', __($status)) : back()->withErrors(['email' => [__($status)]]);
+    })->name('password.update');
+    
+});
 
 Route::middleware(['auth', 'verified'])->group(function (){
 
-    Route::get('/dashboard/commuter', function () {
-        return view('commuter.dashboard');
-    })->name('commuter.dashboard');
+    // Route::get('/dashboard', function () {
+    //     return view('commuter.dashboard');
+    // })->name('commuter.dashboard');Q
+    Route::middleware('role:commuter|admin')->group(function() {
+        Route::get('/dashboard', function () {
+            $role = Auth::user()->roles->first()->name;
 
-    Route::get('/commuter/commuter', function () {
-        return view('commuter.commuter');
-    })->name('commuter.commuter');
+            if($role == 'admin') {
+                return view('admin.dashboard'); 
+            }
 
+            if($role == 'commuter') {
+                return view('commuter.dashboard');
+            }
+
+        })->name('commuter.dashboard');
+    });
+        
+    Route::get('/profile', function () {
+        return view('profile');
+    })->name('profile');
+
+    Route::put('/rates/upload', [RateController::class, 'upload'])->middleware('role:admin')->name('rates.upload');
+
+        
+        // Route::get('/commuter/commuter', function () {
+        //     return view('commuter.commuter');
+        // })->name('commuter.commuter');
     Route::resource('users', UserController::class);
+    Route::resource('routes', RouteController::class)->middleware('role:admin');
+    Route::resource('rates', RateController::class)->middleware('role:admin');
 });
 
 

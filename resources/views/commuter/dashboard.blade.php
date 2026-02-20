@@ -9,6 +9,13 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.18.0/dist/maplibre-gl.css' />
     <script src='https://unpkg.com/maplibre-gl@5.18.0/dist/maplibre-gl.js'></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.umd.js"></script>
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-geocoder@1.5.0/dist/maplibre-gl-geocoder.min.js"></script>
+    <link rel="stylesheet"
+        href="https://unpkg.com/@maplibre/maplibre-gl-geocoder@1.5.0/dist/maplibre-gl-geocoder.css" />
+    <link <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.css" />
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
 
@@ -19,7 +26,6 @@
             min-height: 100vh;
         }
 
-
         .glass {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(12px);
@@ -27,7 +33,6 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
         }
-
 
         .glass-inset {
             box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
@@ -206,8 +211,8 @@
             <div id="map"
                 class="lg:col-span-2 relative h-[550px] glass rounded-[3rem] overflow-hidden border border-white/10 shadow-inner group">
             </div>
-            {{--
-            <pre id="info"></pre> --}}
+
+            <pre id="info"></pre>
 
             <aside class="lg:col-span-1 space-y-8">
                 <a href="/tutorial"
@@ -272,13 +277,72 @@
             'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js'
         );
 
+        const bounds = [
+            [123.77516124821591, 10.229235293025951],
+            [123.91768276426876, 10.332535160307074]
+        ];
+
         const map = new maplibregl.Map({
             container: 'map', // container id
             style: 'https://tiles.openfreemap.org/styles/bright', // style URL
             center: [123.79, 10.24], // starting position [lng, lat]
             zoom: 13, // starting zoom
-            rollEnabled: true
+            rollEnabled: true,
+            maxBounds: bounds
         });
+
+        // const draw = new MaplibreTerradrawControl.MaplibreTerradrawControl({
+        //     modes: [
+        //         // 'render', comment this to always show drawing tool
+        //         'point',
+        //         'linestring',
+        //         'select',
+        //         'delete-selection',
+        //         'delete',
+        //     ],
+        //     open: true,
+        // });
+
+
+        const geocoderApi = {
+            forwardGeocode: async (config) => {
+                const features = [];
+                try {
+                    const request =
+                        `https://nominatim.openstreetmap.org/search?q=${config.query
+                        }&format=geojson&polygon_geojson=1&addressdetails=1`;
+                    const response = await fetch(request);
+                    const geojson = await response.json();
+                    for (const feature of geojson.features) {
+                        const center = [
+                            feature.bbox[0] +
+                            (feature.bbox[2] - feature.bbox[0]) / 2,
+                            feature.bbox[1] +
+                            (feature.bbox[3] - feature.bbox[1]) / 2
+                        ];
+                        const point = {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: center
+                            },
+                            place_name: feature.properties.display_name,
+                            properties: feature.properties,
+                            text: feature.properties.display_name,
+                            place_type: ['place'],
+                            center
+                        };
+                        features.push(point);
+                    }
+                } catch (e) {
+                    console.error(`Failed to forwardGeocode with error: ${e}`);
+                }
+
+                return {
+                    features
+                };
+            }
+        };
 
         map.on('load', () => {
             map.setLayoutProperty('label_country', 'text-field', [
@@ -298,6 +362,13 @@
             ]);
         });
 
+
+        map.addControl(
+            new MaplibreGeocoder(geocoderApi, {
+                maplibregl
+            })
+        );
+
         // Add zoom and rotation controls to the map.
         map.addControl(new maplibregl.NavigationControl({
             visualizePitch: true,
@@ -315,6 +386,8 @@
                 trackUserLocation: true
             })
         );
+
+        map.addControl(draw, 'top-left');
 
         // map.on('mousemove', (e) => {
         //     document.getElementById('info').innerHTML =
