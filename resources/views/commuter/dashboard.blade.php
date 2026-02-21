@@ -136,25 +136,60 @@
 
                 <div class="glass glass-inset p-8 rounded-[2.5rem]">
                     <h3 class="text-xs font-bold mb-6 uppercase tracking-widest opacity-70 flex items-center">
-                        <i class="fa-solid fa-calculator mr-2 text-blue-400"></i> Fare Calculator
+                        <i class="fa-solid fa-money-bill mr-2 text-blue-400"></i>Fare Price
                     </h3>
                     <div class="space-y-4">
                         <div class="relative group">
                             <i
                                 class="fa-solid fa-circle-dot absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-blue-400"></i>
-                            <input type="text" placeholder="Pick-up point"
-                                class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-xs focus:bg-white/10 focus:border-blue-500/50 outline-none transition">
+                            <input type="text" placeholder="Pick-up point" name="pickup" id="pickup"
+                                class="hidden w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-xs focus:bg-white/10 focus:border-blue-500/50 outline-none transition">
+                            <button onclick="getStartingPoint()"
+                                class="w-full bg-white/5 border border-white/10 py-3 rounded-2xl text-[10px] font-bold uppercase hover:bg-white/10 transition-colors">
+                                Add pick-up point
+                            </button>
                         </div>
                         <div class="relative group">
                             <i
                                 class="fa-solid fa-location-dot absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-red-400"></i>
-                            <input type="text" placeholder="Destination"
-                                class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-xs focus:bg-white/10 focus:border-red-500/50 outline-none transition">
+                            <input type="text" placeholder="Destination" name="destination" id="destination"
+                                class="hidden w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-xs focus:bg-white/10 focus:border-red-500/50 outline-none transition">
+                            <button onclick="getDestination()"
+                                class="w-full bg-white/5 border border-white/10 py-3 rounded-2xl text-[10px] font-bold uppercase hover:bg-white/10 transition-colors">
+                                Add destination
+                            </button>
                         </div>
-                        <button
-                            class="w-full bg-white/5 border border-white/10 py-3 rounded-2xl text-[10px] font-bold uppercase hover:bg-white/10 transition-colors">
-                            Calculate Estimate
-                        </button>
+                        <h3
+                            class="text-xs font-bold mb-6 uppercase tracking-widest text-white justify-center flex items-center">
+                            Distance
+                        </h3>
+                        <div class="flex gap-2 items-center">
+                            <input type="text" readonly name="distance" id="distance"
+                                class="w-full bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-xs focus:bg-white/10 focus:border-red-500/50 outline-none transition">
+                            <h3 class="text-xs font-bold uppercase tracking-widest opacity-70 ">
+                                KM
+                            </h3>
+                        </div>
+                        <h3
+                            class="text-xs font-bold mb-6 uppercase tracking-widest text-white justify-center flex items-center">
+                            Price
+                        </h3>
+                        <div class="flex gap-2 items-center">
+                            <input type="text" readonly name="price-regular" id="price-regular"
+                                class="w-20 bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-xs focus:bg-white/10 focus:border-red-500/50 outline-none transition">
+                            <i class="fa-solid fa-peso-sign mr-5 opacity-70"></i>
+                            <h3 class="text-xs font-bold uppercase tracking-widest opacity-70 ">
+                                Regular
+                            </h3>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <input type="text" readonly name="price-regular" id="price-discount"
+                                class="w-20 bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3 text-xs focus:bg-white/10 focus:border-red-500/50 outline-none transition">
+                            <i class="fa-solid fa-peso-sign mr-5 opacity-70"></i>
+                            <h3 class="text-xs font-bold uppercase tracking-widest opacity-70">
+                                Student/ELDERLY/DISABLED
+                            </h3>
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -273,6 +308,42 @@
     </div>
 
     <script>
+        let marker = new maplibregl.Marker({ draggable: false });
+
+        const distanceCoordinate = document.getElementById('distance');
+        const pickupCoordinate = document.getElementById('pickup');
+        const destinationCoordinates = document.getElementById('destination');
+        const priceRegular = document.getElementById('price-regular');
+        const priceDiscount = document.getElementById('price-discount');
+
+        distanceCoordinate.value = "0";
+        priceRegular.value = "0";
+        priceDiscount.value = "0";
+
+        rates = {!! $rates !!};
+
+        function getFareRate(km) {
+
+            if (km >= 1 && km < 50) {
+                for (let i = 0; i < 50; i++) {
+                    if (km == rates[i]['km']) {
+                        fareRate = rates[i];
+                        break;
+                    }
+                }
+            }
+
+            if (km < 1) {
+                fareRate = rates[0];
+            }
+
+            if (km >= 50) {
+                fareRate = rates[49];
+            }
+
+            return fareRate;
+        }
+
         maplibregl.setRTLTextPlugin(
             'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js'
         );
@@ -290,18 +361,6 @@
             rollEnabled: true,
             maxBounds: bounds
         });
-
-        // const draw = new MaplibreTerradrawControl.MaplibreTerradrawControl({
-        //     modes: [
-        //         // 'render', comment this to always show drawing tool
-        //         'point',
-        //         'linestring',
-        //         'select',
-        //         'delete-selection',
-        //         'delete',
-        //     ],
-        //     open: true,
-        // });
 
 
         const geocoderApi = {
@@ -344,7 +403,46 @@
             }
         };
 
+        const startPoint = {
+            'type': 'FeatureCollection',
+            'features': [
+                {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Point',
+                    }
+                }
+            ]
+        };
+
+        const endPoint = {
+            'type': 'FeatureCollection',
+            'features': [
+                {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Point',
+                    }
+                }
+            ]
+        };
+
         map.on('load', () => {
+            map.addSource('point', {
+                'type': 'geojson',
+                'data': startPoint
+            });
+
+            map.addLayer({
+                'id': 'point',
+                'type': 'circle',
+                'source': 'point',
+                'paint': {
+                    'circle-radius': 10,
+                    'circle-color': '#3887be'
+                }
+            });
+
             map.setLayoutProperty('label_country', 'text-field', [
                 'format',
                 ['get', 'name_en'],
@@ -360,6 +458,8 @@
                     ]
                 }
             ]);
+
+            marker.setLngLat([0, 0]).addTo(map);
         });
 
 
@@ -387,17 +487,104 @@
             })
         );
 
-        map.addControl(draw, 'top-left');
 
-        // map.on('mousemove', (e) => {
-        //     document.getElementById('info').innerHTML =
-        //         // e.point is the x, y coordinates of the mousemove event relative
-        //         // to the top-left corner of the map
-        //         `${JSON.stringify(e.point)
-        //         }<br />${
-        //         // e.lngLat is the longitude, latitude geographical position of the event
-        //         JSON.stringify(e.lngLat.wrap())}`;
-        // });
+        destinationLat = null;
+        destinationLng = null;
+        pickupLng = null;
+        pickupLat = null;
+
+        function getStartingPoint() {
+            map.once('mousemove', (e) => {
+                // UI indicator for clicking/hovering a point on the map
+                map.getCanvas().style.cursor = 'crosshair';
+            });
+
+            map.once('click', (e) => {
+                const coords = e.lngLat;
+
+                startPoint.features[0].geometry.coordinates = [coords.lng, coords.lat];
+                map.getSource('point').setData(startPoint);
+
+                let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
+                let coordinatesArray = coordinates.split(" ");
+
+                pickupLng = coordinatesArray[0];
+                pickupLat = coordinatesArray[1];
+
+                pickup.value = coordinates;
+
+                map.getCanvas().style.cursor = 'pointer';
+
+                if (destinationLat && destinationLng) {
+                    distanceKM = (haversineDistanceKM(pickupLat, pickupLng, destinationLat, destinationLng)) ? haversineDistanceKM(pickupLat, pickupLng, destinationLat, destinationLng) : null;
+                    distanceCoordinate.value = distanceKM;
+
+                    rate = getFareRate(parseInt(distanceKM));
+
+                    priceRegular.value = rate['regular'];
+                    priceDiscount.value = rate['discount'];
+                }
+            });
+        }
+
+        getStartingPoint();
+
+        function getDestination() {
+            map.once('mousemove', (e) => {
+                // UI indicator for clicking/hovering a point on the map
+                map.getCanvas().style.cursor = 'crosshair';
+            });
+
+            map.once('click', (e) => {
+                let longLat = e.lngLat;
+
+                let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
+                let coordinatesArray = coordinates.split(" ");
+
+                destinationLng = coordinatesArray[0];
+                destinationLat = coordinatesArray[1];
+
+                marker.setLngLat([longLat.lng, longLat.lat]);
+
+                destinationCoordinates.value = coordinates;
+
+                map.getCanvas().style.cursor = 'pointer';
+
+                if (pickupLat && pickupLng) {
+                    distanceKM = (haversineDistanceKM(pickupLat, pickupLng, destinationLat, destinationLng)) ? haversineDistanceKM(pickupLat, pickupLng, destinationLat, destinationLng) : null;
+                    distanceCoordinate.value = distanceKM;
+
+                    rate = getFareRate(parseInt(distanceKM));
+
+                    priceRegular.value = rate['regular'];
+                    priceDiscount.value = rate['discount'];
+                }
+            });
+        }
+
+        function haversineDistanceKM(lat1Deg, lon1Deg, lat2Deg, lon2Deg) {
+            function toRad(degree) {
+                return degree * Math.PI / 180;
+            }
+
+            const lat1 = toRad(lat1Deg);
+            const lon1 = toRad(lon1Deg);
+            const lat2 = toRad(lat2Deg);
+            const lon2 = toRad(lon2Deg);
+
+            const { sin, cos, sqrt, atan2 } = Math;
+
+            const R = 6371; // earth radius in km 
+            const dLat = lat2 - lat1;
+            const dLon = lon2 - lon1;
+            const a = sin(dLat / 2) * sin(dLat / 2)
+                + cos(lat1) * cos(lat2)
+                * sin(dLon / 2) * sin(dLon / 2);
+            const c = 2 * atan2(sqrt(a), sqrt(1 - a));
+            const d = R * c;
+            return d; // distance in km
+        }
+
     </script>
 </body>
 

@@ -96,7 +96,7 @@
 
                 <div class="glass glass-inset p-8 rounded-[2.5rem]">
                     <h3 class="text-xs font-bold mb-6 uppercase tracking-widest opacity-70 flex items-center">
-                        <i class="fa-solid fa-calculator mr-2 text-blue-400"></i> Create Route
+                        <i class="fa-solid fa-calculator mr-2 text-blue-400"></i> Update Route
                     </h3>
                     <form method="POST" action="{{ route('routes.update', $route->id) }}">
                         @csrf
@@ -131,7 +131,7 @@
                             </button>
                             <button type="submit"
                                 class="w-full bg-white text-black border border-white/10 py-3 rounded-2xl text-[10px] font-bold uppercase hover:bg-green-50 transition-colors">
-                                Create Route
+                                Update Route
                             </button>
                         </div>
                     </form>
@@ -301,6 +301,11 @@
         map.addControl(draw, 'top-left');
 
         function getStartingPoint() {
+            map.once('mousemove', (e) => {
+                // UI indicator for clicking/hovering a point on the map
+                map.getCanvas().style.cursor = 'crosshair';
+            });
+
             map.once('click', (e) => {
 
                 const coords = e.lngLat;
@@ -311,13 +316,18 @@
                 let coordinates = `${e.lngLat.lng}, ${e.lngLat.lat}`;
 
                 document.getElementById('start').value = coordinates;
+
+                map.getCanvas().style.cursor = 'pointer';
             });
         }
 
         function getDestination() {
+            map.once('mousemove', (e) => {
+                // UI indicator for clicking/hovering a point on the map
+                map.getCanvas().style.cursor = 'crosshair';
+            });
+
             map.once('click', (e) => {
-
-
                 let longLat = e.lngLat;
 
                 let coordinates = `${e.lngLat.lng}, ${e.lngLat.lat} `;
@@ -325,9 +335,11 @@
                 marker.setLngLat([longLat.lng, longLat.lat]);
 
                 document.getElementById('end').value = coordinates;
-            });
 
+                map.getCanvas().style.cursor = 'pointer';
+            });
         }
+
     </script>
 </body>
 

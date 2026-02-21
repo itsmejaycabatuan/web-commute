@@ -35,7 +35,7 @@
             </a>
         </nav>
         <nav class="space-y-2">
-            <a href="{{ route('rates.index') }}"
+            <a href="{{ route('fares.index') }}"
                 class="flex items-center gap-4 p-3 rounded-2xl bg-blue-600/10 text-blue-400 border border-blue-500/20 group">
                 <div class="min-w-[24px] flex justify-center">
                     <i class="fa-solid fa-money-bill text-lg"></i>
@@ -46,7 +46,7 @@
         </nav>
     </div>
 
-    <form action="{{ route('home') }}" method="GET">
+    <form action="{{ route('users.logout') }}" method="POST">
         @csrf
         <button type="submit"
             class="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-all group">

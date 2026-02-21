@@ -1,10 +1,13 @@
     <?php
 
+use App\Http\Controllers\FareController;
 use App\Http\Controllers\RateController;
 use App\Http\Controllers\RouteController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Models\User;
+use App\Models\Fare;
+use App\Models\FareRate;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Auth;
@@ -108,19 +111,26 @@ Route::middleware('guest')->group(function() {
 
 Route::middleware(['auth', 'verified'])->group(function (){
 
+    
+
     // Route::get('/dashboard', function () {
     //     return view('commuter.dashboard');
     // })->name('commuter.dashboard');Q
     Route::middleware('role:commuter|admin')->group(function() {
         Route::get('/dashboard', function () {
             $role = Auth::user()->roles->first()->name;
+            $latestFare = Fare::get()->last();
+            $latestFareId = $latestFare->id;
+            $rates = FareRate::where('fare_id', $latestFareId)->get();
 
             if($role == 'admin') {
                 return view('admin.dashboard'); 
             }
 
             if($role == 'commuter') {
-                return view('commuter.dashboard');
+                return view('commuter.dashboard', [
+                    'rates' => $rates
+                ]);
             }
 
         })->name('commuter.dashboard');
@@ -130,8 +140,10 @@ Route::middleware(['auth', 'verified'])->group(function (){
         return view('profile');
     })->name('profile');
 
-    Route::put('/rates/upload', [RateController::class, 'upload'])->middleware('role:admin')->name('rates.upload');
-
+    Route::get('/fare/{id}', [FareController::class, 'view'])->middleware('role:admin')->name('fares.view');
+    Route::get('/fares', [FareController::class, 'index'])->middleware('role:admin')->name('fares.index');
+    Route::put('/fare/upload', [FareController::class, 'upload'])->middleware('role:admin')->name('fares.upload');
+    Route::delete('/fare/{id}/delete', [FareController::class, 'delete'])->middleware('role:admin')->name('fares.destroy');
         
         // Route::get('/commuter/commuter', function () {
         //     return view('commuter.commuter');

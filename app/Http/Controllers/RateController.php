@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Process\Process;
 
 class RateController extends Controller
 {
@@ -14,7 +15,7 @@ class RateController extends Controller
      */
     public function index()
     {
-        return view('rates.index');
+        // return view('rates.index');
     }
 
     /**
@@ -82,13 +83,10 @@ class RateController extends Controller
     }
     
     public function upload(Request $request) {
-        $path = $request->file('fare')->store('storage');
-        $pythonPath = resource_path() . '/scripts/extractPdf.py ';
-        $result = shell_exec('python ' . $pythonPath . $path);
+        // $pythonPath = resource_path() . '/scripts/extractPdf.py ';
+        // $fullPath = storage_path('app/' . $path);
 
-        return $result;
-        // dd($result);
-        // Storage::put($request->fare, $resource);
-
+        // $result = shell_exec(base_path('/venv/bin/python3 ') . $pythonPath . $fullPath);
+        
     }
 }

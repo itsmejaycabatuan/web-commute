@@ -149,7 +149,7 @@
 
 
     <script>
-        var isClicked = false;
+        // var isClicked = false;
 
         let marker = new maplibregl.Marker({ draggable: false });
 
@@ -170,7 +170,7 @@
             rollEnabled: true,
             maxBounds: bounds
         });
-        a
+
         const geocoderApi = {
             forwardGeocode: async (config) => {
                 const features = [];
@@ -324,7 +324,6 @@
 
                 document.getElementById('end').value = coordinates;
             });
-
         }
 
     </script>
