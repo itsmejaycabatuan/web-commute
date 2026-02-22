@@ -35,7 +35,32 @@ Route::get('/', function (Request $request) {
     return view('home');
 })->name('home');
 
-Route::post('/users/logout', [UserController::class, 'logout'])->middleware('auth')->name('users.logout');
+
+    Route::get('/register', function () {
+        return view('register');
+    })->name('register');
+
+    Route::get('/login',function (){
+        return view('login');
+    })->name('login');
+
+    Route::get('/driverprofile', function () {
+        return view('driverprofile');
+    })->name('driverprofile');
+       Route::get('/adminprofile', function () {
+        return view('adminprofile');
+    })->name('adminprofile');
+    Route::get('/admindashboard',function (){
+        return view('admindashboard');
+    })->name('admindashboard');
+
+     Route::get('/driverdashboard',function (){
+        return view('driverdashboard');
+    })->name('driverdashboard');
+
+Route::post('/users/logout', [UserController::class, 'logout'])->name('users.logout');
+Route::post('/users/register', [UserController::class,'register'])->name('users.register');
+Route::post('/users/login', [UserController::class, 'login'])->name('users.login');
 
 Route::get('/email/verify', function() {
     return view('auth.verify-email');
@@ -47,7 +72,7 @@ Route::post('/email/verification-notification', function(Request $request) {
 })->middleware(['auth', 'throttle:6.1'])->name('verification.send');
 
 Route::get('/email/verify/{id}/{hash}', function(EmailVerificationRequest $request) {
-    $request->fulfill();    
+    $request->fulfill();
     return view('commuter.dashboard');
 })->middleware(['auth','signed'])->name('verification.verify');
 
