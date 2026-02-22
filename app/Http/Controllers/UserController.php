@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Password;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -107,6 +108,7 @@ class UserController extends Controller
         if($user) {
             Auth::login($user);
             event(new Registered($user));
+            $user->assignRole('commuter');
             return redirect()->route('commuter.dashboard')->with('success', 'User Successfully Registered!');
         }
         return back()->with('error', 'User Failed to Register.');
@@ -121,6 +123,7 @@ class UserController extends Controller
         ]);
 
         if(Auth::attempt($validated)) {
+
             $request->session()->regenerate();
             return redirect()->route('commuter.dashboard')->with('success','Logged in Successfully!');
         }
