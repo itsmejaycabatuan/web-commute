@@ -31,16 +31,21 @@
     <div
         class="p-8 w-full max-w-sm text-white rounded-3xl border shadow-2xl bg-white/10 backdrop-blur-xl border-white/20">
 
-        <div class="mb-8 text-center">
-            <div class="flex justify-center items-center mb-4">
-                <div class="flex justify-center items-center w-10 h-10 rounded-full border-2 border-white">
-                    <div class="w-5 h-5 bg-white rounded-full"></div>
-                </div>
-                <span class="ml-3 text-2xl italic font-bold tracking-wider">SmartCommute</span>
-            </div>
-            <h2 class="text-2xl font-bold tracking-tight">Reset Password</h2>
-            <p class="mt-1 text-xs opacity-60">Please enter your email address to reset your password</p>
+<div class="mb-8 text-center">
+    <div class="flex flex-col items-center justify-center mb-4">
+         <div class="flex items-center justify-center w-12 h-12 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20 mb-3">
+            <i class="fa-solid fa-bus text-white text-xl"></i>
         </div>
+        <span class="text-2xl font-bold tracking-wider italic text-white">
+            Smart<span class="text-blue-500">Commute</span>
+        </span>
+    </div>
+
+    <h2 class="text-2xl font-bold tracking-tight">Forgot Password?</h2>
+    <p class="mt-2 text-xs opacity-60 px-4">
+        No worries! Enter your email below.
+    </p>
+</div>
 
         <form action="{{ route('password.email') }}" method="POST" class="space-y-5">
             @csrf

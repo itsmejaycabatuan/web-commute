@@ -136,6 +136,18 @@ Route::middleware('guest')->group(function() {
 
 Route::middleware(['auth', 'verified'])->group(function (){
 
+    Route::get('/dashboard/commuter', function () {
+        return view('commuter.dashboard');
+    })->name('commuter.dashboard');
+
+    Route::get('/commuter/commuter', function () {
+        return view('commuter.commuter');
+    })->name('commuter.commuter');
+
+    Route::get('/tutorial', function () {
+        return view('tutorial');
+    })->name('tutorial');
+
     
 
     // Route::get('/dashboard', function () {

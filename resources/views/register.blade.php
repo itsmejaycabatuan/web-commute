@@ -31,18 +31,19 @@
     <div
         class="p-8 w-full max-w-sm text-white rounded-3xl border shadow-2xl bg-white/10 backdrop-blur-xl border-white/20">
 
-                    <div class="mb-8 text-center">
-                <div class="flex flex-col items-center justify-center mb-4">
-                    <div class="flex items-center justify-center w-12 h-12 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20 mb-3">
-                        <i class="fa-solid fa-bus text-white text-xl"></i>
-                    </div>
-                    <span class="text-2xl font-bold tracking-wider italic text-white">
-                        Smart<span class="text-blue-500">Commute</span>
-                    </span>
-                </div>
-                <h2 class="text-2xl font-bold tracking-tight">Create Account</h2>
-                <p class="mt-1 text-xs opacity-60">Optimize your commute today</p>
-            </div>
+                   <div class="mb-8 text-center">
+    <div class="flex flex-col items-center justify-center mb-4">
+        <div class="flex items-center justify-center w-12 h-12 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20 mb-3">
+            <i class="fa-solid fa-bus text-white text-xl"></i>
+        </div>
+        <span class="text-2xl font-bold tracking-wider italic text-white">
+            Smart<span class="text-blue-500">Commute</span>
+        </span>
+    </div>
+
+    <h2 class="text-2xl font-bold tracking-tight">Create Account</h2>
+    <p class="mt-1 text-xs opacity-60">Optimize your commute today</p>
+</div>
 
         <form action="{{ route('users.register') }}" method="POST" class="space-y-4">
             @csrf
