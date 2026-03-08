@@ -117,7 +117,7 @@
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <p class="text-[9px] uppercase tracking-widest text-white/50 font-bold mb-1">Digital Wallet</p>
-                    <h2 class="text-2xl font-bold text-white">₱450.00</h2>
+                    <h2 class="text-2xl font-bold text-white">₱500.00</h2>
                 </div>
                 <i class="fa-solid fa-wallet text-blue-400 opacity-60"></i>
             </div>
