@@ -121,6 +121,10 @@ Route::middleware(['auth', 'verified'])->group(function (){
         return view('commuter.commuter');
     })->name('commuter.commuter');
 
+    Route::get('/tutorial', function () {
+        return view('tutorial');
+    })->name('tutorial');
+
     Route::resource('users', UserController::class);
 });
 
