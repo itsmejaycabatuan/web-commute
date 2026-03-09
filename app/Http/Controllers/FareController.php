@@ -6,14 +6,20 @@ use App\Models\Fare;
 use App\Models\FareRate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\Process\Process;
 
 class FareController extends Controller
 {   
     public function index() {
         $fares = Fare::get();
         $latestFare = Fare::get()->last();
-        $latestFareId = $latestFare->id;
-        $rates = FareRate::where('fare_id', $latestFareId)->get();
+        $rates = FareRate::get();
+
+        if($latestFare) {
+            $latestFareId = $latestFare->id;
+            $rates = FareRate::where('fare_id', $latestFareId)->get();
+        }
+
 
         return view('fares.index',[
             'fares' => $fares,
@@ -75,6 +81,7 @@ class FareController extends Controller
                 'location' => $path,
             ]);
 
+            
             $pythonPath = resource_path() . '/scripts/extractPdf.py ';
             $fullPath = storage_path('app/' . $path);
 

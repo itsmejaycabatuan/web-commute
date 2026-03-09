@@ -157,8 +157,13 @@ Route::middleware(['auth', 'verified'])->group(function (){
         Route::get('/dashboard', function () {
             $role = Auth::user()->roles->first()->name;
             $latestFare = Fare::get()->last();
-            $latestFareId = $latestFare->id;
-            $rates = FareRate::where('fare_id', $latestFareId)->get();
+            
+            $rates = FareRate::get();
+
+            if($latestFare) {
+                $latestFareId = $latestFare->id;
+                $rates = FareRate::where('fare_id', $latestFareId)->get();
+            }
 
             if($role == 'admin') {
                 return view('admin.dashboard'); 

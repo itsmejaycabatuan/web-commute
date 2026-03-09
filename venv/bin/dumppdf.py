@@ -1,4 +1,4 @@
-#!/opt/lampp/htdocs/web-commute/venv/bin/python
+#!/opt/lampp/htdocs/web-commute/venv/bin/python3
 """Extract pdf structure in XML format"""
 
 import logging
