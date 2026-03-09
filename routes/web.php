@@ -140,9 +140,9 @@ Route::middleware(['auth', 'verified'])->group(function (){
         return view('commuter.dashboard');
     })->name('commuter.dashboard');
 
-    Route::get('/commuter/commuter', function () {
-        return view('commuter.commuter');
-    })->name('commuter.commuter');
+    Route::get('/commuter/profile', function () {
+        return view('commuter.profile');
+    })->name('commuter.profile');
 
     Route::get('/tutorial', function () {
         return view('tutorial');
