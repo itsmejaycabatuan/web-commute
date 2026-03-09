@@ -77,38 +77,8 @@
         </div>
 
         <div class="relative group">
-            <div class="h-64 rounded-[3.5rem] glass overflow-hidden relative border border-white/10">
-                <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 via-indigo-600/10 to-transparent"></div>
-                <div class="absolute inset-0 profile-glow"></div>
-                <div class="absolute top-10 right-20 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl"></div>
-            </div>
-
             <div
-                class="absolute -bottom-10 left-6 md:left-12 right-6 md:right-12 flex flex-col md:flex-row items-end justify-between gap-6">
-                <div class="flex items-end space-x-6">
-                    <div class="relative">
-                        <div
-                            class="w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] md:rounded-[3rem] glass p-1.5 border-2 border-white/20 shadow-2xl relative z-10 bg-[#0a0a0a]">
-                            <img src="https://randomuser.me/api/portraits/men/32.jpg"
-                                class="w-full h-full object-cover rounded-[2.2rem] md:rounded-[2.5rem] grayscale hover:grayscale-0 transition duration-500"
-                                alt="James Wilson">
-                        </div>
-                        <div
-                            class="absolute bottom-2 right-2 w-6 h-6 bg-green-500 border-4 border-[#0a0a0a] rounded-full z-20">
-                        </div>
-                    </div>
-
-                    <div class="pb-6 hidden md:block">
-                        <div class="flex items-center space-x-3 mb-1">
-                            <h1 class="text-4xl font-black tracking-tighter">James Wilson</h1>
-                            <i class="fa-solid fa-circle-check text-blue-400 text-xl"></i>
-                        </div>
-                        <div class="flex items-center space-x-4 opacity-60 text-xs font-medium">
-                            <span><i class="fa-solid fa-location-dot mr-1.5 text-blue-400"></i> Manila, PH</span>
-                            <span><i class="fa-solid fa-id-card-clip mr-1.5 text-blue-400"></i> #SC-99281</span>
-                        </div>
-                    </div>
-                </div>
+                class="absolute-bottom-10 left-6 md:left-12 right-6 md:right-12 flex flex-col md:flex-row items-end justify-between gap-6">
 
                 <div class="flex items-center space-x-3 pb-8">
                     <button
@@ -117,7 +87,7 @@
                     </button>
                     <button
                         class="bg-blue-600 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition active:scale-95">
-                        Account Settings
+                        Settings
                     </button>
                 </div>
             </div>
@@ -133,47 +103,10 @@
 
                     <div class="space-y-6">
                         <div class="list-item-hover p-2 -m-2 rounded-xl">
-                            <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Full Legal Name</p>
-                            <p class="text-sm font-bold">James Alexander Wilson</p>
-                        </div>
-                        <div class="list-item-hover p-2 -m-2 rounded-xl">
-                            <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Contact Email</p>
+                            <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Email Address</p>
                             <p class="text-sm font-bold">j.wilson@smartcommute.ph</p>
                         </div>
-                        <div class="list-item-hover p-2 -m-2 rounded-xl">
-                            <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Linked Mobile</p>
-                            <p class="text-sm font-bold">+63 917 882 1994</p>
-                        </div>
                     </div>
-
-                    <div class="mt-10 pt-8 border-t border-white/5">
-                        <p class="text-[10px] font-black uppercase tracking-widest opacity-30 mb-4">Security Level</p>
-                        <div class="flex items-center justify-between">
-                            <div class="flex space-x-1">
-                                <div class="w-8 h-1 bg-blue-500 rounded-full"></div>
-                                <div class="w-8 h-1 bg-blue-500 rounded-full"></div>
-                                <div class="w-8 h-1 bg-white/10 rounded-full"></div>
-                            </div>
-                            <span class="text-[10px] font-bold text-blue-400 uppercase">Strong</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    class="glass p-8 rounded-[2.5rem] bg-gradient-to-br from-purple-600/20 to-transparent border-purple-500/20">
-                    <div class="flex justify-between items-start mb-4">
-                        <i class="fa-solid fa-crown text-purple-400 text-xl"></i>
-                        <span class="text-[10px] font-black text-purple-400 uppercase tracking-widest">Commuter
-                            Tier</span>
-                    </div>
-                    <p class="text-2xl font-black mb-1 tracking-tighter">Gold Status</p>
-                    <p class="text-[10px] text-gray-500 uppercase font-bold mb-6 tracking-wide">2,450 Total Points</p>
-
-                    <div class="w-full bg-white/5 rounded-full h-1.5 mb-2 progress-shine">
-                        <div class="bg-purple-500 h-1.5 rounded-full" style="width: 75%"></div>
-                    </div>
-                    <p class="text-[9px] text-gray-600 font-bold uppercase tracking-tight text-center">550 pts until
-                        Platinum Status</p>
                 </div>
             </div>
 
@@ -184,13 +117,6 @@
                             class="fa-solid fa-bus absolute -right-4 -bottom-4 text-6xl opacity-5 group-hover:scale-110 transition duration-700"></i>
                         <p class="text-3xl font-black mb-1">142</p>
                         <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Trips Completed</p>
-                    </div>
-                    <div
-                        class="glass glass-inset p-8 rounded-[2.5rem] relative overflow-hidden border-green-500/20 group">
-                        <i
-                            class="fa-solid fa-leaf absolute -right-4 -bottom-4 text-6xl text-green-500/5 group-hover:scale-110 transition duration-700"></i>
-                        <p class="text-3xl font-black text-green-400 mb-1">84%</p>
-                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Eco-Score</p>
                     </div>
                     <div
                         class="glass glass-inset p-8 rounded-[2.5rem] relative overflow-hidden border-orange-500/20 group">

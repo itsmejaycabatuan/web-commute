@@ -142,8 +142,7 @@
                 <i class="fa-solid fa-bus text-white"></i>
             </div>
             <div>
-                <h1 class="text-white font-bold text-sm">SmartCommute</h1>
-                <p class="text-[10px] text-green-400 font-bold uppercase tracking-widest">Live • System Normal</p>
+                <h1 class="text-white font-bold text-sm">SmartCommute</h1>5
             </div>
         </div>
 
@@ -153,10 +152,12 @@
                 <i class="fa-solid fa-calendar-day mr-2 opacity-70"></i>
                 <span id="current-date">Loading date...</span>
             </div>
-            <div
-                class="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-white/10 transition">
-                <i class="fa-solid fa-bell text-xs"></i>
-            </div>
+            <a href="{{ route('commuter.profile') }}">
+                <div
+                    class="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-white/10 transition">
+                    <i class="fa-solid fa-user text-xs"></i>
+                </div>
+            </a>
             <div class="flex items-center space-x-3 pointer-events-auto">
                 <button onclick="toggleLogoutModal()"
                     class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold uppercase tracking-wider hover:bg-red-500/20 transition">
@@ -337,546 +338,527 @@
         </div>
     </div>
 
-    @if ($rates->isNotEmpty())
-        <script>
-            maplibregl.setRTLTextPlugin(
-                'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js'
-            );
+    {{-- @if ($rates->isNotEmpty()) --}}
+    <script>
+        maplibregl.setRTLTextPlugin(
+            'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js'
+        );
 
-            const bounds = [
-                [123.77516124821591, 10.229235293025951],
-                [123.91768276426876, 10.332535160307074]
-            ];
+        const bounds = [
+            [123.77516124821591, 10.229235293025951],
+            [123.91768276426876, 10.332535160307074]
+        ];
 
-            const map = new maplibregl.Map({
-                container: 'map',
-                style: 'https://tiles.openfreemap.org/styles/bright',
-                center: [123.79, 10.24],
-                zoom: 13,
-                rollEnabled: true,
-                maxBounds: bounds
-            });
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://tiles.openfreemap.org/styles/bright',
+            center: [123.79, 10.24],
+            zoom: 13,
+            rollEnabled: true,
+            maxBounds: bounds
+        });
 
-            map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-            map.addControl(new maplibregl.GeolocateControl({
-                positionOptions: { enableHighAccuracy: true },
-                trackUserLocation: true
-            }), 'bottom-right');
+        map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+        map.addControl(new maplibregl.GeolocateControl({
+            positionOptions: { enableHighAccuracy: true },
+            trackUserLocation: true
+        }), 'bottom-right');
 
-            function updateLiveDate() {
-                const dateElement = document.getElementById('current-date');
-                const now = new Date();
-                const options = {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                };
-                dateElement.textContent = now.toLocaleDateString('en-US', options);
+        function updateLiveDate() {
+            const dateElement = document.getElementById('current-date');
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+            dateElement.textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        updateLiveDate();
+        setInterval(updateLiveDate, 3600000);
+
+        function toggleLogoutModal() {
+            const modal = document.getElementById('logout-modal');
+            const content = document.getElementById('modal-content');
+
+            if (modal.classList.contains('opacity-0')) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            } else {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
             }
+        }
 
-            updateLiveDate();
-            setInterval(updateLiveDate, 3600000);
-
-            function toggleLogoutModal() {
-                const modal = document.getElementById('logout-modal');
-                const content = document.getElementById('modal-content');
-
-                if (modal.classList.contains('opacity-0')) {
-                    modal.classList.remove('opacity-0', 'pointer-events-none');
-                    content.classList.remove('scale-95');
-                    content.classList.add('scale-100');
-                } else {
-                    modal.classList.add('opacity-0', 'pointer-events-none');
-                    content.classList.remove('scale-100');
-                    content.classList.add('scale-95');
-                }
+        window.onclick = function (event) {
+            const modal = document.getElementById('logout-modal');
+            if (event.target == modal) {
+                toggleLogoutModal();
             }
+        }
 
-            window.onclick = function (event) {
-                const modal = document.getElementById('logout-modal');
-                if (event.target == modal) {
-                    toggleLogoutModal();
-                }
-            }
+        let marker = new maplibregl.Marker({ draggable: false });
 
-            let marker = new maplibregl.Marker({ draggable: false });
+        const distanceCoordinate = document.getElementById('distance');
+        const pickup = document.getElementById('pickup');
+        const destination = document.getElementById('destination');
+        const priceRegular = document.getElementById('price-regular');
+        const priceDiscount = document.getElementById('price-discount');
 
-            const distanceCoordinate = document.getElementById('distance');
-            const pickup = document.getElementById('pickup');
-            const destination = document.getElementById('destination');
-            const priceRegular = document.getElementById('price-regular');
-            const priceDiscount = document.getElementById('price-discount');
+        distanceCoordinate.value = "0";
+        priceRegular.value = "0";
+        priceDiscount.value = "0";
 
-            distanceCoordinate.value = "0";
-            priceRegular.value = "0";
-            priceDiscount.value = "0";
+        let rates = {!! $rates !!};
 
-            let rates = {!! $rates !!};
-
-            function getFareRate(km) {
-                if (km >= 1 && km < 50) {
-                    for (let i = 0; i < 50; i++) {
-                        if (km == rates[i]['km']) {
-                            return rates[i];
-                        }
+        function getFareRate(km) {
+            if (km >= 1 && km < 50) {
+                for (let i = 0; i < 50; i++) {
+                    if (km == rates[i]['km']) {
+                        return rates[i];
                     }
                 }
-                if (km < 1) {
-                    return rates[0];
-                }
-                if (km >= 50) {
-                    return rates[49];
-                }
+            }
+            if (km < 1) {
                 return rates[0];
             }
+            if (km >= 50) {
+                return rates[49];
+            }
+            return rates[0];
+        }
 
-            const geocoderApi = {
-                forwardGeocode: async (config) => {
-                    const features = [];
-                    try {
-                        const request =
-                            `https://nominatim.openstreetmap.org/search?q=${config.query}&format=geojson&polygon_geojson=1&addressdetails=1`;
-                        const response = await fetch(request);
-                        const geojson = await response.json();
-                        for (const feature of geojson.features) {
-                            const center = [
-                                feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
-                                feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2
-                            ];
-                            const point = {
-                                type: 'Feature',
-                                geometry: {
-                                    type: 'Point',
-                                    coordinates: center
-                                },
-                                place_name: feature.properties.display_name,
-                                properties: feature.properties,
-                                text: feature.properties.display_name,
-                                place_type: ['place'],
-                                center
-                            };
-                            features.push(point);
-                        }
-                    } catch (e) {
-                        console.error(`Failed to forwardGeocode with error: ${e}`);
+        const geocoderApi = {
+            forwardGeocode: async (config) => {
+                const features = [];
+                try {
+                    const request =
+                        `https://nominatim.openstreetmap.org/search?q=${config.query}&format=geojson&polygon_geojson=1&addressdetails=1`;
+                    const response = await fetch(request);
+                    const geojson = await response.json();
+                    for (const feature of geojson.features) {
+                        const center = [
+                            feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
+                            feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2
+                        ];
+                        const point = {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: center
+                            },
+                            place_name: feature.properties.display_name,
+                            properties: feature.properties,
+                            text: feature.properties.display_name,
+                            place_type: ['place'],
+                            center
+                        };
+                        features.push(point);
                     }
-                    return { features };
+                } catch (e) {
+                    console.error(`Failed to forwardGeocode with error: ${e}`);
                 }
-            };
+                return { features };
+            }
+        };
 
-            const startPoint = {
-                'type': 'FeatureCollection',
-                'features': [{
-                    'type': 'Feature',
-                    'geometry': {
-                        'type': 'Point',
-                    }
-                }]
-            };
+        const startPoint = {
+            'type': 'FeatureCollection',
+            'features': [{
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Point',
+                }
+            }]
+        };
 
-            map.on('load', () => {
-                map.addSource('point', {
-                    'type': 'geojson',
-                    'data': startPoint
-                });
-
-                map.addLayer({
-                    'id': 'point',
-                    'type': 'circle',
-                    'source': 'point',
-                    'paint': {
-                        'circle-radius': 10,
-                        'circle-color': '#3887be'
-                    }
-                });
-
-                map.setLayoutProperty('label_country', 'text-field', [
-                    'format',
-                    ['get', 'name_en'],
-                    { 'font-scale': 1.2 },
-                    '\n',
-                    {},
-                    ['get', 'name'],
-                    {
-                        'font-scale': 0.8,
-                        'text-font': [
-                            'literal',
-                            ['Noto Sans Regular']
-                        ]
-                    }
-                ]);
-
-                marker.setLngLat([0, 0]).addTo(map);
+        map.on('load', () => {
+            map.addSource('point', {
+                'type': 'geojson',
+                'data': startPoint
             });
 
-            map.addControl(
-                new MaplibreGeocoder(geocoderApi, {
-                    maplibregl
-                })
-            );
-
-            map.addControl(new maplibregl.NavigationControl({
-                visualizePitch: true,
-                visualizeRoll: true,
-                showZoom: true,
-                showCompass: true
-            }));
-
-            map.addControl(
-                new maplibregl.GeolocateControl({
-                    positionOptions: {
-                        enableHighAccuracy: true
-                    },
-                    trackUserLocation: true
-                })
-            );
-
-            let destinationLat = null;
-            let destinationLng = null;
-            let pickupLng = null;
-            let pickupLat = null;
-
-            function getStartingPoint() {
-                map.once('mousemove', (e) => {
-                    map.getCanvas().style.cursor = 'crosshair';
-                });
-
-                map.once('click', (e) => {
-                    const coords = e.lngLat;
-
-                    startPoint.features[0].geometry.coordinates = [coords.lng, coords.lat];
-                    map.getSource('point').setData(startPoint);
-
-                    let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
-                    let coordinatesArray = coordinates.split(" ");
-
-                    pickupLng = coordinatesArray[0];
-                    pickupLat = coordinatesArray[1];
-
-                    pickup.value = coordinates;
-
-                    map.getCanvas().style.cursor = 'pointer';
-
-                    if (destinationLat && destinationLng) {
-                        let distanceKM = haversineDistanceKM(pickupLat, pickupLng, destinationLat, destinationLng);
-                        distanceCoordinate.value = distanceKM.toFixed(2);
-
-                        let rate = getFareRate(parseInt(distanceKM));
-                        priceRegular.value = rate['regular'];
-                        priceDiscount.value = rate['discount'];
-                    }
-                });
-            }
-
-            function getDestination() {
-                map.once('mousemove', (e) => {
-                    map.getCanvas().style.cursor = 'crosshair';
-                });
-
-                map.once('click', (e) => {
-                    let longLat = e.lngLat;
-
-                    let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
-                    let coordinatesArray = coordinates.split(" ");
-
-                    destinationLng = coordinatesArray[0];
-                    destinationLat = coordinatesArray[1];
-
-                    marker.setLngLat([longLat.lng, longLat.lat]);
-
-                    destination.value = coordinates;
-
-                    map.getCanvas().style.cursor = 'pointer';
-
-                    if (pickupLat && pickupLng) {
-                        let distanceKM = haversineDistanceKM(pickupLat, pickupLng, destinationLat, destinationLng);
-                        distanceCoordinate.value = distanceKM.toFixed(2);
-
-                        let rate = getFareRate(parseInt(distanceKM));
-                        priceRegular.value = rate['regular'];
-                        priceDiscount.value = rate['discount'];
-                    }
-                });
-            }
-
-            function haversineDistanceKM(lat1Deg, lon1Deg, lat2Deg, lon2Deg) {
-                function toRad(degree) {
-                    return degree * Math.PI / 180;
+            map.addLayer({
+                'id': 'point',
+                'type': 'circle',
+                'source': 'point',
+                'paint': {
+                    'circle-radius': 10,
+                    'circle-color': '#3887be'
                 }
-
-                const lat1 = toRad(lat1Deg);
-                const lon1 = toRad(lon1Deg);
-                const lat2 = toRad(lat2Deg);
-                const lon2 = toRad(lon2Deg);
-
-                const { sin, cos, sqrt, atan2 } = Math;
-
-                const R = 6371;
-                const dLat = lat2 - lat1;
-                const dLon = lon2 - lon1;
-                const a = sin(dLat / 2) * sin(dLat / 2) +
-                    cos(lat1) * cos(lat2) * sin(dLon / 2) * sin(dLon / 2);
-                const c = 2 * atan2(sqrt(a), sqrt(1 - a));
-                const d = R * c;
-                return d;
-            }
-
-            // Initialize the functions
-            getStartingPoint();
-        </script>
-    @else
-        <script>
-            // Same as above but without rates logic
-            maplibregl.setRTLTextPlugin(
-                'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js'
-            );
-
-            const bounds = [
-                [123.77516124821591, 10.229235293025951],
-                [123.91768276426876, 10.332535160307074]
-            ];
-
-            const map = new maplibregl.Map({
-                container: 'map',
-                style: 'https://tiles.openfreemap.org/styles/bright',
-                center: [123.79, 10.24],
-                zoom: 13,
-                rollEnabled: true,
-                maxBounds: bounds
             });
 
-            map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-            map.addControl(new maplibregl.GeolocateControl({
-                positionOptions: { enableHighAccuracy: true },
-                trackUserLocation: true
-            }), 'bottom-right');
-
-            function updateLiveDate() {
-                const dateElement = document.getElementById('current-date');
-                const now = new Date();
-                const options = {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                };
-                dateElement.textContent = now.toLocaleDateString('en-US', options);
-            }
-
-            updateLiveDate();
-            setInterval(updateLiveDate, 3600000);
-
-            function toggleLogoutModal() {
-                const modal = document.getElementById('logout-modal');
-                const content = document.getElementById('modal-content');
-
-                if (modal.classList.contains('opacity-0')) {
-                    modal.classList.remove('opacity-0', 'pointer-events-none');
-                    content.classList.remove('scale-95');
-                    content.classList.add('scale-100');
-                } else {
-                    modal.classList.add('opacity-0', 'pointer-events-none');
-                    content.classList.remove('scale-100');
-                    content.classList.add('scale-95');
+            map.setLayoutProperty('label_country', 'text-field', [
+                'format',
+                ['get', 'name_en'],
+                { 'font-scale': 1.2 },
+                '\n',
+                {},
+                ['get', 'name'],
+                {
+                    'font-scale': 0.8,
+                    'text-font': [
+                        'literal',
+                        ['Noto Sans Regular']
+                    ]
                 }
-            }
+            ]);
 
-            window.onclick = function (event) {
-                const modal = document.getElementById('logout-modal');
-                if (event.target == modal) {
-                    toggleLogoutModal();
-                }
-            }
+            marker.setLngLat([0, 0]).addTo(map);
+        });
 
-            let marker = new maplibregl.Marker({ draggable: false });
+        map.addControl(
+            new MaplibreGeocoder(geocoderApi, {
+                maplibregl
+            })
+        );
 
-            const distanceCoordinate = document.getElementById('distance');
-            const pickup = document.getElementById('pickup');
-            const destination = document.getElementById('destination');
-            const priceRegular = document.getElementById('price-regular');
-            const priceDiscount = document.getElementById('price-discount');
+        let destinationLat = null;
+        let destinationLng = null;
+        let pickupLng = null;
+        let pickupLat = null;
 
-            distanceCoordinate.value = "0";
-            priceRegular.value = "0";
-            priceDiscount.value = "0";
-
-            const geocoderApi = {
-                forwardGeocode: async (config) => {
-                    const features = [];
-                    try {
-                        const request =
-                            `https://nominatim.openstreetmap.org/search?q=${config.query}&format=geojson&polygon_geojson=1&addressdetails=1`;
-                        const response = await fetch(request);
-                        const geojson = await response.json();
-                        for (const feature of geojson.features) {
-                            const center = [
-                                feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
-                                feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2
-                            ];
-                            const point = {
-                                type: 'Feature',
-                                geometry: {
-                                    type: 'Point',
-                                    coordinates: center
-                                },
-                                place_name: feature.properties.display_name,
-                                properties: feature.properties,
-                                text: feature.properties.display_name,
-                                place_type: ['place'],
-                                center
-                            };
-                            features.push(point);
-                        }
-                    } catch (e) {
-                        console.error(`Failed to forwardGeocode with error: ${e}`);
-                    }
-                    return { features };
-                }
-            };
-
-            const startPoint = {
-                'type': 'FeatureCollection',
-                'features': [{
-                    'type': 'Feature',
-                    'geometry': {
-                        'type': 'Point',
-                    }
-                }]
-            };
-
-            map.on('load', () => {
-                map.addSource('point', {
-                    'type': 'geojson',
-                    'data': startPoint
-                });
-
-                map.addLayer({
-                    'id': 'point',
-                    'type': 'circle',
-                    'source': 'point',
-                    'paint': {
-                        'circle-radius': 10,
-                        'circle-color': '#3887be'
-                    }
-                });
-
-                map.setLayoutProperty('label_country', 'text-field', [
-                    'format',
-                    ['get', 'name_en'],
-                    { 'font-scale': 1.2 },
-                    '\n',
-                    {},
-                    ['get', 'name'],
-                    {
-                        'font-scale': 0.8,
-                        'text-font': [
-                            'literal',
-                            ['Noto Sans Regular']
-                        ]
-                    }
-                ]);
-
-                marker.setLngLat([0, 0]).addTo(map);
+        function getStartingPoint() {
+            map.once('mousemove', (e) => {
+                map.getCanvas().style.cursor = 'crosshair';
             });
 
-            map.addControl(
-                new MaplibreGeocoder(geocoderApi, {
-                    maplibregl
-                })
-            );
+            map.once('click', (e) => {
+                const coords = e.lngLat;
 
-            // map.addControl(new maplibregl.NavigationControl({
-            //     visualizePitch: true,
-            //     visualizeRoll: true,
-            //     showZoom: true,
-            //     showCompass: true
-            // }));
+                startPoint.features[0].geometry.coordinates = [coords.lng, coords.lat];
+                map.getSource('point').setData(startPoint);
 
-            // map.addControl(
-            //     new maplibregl.GeolocateControl({
-            //         positionOptions: {
-            //             enableHighAccuracy: true
-            //         },
-            //         trackUserLocation: true
-            //     })
-            // );
+                let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
+                let coordinatesArray = coordinates.split(" ");
 
-            let destinationLat = null;
-            let destinationLng = null;
-            let pickupLng = null;
-            let pickupLat = null;
+                pickupLng = coordinatesArray[0];
+                pickupLat = coordinatesArray[1];
 
-            function getStartingPoint() {
-                map.once('mousemove', (e) => {
-                    map.getCanvas().style.cursor = 'crosshair';
-                });
+                pickup.value = coordinates;
 
-                map.once('click', (e) => {
-                    const coords = e.lngLat;
+                map.getCanvas().style.cursor = 'pointer';
 
-                    startPoint.features[0].geometry.coordinates = [coords.lng, coords.lat];
-                    map.getSource('point').setData(startPoint);
+                if (destinationLat && destinationLng) {
+                    let distanceKM = haversineDistanceKM(pickupLat, pickupLng, destinationLat, destinationLng);
+                    distanceCoordinate.value = distanceKM.toFixed(2);
 
-                    let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
-                    let coordinatesArray = coordinates.split(" ");
-
-                    pickupLng = coordinatesArray[0];
-                    pickupLat = coordinatesArray[1];
-
-                    pickup.value = coordinates;
-
-                    map.getCanvas().style.cursor = 'pointer';
-                });
-            }
-
-            function getDestination() {
-                map.once('mousemove', (e) => {
-                    map.getCanvas().style.cursor = 'crosshair';
-                });
-
-                map.once('click', (e) => {
-                    let longLat = e.lngLat;
-
-                    let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
-                    let coordinatesArray = coordinates.split(" ");
-
-                    destinationLng = coordinatesArray[0];
-                    destinationLat = coordinatesArray[1];
-
-                    marker.setLngLat([longLat.lng, longLat.lat]);
-
-                    destination.value = coordinates;
-
-                    map.getCanvas().style.cursor = 'pointer';
-                });
-            }
-
-            function haversineDistanceKM(lat1Deg, lon1Deg, lat2Deg, lon2Deg) {
-                function toRad(degree) {
-                    return degree * Math.PI / 180;
+                    let rate = getFareRate(parseInt(distanceKM));
+                    priceRegular.value = rate['regular'];
+                    priceDiscount.value = rate['discount'];
                 }
+            });
+        }
 
-                const lat1 = toRad(lat1Deg);
-                const lon1 = toRad(lon1Deg);
-                const lat2 = toRad(lat2Deg);
-                const lon2 = toRad(lon2Deg);
+        function getDestination() {
+            map.once('mousemove', (e) => {
+                map.getCanvas().style.cursor = 'crosshair';
+            });
 
-                const { sin, cos, sqrt, atan2 } = Math;
+            map.once('click', (e) => {
+                let longLat = e.lngLat;
 
-                const R = 6371;
-                const dLat = lat2 - lat1;
-                const dLon = lon2 - lon1;
-                const a = sin(dLat / 2) * sin(dLat / 2) +
-                    cos(lat1) * cos(lat2) * sin(dLon / 2) * sin(dLon / 2);
-                const c = 2 * atan2(sqrt(a), sqrt(1 - a));
-                const d = R * c;
-                return d;
+                let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
+                let coordinatesArray = coordinates.split(" ");
+
+                destinationLng = coordinatesArray[0];
+                destinationLat = coordinatesArray[1];
+
+                marker.setLngLat([longLat.lng, longLat.lat]);
+
+                destination.value = coordinates;
+
+                map.getCanvas().style.cursor = 'pointer';
+
+                if (pickupLat && pickupLng) {
+                    let distanceKM = haversineDistanceKM(pickupLat, pickupLng, destinationLat, destinationLng);
+                    distanceCoordinate.value = distanceKM.toFixed(2);
+
+                    let rate = getFareRate(parseInt(distanceKM));
+                    priceRegular.value = rate['regular'];
+                    priceDiscount.value = rate['discount'];
+                }
+            });
+        }
+
+        function haversineDistanceKM(lat1Deg, lon1Deg, lat2Deg, lon2Deg) {
+            function toRad(degree) {
+                return degree * Math.PI / 180;
             }
 
-            getStartingPoint();
-        </script>
-    @endif
+            const lat1 = toRad(lat1Deg);
+            const lon1 = toRad(lon1Deg);
+            const lat2 = toRad(lat2Deg);
+            const lon2 = toRad(lon2Deg);
+
+            const { sin, cos, sqrt, atan2 } = Math;
+
+            const R = 6371;
+            const dLat = lat2 - lat1;
+            const dLon = lon2 - lon1;
+            const a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(lat1) * cos(lat2) * sin(dLon / 2) * sin(dLon / 2);
+            const c = 2 * atan2(sqrt(a), sqrt(1 - a));
+            const d = R * c;
+            return d;
+        }
+
+        // Initialize the functions
+    </script>
+    {{-- @else
+    <script>
+        // Same as above but without rates logic
+        maplibregl.setRTLTextPlugin(
+            'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js'
+        );
+
+        const bounds = [
+            [123.77516124821591, 10.229235293025951],
+            [123.91768276426876, 10.332535160307074]
+        ];
+
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://tiles.openfreemap.org/styles/bright',
+            center: [123.79, 10.24],
+            zoom: 13,
+            rollEnabled: true,
+            maxBounds: bounds
+        });
+
+        map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+        map.addControl(new maplibregl.GeolocateControl({
+            positionOptions: { enableHighAccuracy: true },
+            trackUserLocation: true
+        }), 'bottom-right');
+
+        function updateLiveDate() {
+            const dateElement = document.getElementById('current-date');
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+            dateElement.textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        updateLiveDate();
+        setInterval(updateLiveDate, 3600000);
+
+        function toggleLogoutModal() {
+            const modal = document.getElementById('logout-modal');
+            const content = document.getElementById('modal-content');
+
+            if (modal.classList.contains('opacity-0')) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            } else {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                content.classList.remove('scale-100');
+                content.classList.add('scale-95');
+            }
+        }
+
+        window.onclick = function (event) {
+            const modal = document.getElementById('logout-modal');
+            if (event.target == modal) {
+                toggleLogoutModal();
+            }
+        }
+
+        let marker = new maplibregl.Marker({ draggable: false });
+
+        const distanceCoordinate = document.getElementById('distance');
+        const pickup = document.getElementById('pickup');
+        const destination = document.getElementById('destination');
+        const priceRegular = document.getElementById('price-regular');
+        const priceDiscount = document.getElementById('price-discount');
+
+        distanceCoordinate.value = "0";
+        priceRegular.value = "0";
+        priceDiscount.value = "0";
+
+        const geocoderApi = {
+            forwardGeocode: async (config) => {
+                const features = [];
+                try {
+                    const request =
+                        `https://nominatim.openstreetmap.org/search?q=${config.query}&format=geojson&polygon_geojson=1&addressdetails=1`;
+                    const response = await fetch(request);
+                    const geojson = await response.json();
+                    for (const feature of geojson.features) {
+                        const center = [
+                            feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
+                            feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2
+                        ];
+                        const point = {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: center
+                            },
+                            place_name: feature.properties.display_name,
+                            properties: feature.properties,
+                            text: feature.properties.display_name,
+                            place_type: ['place'],
+                            center
+                        };
+                        features.push(point);
+                    }
+                } catch (e) {
+                    console.error(`Failed to forwardGeocode with error: ${e}`);
+                }
+                return { features };
+            }
+        };
+
+        const startPoint = {
+            'type': 'FeatureCollection',
+            'features': [{
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Point',
+                }
+            }]
+        };
+
+        map.on('load', () => {
+            map.addSource('point', {
+                'type': 'geojson',
+                'data': startPoint
+            });
+
+            map.addLayer({
+                'id': 'point',
+                'type': 'circle',
+                'source': 'point',
+                'paint': {
+                    'circle-radius': 10,
+                    'circle-color': '#3887be'
+                }
+            });
+
+            map.setLayoutProperty('label_country', 'text-field', [
+                'format',
+                ['get', 'name_en'],
+                { 'font-scale': 1.2 },
+                '\n',
+                {},
+                ['get', 'name'],
+                {
+                    'font-scale': 0.8,
+                    'text-font': [
+                        'literal',
+                        ['Noto Sans Regular']
+                    ]
+                }
+            ]);
+
+            marker.setLngLat([0, 0]).addTo(map);
+        });
+
+        map.addControl(
+            new MaplibreGeocoder(geocoderApi, {
+                maplibregl
+            })
+        );
+
+        // map.addControl(new maplibregl.NavigationControl({
+        //     visualizePitch: true,
+        //     visualizeRoll: true,
+        //     showZoom: true,
+        //     showCompass: true
+        // }));
+
+        // map.addControl(
+        //     new maplibregl.GeolocateControl({
+        //         positionOptions: {
+        //             enableHighAccuracy: true
+        //         },
+        //         trackUserLocation: true
+        //     })
+        // );
+
+        let destinationLat = null;
+        let destinationLng = null;
+        let pickupLng = null;
+        let pickupLat = null;
+
+        function getStartingPoint() {
+            map.once('mousemove', (e) => {
+                map.getCanvas().style.cursor = 'crosshair';
+            });
+
+            map.once('click', (e) => {
+                const coords = e.lngLat;
+
+                startPoint.features[0].geometry.coordinates = [coords.lng, coords.lat];
+                map.getSource('point').setData(startPoint);
+
+                let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
+                let coordinatesArray = coordinates.split(" ");
+
+                pickupLng = coordinatesArray[0];
+                pickupLat = coordinatesArray[1];
+
+                pickup.value = coordinates;
+
+                map.getCanvas().style.cursor = 'pointer';
+            });
+        }
+
+        function getDestination() {
+            map.once('mousemove', (e) => {
+                map.getCanvas().style.cursor = 'crosshair';
+            });
+
+            map.once('click', (e) => {
+                let longLat = e.lngLat;
+
+                let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
+                let coordinatesArray = coordinates.split(" ");
+
+                destinationLng = coordinatesArray[0];
+                destinationLat = coordinatesArray[1];
+
+                marker.setLngLat([longLat.lng, longLat.lat]);
+
+                destination.value = coordinates;
+
+                map.getCanvas().style.cursor = 'pointer';
+            });
+        }
+
+        function haversineDistanceKM(lat1Deg, lon1Deg, lat2Deg, lon2Deg) {
+            function toRad(degree) {
+                return degree * Math.PI / 180;
+            }
+
+            const lat1 = toRad(lat1Deg);
+            const lon1 = toRad(lon1Deg);
+            const lat2 = toRad(lat2Deg);
+            const lon2 = toRad(lon2Deg);
+
+            const { sin, cos, sqrt, atan2 } = Math;
+
+            const R = 6371;
+            const dLat = lat2 - lat1;
+            const dLon = lon2 - lon1;
+            const a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(lat1) * cos(lat2) * sin(dLon / 2) * sin(dLon / 2);
+            const c = 2 * atan2(sqrt(a), sqrt(1 - a));
+            const d = R * c;
+            return d;
+        }
+    </script>
+    @endif --}}
 
 </body>
 
