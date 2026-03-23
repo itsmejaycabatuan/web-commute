@@ -12,6 +12,7 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
+        'track/*/update',  // This disables CSRF for all tracking update routes
+        'api/*',           // Or disable for all API routes if you move them
     ];
 }

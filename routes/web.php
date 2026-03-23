@@ -1,10 +1,14 @@
     <?php
 
 use App\Http\Controllers\FareController;
+use App\Http\Controllers\LocationController;
+use App\Http\Controllers\PusherController;
 use App\Http\Controllers\RateController;
 use App\Http\Controllers\RouteController;
+use App\Http\Controllers\TrackingController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VehicleTrackingController;
 use App\Models\User;
 use App\Models\Fare;
 use App\Models\FareRate;
@@ -35,28 +39,27 @@ Route::get('/', function (Request $request) {
     return view('home');
 })->name('home');
 
+Route::get('/pusher', [PusherController::class, 'index'])->name('pusher.index');
+Route::post('/fire-event', [PusherController::class, 'fireEvent'])->name('fire.event');
 
-    Route::get('/register', function () {
-        return view('register');
-    })->name('register');
+Route::post('/track/vehicle/broadcast', [VehicleTrackingController::class, 'broadcastLocation']);
+Route::get('/track/vehicles/active', [VehicleTrackingController::class, 'getActiveVehicles']);
 
-    Route::get('/login',function (){
-        return view('login');
-    })->name('login');
+// Route::get('/location', [LocationController::class, 'index'])->name('location.index');
+// Route::get('/location/update', [LocationController::class, 'update'])->name('location.update');
 
-    Route::get('/driverprofile', function () {
-        return view('driverprofile');
-    })->name('driverprofile');
-       Route::get('/adminprofile', function () {
-        return view('adminprofile');
-    })->name('adminprofile');
-    Route::get('/admindashboard',function (){
-        return view('admindashboard');
-    })->name('admindashboard');
+// Route::get('/track/{vehicleId}', [VehicleTrackingController::class, 'show']);
+// Route::post('/track/{vehicleId}/update', [VehicleTrackingController::class, 'updateLocation']);
 
-     Route::get('/driverdashboard',function (){
-        return view('driverdashboard');
-    })->name('driverdashboard');
+Route::get('/register', function () {
+    return view('register');
+})->name('register');
+
+Route::get('/login',function (){
+    return view('login');
+})->name('login');
+
+
 
 Route::post('/users/logout', [UserController::class, 'logout'])->name('users.logout');
 Route::post('/users/register', [UserController::class,'register'])->name('users.register');
@@ -72,8 +75,19 @@ Route::post('/email/verification-notification', function(Request $request) {
 })->middleware(['auth', 'throttle:6.1'])->name('verification.send');
 
 Route::get('/email/verify/{id}/{hash}', function(EmailVerificationRequest $request) {
+    $latestFare = Fare::get()->last();
+
+    $rates = FareRate::get();
+
+    if($latestFare) {
+        $latestFareId = $latestFare->id;
+        $rates = FareRate::where('fare_id', $latestFareId)->get();
+    }
+
     $request->fulfill();
-    return view('commuter.dashboard');
+    return view('commuter.dashboard', [
+        'rates' => $rates
+    ]);
 })->middleware(['auth','signed'])->name('verification.verify');
 
 
@@ -131,22 +145,40 @@ Route::middleware('guest')->group(function() {
     
         return $status === Password::PASSWORD_RESET ? redirect()->route('login')->with('status', __($status)) : back()->withErrors(['email' => [__($status)]]);
     })->name('password.update');
-    
+
+    Route::get('/map', function () {
+        $latestFare = Fare::get()->last();
+        
+        $rates = FareRate::get();
+
+        if($latestFare) {
+            $latestFareId = $latestFare->id;
+            $rates = FareRate::where('fare_id', $latestFareId)->get();
+        }
+
+        return view('commuter.dashboard', [
+            'rates' => $rates
+        ]);
+    })->name('guest.map');
+
+
+    Route::get('/tutorial', function () {
+        return view('tutorial');
+    })->name('tutorial');
+
 });
 
 Route::middleware(['auth', 'verified'])->group(function (){
 
-    Route::get('/dashboard/commuter', function () {
-        return view('commuter.dashboard');
-    })->name('commuter.dashboard');
+    // Route::get('/dashboard/commuter', function () {
+    //     return view('commuter.dashboard');
+    // })->name('commuter.dashboard');
 
     Route::get('/commuter/profile', function () {
         return view('commuter.profile');
     })->name('commuter.profile');
 
-    Route::get('/tutorial', function () {
-        return view('tutorial');
-    })->name('tutorial');
+
 
     
 
@@ -177,7 +209,24 @@ Route::middleware(['auth', 'verified'])->group(function (){
 
         })->name('commuter.dashboard');
     });
-        
+
+
+    Route::get('/driverprofile', function () {
+        return view('driverprofile');
+    })->name('driverprofile');
+
+    Route::get('/adminprofile', function () {
+        return view('adminprofile');
+    })->name('adminprofile');
+
+    Route::get('/admindashboard',function (){
+        return view('admindashboard');
+    })->name('admindashboard');
+
+    Route::get('/driverdashboard',function (){
+        return view('driverdashboard');
+    })->name('driverdashboard');
+            
     Route::get('/profile', function () {
         return view('profile');
     })->name('profile');
@@ -193,6 +242,7 @@ Route::middleware(['auth', 'verified'])->group(function (){
     Route::resource('users', UserController::class);
     Route::resource('routes', RouteController::class)->middleware('role:admin');
     Route::resource('rates', RateController::class)->middleware('role:admin');
+
 });
 
 
