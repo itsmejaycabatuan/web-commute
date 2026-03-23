@@ -28,8 +28,9 @@
     <section class="relative h-screen w-full hero-bg flex flex-col justify-between p-8 md:p-12">
 
         <nav class="flex justify-between items-center w-full">
-           <div class="flex items-center gap-3 px-2 mb-10 overflow-hidden whitespace-nowrap">
-                <div class="min-w-[40px] h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
+            <div class="flex items-center gap-3 px-2 mb-10 overflow-hidden whitespace-nowrap">
+                <div
+                    class="min-w-[40px] h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
                     <i class="fa-solid fa-bus text-white"></i>
                 </div>
                 <span class="text-2xl font-bold tracking-wider italic">SmartCommute</span>
@@ -40,7 +41,7 @@
                     class="hidden md:flex items-center space-x-8 text-sm font-medium bg-white/10 backdrop-blur-md border border-white/20 px-8 py-3 rounded-full">
                     <a href="{{ url('/register') }}" class="hover:text-gray-300 transition">Register</a>
                     <a href="{{ url('/login') }}" class="hover:text-gray-300 transition">Log in</a>
-                    <a href="#contacts" class="hover:text-gray-300 transition">Contacts</a>
+                    <a href="{{  route('guest.map') }}" class="hover:text-gray-300 transition">View Map</a>
                 </div>
             @endif
 

@@ -47,7 +47,28 @@ class RolePermissionSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
 
+        $admin = User::create([
+            'email' => 'admin@gmail.com',
+            'password' => Hash::make('admin123'),
+            'email_verified_at' => now()
+        ]);
+
+        $commuter = User::create([
+            'email' => 'commuter@gmail.com',
+            'password' => Hash::make('admin123'),
+            'email_verified_at' => now()
+        ]);
+
+        $driver = User::create([
+            'email' => 'driver@gmail.com',
+            'password' => Hash::make('admin123'),
+            'email_verified_at' => now(),
+        ]);
+
         // Assign Roles to users here
         $markj->assignRole($adminRole);
+        $admin->assignRole($adminRole);
+        $commuter->assignRole($commuterRole);
+        $driver->assignRole($driverRole);
     }
 }
