@@ -19,6 +19,51 @@
 
 <body class="flex relative justify-center items-center p-6 min-h-screen login-bg">
 
+    @if (session('driver_pending'))
+        <div id="driver-pending-modal" role="dialog" aria-modal="true"
+            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75">
+            <div class="w-full max-w-sm p-8 text-center text-gray-900 bg-white rounded-2xl shadow-2xl">
+                <div class="flex justify-center mb-4">
+                    <div class="flex items-center justify-center w-14 h-14 rounded-full bg-amber-100">
+                        <i class="text-2xl text-amber-600 fa-solid fa-clock"></i>
+                    </div>
+                </div>
+                <h3 class="text-lg font-bold tracking-tight">Your account is pending!</h3>
+                <p class="mt-2 text-sm text-gray-600">An administrator must approve your driver account before you can sign in.</p>
+                <button type="button" onclick="document.getElementById('driver-pending-modal').remove()"
+                    class="py-3 mt-6 w-full text-xs font-bold tracking-widest text-white uppercase bg-blue-600 rounded-xl transition hover:bg-blue-500">
+                    OK
+                </button>
+            </div>
+        </div>
+    @endif
+
+    @if (session('driver_rejected'))
+        <div id="driver-rejected-modal" role="dialog" aria-modal="true"
+            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75">
+            <div class="w-full max-w-sm p-8 text-center text-gray-900 bg-white rounded-2xl shadow-2xl">
+                <div class="flex justify-center mb-4">
+                    <div class="flex items-center justify-center w-14 h-14 rounded-full bg-red-100">
+                        <i class="text-2xl text-red-600 fa-solid fa-ban"></i>
+                    </div>
+                </div>
+                <h3 class="text-lg font-bold tracking-tight">Your account submission was rejected</h3>
+                <p class="mt-2 text-sm text-gray-600">Your driver application was not approved. You cannot sign in with this account. If you believe this is a mistake, contact support.</p>
+                <button type="button" onclick="document.getElementById('driver-rejected-modal').remove()"
+                    class="py-3 mt-6 w-full text-xs font-bold tracking-widest text-white uppercase bg-blue-600 rounded-xl transition hover:bg-blue-500">
+                    OK
+                </button>
+            </div>
+        </div>
+    @endif
+
+    @if (session('success'))
+        <div class="fixed top-6 left-1/2 z-[90] px-4 py-3 max-w-md text-sm text-center text-white -translate-x-1/2 bg-emerald-600/95 rounded-xl border border-emerald-500/30 shadow-lg"
+            id="login-flash-success">
+            {{ session('success') }}
+        </div>
+    @endif
+
     <a href="{{ url('/') }}"
         class="flex absolute top-8 left-8 items-center space-x-2 transition hover:text-white text-white/70 group">
         <div
@@ -40,7 +85,7 @@
             Smart<span class="text-blue-500">Commute</span>
         </span>
     </div>
-    <h2 class="text-2xl font-bold tracking-tight">Create Account</h2>
+    <h2 class="text-2xl font-bold tracking-tight">Login</h2>
     <p class="mt-1 text-xs opacity-60">Optimize your commute today</p>
 </div>
 

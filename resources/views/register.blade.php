@@ -122,19 +122,34 @@
                 </div>
             @endif
 
-            <button type="submit"
+                    <button type="submit"
                 class="py-3 mt-4 w-full text-xs font-bold tracking-widest text-black uppercase bg-white rounded-xl transition-all hover:bg-gray-200 active:scale-95">
                 Sign up
             </button>
         </form>
 
+            <!-- OR Divider -->
+            <div class="flex items-center my-3">
+                <div class="flex-grow h-px bg-white/20"></div>
+                <span class="mx-3 text-[10px] font-bold tracking-widest text-white/50">OR</span>
+                <div class="flex-grow h-px bg-white/20"></div>
+            </div>
+
+                    <a href="{{ route('driver.register.page') }}"
+        class="py-3 w-full text-xs font-bold tracking-widest text-black uppercase bg-blue-600
+        rounded-xl transition-all hover:bg-gray-200 active:scale-95 text-center block">
+            Register as Driver
+        </a>
+         
         <div class="pt-6 mt-8 text-center border-t border-white/10">
             <p class="text-xs opacity-60">
                 Already have an account?
                 <a href="{{ url('/login') }}" class="font-bold text-white hover:underline">Log in</a>
             </p>
         </div>
+        
     </div>
+   
 
     <script>
         function togglePassword(inputId, iconId) {
@@ -150,8 +165,10 @@
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
             }
-        }
+            }
+           
     </script>
+    
 
 </body>
 

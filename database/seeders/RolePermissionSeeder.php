@@ -63,6 +63,10 @@ class RolePermissionSeeder extends Seeder
             'email' => 'driver@gmail.com',
             'password' => Hash::make('admin123'),
             'email_verified_at' => now(),
+            'license_number' => 'DEMO-LIC-001',
+            'license_code' => 'A',
+            'license_image_path' => null,
+            'driver_approval_status' => 'approved',
         ]);
 
         // Assign Roles to users here

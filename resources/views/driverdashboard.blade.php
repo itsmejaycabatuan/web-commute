@@ -151,7 +151,7 @@
                     <button @click="showLogoutModal = false" class="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition font-bold text-xs uppercase tracking-widest">
                         Cancel
                     </button>
-                    <form action="{{ route('home') }}" method="GET" class="flex-1">
+                    <form action="{{ route('users.logout') }}" method="POST" class="flex-1">
                         @csrf
                         <button type="submit" class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 transition font-bold text-xs uppercase tracking-widest active:scale-95">
                             Logout

@@ -13,6 +13,7 @@
         body { background: #050505; font-family: 'Plus Jakarta Sans', sans-serif; color: #fff; }
         .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .sidebar-transition { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
 
@@ -137,8 +138,10 @@
         </div>
     </main>
 
-    <div x-show="showLogoutModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" style="display: none;">
-        <div class="glass p-8 rounded-[2.5rem] max-w-sm w-full border border-white/10 shadow-2xl">
+    <div x-show="showLogoutModal" x-cloak
+        class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        x-transition>
+        <div @click.away="showLogoutModal = false" class="glass p-8 rounded-[2.5rem] max-w-sm w-full border border-white/10 shadow-2xl">
             <div class="text-center">
                 <div class="w-16 h-16 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <i class="fa-solid fa-power-off text-2xl"></i>
@@ -146,17 +149,16 @@
                 <h3 class="text-xl font-bold mb-2">End Admin Session?</h3>
                 <p class="text-gray-400 text-sm mb-8">Are you sure you want to end your admin session?</p>
                 <div class="flex gap-3">
-            <button @click="showLogoutModal = false" class="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition font-bold text-xs">
-                Cancel
-            </button>
-
-            <form action="{{ route('home') }}" method="POST" class="flex-1">
-                @csrf
-                <button type="submit" class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 transition font-bold text-xs uppercase tracking-widest text-white">
-                    Logout
-                </button>
-            </form>
-            <div>
+                    <button type="button" @click="showLogoutModal = false" class="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition font-bold text-xs uppercase tracking-widest">
+                        Cancel
+                    </button>
+                    <form action="{{ route('users.logout') }}" method="POST" class="flex-1">
+                        @csrf
+                        <button type="submit" class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 transition font-bold text-xs uppercase tracking-widest text-white">
+                            Logout
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
