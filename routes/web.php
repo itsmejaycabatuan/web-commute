@@ -178,14 +178,10 @@ Route::middleware(['auth', 'verified'])->group(function (){
         return view('commuter.profile');
     })->name('commuter.profile');
 
-
-
-    
-
     // Route::get('/dashboard', function () {
     //     return view('commuter.dashboard');
     // })->name('commuter.dashboard');Q
-    Route::middleware('role:commuter|admin')->group(function() {
+    Route::middleware('role:commuter|admin|driver')->group(function() {
         Route::get('/dashboard', function () {
             $role = Auth::user()->roles->first()->name;
             $latestFare = Fare::get()->last();
@@ -199,6 +195,10 @@ Route::middleware(['auth', 'verified'])->group(function (){
 
             if($role == 'admin') {
                 return view('admin.dashboard'); 
+            }
+
+            if($role == 'driver') {
+                return view('driverdashboard');
             }
 
             if($role == 'commuter') {
@@ -223,9 +223,10 @@ Route::middleware(['auth', 'verified'])->group(function (){
         return view('admindashboard');
     })->name('admindashboard');
 
-    Route::get('/driverdashboard',function (){
-        return view('driverdashboard');
-    })->name('driverdashboard');
+    // Route::get('/driverdashboard',function (){
+
+    //     return view('driverdashboard');
+    // })->name('driverdashboard');
             
     Route::get('/profile', function () {
         return view('profile');
@@ -235,10 +236,11 @@ Route::middleware(['auth', 'verified'])->group(function (){
     Route::get('/fares', [FareController::class, 'index'])->middleware('role:admin')->name('fares.index');
     Route::put('/fare/upload', [FareController::class, 'upload'])->middleware('role:admin')->name('fares.upload');
     Route::delete('/fare/{id}/delete', [FareController::class, 'delete'])->middleware('role:admin')->name('fares.destroy');
-        
-        // Route::get('/commuter/commuter', function () {
-        //     return view('commuter.commuter');
-        // })->name('commuter.commuter');
+
+    // Route::get('/commuter/commuter', function () {
+    //     return view('commuter.commuter');
+    // })->name('commuter.commuter');
+
     Route::resource('users', UserController::class);
     Route::resource('routes', RouteController::class)->middleware('role:admin');
     Route::resource('rates', RateController::class)->middleware('role:admin');
