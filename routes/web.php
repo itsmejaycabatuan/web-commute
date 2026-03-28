@@ -198,7 +198,9 @@ Route::middleware(['auth', 'verified'])->group(function (){
             }
 
             if($role == 'driver') {
-                return view('driverdashboard');
+                return view('commuter.dashboard', [
+                    'rates' => $rates
+                ]);
             }
 
             if($role == 'commuter') {
@@ -210,6 +212,9 @@ Route::middleware(['auth', 'verified'])->group(function (){
         })->name('commuter.dashboard');
     });
 
+    Route::get('/payment', function() {
+        return view('commuter.payment');
+    })->name('payment');
 
     Route::get('/driverprofile', function () {
         return view('driverprofile');
