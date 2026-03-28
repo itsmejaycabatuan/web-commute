@@ -102,7 +102,8 @@ class UserController extends Controller
 
         $user = User::create([
             'email' => $request->email,
-            'password' => Hash::make($request->password)
+            'password' => Hash::make($request->password),
+            'driver_approval_status' => null,
         ]);
 
         if($user) {
@@ -122,10 +123,28 @@ class UserController extends Controller
             'password' => 'required|min:8'
         ]);
 
-        if(Auth::attempt($validated)) {
+        if (Auth::attempt($validated)) {
+            $user = Auth::user();
+
+            if ($user->hasRole('driver') && $user->driver_approval_status === 'pending') {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('login')->with('driver_pending', true);
+            }
+
+            if ($user->hasRole('driver') && $user->driver_approval_status === 'rejected') {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('login')->with('driver_rejected', true);
+            }
 
             $request->session()->regenerate();
-            return redirect()->route('commuter.dashboard')->with('success','Logged in Successfully!');
+
+            return redirect()->route('commuter.dashboard')->with('success', 'Logged in Successfully!');
         }
 
         throw ValidationException::withMessages([

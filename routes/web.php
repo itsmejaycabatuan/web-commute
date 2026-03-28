@@ -9,6 +9,10 @@ use App\Http\Controllers\TrackingController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleTrackingController;
+use App\Http\Controllers\DriverController;
+use App\Http\Controllers\Admin\CommuterController;
+use App\Http\Controllers\Admin\DriverApprovalController;
+use App\Http\Controllers\DriverProfileController;
 use App\Models\User;
 use App\Models\Fare;
 use App\Models\FareRate;
@@ -96,6 +100,12 @@ Route::middleware('guest')->group(function() {
     Route::post('/users/register', [UserController::class,'register'])->name('users.register');
     Route::post('/users/login', [UserController::class, 'login'])->name('users.login');
 
+   
+     Route::get('/driver/register', function () {
+        return view('driver-register');
+    })->name('driver.register.page');
+
+    Route::post('/driver/register', [DriverController::class, 'store'])->name('driver.register');
     Route::get('/register', function () {
         return view('register');
     })->name('register');
@@ -107,21 +117,21 @@ Route::middleware('guest')->group(function() {
     Route::get('/forgot-password', function() {
         return view('auth.forgot-password');
     })->name('password.request');
-    
+
     Route::post('/forgot-password', function(Request $request) {
         $request->validate(['email' => 'required|email']);
-    
+
         $status = Password::sendResetLink(
             $request->only('email')
         );
-    
+
         return $status === Password::RESET_LINK_SENT ? back()->with(['status' => __($status)]) : back()->withErrors(['email' => __($status)]);
     })->name('password.email');
-    
+
     Route::get('/reset-password/{token}', function(string $token) {
         return view('auth.reset-password', ['token' => $token]);
     })->name('password.reset');
-    
+
     Route::post('/reset-password', function(Request $request) {
         $request->validate([
             'token' => 'required',
@@ -129,26 +139,26 @@ Route::middleware('guest')->group(function() {
             'password' => 'required|min:8',
             'confirm-password' => 'required|same:password'
         ]);
-    
+
         $status = Password::reset(
             $request->only('email', 'password', 'confirm-password', 'token'),
             function (User $user, string $password) {
                 $user->forceFill([
                     'password' => Hash::make($password)
                 ])->setRememberToken(Str::random(60));
-    
+
                 $user->save();
-    
+
                 event(new PasswordReset($user));
             }
         );
-    
+
         return $status === Password::PASSWORD_RESET ? redirect()->route('login')->with('status', __($status)) : back()->withErrors(['email' => [__($status)]]);
     })->name('password.update');
 
     Route::get('/map', function () {
         $latestFare = Fare::get()->last();
-        
+
         $rates = FareRate::get();
 
         if($latestFare) {
@@ -183,9 +193,10 @@ Route::middleware(['auth', 'verified'])->group(function (){
     // })->name('commuter.dashboard');Q
     Route::middleware('role:commuter|admin|driver')->group(function() {
         Route::get('/dashboard', function () {
-            $role = Auth::user()->roles->first()->name;
+            $user = Auth::user();
+            $role = $user->roles->first()->name;
             $latestFare = Fare::get()->last();
-            
+
             $rates = FareRate::get();
 
             if($latestFare) {
@@ -194,13 +205,18 @@ Route::middleware(['auth', 'verified'])->group(function (){
             }
 
             if($role == 'admin') {
-                return view('admin.dashboard'); 
+                return view('admin.dashboard');
             }
 
             if($role == 'driver') {
                 return view('commuter.dashboard', [
                     'rates' => $rates
                 ]);
+                if ($user->driver_approval_status !== 'approved') {
+                    Auth::logout();
+                    return redirect()->route('login')->with('driver_pending', true);
+                }
+                return view('driverdashboard');
             }
 
             if($role == 'commuter') {
@@ -215,10 +231,30 @@ Route::middleware(['auth', 'verified'])->group(function (){
     Route::get('/payment', function() {
         return view('commuter.payment');
     })->name('payment');
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/admin/commuters/create', [CommuterController::class, 'create'])->name('admin.commuters.create');
+        Route::post('/admin/commuters', [CommuterController::class, 'store'])->name('admin.commuters.store');
+        Route::get('/admin/commuters/{user}/edit', [CommuterController::class, 'edit'])->name('admin.commuters.edit');
+        Route::put('/admin/commuters/{user}', [CommuterController::class, 'update'])->name('admin.commuters.update');
+        Route::delete('/admin/commuters/{user}', [CommuterController::class, 'destroy'])->name('admin.commuters.destroy');
+        Route::get('/admin/commuters', [CommuterController::class, 'index'])->name('admin.commuters.index');
 
-    Route::get('/driverprofile', function () {
-        return view('driverprofile');
-    })->name('driverprofile');
+        Route::get('/admin/drivers/create', [DriverApprovalController::class, 'create'])->name('admin.drivers.create');
+        Route::post('/admin/drivers', [DriverApprovalController::class, 'store'])->name('admin.drivers.store');
+        Route::get('/admin/drivers/{user}/edit', [DriverApprovalController::class, 'edit'])->name('admin.drivers.edit');
+        Route::put('/admin/drivers/{user}', [DriverApprovalController::class, 'update'])->name('admin.drivers.update');
+        Route::delete('/admin/drivers/{user}', [DriverApprovalController::class, 'destroy'])->name('admin.drivers.destroy');
+        Route::get('/admin/drivers/{user}/license', [DriverApprovalController::class, 'showLicense'])->name('admin.drivers.license');
+        Route::post('/admin/drivers/{user}/approve', [DriverApprovalController::class, 'approve'])->name('admin.drivers.approve');
+        Route::post('/admin/drivers/{user}/unapprove', [DriverApprovalController::class, 'unapprove'])->name('admin.drivers.unapprove');
+        Route::post('/admin/drivers/{user}/reject', [DriverApprovalController::class, 'reject'])->name('admin.drivers.reject');
+        Route::get('/admin/drivers', [DriverApprovalController::class, 'index'])->name('admin.drivers.index');
+    });
+
+    Route::middleware('role:driver')->group(function () {
+        Route::get('/driverprofile', [DriverProfileController::class, 'show'])->name('driverprofile');
+        Route::put('/driverprofile', [DriverProfileController::class, 'update'])->name('driverprofile.update');
+    });
 
     Route::get('/adminprofile', function () {
         return view('adminprofile');
@@ -227,12 +263,13 @@ Route::middleware(['auth', 'verified'])->group(function (){
     Route::get('/admindashboard',function (){
         return view('admindashboard');
     })->name('admindashboard');
-
+     
+  
     // Route::get('/driverdashboard',function (){
 
     //     return view('driverdashboard');
     // })->name('driverdashboard');
-            
+
     Route::get('/profile', function () {
         return view('profile');
     })->name('profile');
