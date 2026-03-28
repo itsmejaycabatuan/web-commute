@@ -232,215 +232,7 @@
 
 <body class="antialiased bg-slate-900">
 
-    <div id="map">
-        <div id="left" class="sidebar flex-center left collapsed">
-            <div class="sidebar-content flex-center">
-                <div class="fixed top-28 left-6 w-80 z-40 hidden md:flex flex-col gap-4 max-h-[calc(100vh-140px)]">
-                    <div class="glass-panel p-8 rounded-[2.5rem]"> <!-- Fixed class -->
-                        <h3
-                            class="text-xs font-bold mb-6 uppercase text-white tracking-widest opacity-80 flex items-center">
-                            <i class="fa-solid fa-money-bill mr-2 text-blue-400"></i>Fare Price
-                        </h3>
-                        <div class="space-y-4">
-                            <div class="relative group">
-                                <i
-                                    class="fa-solid fa-circle-dot absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-blue-400"></i>
-                                <input type="text" placeholder="Pick-up point" name="pickup" id="pickup" readonly
-                                    class="w-full bg-white/10 border border-white/20 rounded-2xl pl-10 pr-4 py-3 text-xs text-white focus:bg-white/20 focus:border-blue-500/50 outline-none transition cursor-pointer">
-                                <button onclick="getStartingPoint()"
-                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                    <!-- Invisible button for functionality -->
-                                </button>
-                            </div>
-                            <div class="relative group">
-                                <i
-                                    class="fa-solid fa-location-dot absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-red-400"></i>
-                                <input type="text" placeholder="Destination" name="destination" id="destination"
-                                    readonly
-                                    class="w-full bg-white/10 border border-white/20 rounded-2xl pl-10 pr-4 py-3 text-xs text-white focus:bg-white/20 focus:border-red-500/50 outline-none transition cursor-pointer">
-                                <button onclick="getDestination()"
-                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                    <!-- Invisible button for functionality -->
-                                </button>
-                            </div>
-                            <h3
-                                class="text-xs font-bold mb-2 uppercase tracking-widest text-white/80 justify-center flex items-center">
-                                Distance
-                            </h3>
-                            <div class="flex gap-2 items-center">
-                                <input type="text" readonly name="distance" id="distance"
-                                    class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-xs text-white text-center"
-                                    value="0">
-                                <span class="text-xs font-bold uppercase tracking-widest text-white/70">KM</span>
-                            </div>
-                            <h3
-                                class="text-xs font-bold mb-2 uppercase tracking-widest text-white/80 justify-center flex items-center">
-                                Price
-                            </h3>
-                            <div class="space-y-3">
-                                <div class="flex gap-2 items-center">
-                                    <div class="relative flex-1">
-                                        <i
-                                            class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-70 text-white/60"></i>
-                                        <input type="text" readonly name="price-regular" id="price-regular"
-                                            class="w-full bg-white/10 border border-white/20 rounded-2xl pl-8 pr-4 py-3 text-xs text-white text-center"
-                                            value="0">
-                                    </div>
-                                    <span
-                                        class="text-xs font-bold uppercase tracking-widest text-white/70">Regular</span>
-                                </div>
-                                <div class="flex gap-2 items-center">
-                                    <div class="relative flex-1">
-                                        <i
-                                            class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-70 text-white/60"></i>
-                                        <input type="text" readonly name="price-discount" id="price-discount"
-                                            class="w-full bg-white/10 border border-white/20 rounded-2xl pl-8 pr-4 py-3 text-xs text-white text-center"
-                                            value="0">
-                                    </div>
-                                    <span
-                                        class="text-xs font-bold uppercase tracking-widest text-white/70">Discount</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    @if (Auth::user())
-
-                        <div
-                            class="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-blue-600/30 to-transparent border-blue-500/30">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">Digital
-                                        Wallet</p>
-                                    <h2 class="text-2xl font-bold text-white">₱500.00</h2>
-                                </div>
-                                <i class="fa-solid fa-wallet text-blue-400 opacity-80"></i>
-                            </div>
-                            <button
-                                class="w-full bg-white/20 border border-white/30 py-2.5 rounded-xl text-[10px] font-bold text-white uppercase hover:bg-white/30 transition">
-                                + Top Up
-                            </button>
-                        </div>
-                    @endif
-                </div>
-                <div class="sidebar-toggle rounded-rect left" onclick="toggleSidebar('left')">
-
-                    &rarr;
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div id="right" class="sidebar flex-center right collapsed">
-
-            <div class="sidebar-content flex-center">
-                <div class="fixed top-28 right-6 w-80 z-40 hidden lg:flex flex-col gap-4 max-h-[calc(100vh-140px)]">
-                    <a href="{{ route('tutorial') }}" class=" glass-panel p-5 rounded-3xl flex items-center space-x-4 border-yellow-500/30 group
-            hover:bg-yellow-500/10 transition">
-                        <div class=" w-10 h-10 bg-yellow-500/30 rounded-xl flex items-center justify-center
-                        group-hover:rotate-12 transition">
-                            <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-white">App Tutorial</p>
-                            <p class="text-[9px] text-white/50 uppercase tracking-wider font-bold">New user? Start here
-                            </p>
-                        </div>
-                    </a>
-
-                    @if (Auth::user())
-
-                        <div class="glass-panel p-6 rounded-[2.5rem] flex flex-col overflow-hidden">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-[10px] font-black uppercase tracking-widest text-white/60">Recent Receipts
-                                </h3>
-                                <button class="text-[10px] font-bold text-blue-400 hover:underline">History</button>
-                            </div>
-                            <div class="space-y-4 custom-scroll overflow-y-auto pr-2">
-                                <div class="flex items-center justify-between group">
-                                    <div class="flex items-center space-x-3">
-                                        <div
-                                            class="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center border border-white/10 group-hover:border-blue-500/30 transition">
-                                            <i
-                                                class="fa-solid fa-receipt text-[10px] text-white/60 group-hover:text-blue-400"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-[11px] font-bold text-white">#INV-8821</p>
-                                            <p class="text-[9px] text-white/40">Today, 8:45 AM</p>
-                                        </div>
-                                    </div>
-                                    <span class="text-xs font-bold text-green-400">-₱22.50</span>
-                                </div>
-                                <div class="flex items-center justify-between group opacity-80">
-                                    <div class="flex items-center space-x-3">
-                                        <div
-                                            class="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center border border-white/10">
-                                            <i class="fa-solid fa-receipt text-[10px] text-white/60"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-[11px] font-bold text-white">#INV-8819</p>
-                                            <p class="text-[9px] text-white/40">Feb 4, 2026</p>
-                                        </div>
-                                    </div>
-                                    <span class="text-xs font-bold text-green-400">-₱18.75</span>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-
-                    <!-- Vehicle Tracking Info Panel -->
-                    <div
-                        class="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-green-600/30 to-transparent border-green-500/30">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">Live
-                                    Vehicle Status</p>
-                                <h2 class="text-lg font-bold text-white">GPS Tracking</h2>
-                            </div>
-                            <i class="fa-solid fa-satellite-dish text-green-400 opacity-80"></i>
-                        </div>
-
-                        <div id="gps-status" class="tracking-controls-panel text-center">
-                            <div class="flex items-center justify-center space-x-2 mb-3">
-                                <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" id="gps-indicator"></div>
-                                <span class="text-xs text-white/70" id="gps-status-text">GPS: Not active</span>
-                            </div>
-                            <div id="live-location-info" class="text-xs text-white/80 space-y-1">
-                                <div class="flex justify-between">
-                                    <span><i class="fa-solid fa-location-dot text-green-400 mr-1"></i> Position:</span>
-                                    <span class="font-mono" id="current-coords">--, --</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span><i class="fa-solid fa-gauge-high text-blue-400 mr-1"></i> Accuracy:</span>
-                                    <span id="current-accuracy">-- m</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span><i class="fa-regular fa-clock text-yellow-400 mr-1"></i> Updated:</span>
-                                    <span id="update-time">--:--:--</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-3 text-[10px] text-white/40 text-center">
-                            <i class="fa-solid fa-map-marker-alt"></i> Click the GPS button (📍) on the map to track
-                            your location
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sidebar-toggle rounded-rect right" onclick="toggleSidebar('right')">
-
-                    &larr;
-
-                </div>
-
-            </div>
-
-        </div>
-    </div>
 
     <header
         class="fixed top-6 left-6 right-6 z-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pointer-events-none">
@@ -454,7 +246,7 @@
             </div>
         </div>
 
-        <div class="flex items-center space-x-3 pointer-events-auto">
+        <div class="flex items-center space-x-3 pointer-events-auto z-50">
             <div
                 class="glass-panel px-4 py-2.5 rounded-full hidden md:flex items-center text-white text-xs font-medium">
                 <i class="fa-solid fa-calendar-day mr-2 opacity-70"></i>
@@ -477,18 +269,13 @@
             @else
                 <a href="{{ route('register') }}">
                     <div
-                        class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold uppercase tracking-wider hover:bg-red-500/20 transition">
+                        class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold cursor-pointer uppercase tracking-wider hover:bg-red-500/20 transition">
                         Sign up
                     </div>
                 </a>
             @endif
-
         </div>
     </header>
-
-
-
-
 
     <!-- Logout Modal -->
     <div id="logout-modal"
@@ -518,6 +305,7 @@
         </div>
     </div>
 
+
     <!-- Mobile Bottom Navigation -->
     <div class="fixed bottom-6 left-6 right-6 z-50 md:hidden">
         <div class="glass-panel p-4 rounded-3xl flex justify-around items-center">
@@ -532,7 +320,233 @@
         </div>
     </div>
 
+    <div id="map">
+        <div id="left" class="sidebar flex-center left collapsed">
+            <div class="sidebar-content flex-center">
+                @if(Auth::check() && Auth::user()->roles[0]->name !== 'driver' || Auth::guest())
+                    <div class="fixed top-28 left-6 w-80 z-40 hidden md:flex flex-col gap-4 max-h-[calc(100vh-140px)]">
+                        <div class="glass-panel p-8 rounded-[2.5rem]"> <!-- Fixed class -->
+                            <h3
+                                class="text-xs font-bold mb-6 uppercase text-white tracking-widest opacity-80 flex items-center">
+                                <i class="fa-solid fa-money-bill mr-2 text-blue-400"></i>Fare Price
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="relative group">
+                                    <i
+                                        class="fa-solid fa-circle-dot absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-blue-400"></i>
+                                    <input type="text" placeholder="Pick-up point" name="pickup" id="pickup" readonly
+                                        class="w-full bg-white/10 border border-white/20 rounded-2xl pl-10 pr-4 py-3 text-xs text-white focus:bg-white/20 focus:border-blue-500/50 outline-none transition cursor-pointer">
+                                    <button onclick="getStartingPoint()"
+                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                        <!-- Invisible button for functionality -->
+                                    </button>
+                                </div>
+                                <div class="relative group">
+                                    <i
+                                        class="fa-solid fa-location-dot absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-red-400"></i>
+                                    <input type="text" placeholder="Destination" name="destination" id="destination"
+                                        readonly
+                                        class="w-full bg-white/10 border border-white/20 rounded-2xl pl-10 pr-4 py-3 text-xs text-white focus:bg-white/20 focus:border-red-500/50 outline-none transition cursor-pointer">
+                                    <button onclick="getDestination()"
+                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                        <!-- Invisible button for functionality -->
+                                    </button>
+                                </div>
+                                <h3
+                                    class="text-xs font-bold mb-2 uppercase tracking-widest text-white/80 justify-center flex items-center">
+                                    Distance
+                                </h3>
+                                <div class="flex gap-2 items-center">
+                                    <input type="text" readonly name="distance" id="distance"
+                                        class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-xs text-white text-center"
+                                        value="0">
+                                    <span class="text-xs font-bold uppercase tracking-widest text-white/70">KM</span>
+                                </div>
+                                <h3
+                                    class="text-xs font-bold mb-2 uppercase tracking-widest text-white/80 justify-center flex items-center">
+                                    Price
+                                </h3>
+                                <div class="space-y-3">
+                                    <div class="flex gap-2 items-center">
+                                        <div class="relative flex-1">
+                                            <i
+                                                class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-70 text-white/60"></i>
+                                            <input type="text" readonly name="price-regular" id="price-regular"
+                                                class="w-full bg-white/10 border border-white/20 rounded-2xl pl-8 pr-4 py-3 text-xs text-white text-center"
+                                                value="0">
+                                        </div>
+                                        <span
+                                            class="text-xs font-bold uppercase tracking-widest text-white/70">Regular</span>
+                                    </div>
+                                    <div class="flex gap-2 items-center">
+                                        <div class="relative flex-1">
+                                            <i
+                                                class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-70 text-white/60"></i>
+                                            <input type="text" readonly name="price-discount" id="price-discount"
+                                                class="w-full bg-white/10 border border-white/20 rounded-2xl pl-8 pr-4 py-3 text-xs text-white text-center"
+                                                value="0">
+                                        </div>
+                                        <span
+                                            class="text-xs font-bold uppercase tracking-widest text-white/70">Discount</span>
+                                    </div>
+                                </div>
+                                <a href={{ route('payment') }}
+                                    class="mt-6 flex items-center justify-center gap-2 w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-4 px-6 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-lg shadow-blue-500/20 active:scale-[0.98]">
+                                    <span>Buy a ride</span>
+                                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                </a>
+                            </div>
+                        </div>
+
+
+
+
+                    </div>
+                    <div class="sidebar-toggle rounded-rect left" onclick="toggleSidebar('left')">
+
+                        &rarr;
+
+                    </div>
+                @endif
+            </div>
+
+        </div>
+
+        <div id="right" class="sidebar flex-center right collapsed">
+
+            <div class="sidebar-content flex-center">
+                <div class="fixed top-28 right-6 w-80 z-40 hidden lg:flex flex-col gap-4 max-h-[calc(100vh-140px)]">
+
+                    <a href="{{ route('tutorial') }}"
+                        class=" glass-panel p-5 rounded-3xl flex items-center space-x-4 border-yellow-500/30 group
+                                                                                                                    hover:bg-yellow-500/10 transition">
+                        <div
+                            class=" w-10 h-10 bg-yellow-500/30 rounded-xl flex items-center justify-center
+                                                                                                                                group-hover:rotate-12 transition">
+                            <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-white">App Tutorial</p>
+                            <p class="text-[9px] text-white/50 uppercase tracking-wider font-bold">New user? Start here
+                            </p>
+                        </div>
+                    </a>
+                    @if(Auth::check() && Auth::user()->roles[0]->name !== 'driver')
+
+                        @if (Auth::user())
+
+                            <div class="glass-panel p-6 rounded-[2.5rem] flex flex-col overflow-hidden">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-[10px] font-black uppercase tracking-widest text-white/60">Recent Receipts
+                                    </h3>
+                                    <button class="text-[10px] font-bold text-blue-400 hover:underline">History</button>
+                                </div>
+                                <div class="space-y-4 custom-scroll overflow-y-auto pr-2">
+                                    <div class="flex items-center justify-between group">
+                                        <div class="flex items-center space-x-3">
+                                            <div
+                                                class="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center border border-white/10 group-hover:border-blue-500/30 transition">
+                                                <i
+                                                    class="fa-solid fa-receipt text-[10px] text-white/60 group-hover:text-blue-400"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-[11px] font-bold text-white">#INV-8821</p>
+                                                <p class="text-[9px] text-white/40">Today, 8:45 AM</p>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs font-bold text-green-400">-₱22.50</span>
+                                    </div>
+                                    <div class="flex items-center justify-between group opacity-80">
+                                        <div class="flex items-center space-x-3">
+                                            <div
+                                                class="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center border border-white/10">
+                                                <i class="fa-solid fa-receipt text-[10px] text-white/60"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-[11px] font-bold text-white">#INV-8819</p>
+                                                <p class="text-[9px] text-white/40">Feb 4, 2026</p>
+                                            </div>
+                                        </div>
+                                        <span class="text-xs font-bold text-green-400">-₱18.75</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                class="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-blue-600/30 to-transparent border-blue-500/30">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">Digital
+                                            Wallet</p>
+                                        <h2 class="text-2xl font-bold text-white">₱500.00</h2>
+                                    </div>
+                                    <i class="fa-solid fa-wallet text-blue-400 opacity-80"></i>
+                                </div>
+                                <button
+                                    class="w-full bg-white/20 border border-white/30 py-2.5 rounded-xl text-[10px] font-bold text-white uppercase hover:bg-white/30 transition">
+                                    + Top Up
+                                </button>
+                            </div>
+                        @endif
+
+
+                    @endif
+
+                    @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
+                        <div
+                            class="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-green-600/30 to-transparent border-green-500/30">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">Live
+                                        Vehicle Status</p>
+                                    <h2 class="text-lg font-bold text-white">GPS Tracking</h2>
+                                </div>
+                                <i class="fa-solid fa-satellite-dish text-green-400 opacity-80"></i>
+                            </div>
+
+                            <div id="gps-status" class="tracking-controls-panel text-center">
+                                <div class="flex items-center justify-center space-x-2 mb-3">
+                                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" id="gps-indicator"></div>
+                                    <span class="text-xs text-white/70" id="gps-status-text">GPS: Not active</span>
+                                </div>
+                                <div id="live-location-info" class="text-xs text-white/80 space-y-1">
+                                    <div class="flex justify-between">
+                                        <span><i class="fa-solid fa-location-dot text-green-400 mr-1"></i> Position:</span>
+                                        <span class="font-mono" id="current-coords">--, --</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span><i class="fa-solid fa-gauge-high text-blue-400 mr-1"></i> Accuracy:</span>
+                                        <span id="current-accuracy">-- m</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span><i class="fa-regular fa-clock text-yellow-400 mr-1"></i> Updated:</span>
+                                        <span id="update-time">--:--:--</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Vehicle Tracking Info Panel -->
+
+                            <div class="mt-3 text-[10px] text-white/40 text-center">
+                                <i class="fa-solid fa-map-marker-alt"></i> Click the GPS button (📍) on the map to track
+                                your location
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="sidebar-toggle rounded-rect right" onclick="toggleSidebar('right')">
+
+                    &larr;
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
     <script>
+
+        // const userRole = @json(Auth::user())?.roles[0]?.name ?? '';
 
         const pusherKey = '{{ env("PUSHER_APP_KEY") }}';
         const pusherCluster = '{{ env("PUSHER_APP_CLUSER") }}';

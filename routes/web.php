@@ -209,6 +209,9 @@ Route::middleware(['auth', 'verified'])->group(function (){
             }
 
             if($role == 'driver') {
+                return view('commuter.dashboard', [
+                    'rates' => $rates
+                ]);
                 if ($user->driver_approval_status !== 'approved') {
                     Auth::logout();
                     return redirect()->route('login')->with('driver_pending', true);
@@ -225,6 +228,9 @@ Route::middleware(['auth', 'verified'])->group(function (){
         })->name('commuter.dashboard');
     });
 
+    Route::get('/payment', function() {
+        return view('commuter.payment');
+    })->name('payment');
     Route::middleware('role:admin')->group(function () {
         Route::get('/admin/commuters/create', [CommuterController::class, 'create'])->name('admin.commuters.create');
         Route::post('/admin/commuters', [CommuterController::class, 'store'])->name('admin.commuters.store');
