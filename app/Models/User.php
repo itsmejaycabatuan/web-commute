@@ -22,6 +22,12 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
     protected $fillable = [
         'email',
         'password',
+        'license_number',
+        'license_code',
+        'license_image_path',
+        'license_image_data',
+        'license_image_mime',
+        'driver_approval_status',
     ];
 
     /**
@@ -32,6 +38,7 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
     protected $hidden = [
         'password',
         'remember_token',
+        'license_image_data',
     ];
 
     /**
