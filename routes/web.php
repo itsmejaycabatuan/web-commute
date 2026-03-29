@@ -232,6 +232,9 @@ Route::middleware(['auth', 'verified'])->group(function (){
     Route::get('/payment', function() {
         return view('commuter.payment');
     })->name('payment');
+    Route::get('/payment', function() {
+        return view('commuter.payment');
+    })->name('payment');
     Route::middleware('role:admin')->group(function () {
         Route::get('/admin/commuters/create', [CommuterController::class, 'create'])->name('admin.commuters.create');
         Route::post('/admin/commuters', [CommuterController::class, 'store'])->name('admin.commuters.store');
