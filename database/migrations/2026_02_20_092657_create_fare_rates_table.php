@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('fare_rates', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('fare_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('fare_id')->constrained('fares')->cascadeOnDelete();
             $table->integer('km');
             $table->double('regular');
             $table->double('discount');

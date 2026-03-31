@@ -13,9 +13,11 @@ use App\Http\Controllers\DriverController;
 use App\Http\Controllers\Admin\CommuterController;
 use App\Http\Controllers\Admin\DriverApprovalController;
 use App\Http\Controllers\DriverProfileController;
+use App\Http\Controllers\PaymentController;
 use App\Models\User;
 use App\Models\Fare;
 use App\Models\FareRate;
+use App\Models\Payment;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Auth;
@@ -194,8 +196,10 @@ Route::middleware(['auth', 'verified'])->group(function (){
     Route::middleware('role:commuter|admin|driver')->group(function() {
         Route::get('/dashboard', function () {
             $user = Auth::user();
+            $userId = Auth::user()->id;
             $role = $user->roles->first()->name;
             $latestFare = Fare::get()->last();
+            $recentReceipts = Payment::where('paid_by', $userId)->latest()->take(3)->get();
 
             $rates = FareRate::get();
 
@@ -209,20 +213,22 @@ Route::middleware(['auth', 'verified'])->group(function (){
             }
 
             if($role == 'driver') {
-                // return view('commuter.dashboard', [
-                //     'rates' => $rates
-                // ]);
                 
                 if ($user->driver_approval_status !== 'approved') {
                     Auth::logout();
                     return redirect()->route('login')->with('driver_pending', true);
                 }
-                return view('driverdashboard');
+                return view('commuter.dashboard', [
+                    'rates' => $rates,
+                    'recentReceipts' => $recentReceipts
+                ]);
+                    // return view('driverdashboard');
             }
 
             if($role == 'commuter') {
                 return view('commuter.dashboard', [
-                    'rates' => $rates
+                    'rates' => $rates,
+                    'recentReceipts' => $recentReceipts
                 ]);
             }
 
@@ -232,9 +238,10 @@ Route::middleware(['auth', 'verified'])->group(function (){
     Route::get('/payment', function() {
         return view('commuter.payment');
     })->name('payment');
-    Route::get('/payment', function() {
-        return view('commuter.payment');
-    })->name('payment');
+
+    Route::get('/payment', [PaymentController::class, 'index'])->name('payment.index');
+    Route::post('/payment/process', [PaymentController::class, 'process'])->name('payment.process');
+
     Route::middleware('role:admin')->group(function () {
         Route::get('/admin/commuters/create', [CommuterController::class, 'create'])->name('admin.commuters.create');
         Route::post('/admin/commuters', [CommuterController::class, 'store'])->name('admin.commuters.store');
@@ -269,10 +276,10 @@ Route::middleware(['auth', 'verified'])->group(function (){
     })->name('admindashboard');
      
   
-    // Route::get('/driverdashboard',function (){
+    Route::get('/driverdashboard',function (){
 
-    //     return view('driverdashboard');
-    // })->name('driverdashboard');
+        return view('driverdashboard');
+    })->name('driver.dashboard');
 
     Route::get('/profile', function () {
         return view('profile');

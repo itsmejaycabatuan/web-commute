@@ -50,12 +50,20 @@
             <nav class="space-y-2">
                 <a href="{{ route('commuter.dashboard') }}"
                     class="flex items-center gap-4 p-3 rounded-2xl text-gray-500 hover:bg-white/5 hover:text-white transition group">
+                    <div class="min-w-[24px] flex justify-center">
+                        <i class="fa-solid fa-gauge-high text-lg"></i>
+                    </div>
+                    <span x-show="open" x-transition.opacity
+                        class="text-xs font-bold uppercase tracking-widest">Map</span>
+                </a>
+                <a href="{{ route('commuter.dashboard') }}"
+                    class="flex items-center gap-4 p-3 rounded-2xl text-gray-500 hover:bg-white/5 hover:text-white transition group">
                     <div class="min-w-[24px] flex justify-center"><i class="fa-solid fa-gauge-high text-lg"></i></div>
                     <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Driver
-                        Console</span>
+                        Dashboard</span>
                 </a>
                 <a href="#"
-                    class="flex items-center gap-4 p-3 rounded-2xl text-gray-500 hover:bg-white/5 hover:text-white transition group pointer-events-none opacity-40">
+                    class="flex items-center gap-4 p-3 rounded-2xl text-gray-500 hover:bg-white/5 hover:text-white transition group">
                     <div class="min-w-[24px] flex justify-center"><i class="fa-solid fa-route text-lg"></i></div>
                     <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">My
                         Routes</span>
@@ -85,7 +93,8 @@
             </header>
 
             @if (session('success'))
-                <div class="mb-6 px-4 py-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-sm">
+                <div
+                    class="mb-6 px-4 py-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-sm">
                     {{ session('success') }}
                 </div>
             @endif
@@ -110,8 +119,10 @@
                     <div class="flex-1 space-y-6 w-full">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div class="space-y-1 md:col-span-2">
-                                <label class="text-[10px] uppercase font-black text-blue-500 tracking-[0.2em]">Email</label>
-                                <div class="glass p-4 rounded-2xl text-sm font-semibold border-white/5 bg-white/[0.02] break-all">
+                                <label
+                                    class="text-[10px] uppercase font-black text-blue-500 tracking-[0.2em]">Email</label>
+                                <div
+                                    class="glass p-4 rounded-2xl text-sm font-semibold border-white/5 bg-white/[0.02] break-all">
                                     {{ $user->email }}
                                 </div>
                             </div>
@@ -132,7 +143,8 @@
                             <div class="space-y-1 md:col-span-2">
                                 <label class="text-[10px] uppercase font-black text-blue-500 tracking-[0.2em]">Assigned
                                     vehicle</label>
-                                <div class="glass p-4 rounded-2xl text-sm font-medium border-white/5 bg-white/[0.02] text-gray-500 italic">
+                                <div
+                                    class="glass p-4 rounded-2xl text-sm font-medium border-white/5 bg-white/[0.02] text-gray-500 italic">
                                     Not assigned
                                 </div>
                                 <p class="text-[10px] text-gray-600 mt-1">No vehicle is linked to your account yet.</p>
@@ -140,12 +152,14 @@
                         </div>
 
                         <div class="pt-4 border-t border-white/10">
-                            <p class="text-[10px] uppercase font-black text-gray-500 tracking-[0.2em] mb-4">Change password</p>
+                            <p class="text-[10px] uppercase font-black text-gray-500 tracking-[0.2em] mb-4">Change
+                                password</p>
                             <form action="{{ route('driverprofile.update') }}" method="POST" class="space-y-4 max-w-md">
                                 @csrf
                                 @method('PUT')
                                 <div>
-                                    <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">New password</label>
+                                    <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">New
+                                        password</label>
                                     <input type="password" name="password" autocomplete="new-password"
                                         class="mt-1 w-full glass p-3 rounded-xl text-sm border border-white/10 bg-white/5 focus:ring-2 focus:ring-blue-500/40 focus:outline-none"
                                         placeholder="Leave blank to skip">
@@ -154,7 +168,8 @@
                                     @enderror
                                 </div>
                                 <div>
-                                    <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Confirm new password</label>
+                                    <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Confirm
+                                        new password</label>
                                     <input type="password" name="password_confirmation" autocomplete="new-password"
                                         class="mt-1 w-full glass p-3 rounded-xl text-sm border border-white/10 bg-white/5 focus:ring-2 focus:ring-blue-500/40 focus:outline-none">
                                 </div>
@@ -189,7 +204,9 @@
                 </div>
                 <div class="glass p-6 rounded-3xl border-white/5">
                     <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Joined</p>
-                    <p class="text-sm font-bold">{{ $user->created_at->timezone(config('app.timezone'))->format('F j, Y') }}</p>
+                    <p class="text-sm font-bold">
+                        {{ $user->created_at->timezone(config('app.timezone'))->format('F j, Y') }}
+                    </p>
                     <p class="text-[10px] text-gray-600 mt-1">Member since {{ $user->created_at->diffForHumans() }}</p>
                 </div>
                 <div class="glass p-6 rounded-3xl border-white/5">

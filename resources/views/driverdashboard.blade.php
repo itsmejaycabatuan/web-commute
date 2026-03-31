@@ -48,6 +48,14 @@
             </div>
 
             <nav class="space-y-2">
+                <a href="{{ route('commuter.dashboard') }}"
+                    class="flex items-center gap-4 p-3 rounded-2xl text-gray-500 hover:bg-white/5 hover:text-white transition group">
+                    <div class="min-w-[24px] flex justify-center">
+                        <i class="fa-solid fa-gauge-high text-lg"></i>
+                    </div>
+                    <span x-show="open" x-transition.opacity
+                        class="text-xs font-bold uppercase tracking-widest">Map</span>
+                </a>
                 <a href="#"
                     class="flex items-center gap-4 p-3 rounded-2xl bg-blue-600/10 text-blue-400 border border-blue-500/20 group">
                     <div class="min-w-[24px] flex justify-center">

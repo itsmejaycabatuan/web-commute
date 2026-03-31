@@ -232,7 +232,7 @@
 
 <body class="antialiased bg-slate-900">
 
-
+    @include('components.flash');
 
     <header
         class="fixed top-6 left-6 right-6 z-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pointer-events-none">
@@ -254,6 +254,14 @@
             </div>
 
             @if (Auth::user())
+                @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
+                    <a href="{{ route('driver.dashboard') }}">
+                        <div
+                            class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold cursor-pointer uppercase tracking-wider hover:bg-red-500/20 transition">
+                            Dashboard
+                        </div>
+                    </a>
+                @endif
                 <a href="{{ route('commuter.profile') }}">
                     <div
                         class="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-white/10 transition">
@@ -325,82 +333,85 @@
             <div class="sidebar-content flex-center">
                 @if(Auth::check() && Auth::user()->roles[0]->name !== 'driver' || Auth::guest())
                     <div class="fixed top-28 left-6 w-80 z-40 hidden md:flex flex-col gap-4 max-h-[calc(100vh-140px)]">
-                        <div class="glass-panel p-8 rounded-[2.5rem]"> <!-- Fixed class -->
-                            <h3
-                                class="text-xs font-bold mb-6 uppercase text-white tracking-widest opacity-80 flex items-center">
-                                <i class="fa-solid fa-money-bill mr-2 text-blue-400"></i>Fare Price
-                            </h3>
-                            <div class="space-y-4">
-                                <div class="relative group">
-                                    <i
-                                        class="fa-solid fa-circle-dot absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-blue-400"></i>
-                                    <input type="text" placeholder="Pick-up point" name="pickup" id="pickup" readonly
-                                        class="w-full bg-white/10 border border-white/20 rounded-2xl pl-10 pr-4 py-3 text-xs text-white focus:bg-white/20 focus:border-blue-500/50 outline-none transition cursor-pointer">
-                                    <button onclick="getStartingPoint()"
-                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                        <!-- Invisible button for functionality -->
+                        <form action="{{ route('payment.index') }}" method="GET">
+                            {{-- @csrf --}}
+                            <div class="glass-panel p-8 rounded-[2.5rem]"> <!-- Fixed class -->
+                                <h3
+                                    class="text-xs font-bold mb-6 uppercase text-white tracking-widest opacity-80 flex items-center">
+                                    <i class="fa-solid fa-money-bill mr-2 text-blue-400"></i>Fare Price
+                                </h3>
+                                <div class="space-y-4">
+                                    <div class="relative group">
+                                        <i
+                                            class="fa-solid fa-circle-dot absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-blue-400"></i>
+                                        <input type="text" placeholder="Pick-up point" name="pickup" id="pickup" readonly
+                                            class="w-full bg-white/10 border border-white/20 rounded-2xl pl-10 pr-4 py-3 text-xs text-white focus:bg-white/20 focus:border-blue-500/50 outline-none transition cursor-pointer">
+                                        <button type="button" onclick="getStartingPoint()"
+                                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                            <!-- Invisible button for functionality -->
+                                        </button>
+                                    </div>
+                                    <div class="relative group">
+                                        <i
+                                            class="fa-solid fa-location-dot absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-red-400"></i>
+                                        <input type="text" placeholder="Destination" name="destination" id="destination"
+                                            readonly
+                                            class="w-full bg-white/10 border border-white/20 rounded-2xl pl-10 pr-4 py-3 text-xs text-white focus:bg-white/20 focus:border-red-500/50 outline-none transition cursor-pointer">
+                                        <button type="button" onclick="getDestination()"
+                                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                            <!-- Invisible button for functionality -->
+                                        </button>
+                                    </div>
+                                    <h3
+                                        class="text-xs font-bold mb-2 uppercase tracking-widest text-white/80 justify-center flex items-center">
+                                        Distance
+                                    </h3>
+                                    <div class="flex gap-2 items-center">
+                                        <input type="text" readonly name="distance" id="distance"
+                                            class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-xs text-white text-center"
+                                            value="0">
+                                        <span class="text-xs font-bold uppercase tracking-widest text-white/70">KM</span>
+                                    </div>
+                                    <h3
+                                        class="text-xs font-bold mb-2 uppercase tracking-widest text-white/80 justify-center flex items-center">
+                                        Price
+                                    </h3>
+                                    <div class="space-y-3">
+                                        <div class="flex gap-2 items-center">
+                                            <div class="relative flex-1">
+                                                <i
+                                                    class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-70 text-white/60"></i>
+                                                <input type="text" readonly name="price-regular" id="price-regular"
+                                                    class="w-full bg-white/10 border border-white/20 rounded-2xl pl-8 pr-4 py-3 text-xs text-white text-center"
+                                                    value="0">
+                                            </div>
+                                            <span
+                                                class="text-xs font-bold uppercase tracking-widest text-white/70">Regular</span>
+                                        </div>
+                                        <div class="flex gap-2 items-center">
+                                            <div class="relative flex-1">
+                                                <i
+                                                    class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-70 text-white/60"></i>
+                                                <input type="text" readonly name="price-discount" id="price-discount"
+                                                    class="w-full bg-white/10 border border-white/20 rounded-2xl pl-8 pr-4 py-3 text-xs text-white text-center"
+                                                    value="0">
+                                            </div>
+                                            <span
+                                                class="text-xs font-bold uppercase tracking-widest text-white/70">Discount</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        class="mt-6 flex items-center justify-center gap-2 w-full bg-gradient-to-r
+                                                                                                    from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold
+                                                                                                    py-4 px-6 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all duration-300
+                                                                                                    shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                                        type="submit">
+                                        <span>Buy a ride</span>
+                                        <i class="fa-solid fa-arrow-right text-[10px]"></i>
                                     </button>
                                 </div>
-                                <div class="relative group">
-                                    <i
-                                        class="fa-solid fa-location-dot absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-red-400"></i>
-                                    <input type="text" placeholder="Destination" name="destination" id="destination"
-                                        readonly
-                                        class="w-full bg-white/10 border border-white/20 rounded-2xl pl-10 pr-4 py-3 text-xs text-white focus:bg-white/20 focus:border-red-500/50 outline-none transition cursor-pointer">
-                                    <button onclick="getDestination()"
-                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                        <!-- Invisible button for functionality -->
-                                    </button>
-                                </div>
-                                <h3
-                                    class="text-xs font-bold mb-2 uppercase tracking-widest text-white/80 justify-center flex items-center">
-                                    Distance
-                                </h3>
-                                <div class="flex gap-2 items-center">
-                                    <input type="text" readonly name="distance" id="distance"
-                                        class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-xs text-white text-center"
-                                        value="0">
-                                    <span class="text-xs font-bold uppercase tracking-widest text-white/70">KM</span>
-                                </div>
-                                <h3
-                                    class="text-xs font-bold mb-2 uppercase tracking-widest text-white/80 justify-center flex items-center">
-                                    Price
-                                </h3>
-                                <div class="space-y-3">
-                                    <div class="flex gap-2 items-center">
-                                        <div class="relative flex-1">
-                                            <i
-                                                class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-70 text-white/60"></i>
-                                            <input type="text" readonly name="price-regular" id="price-regular"
-                                                class="w-full bg-white/10 border border-white/20 rounded-2xl pl-8 pr-4 py-3 text-xs text-white text-center"
-                                                value="0">
-                                        </div>
-                                        <span
-                                            class="text-xs font-bold uppercase tracking-widest text-white/70">Regular</span>
-                                    </div>
-                                    <div class="flex gap-2 items-center">
-                                        <div class="relative flex-1">
-                                            <i
-                                                class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-70 text-white/60"></i>
-                                            <input type="text" readonly name="price-discount" id="price-discount"
-                                                class="w-full bg-white/10 border border-white/20 rounded-2xl pl-8 pr-4 py-3 text-xs text-white text-center"
-                                                value="0">
-                                        </div>
-                                        <span
-                                            class="text-xs font-bold uppercase tracking-widest text-white/70">Discount</span>
-                                    </div>
-                                </div>
-                                <a href={{ route('payment') }}
-                                    class="mt-6 flex items-center justify-center gap-2 w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-4 px-6 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all duration-300 shadow-lg shadow-blue-500/20 active:scale-[0.98]">
-                                    <span>Buy a ride</span>
-                                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                                </a>
                             </div>
-                        </div>
-
-
-
-
+                        </form>
                     </div>
                     <div class="sidebar-toggle rounded-rect left" onclick="toggleSidebar('left')">
 
@@ -442,33 +453,32 @@
                                     <button class="text-[10px] font-bold text-blue-400 hover:underline">History</button>
                                 </div>
                                 <div class="space-y-4 custom-scroll overflow-y-auto pr-2">
-                                    <div class="flex items-center justify-between group">
-                                        <div class="flex items-center space-x-3">
-                                            <div
-                                                class="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center border border-white/10 group-hover:border-blue-500/30 transition">
-                                                <i
-                                                    class="fa-solid fa-receipt text-[10px] text-white/60 group-hover:text-blue-400"></i>
+                                    @if (isset($recentReceipts) && count($recentReceipts) > 0)
+                                        @foreach ($recentReceipts as $receipt)
+                                            <div class="flex items-center justify-between group">
+                                                <div class="flex items-center space-x-3">
+                                                    <div
+                                                        class="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center border border-white/10 group-hover:border-blue-500/30 transition">
+                                                        <i
+                                                            class="fa-solid fa-receipt text-[10px] text-white/60 group-hover:text-blue-400"></i>
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-[11px] font-bold text-white">{{ $receipt->transaction_id }}</p>
+                                                        <p class="text-[9px] text-white/40">Paid At: {{ $receipt->paid_at }}</p>
+                                                    </div>
+                                                </div>
+                                                <span class="text-xs font-bold text-green-400">-₱{{ $receipt->price }}</span>
                                             </div>
-                                            <div>
-                                                <p class="text-[11px] font-bold text-white">#INV-8821</p>
-                                                <p class="text-[9px] text-white/40">Today, 8:45 AM</p>
+                                        @endforeach
+                                    @else
+                                        <div class="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-white/5 rounded-xl">
+                                            <div class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-3">
+                                                <i class="fa-solid fa-file-invoice text-white/20 text-lg"></i>
                                             </div>
+                                            <p class="text-[11px] font-medium text-white/50 text-center">No receipts found</p>
+                                            <p class="text-[9px] text-white/30 text-center mt-1">New transactions will appear here.</p>
                                         </div>
-                                        <span class="text-xs font-bold text-green-400">-₱22.50</span>
-                                    </div>
-                                    <div class="flex items-center justify-between group opacity-80">
-                                        <div class="flex items-center space-x-3">
-                                            <div
-                                                class="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center border border-white/10">
-                                                <i class="fa-solid fa-receipt text-[10px] text-white/60"></i>
-                                            </div>
-                                            <div>
-                                                <p class="text-[11px] font-bold text-white">#INV-8819</p>
-                                                <p class="text-[9px] text-white/40">Feb 4, 2026</p>
-                                            </div>
-                                        </div>
-                                        <span class="text-xs font-bold text-green-400">-₱18.75</span>
-                                    </div>
+                                    @endif
                                 </div>
                             </div>
                             <div

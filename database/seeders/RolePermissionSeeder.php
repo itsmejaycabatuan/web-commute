@@ -22,52 +22,52 @@ class RolePermissionSeeder extends Seeder
 
         // Create Permissions Here
         // Routes Permission
-        Permission::create(['name' => 'view routes']);
-        Permission::create(['name' => 'create routes']);
-        Permission::create(['name' => 'edit routes']);
-        Permission::create(['name' => 'delete routes']);
+        Permission::firstOrCreate(['name' => 'view routes']);
+        Permission::firstOrCreate(['name' => 'create routes']);
+        Permission::firstOrCreate(['name' => 'edit routes']);
+        Permission::firstOrCreate(['name' => 'delete routes']);
 
         // app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create Roles Here
-        $commuterRole = Role::create(['name' => 'commuter']);
-        $driverRole = Role::create(['name'=> 'driver']);
-        $adminRole = Role::create(['name' => 'admin']);
-        $superAdmin = Role::create(['name'=> 'superadmin']);
-        $ownerRole = Role::create(['name'=> 'owner']);
+        $commuterRole = Role::firstOrCreate(['name' => 'commuter']);
+        $driverRole = Role::firstOrCreate(['name'=> 'driver']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $superAdmin = Role::firstOrCreate(['name'=> 'superadmin']);
+        $ownerRole = Role::firstOrCreate(['name'=> 'owner']);
 
         //AssignPermissions Here
         //AdminPermissions
         $adminRole->givePermissionTo('view routes', 'create routes', 'edit routes', 'delete routes');
 
         // Create Users Here
-        $markj = User::create([
-            'email' => 'markjay.dev@proton.me',
-            'password' => Hash::make('admin123'),
-            'email_verified_at' => now(),
-        ]);
+        $markj = User::firstOrCreate(
+            ['email' => 'markjay.dev@proton.me'],
+            ['password' => Hash::make('admin123'),
+            'email_verified_at' => now(),]
+        );
 
-        $admin = User::create([
-            'email' => 'admin@gmail.com',
-            'password' => Hash::make('admin123'),
-            'email_verified_at' => now()
-        ]);
+        $admin = User::firstOrCreate([
+            'email' => 'admin@gmail.com'],
+            ['password' => Hash::make('admin123'),
+            'email_verified_at' => now()]
+        );
 
-        $commuter = User::create([
-            'email' => 'commuter@gmail.com',
-            'password' => Hash::make('admin123'),
-            'email_verified_at' => now()
-        ]);
+        $commuter = User::firstOrCreate([
+            'email' => 'commuter@gmail.com'],
+            ['password' => Hash::make('admin123'),
+            'email_verified_at' => now()]
+        );
 
-        $driver = User::create([
-            'email' => 'driver@gmail.com',
-            'password' => Hash::make('admin123'),
+        $driver = User::firstOrCreate(
+            ['email' => 'driver@gmail.com'],
+            ['password' => Hash::make('admin123'),
             'email_verified_at' => now(),
             'license_number' => 'DEMO-LIC-001',
             'license_code' => 'A',
             'license_image_path' => null,
-            'driver_approval_status' => 'approved',
-        ]);
+            'driver_approval_status' => 'approved'],
+        );
 
         // Assign Roles to users here
         $markj->assignRole($adminRole);
