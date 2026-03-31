@@ -99,8 +99,9 @@
                             {{ number_format($price, 2) }}
                         </div>
                     </div>
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=SmartCommute-{{ $price }}"
-                        alt="QR Verify" class="rounded-xl border border-white/10 p-1 bg-white opacity-80">
+                    {{-- <img
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=SmartCommute-{{ $price }}"
+                        alt="QR Verify" class="rounded-xl border border-white/10 p-1 bg-white opacity-80"> --}}
                 </div>
             </div>
 

@@ -241,6 +241,8 @@ Route::middleware(['auth', 'verified'])->group(function (){
 
     Route::get('/payment', [PaymentController::class, 'index'])->name('payment.index');
     Route::post('/payment/process', [PaymentController::class, 'process'])->name('payment.process');
+    Route::get('/payment/history', [PaymentController::class, 'history'])->name('payment.history');
+    Route::get('/payment/receipt/{id}', [PaymentController::class, 'showReceipt'])->name('payment.showReceipt');
 
     Route::middleware('role:admin')->group(function () {
         Route::get('/admin/commuters/create', [CommuterController::class, 'create'])->name('admin.commuters.create');

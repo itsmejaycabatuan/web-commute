@@ -450,7 +450,10 @@
                                 <div class="flex justify-between items-center mb-6">
                                     <h3 class="text-[10px] font-black uppercase tracking-widest text-white/60">Recent Receipts
                                     </h3>
-                                    <button class="text-[10px] font-bold text-blue-400 hover:underline">History</button>
+                                    <a href="{{ route('payment.history') }}" class="text-[10px] font-bold text-blue-400 hover:underline">
+                                        History
+                                    </a>
+                                    {{-- <button class="text-[10px] font-bold text-blue-400 hover:underline">History</button> --}}
                                 </div>
                                 <div class="space-y-4 custom-scroll overflow-y-auto pr-2">
                                     @if (isset($recentReceipts) && count($recentReceipts) > 0)

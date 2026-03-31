@@ -56,4 +56,44 @@ class PaymentController extends Controller
         }
         return back()->with('error', 'There was a problem trying to process the payment');
     }
+
+    public function history(Request $request) {
+        $userId = Auth::user()->id;
+        $query = Payment::where('paid_by', $userId);
+
+        // $request->validate([
+        //     'from_date' => 'required',
+        //     'to_date' => 'required'
+        // ]);
+
+        $query->when($request->from_date, function($q) use ($request) {
+            return $q->whereDate('paid_at', '>=', $request->from_date);
+        });
+
+        $query->when($request->to_date, function($q) use ($request) {
+            return $q->whereDate('paid_at', '<=', $request->to_date);
+        });
+
+        $totalSpent = Payment::where('paid_by', $userId)->get()->sum('price');
+        $recentReceipts = $query->orderBy('paid_at')->paginate(4);
+
+        return view('commuter.paymenthistory', [
+            'recentReceipts' => $recentReceipts,
+            'totalSpent' => $totalSpent
+        ]);
+    }
+
+    public function showReceipt(string $id) {
+        $payment = Payment::where('id', $id)->first();
+        // dd($payment);
+        return view('commuter.viewreceipt', [
+            'pickup' => $payment->starting_point,
+            'destination' => $payment->destination,
+            'distance' => $payment->total_distance,
+            'paymentMethod' => $payment->payment_method,
+            'transactionId' => $payment->transaction_id,
+            'price' => $payment->price,
+            'paidAt' => $payment->paid_at
+        ]);
+    }
 }
