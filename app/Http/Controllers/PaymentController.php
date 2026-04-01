@@ -41,7 +41,16 @@ class PaymentController extends Controller
         $userId = Auth::user()->id;
         $wallet = Wallet::where('user_id', $userId)->first();
         $balance = $wallet->balance;
+        $currentBalance = (double) $balance;
+        
+        if($request->{'payment-method'} === 'Wallet') {
+            $price = (double) $request->amount;
+            $newBalance = $currentBalance - $price;
+        }
 
+        if($newBalance < 0) {
+            return redirect()->route('commuter.dashboard')->with('error', "You don't have enough balance");
+        }
         
         $payment = Payment::create([
             'paid_by' => $userId,
@@ -54,16 +63,10 @@ class PaymentController extends Controller
         ]);
         
         if($payment) {
-            
-            if($request->{'payment-method'} === 'Wallet') {
-                $price = (double) $request->amount;
-                $currentBalance = (double) $balance;
-                $newBalance = $currentBalance - $price;
 
-                $wallet->update([
-                    'balance' => $newBalance
-                ]);
-            }
+            $wallet->update([
+                'balance' => $newBalance
+            ]);
 
             return view('commuter.receipt', [
                 'pickup' => $request->pickup,
