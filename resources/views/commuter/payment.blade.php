@@ -104,14 +104,26 @@
                             </div>
                         </label>
 
-                        <label class="relative cursor-pointer group opacity-50">
+                        <label class="relative cursor-pointer group">
+                            <input type="radio" name="payment-method" value="Wallet" class="peer sr-only" checked>
+                            <div
+                                class="method-box p-4 rounded-2xl border border-white/10 bg-white/5 text-center transition-all group-hover:bg-white/10">
+                                {{-- <i class="fa-solid fa-mobile-screen text-blue-400 mb-2 block text-lg"></i> --}}
+                                <p class="text-[10px] text-white font-black uppercase tracking-widest">Wallet</p>
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Balance:
+                                    ₱{{ $balance }}
+                                </span>
+                            </div>
+                        </label>
+
+                        {{-- <label class="relative cursor-pointer group opacity-50">
                             <input type="radio" name="payment-method" value="card" class="peer sr-only" disabled>
                             <div
                                 class="method-box p-4 rounded-2xl border border-white/5 bg-white/5 text-center transition-all">
                                 <i class="fa-solid fa-credit-card text-gray-500 mb-2 block text-lg"></i>
                                 <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Card</p>
                             </div>
-                        </label>
+                        </label> --}}
                     </div>
                 </div>
 

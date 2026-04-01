@@ -52,7 +52,7 @@
             class="bg-gradient-to-r from-red-500 to-rose-600 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-red-500/20 flex items-start gap-3 min-w-[300px]">
             <i class="fa-solid fa-circle-exclamation text-xl mt-0.5"></i>
             <div class="flex-1">
-                <p class="font-bold text-sm">Error buying a ride</p>
+                <p class="font-bold text-sm">Error </p>
                 <ul class="text-xs opacity-90 mt-1 list-disc list-inside">
                     @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Mail\EmailVerification;
+use App\Models\Wallet;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Events\Registered;
@@ -110,6 +111,11 @@ class UserController extends Controller
             Auth::login($user);
             event(new Registered($user));
             $user->assignRole('commuter');
+
+            Wallet::create([
+                'user_id' => $user->id
+            ]);
+            
             return redirect()->route('commuter.dashboard')->with('success', 'User Successfully Registered!');
         }
         return back()->with('error', 'User Failed to Register.');

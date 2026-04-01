@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Models\Fare;
 use App\Models\FareRate;
 use App\Models\Payment;
+use App\Models\Wallet;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Auth;
@@ -199,6 +200,8 @@ Route::middleware(['auth', 'verified'])->group(function (){
             $userId = Auth::user()->id;
             $role = $user->roles->first()->name;
             $latestFare = Fare::get()->last();
+            $wallet = Wallet::where('user_id', $userId)->first();
+
             $recentReceipts = Payment::where('paid_by', $userId)->latest()->take(3)->get();
 
             $rates = FareRate::get();
@@ -228,7 +231,8 @@ Route::middleware(['auth', 'verified'])->group(function (){
             if($role == 'commuter') {
                 return view('commuter.dashboard', [
                     'rates' => $rates,
-                    'recentReceipts' => $recentReceipts
+                    'recentReceipts' => $recentReceipts,
+                    'balance' => $wallet->balance ?? 0.00
                 ]);
             }
 
@@ -243,6 +247,9 @@ Route::middleware(['auth', 'verified'])->group(function (){
     Route::post('/payment/process', [PaymentController::class, 'process'])->name('payment.process');
     Route::get('/payment/history', [PaymentController::class, 'history'])->name('payment.history');
     Route::get('/payment/receipt/{id}', [PaymentController::class, 'showReceipt'])->name('payment.showReceipt');
+    Route::get('/payment/topup', [PaymentController::class, 'topup'])->name('payment.topup');
+    Route::post('/payment/topup/process', [PaymentController::class, 'topupProcess'])->name('payment.topup.process');
+    Route::get('/payment/topup/history', [PaymentController::class, 'topupHistory'])->name('payment.topup.history');
 
     Route::middleware('role:admin')->group(function () {
         Route::get('/admin/commuters/create', [CommuterController::class, 'create'])->name('admin.commuters.create');

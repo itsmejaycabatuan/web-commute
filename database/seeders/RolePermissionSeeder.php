@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\User;
+use App\Models\Wallet;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
@@ -58,6 +59,10 @@ class RolePermissionSeeder extends Seeder
             ['password' => Hash::make('admin123'),
             'email_verified_at' => now()]
         );
+
+        Wallet::firstOrCreate([
+            'user_id' => $commuter->id
+        ]);
 
         $driver = User::firstOrCreate(
             ['email' => 'driver@gmail.com'],

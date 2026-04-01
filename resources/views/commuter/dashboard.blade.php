@@ -244,6 +244,23 @@
             <div>
                 <h1 class="text-white font-bold text-sm">SmartCommute</h1>
             </div>
+
+            @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter' && isset($balance))
+            <a  href="{{ route('payment.topup') }}">
+                <div class="glass-panel p-2 pr-5 rounded-full flex items-center space-x-3 group cursor-pointer hover:bg-white/10 transition-all">
+                    <div class="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-500/30">
+                        <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[8px] uppercase tracking-widest text-white/40 font-black leading-none">Balance</span>
+                        <span class="text-white font-bold text-xs">₱{{ $balance }}</span>
+                    </div>
+                    <div class="ml-1 w-4 h-4 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-blue-500 transition-colors">
+                        <i class="fa-solid fa-plus text-[8px] text-white"></i>
+                    </div>
+                </div>
+            </a>
+            @endif
         </div>
 
         <div class="flex items-center space-x-3 pointer-events-auto z-50">
@@ -483,21 +500,6 @@
                                         </div>
                                     @endif
                                 </div>
-                            </div>
-                            <div
-                                class="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-blue-600/30 to-transparent border-blue-500/30">
-                                <div class="flex justify-between items-start mb-4">
-                                    <div>
-                                        <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">Digital
-                                            Wallet</p>
-                                        <h2 class="text-2xl font-bold text-white">₱500.00</h2>
-                                    </div>
-                                    <i class="fa-solid fa-wallet text-blue-400 opacity-80"></i>
-                                </div>
-                                <button
-                                    class="w-full bg-white/20 border border-white/30 py-2.5 rounded-xl text-[10px] font-bold text-white uppercase hover:bg-white/30 transition">
-                                    + Top Up
-                                </button>
                             </div>
                         @endif
 

@@ -58,7 +58,7 @@
             <div class="w-px h-8 bg-white/10"></div>
             <div class="text-center">
                 <p class="text-[9px] uppercase text-white/40 font-bold">Wallet Balance</p>
-                <p class="text-sm font-bold text-green-400">₱500.00</p>
+                <p class="text-sm font-bold text-green-400">₱{{ $balance }}</p>
             </div>
         </div>
     </header>
