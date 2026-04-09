@@ -572,7 +572,7 @@
     </div>
 
     <script type="module">
-        // const userRole = @json(Auth::user())?.roles[0]?.name ?? '';
+        const userRole = @json(Auth::user())?.roles[0]?.name ?? 'guest';
         import MapLibreGlDirections from 'https://esm.sh/@maplibre/maplibre-gl-directions';
 
         const pusherKey = '{{ env("PUSHER_APP_KEY") }}';
@@ -677,6 +677,7 @@
                     const { latitude, longitude, accuracy, speed } = position.coords;
                     currentLocation = { latitude, longitude, accuracy, speed };
 
+                    console.log("coords: ", latitude, longtitude);
                     // Update local map marker
                     updateVehicleMarker(latitude, longitude);
 
@@ -721,7 +722,7 @@
                 const markerElement = document.createElement('div');
                 markerElement.className = 'custom-vehicle-marker';
                 markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
-                vehicleMarker = new maplibregl.Marker({ element: markerElement })
+                vehicleMarker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
                     .setLngLat([longitude, latitude])
                     .addTo(map);
             } else {
@@ -775,9 +776,9 @@
             // Create custom vehicle marker
             const markerElement = document.createElement('div');
             markerElement.className = 'vehicle-marker';
-            markerElement.innerHTML = '<i class="fa-solid fa-bus" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; color: white;"></i>';
+            // markerElement.innerHTML = '<i class="fa-solid fa-bus" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; color: white;"></i>';
 
-            vehicleMarker = new maplibregl.Marker({ element: markerElement })
+            vehicleMarker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
                 .setLngLat([123.79, 10.24])
                 .addTo(map);
 
@@ -855,8 +856,8 @@
             // IMPORTANT: Include vehicle_id in the request body
             const requestData = {
                 vehicle_id: currentVehicleId,  // ← THIS IS CRITICAL - ADD THIS!
-                latitude: latitude,
-                longitude: longitude,
+                latitude: latitude.toFixed(6),
+                longitude: longitude.toFixed(6),
                 speed: 0,
                 accuracy: accuracy || 0
             };
@@ -909,73 +910,91 @@
             gpsStatusText.textContent = 'GPS: Not active';
         });
 
-        // Listen for ALL vehicle location updates (this runs for every user)
-        window.Echo.channel('vehicle-locations')
-            .listen('vehicle-location-updated', (e) => {
-                console.log('🚍 Vehicle location update:', e);
+        if(userRole !== 'driver') {
+            // Listen for ALL vehicle location updates (this runs for every user)
+            window.Echo.channel('vehicle-locations')
+                .listen('vehicle-location-updated', (e) => {
+                    console.log('🚍 Vehicle location update:', e);
+    
+                    if(e.vehicleId === currentVehicleId) {
+                        return;
+                    }
 
-                // Update or create marker for this vehicle
-                updateVehicleMarkerOnMap(e.vehicleId, e.coordinates[0], e.coordinates[1]);
-
-                // Update vehicle info panel if visible
-                updateVehicleInfoPanel(e.vehicleId, e.coordinates, e.speed, e.timestamp);
-            });
-
-        const vehicleMarkers = new Map();
-
-        function updateVehicleMarkerOnMap(vehicleId, longitude, latitude) {
-            if (vehicleMarkers.has(vehicleId)) {
-                // Update existing marker
-                const marker = vehicleMarkers.get(vehicleId);
-                marker.setLngLat([longitude, latitude]);
-            } else {
-                // Create new marker for this vehicle
-                const markerElement = document.createElement('div');
-                markerElement.className = 'custom-vehicle-marker';
-                markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
-                markerElement.style.backgroundColor = getRandomColor(vehicleId);
-
-                const marker = new maplibregl.Marker({ element: markerElement })
-                    .setLngLat([longitude, latitude])
-                    .addTo(map);
-
-                vehicleMarkers.set(vehicleId, marker);
-
-                // Add popup with vehicle info
-                const popup = new maplibregl.Popup({ offset: 25 })
-                    .setHTML(`
-                <div style="background: #1e293b; color: white; padding: 8px; border-radius: 8px;">
-                    <strong>Vehicle: ${vehicleId}</strong><br>
-                    Last update: ${new Date().toLocaleTimeString()}
-                </div>
-            `);
-
-                marker.setPopup(popup);
+                    console.log("coordinates:", e.coordinates[0], e.coordinates[1]);
+    
+                    // Update or create marker for this vehicle
+                    updateVehicleMarkerOnMap(e.vehicleId, e.coordinates[0], e.coordinates[1]);
+    
+                    // Update vehicle info panel if visible
+                    updateVehicleInfoPanel(e.vehicleId, e.coordinates, e.speed, e.timestamp);
+                });
+    
+            const vehicleMarkers = new Map();
+            function updateVehicleMarkerOnMap(vehicleId, longitude, latitude) {
+                if (vehicleMarkers.has(vehicleId)) {
+                    // Update existing marker
+                    const marker = vehicleMarkers.get(vehicleId);
+                    marker.setLngLat([longitude, latitude]);
+                } else {
+                    // Create new marker for this vehicle
+                    const markerElement = document.createElement('div');
+                    markerElement.className = 'custom-vehicle-marker';
+                    markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
+                    markerElement.style.backgroundColor = getRandomColor(vehicleId);
+    
+                    const marker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
+                        .setLngLat([longitude, latitude])
+                        .addTo(map);
+    
+                    vehicleMarkers.set(vehicleId, marker);
+    
+                    // Add popup with vehicle info
+                    const popup = new maplibregl.Popup({ offset: 25 })
+                        .setHTML(`
+                    <div style="background: #1e293b; color: white; padding: 8px; border-radius: 8px;">
+                        <strong>Vehicle: ${vehicleId}</strong><br>
+                        Last update: ${new Date().toLocaleTimeString()}
+                    </div>
+                `);
+    
+                    marker.setPopup(popup);
+                }
             }
+    
+            window.updateVehicleMarkerOnMap = updateVehicleMarkerOnMap;
+    
+            function getRandomColor(vehicleId) {
+                // Generate consistent color based on vehicle ID
+                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
+                let hash = 0;
+                for (let i = 0; i < vehicleId.length; i++) {
+                    hash = vehicleId.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                return colors[Math.abs(hash) % colors.length];
+            }
+    
+            window.getRandomColor = getRandomColor;
         }
 
-        window.updateVehicleMarkerOnMap = updateVehicleMarkerOnMap;
-
-        function getRandomColor(vehicleId) {
-            // Generate consistent color based on vehicle ID
-            const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
-            let hash = 0;
-            for (let i = 0; i < vehicleId.length; i++) {
-                hash = vehicleId.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            return colors[Math.abs(hash) % colors.length];
-        }
-
-        window.getRandomColor = getRandomColor;
 
         // Fare calculation functions (existing)
         let marker = new maplibregl.Marker({ draggable: false });
+        const activeVehicleMarkers = {};
 
         // Function to fetch and display active vehicles from database
         function refreshActiveVehicles() {
             fetch('/track/vehicles/active').then(response => response.json()).then(data => {
                 console.log('Active vehicles from DB:', data);
                 if (Array.isArray(data)) {
+                    const activeIds = new Set(data.map(v => v.vehicle_id));
+
+                    Object.keys(activeVehicleMarkers).forEach(vehicleId => {
+                        if(!activeIds.has(vehicleId)) {
+                            activeVehicleMarkers[vehicleId].remove();
+                            delete activeVehicleMarkers[vehicleId];
+                        }
+                    });
+
                     data.forEach(vehicle => {
                         updateVehicleMarkerOnMap(
                             vehicle.vehicle_id,

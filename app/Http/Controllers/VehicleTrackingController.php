@@ -40,7 +40,8 @@ class VehicleTrackingController extends Controller
         );
 
         return response()->json([
-            'success' => true
+            'success' => true,
+            'request' => $validated
         ]);
     }
 

@@ -16,8 +16,8 @@ return new class extends Migration
         Schema::create('vehicle_locations', function (Blueprint $table) {
             $table->id();
             $table->string('vehicle_id');
-            $table->decimal('latitude');
-            $table->decimal('longitude');
+            $table->decimal('latitude', 11, 8);
+            $table->decimal('longitude', 11, 8);
             $table->decimal('accuracy')->nullable();
             $table->decimal('speed')->nullable();
             $table->timestamp('last_update');
