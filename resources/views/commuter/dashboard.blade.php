@@ -9,6 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.18.0/dist/maplibre-gl.css' />
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-directions@latest/dist/maplibre-gl-directions.js"></script>
     <script src='https://unpkg.com/maplibre-gl@5.18.0/dist/maplibre-gl.js'></script>
     <script src="https://unpkg.com/laravel-echo@1.15.3/dist/echo.iife.js"></script>
     <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
@@ -216,10 +217,12 @@
             height: 100%;
         }
 
+        
+
         /*
   The sidebar styling has them "expanded" by default, we use CSS transforms to push them offscreen
   The toggleSidebar() function removes this class from the element in order to expand it.
-*/
+ */
         .left.collapsed {
             transform: translateX(-295px);
         }
@@ -273,6 +276,14 @@
             @if (Auth::user())
                 @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
                     <a href="{{ route('driver.dashboard') }}">
+                        <div
+                            class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold cursor-pointer uppercase tracking-wider hover:bg-red-500/20 transition">
+                            Dashboard
+                        </div>
+                    </a>
+                @endif
+                @if (Auth::check() && Auth::user()->roles[0]->name === 'admin')
+                    <a href="{{ route('admin.dashboard') }}">
                         <div
                             class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold cursor-pointer uppercase tracking-wider hover:bg-red-500/20 transition">
                             Dashboard
@@ -348,7 +359,7 @@
     <div id="map">
         <div id="left" class="sidebar flex-center left collapsed">
             <div class="sidebar-content flex-center">
-                @if(Auth::check() && Auth::user()->roles[0]->name !== 'driver' || Auth::guest())
+                @if(Auth::check() && Auth::user()->roles[0]->name === 'commuter' || Auth::guest())
                     <div class="fixed top-28 left-6 w-80 z-40 hidden md:flex flex-col gap-4 max-h-[calc(100vh-140px)]">
                         <form action="{{ route('payment.index') }}" method="GET">
                             {{-- @csrf --}}
@@ -444,22 +455,23 @@
 
             <div class="sidebar-content flex-center">
                 <div class="fixed top-28 right-6 w-80 z-40 hidden lg:flex flex-col gap-4 max-h-[calc(100vh-140px)]">
-
-                    <a href="{{ route('tutorial') }}"
-                        class=" glass-panel p-5 rounded-3xl flex items-center space-x-4 border-yellow-500/30 group
-                                                                                                                    hover:bg-yellow-500/10 transition">
-                        <div
-                            class=" w-10 h-10 bg-yellow-500/30 rounded-xl flex items-center justify-center
-                                                                                                                                group-hover:rotate-12 transition">
-                            <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-white">App Tutorial</p>
-                            <p class="text-[9px] text-white/50 uppercase tracking-wider font-bold">New user? Start here
-                            </p>
-                        </div>
-                    </a>
-                    @if(Auth::check() && Auth::user()->roles[0]->name !== 'driver')
+                    @if (Auth::check() && Auth::user()->roles[0]->name !== 'admin')
+                        <a href="{{ route('tutorial') }}"
+                            class=" glass-panel p-5 rounded-3xl flex items-center space-x-4 border-yellow-500/30 group
+                                                                                                                        hover:bg-yellow-500/10 transition">
+                            <div
+                                class=" w-10 h-10 bg-yellow-500/30 rounded-xl flex items-center justify-center
+                                                                                                                                    group-hover:rotate-12 transition">
+                                <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-white">App Tutorial</p>
+                                <p class="text-[9px] text-white/50 uppercase tracking-wider font-bold">New user? Start here
+                                </p>
+                            </div>
+                        </a>
+                    @endif
+                    @if(Auth::check() && Auth::user()->roles[0]->name === 'commuter')
 
                         @if (Auth::user())
 
@@ -502,10 +514,7 @@
                                 </div>
                             </div>
                         @endif
-
-
                     @endif
-
                     @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
                         <div
                             class="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-green-600/30 to-transparent border-green-500/30">
@@ -548,23 +557,27 @@
                     @endif
                 </div>
 
+                @if (Auth::check() && Auth::user()->roles[0]->name !== 'admin')
+                
                 <div class="sidebar-toggle rounded-rect right" onclick="toggleSidebar('right')">
 
                     &larr;
 
                 </div>
+                @endif
 
             </div>
 
         </div>
     </div>
 
-    <script>
-
+    <script type="module">
         // const userRole = @json(Auth::user())?.roles[0]?.name ?? '';
+        import MapLibreGlDirections from 'https://esm.sh/@maplibre/maplibre-gl-directions';
 
         const pusherKey = '{{ env("PUSHER_APP_KEY") }}';
         const pusherCluster = '{{ env("PUSHER_APP_CLUSER") }}';
+
 
         window.Pusher = Pusher;
         window.Echo = new Echo({
@@ -620,6 +633,8 @@
             }
             elem.className = classes.join(' ');
         }
+
+        window.toggleSidebar = toggleSidebar;
 
         map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
         const geolocate = new maplibregl.GeolocateControl({
@@ -697,6 +712,8 @@
             );
         }
 
+        window.startBroadcastingLocation = startBroadcastingLocation;
+
         // Function to update vehicle marker on map
         function updateVehicleMarker(latitude, longitude) {
             if (!vehicleMarker) {
@@ -711,6 +728,8 @@
                 vehicleMarker.setLngLat([longitude, latitude]);
             }
         }
+
+        window.updateVehicleMarker = updateVehicleMarker;
 
         // function updateLiveDate() {
         //     const dateElement = document.getElementById('current-date');
@@ -742,6 +761,8 @@
                 content.classList.add('scale-95');
             }
         }
+
+        window.toggleLogoutModal = toggleLogoutModal;
 
         window.onclick = function (event) {
             const modal = document.getElementById('logout-modal');
@@ -933,6 +954,8 @@
             }
         }
 
+        window.updateVehicleMarkerOnMap = updateVehicleMarkerOnMap;
+
         function getRandomColor(vehicleId) {
             // Generate consistent color based on vehicle ID
             const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
@@ -943,10 +966,10 @@
             return colors[Math.abs(hash) % colors.length];
         }
 
+        window.getRandomColor = getRandomColor;
+
         // Fare calculation functions (existing)
         let marker = new maplibregl.Marker({ draggable: false });
-
-
 
         // Function to fetch and display active vehicles from database
         function refreshActiveVehicles() {
@@ -964,6 +987,8 @@
                 }
             }).catch(error => console.error('Error fetching active vehicles:', error));
         }
+
+        window.refreshActiveVehicles = refreshActiveVehicles;
 
         // Refresh active vehicles every 10 seconds
         setInterval(refreshActiveVehicles, 10000);
@@ -1001,6 +1026,8 @@
             }
             return rates[0];
         }
+
+        window.getFareRate = getFareRate;
 
         const geocoderApi = {
             forwardGeocode: async (config) => {
@@ -1086,11 +1113,43 @@
                 maplibregl
             }), 'bottom-left'
         );
-
+  
         let destinationLat = null;
         let destinationLng = null;
         let pickupLng = null;
         let pickupLat = null;
+
+        let directions = null;
+        
+        map.on('load', () => {
+            directions = new MapLibreGlDirections(map); 
+        });
+        
+        function drawRoute() {
+            if(!directions) return;
+            
+            if(pickupLng && pickupLat && destinationLng && destinationLat) {
+                directions.setWaypoints([
+                    [parseFloat(pickupLng), parseFloat(pickupLat)],
+                    [parseFloat(destinationLng), parseFloat(destinationLat)]
+                ]);
+
+                directions.on("fetchroutesend", async (e) => {
+
+                    console.log(e.data.directions.routes[0].distance);
+                    const distanceMeters = e.data.directions.routes[0].distance;
+                    const distanceKM = distanceMeters / 1000;
+
+                    distanceCoordinate.value = distanceKM.toFixed(2);
+
+                    let rate = getFareRate(Math.round(distanceKM));
+                    priceRegular.value = rate['regular'];
+                    priceDiscount.value = rate['discount'];
+                });
+            }
+        }
+
+        window.drawRoute = drawRoute;
 
         function getStartingPoint() {
             map.once('mousemove', (e) => {
@@ -1112,17 +1171,11 @@
                 pickup.value = coordinates;
 
                 map.getCanvas().style.cursor = 'pointer';
-
-                if (destinationLat && destinationLng) {
-                    let distanceKM = haversineDistanceKM(pickupLat, pickupLng, destinationLat, destinationLng);
-                    distanceCoordinate.value = distanceKM.toFixed(2);
-
-                    let rate = getFareRate(parseInt(distanceKM));
-                    priceRegular.value = rate['regular'];
-                    priceDiscount.value = rate['discount'];
-                }
+                drawRoute();
             });
         }
+
+        window.getStartingPoint = getStartingPoint;
 
         function getDestination() {
             map.once('mousemove', (e) => {
@@ -1143,39 +1196,11 @@
                 destination.value = coordinates;
 
                 map.getCanvas().style.cursor = 'pointer';
-
-                if (pickupLat && pickupLng) {
-                    let distanceKM = haversineDistanceKM(pickupLat, pickupLng, destinationLat, destinationLng);
-                    distanceCoordinate.value = distanceKM.toFixed(2);
-
-                    let rate = getFareRate(parseInt(distanceKM));
-                    priceRegular.value = rate['regular'];
-                    priceDiscount.value = rate['discount'];
-                }
+                drawRoute();
             });
         }
 
-        function haversineDistanceKM(lat1Deg, lon1Deg, lat2Deg, lon2Deg) {
-            function toRad(degree) {
-                return degree * Math.PI / 180;
-            }
-
-            const lat1 = toRad(lat1Deg);
-            const lon1 = toRad(lon1Deg);
-            const lat2 = toRad(lat2Deg);
-            const lon2 = toRad(lon2Deg);
-
-            const { sin, cos, sqrt, atan2 } = Math;
-
-            const R = 6371;
-            const dLat = lat2 - lat1;
-            const dLon = lon2 - lon1;
-            const a = sin(dLat / 2) * sin(dLat / 2) +
-                cos(lat1) * cos(lat2) * sin(dLon / 2) * sin(dLon / 2);
-            const c = 2 * atan2(sqrt(a), sqrt(1 - a));
-            const d = R * c;
-            return d;
-        }
+        window.getDestination = getDestination;
 
         // Optional: Auto - start GPS tracking when page loads
         setTimeout(() => {
@@ -1183,8 +1208,8 @@
         }, 1000);
 
         // Initialize the functions
+       
     </script>
-
 </body>
 
 </html>

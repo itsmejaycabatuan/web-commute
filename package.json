@@ -17,6 +17,7 @@
         "postcss": "^8.1.14"
     },
     "dependencies": {
+        "@maplibre/maplibre-gl-directions": "^0.9.1",
         "bootstrap": "^5.3.8",
         "bootstrap-icons": "^1.13.1",
         "laravel-echo": "^2.3.1",
