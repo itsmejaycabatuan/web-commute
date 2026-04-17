@@ -550,11 +550,11 @@
                             <div id="live-location-info" class="text-xs text-white/80 space-y-1 mb-6">
                                     <div class="flex justify-between">
                                         <span><i class="fa-solid fa-location-dot text-green-400 mr-1"></i> Starting Point:</span>
-                                        <span class="font-mono" id="current-coords">Minglanilla</span>
+                                        <span class="font-mono">Minglanilla</span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span><i class="fa-solid fa-location-dot text-blue-400 mr-1"></i> Destination:</span>
-                                        <span class="font-mono" id="current-coords">IT Park</span>
+                                        <span class="font-mono"">IT Park</span>
                                     </div>
                                 </div>
                             <div class="flex justify-between items-start mb-4">
@@ -637,6 +637,8 @@
             [123.91768276426876, 10.332535160307074]
         ];
 
+        const viewbox = "123.77516124821591,10.332535160307074,123.91768276426876,10.229235293025951";
+
         const map = new maplibregl.Map({
             container: 'map',
             style: 'https://tiles.openfreemap.org/styles/bright',
@@ -676,6 +678,7 @@
         window.toggleSidebar = toggleSidebar;
 
         map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+
         const geolocate = new maplibregl.GeolocateControl({
             positionOptions: {
                 enableHighAccuracy: true,
@@ -693,6 +696,16 @@
         
         map.addControl(geolocate, 'bottom-right');
 
+        geolocate.on('geolocate', (event) => {
+            const lng = event.coords.longitude;
+            const lat = event.coords.latitude;
+
+            console.log(`Longitude: ${lng}, Latitude: ${lat}`);
+            
+            // You can now use these variables to filter data, 
+            // center the map, or send them to a database.
+        })
+
         let vehicleMarker = null;
         let vehiclePathCoordinates = [];
         let watchId = null;
@@ -706,12 +719,17 @@
         const updateTime = document.getElementById('update-time');
 
         if(userRole === 'driver') {
+
+            let lastKnownLocation = null;
+
             // Function to start broadcasting location
             function startBroadcastingLocation() {
                 if (!navigator.geolocation) {
                     console.error('Geolocation not supported');
                     return;
                 }
+
+                if(watchId !== null ) return;
     
                 watchId = navigator.geolocation.watchPosition(
                     async (position) => {
@@ -721,40 +739,49 @@
                         console.log("coords: ", latitude, longitude);
                         // Update local map marker
                         updateVehicleMarker(latitude, longitude);
+
+                        setInterval(async() => {
+                            if(!lastKnownLocation) return;
+                            // BROADCAST TO ALL USERS via Pusher
+                            try {
+                                await fetch(`/track/vehicle/broadcast`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                    },
+                                    body: JSON.stringify({
+                                        vehicle_id: '{{ "vehicle-" . Auth::id() ?? "default-vehicle" }}',
+                                        latitude: latitude,
+                                        longitude: longitude,
+                                        accuracy: accuracy,
+                                        speed: speed,
+                                        timestamp: new Date().toISOString(),
+                                        latitude: lastKnownLocation.latitude,
+                                        longitude: lastKnownLocation.longitude
+                                    })
+                                });
+                            } catch (error) {
+                                console.error('Error broadcasting location:', error);
+                            }
+                        }, 5000)
     
-                        // BROADCAST TO ALL USERS via Pusher
-                        try {
-                            await fetch(`/api/track/vehicle/broadcast`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                },
-                                body: JSON.stringify({
-                                    vehicle_id: '{{ "vehicle-" . Auth::id() ?? "default-vehicle" }}',
-                                    latitude: latitude,
-                                    longitude: longitude,
-                                    accuracy: accuracy,
-                                    speed: speed,
-                                    timestamp: new Date().toISOString()
-                                })
-                            });
-                        } catch (error) {
-                            console.error('Error broadcasting location:', error);
-                        }
                     },
                     (error) => {
                         console.error('Geolocation error:', error);
                     },
                     {
                         enableHighAccuracy: true,
-                        timeout: 5000,
+                        timeout: 15000,
                         maximumAge: 0
                     }
                 );
             }
     
             window.startBroadcastingLocation = startBroadcastingLocation;
+
+            // // Broadcast the location every 5 seconds
+            // setInterval(startBroadcastingLocation, 5000);
         }
 
         // Function to update vehicle marker on map
@@ -850,31 +877,44 @@
         });
 
         if(userRole === 'driver') {
+            let lastBroadcastTime = 0;
+            const broadcastInterval = 5000; // 5 seconds
+            let currentPosition = null; // Store latest position
 
+            // Listen for geolocation updates (just store the position)
             geolocate.on('geolocate', (position) => {
-                const { latitude, longitude, accuracy } = position.coords;
-    
+                const { latitude, longitude, accuracy, speed } = position.coords;
+                
+                // Store the latest position
+                currentPosition = {
+                    latitude,
+                    longitude,
+                    accuracy,
+                    speed,
+                    timestamp: Date.now()
+                };
+                
                 console.log('📍 GPS fix acquired:', { latitude, longitude, accuracy });
-    
+                
                 // Update UI
                 gpsIndicator.className = 'w-2 h-2 bg-green-500 rounded-full animate-pulse';
                 gpsStatusText.textContent = 'GPS: Active';
                 currentCoords.textContent = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
                 currentAccuracy.textContent = `${accuracy.toFixed(1)} m`;
                 updateTime.textContent = new Date().toLocaleTimeString();
-    
-                // Show and update vehicle marker
+                
+                // Update vehicle marker
                 if (vehicleMarker) {
                     vehicleMarker.setLngLat([longitude, latitude]);
                     vehicleMarker.addTo(map);
                 }
-    
+                
                 // Update path
                 vehiclePathCoordinates.push([longitude, latitude]);
                 if (vehiclePathCoordinates.length > 100) {
                     vehiclePathCoordinates.shift();
                 }
-    
+                
                 const pathSource = map.getSource('vehicle-path');
                 if (pathSource && vehiclePathCoordinates.length > 1) {
                     pathSource.setData({
@@ -889,34 +929,45 @@
                         }]
                     });
                 }
-    
-                // Get CSRF token safely
-                const csrfToken = document.querySelector('meta[name="csrf-token"]');
-                if (!csrfToken) {
-                    console.error('CSRF token not found');
-                    return;
-                }
-    
-                // IMPORTANT: Include vehicle_id in the request body
-                const requestData = {
-                    vehicle_id: currentVehicleId,  // ← THIS IS CRITICAL - ADD THIS!
-                    latitude: latitude.toFixed(6),
-                    longitude: longitude.toFixed(6),
-                    speed: 0,
-                    accuracy: accuracy || 0
-                };
-    
-                console.log('Sending location data:', requestData); // Debug log
-    
-                fetch(`/track/vehicle/broadcast`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken.content,
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(requestData)
-                })
+            });
+            
+            // Separate interval for broadcasting (runs every 5 seconds)
+            setInterval(async () => {
+                const currentTime = Date.now();
+                
+                // Only broadcast if we have a valid position
+                if (currentPosition && (currentTime - lastBroadcastTime > broadcastInterval)) {
+                    lastBroadcastTime = currentTime;
+                    
+                    console.log("Broadcasting at:", currentTime);
+                    console.log("Time since last broadcast:", currentTime - lastBroadcastTime);
+                    
+                    // Get CSRF token safely
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                    if (!csrfToken) {
+                        console.error('CSRF token not found');
+                        return;
+                    }
+                    
+                    const requestData = {
+                        vehicle_id: currentVehicleId,
+                        latitude: currentPosition.latitude.toFixed(6),
+                        longitude: currentPosition.longitude.toFixed(6),
+                        speed: currentPosition.speed || 0,
+                        accuracy: currentPosition.accuracy || 0,
+                    };
+                    
+                    console.log('Sending location data:', requestData);
+                    
+                    fetch(`/track/vehicle/broadcast`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken.content,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(requestData)
+                    })
                     .then(response => {
                         if (!response.ok) {
                             return response.json().then(errorData => {
@@ -930,28 +981,24 @@
                         console.log('Location sent successfully:', data);
                     })
                     .catch(error => console.error('Error broadcasting:', error));
-            });
-    
+                }
+            }, 1000); // Check every second (or use broadcastInterval directly)
+            
+            // OR simpler - just use broadcastInterval directly:
+            // setInterval(() => {
+            //     if (currentPosition) {
+            //         // broadcast logic here...
+            //     }
+            // }, broadcastInterval);
+            
             geolocate.on('error', (error) => {
                 console.error('Geolocation error:', error);
                 gpsIndicator.className = 'w-2 h-2 bg-red-500 rounded-full';
                 gpsStatusText.textContent = 'GPS: Error - ' + error.message;
             });
-    
+            
             geolocate.on('outofmaxbounds', () => {
                 console.log('GPS out of bounds');
-            });
-    
-            geolocate.on('trackuserlocationstart', () => {
-                console.log('Tracking started');
-                gpsIndicator.className = 'w-2 h-2 bg-yellow-500 rounded-full animate-pulse';
-                gpsStatusText.textContent = 'GPS: Acquiring...';
-            });
-    
-            geolocate.on('trackuserlocationend', () => {
-                console.log('Tracking ended');
-                gpsIndicator.className = 'w-2 h-2 bg-gray-400 rounded-full';
-                gpsStatusText.textContent = 'GPS: Not active';
             });
         }
 
@@ -1026,42 +1073,48 @@
         let marker = new maplibregl.Marker({ draggable: false });
         const activeVehicleMarkers = {};
 
-        // Function to fetch and display active vehicles from database
-        function refreshActiveVehicles() {
-            fetch('/track/vehicles/active').then(response => response.json()).then(data => {
-                console.log('Active vehicles from DB:', data);
-                if (Array.isArray(data)) {
-                    const activeIds = new Set(data.map(v => v.vehicle_id));
+        if(userRole !== 'driver') {
 
-                    Object.keys(activeVehicleMarkers).forEach(vehicleId => {
-                        if(!activeIds.has(vehicleId)) {
-                            activeVehicleMarkers[vehicleId].remove();
-                            delete activeVehicleMarkers[vehicleId];
-                        }
-                    });
+            // Function to fetch and display active vehicles from database
+            function refreshActiveVehicles() {
+                fetch('/track/vehicles/active').then(response => response.json()).then(data => {
+                    console.log('Active vehicles from DB:', data);
+                    if (Array.isArray(data)) {
+                        const activeIds = new Set(data.map(v => v.vehicle_id));
+    
+                        Object.keys(activeVehicleMarkers).forEach(vehicleId => {
+                            if(!activeIds.has(vehicleId)) {
+                                activeVehicleMarkers[vehicleId].remove();
+                                delete activeVehicleMarkers[vehicleId];
+                            }
+                        });
+    
+                        data.forEach(vehicle => {
+                            updateVehicleMarkerOnMap(
+                                vehicle.vehicle_id,
+                                vehicle.longitude,
+                                vehicle.latitude
+                            );
+                        });
+                        console.log(`✅ Loaded ${data.length} active vehicles`);
+                    }
+                }).catch(error => console.error('Error fetching active vehicles:', error));
+            }
+    
+            window.refreshActiveVehicles = refreshActiveVehicles;
 
-                    data.forEach(vehicle => {
-                        updateVehicleMarkerOnMap(
-                            vehicle.vehicle_id,
-                            vehicle.longitude,
-                            vehicle.latitude
-                        );
-                    });
-                    console.log(`✅ Loaded ${data.length} active vehicles`);
-                }
-            }).catch(error => console.error('Error fetching active vehicles:', error));
+            // Refresh active vehicles every 10 seconds
+            setInterval(refreshActiveVehicles, 10000);
+            // Initial refresh after 2 seconds
+            setTimeout(refreshActiveVehicles, 2000);
         }
 
-        window.refreshActiveVehicles = refreshActiveVehicles;
 
-        // Refresh active vehicles every 10 seconds
-        setInterval(refreshActiveVehicles, 10000);
 
-        // Broadcast the location every 5 seconds
-        setInterval(startBroadcastingLocation, 5000);
+        if(userRole === 'admin') {
+  
+        }
 
-        // Initial refresh after 2 seconds
-        setTimeout(refreshActiveVehicles, 2000);
 
         const distanceCoordinate = document.getElementById('distance');
         const pickup = document.getElementById('pickup');
@@ -1093,25 +1146,27 @@
             }
             return rates[0];
         }
-
+        
         window.getFareRate = getFareRate;
 
+       
+        
         const geocoderApi = {
             forwardGeocode: async (config) => {
                 const features = [];
                 try {
                     const request =
-                        `https://nominatim.openstreetmap.org/search?q=${config.query}&format=geojson&polygon_geojson=1&addressdetails=1`;
-                    const response = await fetch(request);
-                    const geojson = await response.json();
-                    for (const feature of geojson.features) {
-                        const center = [
-                            feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
-                            feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2
-                        ];
-                        const point = {
-                            type: 'Feature',
-                            geometry: {
+                        `https://nominatim.openstreetmap.org/search?q=${config.query}&format=geojson&polygon_geojson=1&addressdetails=1&viewbox=${viewbox}&bounded=1`;
+                        const response = await fetch(request);
+                        const geojson = await response.json();
+                        for (const feature of geojson.features) {
+                            const center = [
+                                feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
+                                feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2
+                                ];
+                                const point = {
+                                    type: 'Feature',
+                                    geometry: {
                                 type: 'Point',
                                 coordinates: center
                             },
@@ -1129,6 +1184,15 @@
                 return { features };
             }
         };
+        
+        map.addControl(
+            new MaplibreGeocoder(geocoderApi, {
+                maplibregl,
+                minLength: 3,        // Only start searching after 3 characters are typed
+                debounceSearch: 300, // Wait 300ms after the last keystroke before calling the API
+                showResultsWhileTyping: true // Ensures the dropdown updates dynamically
+            }), 'bottom-left'
+        );
 
         const startPoint = {
             'type': 'FeatureCollection',
@@ -1173,14 +1237,9 @@
             ]);
 
             marker.setLngLat([0, 0]).addTo(map);
+            
         });
-
-        map.addControl(
-            new MaplibreGeocoder(geocoderApi, {
-                maplibregl
-            }), 'bottom-left'
-        );
-  
+        
         let destinationLat = null;
         let destinationLng = null;
         let pickupLng = null;

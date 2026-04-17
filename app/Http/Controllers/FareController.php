@@ -128,4 +128,15 @@ class FareController extends Controller
         Fare::destroy($id);
         return back()->with('success','File deleted successfully!');
     }
+
+    public function bulkUpdate(Request $request)
+{
+    foreach ($request->rates as $id => $data) {
+        FareRate::where('id', $id)->update([
+            'regular' => $data['regular'],
+            'discount' => $data['discount']
+        ]);
+    }
+    return back()->with('success', 'Rates updated successfully');
+}
 }

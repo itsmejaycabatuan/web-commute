@@ -18,7 +18,9 @@ class Payment extends Model
         'payment_method',
         'price',
         'transaction_id',
-        'paid_at'
+        'paid_at',
+        'created_at',
+        'updated_at'
     ];
 
     public function user() {

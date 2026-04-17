@@ -50,7 +50,7 @@ Route::get('/', function (Request $request) {
 Route::get('/pusher', [PusherController::class, 'index'])->name('pusher.index');
 Route::post('/fire-event', [PusherController::class, 'fireEvent'])->name('fire.event');
 
-Route::post('/track/vehicle/broadcast', [VehicleTrackingController::class, 'broadcastLocation']);
+Route::post('/track/vehicle/broadcast', [VehicleTrackingController::class, 'broadcastLocation'])->name('vehicle.broadcast');
 Route::get('/track/vehicles/active', [VehicleTrackingController::class, 'getActiveVehicles']);
 
 // Route::get('/location', [LocationController::class, 'index'])->name('location.index');
@@ -301,7 +301,14 @@ Route::middleware(['auth', 'verified'])->group(function (){
     })->name('adminprofile');
 
     Route::get('/admindashboard',function (){
-        return view('admin.dashboard');
+
+        return view('admin.dashboard', [
+            'totalRevenue' => Payment::sum('price'),
+            'totalFundsAdded' => TopupHistory::sum('amount_added'),
+            'activeUsersCount' => Payment::distinct('paid_by')->count(), // Or your preferred logic
+            'recentFares' => Payment::with('user')->latest()->take(5)->get(),
+            'recentTopups' => TopupHistory::with('user')->latest()->take(5)->get(),
+        ]);
     })->name('admin.dashboard');
      
   
@@ -341,6 +348,7 @@ Route::middleware(['auth', 'verified'])->group(function (){
     Route::get('/fare/{id}', [FareController::class, 'view'])->middleware('role:admin')->name('fares.view');
     Route::get('/fares', [FareController::class, 'index'])->middleware('role:admin')->name('fares.index');
     Route::put('/fare/upload', [FareController::class, 'upload'])->middleware('role:admin')->name('fares.upload');
+    Route::put('/fare/update', [FareController::class, 'bulkUpdate'])->middleware('role:admin')->name('fares.bulk-update');
     Route::delete('/fare/{id}/delete', [FareController::class, 'delete'])->middleware('role:admin')->name('fares.destroy');
 
     // Route::get('/commuter/commuter', function () {

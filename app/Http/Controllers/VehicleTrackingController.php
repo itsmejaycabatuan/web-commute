@@ -53,20 +53,46 @@ class VehicleTrackingController extends Controller
                 ]
             );
 
-            $vehicleHistory = VehicleLocationHistory::where('vehicle_location_id', $vehicleLocation->id)->latest()->take(2)->get();
+            // Get last 2 history records safely
+            $vehicleHistory = VehicleLocationHistory::where('vehicle_location_id', $vehicleLocation->id)
+                ->orderBy('created_at', 'desc') // or 'id', 'desc' depending on your table
+                ->take(2)
+                ->get();
 
-            $longitude1 = $vehicleHistory ? $vehicleHistory[0]->longitude : null;
-            $latitude1 = $vehicleHistory ? $vehicleHistory[0]->latitude : null;
-            $longitude2 = $vehicleHistory ? $vehicleHistory[1]->longitude : null;
-            $latitude2 = $vehicleHistory ? $vehicleHistory[1]->latitude : null;
-            $distance = $this->haversineDistance($latitude1, $longitude1, $latitude2, $longitude2) ? $this->haversineDistance($latitude1, $longitude1, $latitude2, $longitude2) : null;
-            $speed = ($distance / 5) * 3.6;
+             // Initialize variables with null values
+            $longitude1 = null;
+            $latitude1 = null;
+            $longitude2 = null;
+            $latitude2 = null;
+            $distance = null;
+            $speed = null;
+            
+            // Safely access history records if they exist
+            if ($vehicleHistory->count() > 0) {
+                $longitude1 = $vehicleHistory[0]->longitude;
+                $latitude1 = $vehicleHistory[0]->latitude;
+            }
+            
+            if ($vehicleHistory->count() > 1) {
+                $longitude2 = $vehicleHistory[1]->longitude;
+                $latitude2 = $vehicleHistory[1]->latitude;
+            }
+            
+            // Calculate distance only if both points exist
+            if ($latitude1 && $longitude1 && $latitude2 && $longitude2) {
+                $distance = $this->haversineDistance($latitude1, $longitude1, $latitude2, $longitude2);
+                // Calculate speed: distance (meters) / 5 seconds * 3.6 = km/h
+                $speed = ($distance / 5) * 3.6;
+            }
+            
+            // Use the speed from request if calculation failed, otherwise use calculated speed
+            $finalSpeed = $speed ?? ($validated['speed'] ?? 0);
 
             event(new LocationUpdated(
                 $validated['vehicle_id'],
                 $validated['longitude'],
                 $validated['latitude'],
-                $speed,
+                $finalSpeed,
                 $validated['accuracy']
             ));
 

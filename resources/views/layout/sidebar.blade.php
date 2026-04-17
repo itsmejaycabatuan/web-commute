@@ -96,7 +96,7 @@
 
         <nav class="space-y-2">
             <a href="{{ route('admin.topups') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('fares.index') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('admin.topups') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
                 <div class="min-w-[24px] flex justify-center">
                     <i class="fa-solid fa-wallet text-lg"></i>
                 </div>

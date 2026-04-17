@@ -186,7 +186,7 @@ class PaymentController extends Controller
 
     if ($request->filled('search')) {
         $query->whereHas('user', function($q) use ($request) {
-            $q->where('name', 'like', "%{$request->search}%");
+            $q->where('email', 'like', "%{$request->search}%");
         })->orWhere('transaction_id', 'like', "%{$request->search}%");
     }
 
@@ -199,7 +199,7 @@ class PaymentController extends Controller
     }
 
     return view('faretransactions', [
-            'allTransactions' => $query->latest()->paginate(6),
+            'allTransactions' => $query->latest()->paginate(5),
             'totalRevenue' => Payment::sum('price'),
             'activeUsersCount' => Payment::distinct('paid_by')->count()
         ]);
@@ -221,19 +221,28 @@ class PaymentController extends Controller
         ]);
     }
 
-    public function showTopupsAdmin() {
+    public function showTopupsAdmin(Request $request) {
 
-        $topups = TopupHistory::paginate(4);
-        $allTopups = TopupHistory::get();
-        $total = 0;
+        $query = TopupHistory::with('user');
+        $total = TopupHistory::sum('amount_added');
 
-        foreach($allTopups as $topup) {
-            $total += $topup->amount_added;
+        if ($request->filled('search')) {
+            $query->whereHas('user', function($q) use ($request) {
+                $q->where('email', 'like', "%{$request->search}%");
+            })->orWhere('id', 'like', "%{$request->search}%");
+        }
+
+        if ($request->filled('from_date')) {
+            $query->whereDate('created_at', '>=', $request->from_date);
+        }
+
+        if ($request->filled('to_date')) {
+            $query->whereDate('created_at', '<=', $request->to_date);
         }
 
         return view('admintopups', [
             'totalFundsAdded' => $total,
-            'transactions' => $topups
+            'transactions' => $query->latest()->paginate(5)
         ]);
     }
 }
