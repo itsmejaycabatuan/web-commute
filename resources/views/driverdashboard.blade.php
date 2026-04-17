@@ -65,15 +65,6 @@
                         Dashboard</span>
                 </a>
 
-                <a href="#"
-                    class="flex items-center gap-4 p-3 rounded-2xl text-gray-500 hover:bg-white/5 hover:text-white transition group">
-                    <div class="min-w-[24px] flex justify-center">
-                        <i class="fa-solid fa-route text-lg"></i>
-                    </div>
-                    <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">My
-                        Routes</span>
-                </a>
-
                 <a href="{{ route('driverprofile') }}"
                     class="flex items-center gap-4 p-3 rounded-2xl text-gray-500 hover:bg-white/5 hover:text-white transition group">
                     <div class="min-w-[24px] flex justify-center">

@@ -155,24 +155,24 @@ class DriverApprovalController extends Controller
             ->with('success', 'Driver approved. They can sign in now.');
     }
 
-    public function unapprove(Request $request, User $user)
-    {
-        if (! $user->hasRole('driver')) {
-            abort(404);
-        }
+    // public function unapprove(Request $request, User $user)
+    // {
+    //     if (! $user->hasRole('driver')) {
+    //         abort(404);
+    //     }
 
-        if ($user->driver_approval_status !== 'approved') {
-            return redirect()
-                ->route('admin.drivers.index')
-                ->with('error', 'Only approved drivers can be set back to pending.');
-        }
+    //     if ($user->driver_approval_status !== 'approved') {
+    //         return redirect()
+    //             ->route('admin.drivers.index')
+    //             ->with('error', 'Only approved drivers can be set back to pending.');
+    //     }
 
-        $user->update(['driver_approval_status' => 'pending']);
+    //     $user->update(['driver_approval_status' => 'pending']);
 
-        return redirect()
-            ->route('admin.drivers.index')
-            ->with('success', 'Driver set to pending. They cannot sign in until approved again.');
-    }
+    //     return redirect()
+    //         ->route('admin.drivers.index')
+    //         ->with('success', 'Driver set to pending. They cannot sign in until approved again.');
+    // }
 
     public function reject(Request $request, User $user)
     {

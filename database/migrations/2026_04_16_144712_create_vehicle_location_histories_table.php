@@ -13,10 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('routes', function (Blueprint $table) {
+        Schema::create('vehicle_location_histories', function (Blueprint $table) {
             $table->id();
-            $table->string('starting_point');
-            $table->string('destination');
+            $table->foreignId('vehicle_location_id')->constrained('vehicle_locations')->cascadeOnDelete();
+            $table->decimal('latitude', 11, 8);
+            $table->decimal('longitude', 11, 8);
             $table->timestamps();
         });
     }
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('routes');
+        Schema::dropIfExists('vehicle_location_histories');
     }
 };

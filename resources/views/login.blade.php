@@ -29,7 +29,8 @@
                     </div>
                 </div>
                 <h3 class="text-lg font-bold tracking-tight">Your account is pending!</h3>
-                <p class="mt-2 text-sm text-gray-600">An administrator must approve your driver account before you can sign in.</p>
+                <p class="mt-2 text-sm text-gray-600">An administrator must approve your driver account before you can sign
+                    in.</p>
                 <button type="button" onclick="document.getElementById('driver-pending-modal').remove()"
                     class="py-3 mt-6 w-full text-xs font-bold tracking-widest text-white uppercase bg-blue-600 rounded-xl transition hover:bg-blue-500">
                     OK
@@ -48,7 +49,8 @@
                     </div>
                 </div>
                 <h3 class="text-lg font-bold tracking-tight">Your account submission was rejected</h3>
-                <p class="mt-2 text-sm text-gray-600">Your driver application was not approved. You cannot sign in with this account. If you believe this is a mistake, contact support.</p>
+                <p class="mt-2 text-sm text-gray-600">Your driver application was not approved. You cannot sign in with this
+                    account. If you believe this is a mistake, contact support.</p>
                 <button type="button" onclick="document.getElementById('driver-rejected-modal').remove()"
                     class="py-3 mt-6 w-full text-xs font-bold tracking-widest text-white uppercase bg-blue-600 rounded-xl transition hover:bg-blue-500">
                     OK
@@ -77,17 +79,18 @@
         class="p-8 w-full max-w-sm text-white rounded-3xl border shadow-2xl bg-white/10 backdrop-blur-xl border-white/20">
 
         <div class="mb-8 text-center">
-    <div class="flex flex-col items-center justify-center mb-4">
-        <div class="flex items-center justify-center w-12 h-12 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20 mb-3">
-            <i class="fa-solid fa-bus text-white text-xl"></i>
+            <div class="flex flex-col items-center justify-center mb-4">
+                <div
+                    class="flex items-center justify-center w-12 h-12 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/20 mb-3">
+                    <i class="fa-solid fa-bus text-white text-xl"></i>
+                </div>
+                <span class="text-2xl font-bold tracking-wider italic text-white">
+                    Smart<span class="text-blue-500">Commute</span>
+                </span>
+            </div>
+            <h2 class="text-2xl font-bold tracking-tight">Login</h2>
+            <p class="mt-1 text-xs opacity-60">Optimize your commute today</p>
         </div>
-        <span class="text-2xl font-bold tracking-wider italic text-white">
-            Smart<span class="text-blue-500">Commute</span>
-        </span>
-    </div>
-    <h2 class="text-2xl font-bold tracking-tight">Login</h2>
-    <p class="mt-1 text-xs opacity-60">Optimize your commute today</p>
-</div>
 
         <form action="{{ route('users.login') }}" method="POST" class="space-y-5">
             @csrf
@@ -102,20 +105,23 @@
                 <div class="alert alert-danger">
                     <ul>
                         @foreach ($errors->get('email') as $message)
-                            <li>{{ $message }}</li>
+                            <li class="text-red-400">{{ $message }}</li>
                         @endforeach
                     </ul>
                 </div>
             @endif
 
             <div>
-                <label class="block mb-1 ml-1 font-bold tracking-widest uppercase opacity-50 text-[10px]">Password</label>
+                <label
+                    class="block mb-1 ml-1 font-bold tracking-widest uppercase opacity-50 text-[10px]">Password</label>
 
                 <div class="relative">
-                    <input type="password" id="password" placeholder="••••••••" name="password" value="{{ old('password') }}"
+                    <input type="password" id="password" placeholder="••••••••" name="password"
+                        value="{{ old('password') }}"
                         class="py-2.5 px-4 w-full text-sm rounded-xl border transition focus:ring-2 focus:outline-none bg-white/5 border-white/10 focus:ring-white/30 pr-10">
 
-                    <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-3 flex items-center text-white/40 hover:text-white transition">
+                    <button type="button" onclick="togglePassword()"
+                        class="absolute inset-y-0 right-3 flex items-center text-white/40 hover:text-white transition">
                         <i id="eye-icon" class="fa-solid fa-eye text-xs"></i>
                     </button>
                 </div>
@@ -130,7 +136,7 @@
                 <div class="alert alert-danger">
                     <ul>
                         @foreach ($errors->get('password') as $message)
-                            <li>{{ $message }}</li>
+                            <li class="text-red-400">{{ $message }}</li>
                         @endforeach
                     </ul>
                 </div>
@@ -140,7 +146,7 @@
                 <div class="alert alert-danger">
                     <ul>
                         @foreach ($errors->get('credentials') as $message)
-                            <li>{{ $message }}</li>
+                            <li class="text-red-400">{{ $message }}</li>
                         @endforeach
                     </ul>
                 </div>

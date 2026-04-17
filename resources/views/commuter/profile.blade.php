@@ -68,121 +68,133 @@
 
 <body class="antialiased">
 
-    <div class="max-w-7xl mx-auto p-4 md:p-10 space-y-8">
+    <div class="pt-10 pb-10 max-w-6xl mx-auto">
 
-        <div class="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest opacity-50">
-            <a href="{{ route('commuter.dashboard') }}" class="hover:text-blue-400">Dashboard</a>
-            <span>/</span>
-            <span class="text-blue-400">User Profile</span>
-        </div>
-
-        <div class="relative group">
-            <div
-                class="absolute-bottom-10 left-6 md:left-12 right-6 md:right-12 flex flex-col md:flex-row items-end justify-between gap-6">
-
-                <div class="flex items-center space-x-3 pb-8">
-                    <button
-                        class="glass px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition active:scale-95">
-                        <i class="fa-solid fa-pen-to-square mr-2"></i> Edit Profile
-                    </button>
-                    <button
-                        class="bg-blue-600 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition active:scale-95">
-                        Settings
-                    </button>
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+            <div>
+                <div
+                    class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-500 mb-2">
+                    <i class="fa-solid fa-circle-user"></i> Commuter Account
                 </div>
+                <h2 class="text-3xl font-black tracking-tight">{{ explode('@', Auth::user()->email)[0] }}</h2>
+                <p class="text-gray-500 text-xs">{{ Auth::user()->email }}</p>
             </div>
-        </div>
+            <div class="flex gap-3">
+                <a href="{{ route('payment.topup') }}"
+                    class="glass px-5 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition">
+                    <i class="fa-solid fa-wallet mr-2 text-blue-400"></i> Top Up
+                </a>
+                <a href="{{ route('profile.edit') }}"
+                    class="bg-blue-600 text-white px-5 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-600/20">
+                    Edit Profile
+                </a>
+                <a href="{{ route('commuter.dashboard') }}" class="group flex items-center gap-2">
+                    <div
+                        class="w-8 h-8 glass rounded-lg flex items-center justify-center group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-all">
+                        <i class="fa-solid fa-arrow-left text-[10px]"></i>
+                    </div>
+                    <span
+                        class="text-[10px] font-black uppercase tracking-widest opacity-50 group-hover:opacity-100 transition">Back
+                        to Home</span>
+                </a>
+            </div>
+        </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-            <div class="lg:col-span-4 space-y-8">
-                <div class="glass glass-inset p-8 rounded-[2.5rem]">
-                    <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-8 flex items-center">
-                        <i class="fa-solid fa-user-gear mr-2"></i> Identity Info
-                    </h3>
+            <div class="lg:col-span-4 space-y-6">
+                <div
+                    class="glass p-8 rounded-[2.5rem] relative overflow-hidden bg-gradient-to-br from-blue-600/10 to-transparent">
+                    <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Available Balance</p>
+                    <h3 class="text-4xl font-black">₱{{ number_format($wallet->balance ?? 0, 2) }}</h3>
+                    <i class="fa-solid fa-shield-halved absolute -right-4 -bottom-4 text-7xl opacity-5"></i>
+                </div>
 
-                    <div class="space-y-6">
-                        <div class="list-item-hover p-2 -m-2 rounded-xl">
-                            <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Email Address</p>
-                            <p class="text-sm font-bold">j.wilson@smartcommute.ph</p>
+                <div class="glass p-8 rounded-[2.5rem] space-y-6">
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Security Details</h4>
+
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Account Status</p>
+                            @if(Auth::user()->email_verified_at)
+                                <span class="text-[10px] font-black text-emerald-400 flex items-center gap-1">
+                                    <i class="fa-solid fa-circle-check"></i> VERIFIED COMMUTER
+                                </span>
+                            @else
+                                <span class="text-[10px] font-black text-amber-500">PENDING VERIFICATION</span>
+                            @endif
+                        </div>
+                        <div>
+                            <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Member Since</p>
+                            <p class="text-sm font-bold text-white/80">{{ Auth::user()->created_at->format('M d, Y') }}
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="lg:col-span-8 space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="glass glass-inset p-8 rounded-[2.5rem] relative overflow-hidden group">
-                        <i
-                            class="fa-solid fa-bus absolute -right-4 -bottom-4 text-6xl opacity-5 group-hover:scale-110 transition duration-700"></i>
-                        <p class="text-3xl font-black mb-1">142</p>
-                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Trips Completed</p>
-                    </div>
-                    <div
-                        class="glass glass-inset p-8 rounded-[2.5rem] relative overflow-hidden border-orange-500/20 group">
-                        <i
-                            class="fa-solid fa-clock absolute -right-4 -bottom-4 text-6xl text-orange-500/5 group-hover:scale-110 transition duration-700"></i>
-                        <p class="text-3xl font-black text-orange-400 mb-1">18.5h</p>
-                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Time Saved</p>
-                    </div>
-                </div>
+            <div class="lg:col-span-8 space-y-6">
 
-                <div class="glass glass-inset p-8 rounded-[2.5rem]">
-                    <div class="flex items-center justify-between mb-10">
-                        <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">Commute History</h3>
-                        <button
-                            class="text-[10px] font-bold text-gray-500 hover:text-white transition uppercase tracking-widest underline decoration-blue-500/50">View
-                            Monthly Report</button>
+                <div class="glass p-8 rounded-[2.5rem]">
+                    <div class="flex items-center justify-between mb-8">
+                        <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">Recent Travels</h4>
+                        <i class="fa-solid fa-bus-simple text-gray-600"></i>
                     </div>
 
                     <div class="space-y-4">
-                        <div
-                            class="flex items-center justify-between group cursor-pointer hover:bg-white/5 p-4 rounded-2xl transition border border-transparent hover:border-white/10">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center">
-                                    <i class="fa-solid fa-route text-blue-400 text-sm"></i>
+                        @forelse($payments as $payment)
+                            <div
+                                class="flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 border border-white/5 transition-all group">
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+                                        <i class="fa-solid fa-location-arrow text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold">{{ $payment->starting_point }} →
+                                            {{ $payment->destination }}
+                                        </p>
+                                        <p class="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">
+                                            {{ \Carbon\Carbon::parse($payment->paid_at)->format('M d • h:i A') }}
+                                            • {{ $payment->total_distance }}km
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-xs font-bold tracking-tight">Central Terminal <i
-                                            class="fa-solid fa-arrow-right-long mx-2 opacity-30 text-[8px]"></i>
-                                        Greenhills</p>
-                                    <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">Feb 05
-                                        • 08:45 AM • Route 14B</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-black text-white">-₱15.00</p>
-                                <span
-                                    class="text-[8px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded font-black uppercase tracking-tighter">Verified</span>
-                            </div>
-                        </div>
-
-                        <div
-                            class="flex items-center justify-between group cursor-pointer hover:bg-white/5 p-4 rounded-2xl transition border border-transparent hover:border-white/10">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center">
-                                    <i class="fa-solid fa-route text-blue-400 text-sm"></i>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-bold tracking-tight">Greenhills <i
-                                            class="fa-solid fa-arrow-right-long mx-2 opacity-30 text-[8px]"></i> Central
-                                        Terminal</p>
-                                    <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">Feb 04
-                                        • 05:30 PM • Route 14B</p>
+                                <div class="text-right">
+                                    <p class="text-sm font-black text-white">-₱{{ number_format($payment->price, 2) }}</p>
+                                    @if($payment->is_discounted)
+                                        <span
+                                            class="text-[8px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded uppercase font-black">Discounted</span>
+                                    @endif
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-sm font-black text-white">-₱15.00</p>
-                                <span
-                                    class="text-[8px] bg-green-500/10 text-green-400 px-2 py-0.5 rounded font-black uppercase tracking-tighter">Verified</span>
-                            </div>
-                        </div>
+                        @empty
+                            <p class="text-center py-10 text-gray-500 text-xs italic">No travel history found.</p>
+                        @endforelse
                     </div>
                 </div>
+
+                <div class="glass p-8 rounded-[2.5rem]">
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-8">Wallet Loads</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @foreach($topups as $topup)
+                            <div class="bg-white/5 p-4 rounded-2xl flex items-center justify-between">
+                                <div>
+                                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-tighter">Reload
+                                        Successful</p>
+                                    <p class="text-[9px] text-gray-500">{{ $topup->created_at->diffForHumans() }} via
+                                        {{ $topup->payment_method }}
+                                    </p>
+                                </div>
+                                <p class="text-sm font-black text-white">+₱{{ number_format($topup->amount_added, 2) }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
-
 </body>
 
 </html>

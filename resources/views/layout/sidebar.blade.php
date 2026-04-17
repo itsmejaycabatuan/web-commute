@@ -1,5 +1,7 @@
+<link rel="stylesheet" href="{{ asset('css/styles.css') }} ">
+
 <aside :class="open ? 'w-72' : 'w-20'"
-    class="sidebar-transition fixed left-0 top-0 h-screen glass border-r border-white/10 z-50 flex flex-col justify-between p-4">
+    class="overflow-y-auto sidebar-transition fixed left-0 top-0 h-screen glass border-r border-white/10 z-50 flex flex-col justify-between p-4">
     <div class="grid gap-2">
         <button @click="open = !open" class="w-full flex justify-end p-2 mb-8 hover:text-blue-400 transition">
             <i class="fa-solid" :class="open ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
@@ -60,7 +62,7 @@
                     drivers</span>
             </a>
         </nav>
-        <nav class="space-y-2">
+        {{-- <nav class="space-y-2">
             <a href="{{ route('routes.index') }}"
                 class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('routes.index') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
                 <div class="min-w-[24px] flex justify-center">
@@ -69,7 +71,7 @@
                 <span x-show="open" x-transition.opacity
                     class="text-xs font-bold uppercase tracking-widest">Routes</span>
             </a>
-        </nav>
+        </nav> --}}
         <nav class="space-y-2">
             <a href="{{ route('fares.index') }}"
                 class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('fares.index') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
@@ -80,6 +82,38 @@
                     rates</span>
             </a>
         </nav>
+
+        <nav class="space-y-2">
+            <a href="{{ route('faretransactions') }}"
+                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('faretransactions') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+                <div class="min-w-[24px] flex justify-center">
+                    <i class="fa-solid fa-receipt text-lg"></i>
+                </div>
+                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Fare
+                    Transactions</span>
+            </a>
+        </nav>
+
+        <nav class="space-y-2">
+            <a href="{{ route('admin.topups') }}"
+                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('fares.index') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+                <div class="min-w-[24px] flex justify-center">
+                    <i class="fa-solid fa-wallet text-lg"></i>
+                </div>
+                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Top
+                    ups</span>
+            </a>
+        </nav>
+
+        <nav class="space-y-2">
+            <a href="{{ route('adminprofile') }}"
+                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('adminprofile') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+                <div class="min-w-[24px] flex justify-center"><i class="fa-solid fa-circle-user text-lg"></i></div>
+                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">My
+                    Profile</span>
+            </a>
+        </nav>
+
     </div>
 
     <button type="button" onclick="toggleAdminLogoutModal()"

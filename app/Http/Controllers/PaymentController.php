@@ -178,4 +178,62 @@ class PaymentController extends Controller
             'transactions' => $history
         ]);
     }
+    
+    public function showTransactions(Request $request) {
+        $query = Payment::with('user'); // Ensure the relationship is defined in Transaction model
+
+        // dd($query->latest()->paginate(15));
+
+    if ($request->filled('search')) {
+        $query->whereHas('user', function($q) use ($request) {
+            $q->where('name', 'like', "%{$request->search}%");
+        })->orWhere('transaction_id', 'like', "%{$request->search}%");
+    }
+
+    if ($request->filled('from_date')) {
+        $query->whereDate('created_at', '>=', $request->from_date);
+    }
+
+    if ($request->filled('to_date')) {
+        $query->whereDate('created_at', '<=', $request->to_date);
+    }
+
+    return view('faretransactions', [
+            'allTransactions' => $query->latest()->paginate(6),
+            'totalRevenue' => Payment::sum('price'),
+            'activeUsersCount' => Payment::distinct('paid_by')->count()
+        ]);
+    }
+
+    public function showReceiptAdmin(string $id) {
+        $payment = Payment::with('user')->where('id', $id)->first();
+        
+        // dd($payment);
+        return view('admin.commuters.receipt', [
+            'pickup' => $payment->starting_point,
+            'destination' => $payment->destination,
+            'distance' => $payment->total_distance,
+            'paymentMethod' => $payment->payment_method,
+            'transactionId' => $payment->transaction_id,
+            'price' => $payment->price,
+            'paidAt' => $payment->paid_at,
+            'user' => $payment->user
+        ]);
+    }
+
+    public function showTopupsAdmin() {
+
+        $topups = TopupHistory::paginate(4);
+        $allTopups = TopupHistory::get();
+        $total = 0;
+
+        foreach($allTopups as $topup) {
+            $total += $topup->amount_added;
+        }
+
+        return view('admintopups', [
+            'totalFundsAdded' => $total,
+            'transactions' => $topups
+        ]);
+    }
 }

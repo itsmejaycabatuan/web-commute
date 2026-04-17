@@ -62,12 +62,6 @@
                     <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Driver
                         Dashboard</span>
                 </a>
-                <a href="#"
-                    class="flex items-center gap-4 p-3 rounded-2xl text-gray-500 hover:bg-white/5 hover:text-white transition group">
-                    <div class="min-w-[24px] flex justify-center"><i class="fa-solid fa-route text-lg"></i></div>
-                    <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">My
-                        Routes</span>
-                </a>
                 <a href="{{ route('driverprofile') }}"
                     class="flex items-center gap-4 p-3 rounded-2xl bg-blue-600/10 text-blue-400 border border-blue-500/20 group">
                     <div class="min-w-[24px] flex justify-center"><i class="fa-solid fa-circle-user text-lg"></i></div>
@@ -140,15 +134,6 @@
                                     {{ $user->license_code ?? '—' }}
                                 </div>
                             </div>
-                            <div class="space-y-1 md:col-span-2">
-                                <label class="text-[10px] uppercase font-black text-blue-500 tracking-[0.2em]">Assigned
-                                    vehicle</label>
-                                <div
-                                    class="glass p-4 rounded-2xl text-sm font-medium border-white/5 bg-white/[0.02] text-gray-500 italic">
-                                    Not assigned
-                                </div>
-                                <p class="text-[10px] text-gray-600 mt-1">No vehicle is linked to your account yet.</p>
-                            </div>
                         </div>
 
                         <div class="pt-4 border-t border-white/10">
@@ -183,7 +168,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                 <div class="glass p-6 rounded-3xl border-white/5">
                     <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Status</p>
                     @if ($user->driver_approval_status === 'approved')
@@ -208,11 +193,6 @@
                         {{ $user->created_at->timezone(config('app.timezone'))->format('F j, Y') }}
                     </p>
                     <p class="text-[10px] text-gray-600 mt-1">Member since {{ $user->created_at->diffForHumans() }}</p>
-                </div>
-                <div class="glass p-6 rounded-3xl border-white/5">
-                    <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Rating</p>
-                    <p class="text-sm font-bold text-gray-500">—</p>
-                    <p class="text-[10px] text-gray-600 mt-1">No trip data yet</p>
                 </div>
             </div>
         </div>

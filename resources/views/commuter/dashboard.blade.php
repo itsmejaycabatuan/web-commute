@@ -290,12 +290,25 @@
                         </div>
                     </a>
                 @endif
+
+                @if (Auth::check() && Auth::user()->roles[0]->name === 'admin')
+                <a href="{{ route('adminprofile') }}">
+                    <div
+                        class="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-white/10 transition">
+                        <i class="fa-solid fa-user text-xs"></i>
+                    </div>
+                </a>
+                @endif
+
+                @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter')
                 <a href="{{ route('commuter.profile') }}">
                     <div
                         class="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-white/10 transition">
                         <i class="fa-solid fa-user text-xs"></i>
                     </div>
                 </a>
+                @endif
+
                 <div class="flex items-center space-x-3 pointer-events-auto">
                     <button onclick="toggleLogoutModal()"
                         class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold uppercase tracking-wider hover:bg-red-500/20 transition">
@@ -307,6 +320,12 @@
                     <div
                         class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold cursor-pointer uppercase tracking-wider hover:bg-red-500/20 transition">
                         Sign up
+                    </div>
+                </a>
+                <a href="{{ route('login') }}">
+                    <div
+                        class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold cursor-pointer uppercase tracking-wider hover:bg-red-500/20 transition">
+                        Log in
                     </div>
                 </a>
             @endif
@@ -325,19 +344,20 @@
             <h3 class="text-xl font-bold text-white mb-2">Sign Out?</h3>
             <p class="text-sm text-white/60 mb-8">Are you sure you want to log out of SmartCommute?</p>
 
-            <div class="flex gap-3">
-                <button onclick=" toggleLogoutModal()"
-                    class="flex-1 px-6 py-3 rounded-2xl bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition">
-                    Cancel
-                </button>
-                <form action="{{ route('users.logout') }}" method="POST" class="flex-1">
-                    @csrf
-                    <button type="submit"
-                        class="w-full px-6 py-3 rounded-2xl bg-red-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-600/20 transition">
-                        Logout
-                    </button>
-                </form>
-            </div>
+           <div class="grid gap-3 grid-row-2 grid-col-1">
+    <button onclick="toggleLogoutModal()"
+        class="flex-1 px-6 py-3 rounded-2xl bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition">
+        Cancel
+    </button>
+
+    <form action="{{ route('users.logout') }}" method="POST" class="flex-1">
+        @csrf
+        <button type="submit"
+            class="w-full px-6 py-3 rounded-2xl bg-red-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-600/20 transition">
+            Logout
+        </button>
+    </form>
+</div>
         </div>
     </div>
 
@@ -455,7 +475,7 @@
 
             <div class="sidebar-content flex-center">
                 <div class="fixed top-28 right-6 w-80 z-40 hidden lg:flex flex-col gap-4 max-h-[calc(100vh-140px)]">
-                    @if (Auth::check() && Auth::user()->roles[0]->name !== 'admin')
+                    @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter')
                         <a href="{{ route('tutorial') }}"
                             class=" glass-panel p-5 rounded-3xl flex items-center space-x-4 border-yellow-500/30 group
                                                                                                                         hover:bg-yellow-500/10 transition">
@@ -471,6 +491,7 @@
                             </div>
                         </a>
                     @endif
+
                     @if(Auth::check() && Auth::user()->roles[0]->name === 'commuter')
 
                         @if (Auth::user())
@@ -516,8 +537,26 @@
                         @endif
                     @endif
                     @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
-                        <div
+                        
+                    <div
                             class="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-green-600/30 to-transparent border-green-500/30">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">Active Trip</p>
+                                    <h2 class="text-lg font-bold text-white">Current Route</h2>
+                                </div>
+                                <i class="fa-solid fa-route text-blue-400 opacity-80"></i>
+                            </div>
+                            <div id="live-location-info" class="text-xs text-white/80 space-y-1 mb-6">
+                                    <div class="flex justify-between">
+                                        <span><i class="fa-solid fa-location-dot text-green-400 mr-1"></i> Starting Point:</span>
+                                        <span class="font-mono" id="current-coords">Minglanilla</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span><i class="fa-solid fa-location-dot text-blue-400 mr-1"></i> Destination:</span>
+                                        <span class="font-mono" id="current-coords">IT Park</span>
+                                    </div>
+                                </div>
                             <div class="flex justify-between items-start mb-4">
                                 <div>
                                     <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">Live
@@ -651,6 +690,7 @@
                 duration: 1000
             }
         });
+        
         map.addControl(geolocate, 'bottom-right');
 
         let vehicleMarker = null;
@@ -665,55 +705,57 @@
         const currentAccuracy = document.getElementById('current-accuracy');
         const updateTime = document.getElementById('update-time');
 
-        // Function to start broadcasting location
-        function startBroadcastingLocation() {
-            if (!navigator.geolocation) {
-                console.error('Geolocation not supported');
-                return;
-            }
-
-            watchId = navigator.geolocation.watchPosition(
-                async (position) => {
-                    const { latitude, longitude, accuracy, speed } = position.coords;
-                    currentLocation = { latitude, longitude, accuracy, speed };
-
-                    console.log("coords: ", latitude, longtitude);
-                    // Update local map marker
-                    updateVehicleMarker(latitude, longitude);
-
-                    // BROADCAST TO ALL USERS via Pusher
-                    try {
-                        await fetch(`/api/track/vehicle/broadcast`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                            },
-                            body: JSON.stringify({
-                                vehicle_id: '{{ "vehicle-" . Auth::id() ?? "default-vehicle" }}',
-                                latitude: latitude,
-                                longitude: longitude,
-                                accuracy: accuracy,
-                                speed: speed,
-                                timestamp: new Date().toISOString()
-                            })
-                        });
-                    } catch (error) {
-                        console.error('Error broadcasting location:', error);
-                    }
-                },
-                (error) => {
-                    console.error('Geolocation error:', error);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 5000,
-                    maximumAge: 0
+        if(userRole === 'driver') {
+            // Function to start broadcasting location
+            function startBroadcastingLocation() {
+                if (!navigator.geolocation) {
+                    console.error('Geolocation not supported');
+                    return;
                 }
-            );
+    
+                watchId = navigator.geolocation.watchPosition(
+                    async (position) => {
+                        const { latitude, longitude, accuracy, speed } = position.coords;
+                        currentLocation = { latitude, longitude, accuracy, speed };
+    
+                        console.log("coords: ", latitude, longitude);
+                        // Update local map marker
+                        updateVehicleMarker(latitude, longitude);
+    
+                        // BROADCAST TO ALL USERS via Pusher
+                        try {
+                            await fetch(`/api/track/vehicle/broadcast`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: JSON.stringify({
+                                    vehicle_id: '{{ "vehicle-" . Auth::id() ?? "default-vehicle" }}',
+                                    latitude: latitude,
+                                    longitude: longitude,
+                                    accuracy: accuracy,
+                                    speed: speed,
+                                    timestamp: new Date().toISOString()
+                                })
+                            });
+                        } catch (error) {
+                            console.error('Error broadcasting location:', error);
+                        }
+                    },
+                    (error) => {
+                        console.error('Geolocation error:', error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            }
+    
+            window.startBroadcastingLocation = startBroadcastingLocation;
         }
-
-        window.startBroadcastingLocation = startBroadcastingLocation;
 
         // Function to update vehicle marker on map
         function updateVehicleMarker(latitude, longitude) {
@@ -732,21 +774,21 @@
 
         window.updateVehicleMarker = updateVehicleMarker;
 
-        // function updateLiveDate() {
-        //     const dateElement = document.getElementById('current-date');
-        //     const now = new Date();
-        //     const options = {
-        //         weekday: 'long',
-        //         year: 'numeric',
-        //         month: 'long',
-        //         day: 'numeric'
-        //     };
-        //     dateElement.textContent = now.toLocaleDateString('en-US', options);
-        // }
+        function updateLiveDate() {
+            const dateElement = document.getElementById('current-date');
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+            dateElement.textContent = now.toLocaleDateString('en-US', options);
+        }
 
-        // updateLiveDate();
+        updateLiveDate();
 
-        // setInterval(updateLiveDate, 3600000);
+        setInterval(updateLiveDate, 3600000);
 
         function toggleLogoutModal() {
             const modal = document.getElementById('logout-modal');
@@ -807,108 +849,111 @@
             vehicleMarker.remove();
         });
 
-        geolocate.on('geolocate', (position) => {
-            const { latitude, longitude, accuracy } = position.coords;
+        if(userRole === 'driver') {
 
-            console.log('📍 GPS fix acquired:', { latitude, longitude, accuracy });
-
-            // Update UI
-            gpsIndicator.className = 'w-2 h-2 bg-green-500 rounded-full animate-pulse';
-            gpsStatusText.textContent = 'GPS: Active';
-            currentCoords.textContent = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-            currentAccuracy.textContent = `${accuracy.toFixed(1)} m`;
-            updateTime.textContent = new Date().toLocaleTimeString();
-
-            // Show and update vehicle marker
-            if (vehicleMarker) {
-                vehicleMarker.setLngLat([longitude, latitude]);
-                vehicleMarker.addTo(map);
-            }
-
-            // Update path
-            vehiclePathCoordinates.push([longitude, latitude]);
-            if (vehiclePathCoordinates.length > 100) {
-                vehiclePathCoordinates.shift();
-            }
-
-            const pathSource = map.getSource('vehicle-path');
-            if (pathSource && vehiclePathCoordinates.length > 1) {
-                pathSource.setData({
-                    type: 'FeatureCollection',
-                    features: [{
-                        type: 'Feature',
-                        geometry: {
-                            type: 'LineString',
-                            coordinates: vehiclePathCoordinates
-                        },
-                        properties: {}
-                    }]
-                });
-            }
-
-            // Get CSRF token safely
-            const csrfToken = document.querySelector('meta[name="csrf-token"]');
-            if (!csrfToken) {
-                console.error('CSRF token not found');
-                return;
-            }
-
-            // IMPORTANT: Include vehicle_id in the request body
-            const requestData = {
-                vehicle_id: currentVehicleId,  // ← THIS IS CRITICAL - ADD THIS!
-                latitude: latitude.toFixed(6),
-                longitude: longitude.toFixed(6),
-                speed: 0,
-                accuracy: accuracy || 0
-            };
-
-            console.log('Sending location data:', requestData); // Debug log
-
-            fetch(`/track/vehicle/broadcast`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken.content,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(requestData)
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(errorData => {
-                            console.error('Server error:', errorData);
-                            throw new Error(JSON.stringify(errorData));
-                        });
-                    }
-                    return response.json();
+            geolocate.on('geolocate', (position) => {
+                const { latitude, longitude, accuracy } = position.coords;
+    
+                console.log('📍 GPS fix acquired:', { latitude, longitude, accuracy });
+    
+                // Update UI
+                gpsIndicator.className = 'w-2 h-2 bg-green-500 rounded-full animate-pulse';
+                gpsStatusText.textContent = 'GPS: Active';
+                currentCoords.textContent = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+                currentAccuracy.textContent = `${accuracy.toFixed(1)} m`;
+                updateTime.textContent = new Date().toLocaleTimeString();
+    
+                // Show and update vehicle marker
+                if (vehicleMarker) {
+                    vehicleMarker.setLngLat([longitude, latitude]);
+                    vehicleMarker.addTo(map);
+                }
+    
+                // Update path
+                vehiclePathCoordinates.push([longitude, latitude]);
+                if (vehiclePathCoordinates.length > 100) {
+                    vehiclePathCoordinates.shift();
+                }
+    
+                const pathSource = map.getSource('vehicle-path');
+                if (pathSource && vehiclePathCoordinates.length > 1) {
+                    pathSource.setData({
+                        type: 'FeatureCollection',
+                        features: [{
+                            type: 'Feature',
+                            geometry: {
+                                type: 'LineString',
+                                coordinates: vehiclePathCoordinates
+                            },
+                            properties: {}
+                        }]
+                    });
+                }
+    
+                // Get CSRF token safely
+                const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                if (!csrfToken) {
+                    console.error('CSRF token not found');
+                    return;
+                }
+    
+                // IMPORTANT: Include vehicle_id in the request body
+                const requestData = {
+                    vehicle_id: currentVehicleId,  // ← THIS IS CRITICAL - ADD THIS!
+                    latitude: latitude.toFixed(6),
+                    longitude: longitude.toFixed(6),
+                    speed: 0,
+                    accuracy: accuracy || 0
+                };
+    
+                console.log('Sending location data:', requestData); // Debug log
+    
+                fetch(`/track/vehicle/broadcast`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken.content,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
                 })
-                .then(data => {
-                    console.log('Location sent successfully:', data);
-                })
-                .catch(error => console.error('Error broadcasting:', error));
-        });
-
-        geolocate.on('error', (error) => {
-            console.error('Geolocation error:', error);
-            gpsIndicator.className = 'w-2 h-2 bg-red-500 rounded-full';
-            gpsStatusText.textContent = 'GPS: Error - ' + error.message;
-        });
-
-        geolocate.on('outofmaxbounds', () => {
-            console.log('GPS out of bounds');
-        });
-
-        geolocate.on('trackuserlocationstart', () => {
-            console.log('Tracking started');
-            gpsIndicator.className = 'w-2 h-2 bg-yellow-500 rounded-full animate-pulse';
-            gpsStatusText.textContent = 'GPS: Acquiring...';
-        });
-
-        geolocate.on('trackuserlocationend', () => {
-            console.log('Tracking ended');
-            gpsIndicator.className = 'w-2 h-2 bg-gray-400 rounded-full';
-            gpsStatusText.textContent = 'GPS: Not active';
-        });
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(errorData => {
+                                console.error('Server error:', errorData);
+                                throw new Error(JSON.stringify(errorData));
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Location sent successfully:', data);
+                    })
+                    .catch(error => console.error('Error broadcasting:', error));
+            });
+    
+            geolocate.on('error', (error) => {
+                console.error('Geolocation error:', error);
+                gpsIndicator.className = 'w-2 h-2 bg-red-500 rounded-full';
+                gpsStatusText.textContent = 'GPS: Error - ' + error.message;
+            });
+    
+            geolocate.on('outofmaxbounds', () => {
+                console.log('GPS out of bounds');
+            });
+    
+            geolocate.on('trackuserlocationstart', () => {
+                console.log('Tracking started');
+                gpsIndicator.className = 'w-2 h-2 bg-yellow-500 rounded-full animate-pulse';
+                gpsStatusText.textContent = 'GPS: Acquiring...';
+            });
+    
+            geolocate.on('trackuserlocationend', () => {
+                console.log('Tracking ended');
+                gpsIndicator.className = 'w-2 h-2 bg-gray-400 rounded-full';
+                gpsStatusText.textContent = 'GPS: Not active';
+            });
+        }
 
         if(userRole !== 'driver') {
             // Listen for ALL vehicle location updates (this runs for every user)
@@ -1011,6 +1056,9 @@
 
         // Refresh active vehicles every 10 seconds
         setInterval(refreshActiveVehicles, 10000);
+
+        // Broadcast the location every 5 seconds
+        setInterval(startBroadcastingLocation, 5000);
 
         // Initial refresh after 2 seconds
         setTimeout(refreshActiveVehicles, 2000);
@@ -1221,10 +1269,10 @@
 
         window.getDestination = getDestination;
 
-        // Optional: Auto - start GPS tracking when page loads
-        setTimeout(() => {
-            geolocate.trigger();
-        }, 1000);
+        // // Optional: Auto - start GPS tracking when page loads
+        // setTimeout(() => {
+        //     geolocate.trigger();
+        // }, 1000);
 
         // Initialize the functions
        

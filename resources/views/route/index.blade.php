@@ -55,7 +55,6 @@
                     <thead>
                         <tr class="text-xs font-bold uppercase tracking-widest opacity-70">
                             <th>ID</th>
-                            <th>Name</th>
                             <th>Starting Point</th>
                             <th> Destination</th>
                             <th>Actions</th>
@@ -65,7 +64,6 @@
                         @foreach ($routes as $route)
                             <tr class="text-center">
                                 <td>{{ $route->id }}</th>
-                                <td>{{ $route->name }}</th>
                                 <td class="break-words whitespace-normal">{{ $route->starting_point }}</th>
                                 <td class="break-words whitespace-normal">{{ $route->destination }}</th>
                                 <td class="flex flex-row gap-2 justify-center items-center py-2">

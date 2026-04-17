@@ -40,18 +40,19 @@
             class="p-8 w-full max-w-sm text-white rounded-3xl border shadow-2xl bg-white/10 backdrop-blur-xl border-white/20">
 
             <div class="mb-8 text-center">
-                <div class="flex justify-center items-center mb-4">
-                    <div class="flex justify-center items-center w-10 h-10 rounded-full border-2 border-white">
-                        <div class="w-5 h-5 bg-white rounded-full"></div>
+                <div class="flex items-center gap-3 px-2 mb-10 overflow-hidden whitespace-nowrap">
+                    <div
+                        class="min-w-[40px] h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
+                        <i class="fa-solid fa-bus text-white"></i>
                     </div>
-                    <span class="ml-3 text-2xl italic font-bold tracking-wider">SmartCommute</span>
+                    <span class="text-2xl font-bold tracking-wider italic">SmartCommute</span>
                 </div>
                 <h2 class="text-2xl font-bold tracking-tight">Email Verification</h2>
                 <p class="mt-1 text-xs opacity-60">We have sent you an activation link in your inbox.</p>
             </div>
             @if (session('message'))
                 <div class="mb-2 text-center">
-                    <p>{{ session('message') }}</p>
+                    <p class="text-green-400">{{ session('message') }}</p>
                 </div>
             @endif
 

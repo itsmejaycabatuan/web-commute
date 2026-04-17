@@ -17,10 +17,11 @@ class Payment extends Model
         'is_discounted',
         'payment_method',
         'price',
-        'transaction_id'
+        'transaction_id',
+        'paid_at'
     ];
 
     public function user() {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'paid_by');
     }
 }

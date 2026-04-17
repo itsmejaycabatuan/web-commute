@@ -54,7 +54,7 @@
                 <div class="alert alert-danger">
                     <ul>
                         @foreach ($errors->get('email') as $message)
-                            <li>{{ $message }}</li>
+                            <li class="text-red-400">{{ $message }}</li>
                         @endforeach
                     </ul>
                 </div>
@@ -63,7 +63,7 @@
                 <div class="alert alert-danger">
                     <ul>
                         @foreach ($errors->all() as $message)
-                            <li>{{ $message }}</li>
+                            <li class="text-red-400">{{ $message }}</li>
                         @endforeach
                     </ul>
                 </div>
@@ -80,7 +80,7 @@
                 <div class="alert alert-danger">
                     <ul>
                         @foreach ($errors->get('password') as $message)
-                            <li>{{ $message }}</li>
+                            <li class="text-red-400">{{ $message }}</li>
                         @endforeach
                     </ul>
                 </div>
@@ -97,7 +97,7 @@
                 <div class="alert alert-danger">
                     <ul>
                         @foreach ($errors->get('confirm-password') as $message)
-                            <li>{{ $message }}</li>
+                            <li class="text-red-400">{{ $message }}</li>
                         @endforeach
                     </ul>
                 </div>

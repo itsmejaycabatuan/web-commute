@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Models\Fare;
 use App\Models\FareRate;
 use App\Models\Payment;
+use App\Models\TopupHistory;
 use App\Models\Wallet;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -188,7 +189,16 @@ Route::middleware(['auth', 'verified'])->group(function (){
     // })->name('commuter.dashboard');
 
     Route::get('/commuter/profile', function () {
-        return view('commuter.profile');
+        $userId = Auth::user()->id;
+        $payments = Payment::where('paid_by', $userId)->get();
+        $topups = TopupHistory::where('user_id', $userId)->get();
+        $wallet = Wallet::where('user_id', $userId)->first();
+
+        return view('commuter.profile', [
+            'payments' => $payments,
+            'topups' => $topups,
+            'wallet' => $wallet
+        ]);
     })->name('commuter.profile');
 
     // Route::get('/dashboard', function () {
@@ -253,6 +263,10 @@ Route::middleware(['auth', 'verified'])->group(function (){
     Route::post('/payment/topup/process', [PaymentController::class, 'topupProcess'])->name('payment.topup.process');
     Route::get('/payment/topup/history', [PaymentController::class, 'topupHistory'])->name('payment.topup.history');
 
+    Route::get('/admin/topups', [PaymentController::class, 'showTopupsAdmin'])->name('admin.topups');
+    Route::get('/transactions', [PaymentController::class, 'showTransactions'])->name('faretransactions'); 
+    Route::get('/trasanctions/receipt/{id}', [PaymentController::class, 'showReceiptAdmin'])->name('admin.receipt.show');
+
     Route::middleware('role:admin')->group(function () {
         Route::get('/admin/commuters/create', [CommuterController::class, 'create'])->name('admin.commuters.create');
         Route::post('/admin/commuters', [CommuterController::class, 'store'])->name('admin.commuters.store');
@@ -268,7 +282,7 @@ Route::middleware(['auth', 'verified'])->group(function (){
         Route::delete('/admin/drivers/{user}', [DriverApprovalController::class, 'destroy'])->name('admin.drivers.destroy');
         Route::get('/admin/drivers/{user}/license', [DriverApprovalController::class, 'showLicense'])->name('admin.drivers.license');
         Route::post('/admin/drivers/{user}/approve', [DriverApprovalController::class, 'approve'])->name('admin.drivers.approve');
-        Route::post('/admin/drivers/{user}/unapprove', [DriverApprovalController::class, 'unapprove'])->name('admin.drivers.unapprove');
+        // Route::post('/admin/drivers/{user}/unapprove', [DriverApprovalController::class, 'unapprove'])->name('admin.drivers.unapprove');
         Route::post('/admin/drivers/{user}/reject', [DriverApprovalController::class, 'reject'])->name('admin.drivers.reject');
         Route::get('/admin/drivers', [DriverApprovalController::class, 'index'])->name('admin.drivers.index');
     });
@@ -279,7 +293,11 @@ Route::middleware(['auth', 'verified'])->group(function (){
     });
 
     Route::get('/adminprofile', function () {
-        return view('adminprofile');
+        $info = Auth::user();
+
+        return view('admin.adminprofile', [
+            'info' => $info
+        ]);
     })->name('adminprofile');
 
     Route::get('/admindashboard',function (){
@@ -295,6 +313,30 @@ Route::middleware(['auth', 'verified'])->group(function (){
     Route::get('/profile', function () {
         return view('profile');
     })->name('profile');
+
+    Route::get('/profile/edit', function() {
+        return view('commuter.editprofile');
+    })->name('profile.edit');
+
+    Route::patch('/profile/update', function(Request $request) {
+
+        $request->validate([
+            'current_password' => 'required',
+            'password' => 'required|min:8',
+            'password_confirmation' => 'required|same:password'
+        ]);
+
+        $userId = Auth::user()->id;
+        $user = User::where('id', $userId)->first();
+
+        if($user->update([
+            'password' => $request->password_confirmation
+        ])) {
+            return redirect()->route('commuter.profile')->with('success', 'password successfully updated');
+        }
+
+        return back()->with('error', 'Failed to update password');
+    })->name('profile.update');
 
     Route::get('/fare/{id}', [FareController::class, 'view'])->middleware('role:admin')->name('fares.view');
     Route::get('/fares', [FareController::class, 'index'])->middleware('role:admin')->name('fares.index');

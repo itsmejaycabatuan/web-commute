@@ -39,7 +39,7 @@
     <div class="max-w-4xl mx-auto">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
             <div>
-                <h1 class="text-3xl font-bold text-white tracking-tight">Transaction History</h1>
+                <h1 class="text-3xl font-bold text-white tracking-tight">Top-up History</h1>
                 <p class="text-white/50 text-sm">Monitor your wallet top-ups and status</p>
             </div>
             <div class="flex gap-3">

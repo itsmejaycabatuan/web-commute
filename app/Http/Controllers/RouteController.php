@@ -39,13 +39,11 @@ class RouteController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string',
             'starting_point' => 'required|string',
             'destination' => 'required|string'
         ]);
 
         $route = Route::create([
-            'name' => $request->name,
             'starting_point' => $request->starting_point,
             'destination' => $request->destination
         ]);
@@ -93,7 +91,22 @@ class RouteController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $route = Route::find($id);
+
+        $request->validate([
+            'starting_point' => 'required|string',
+            'destination' => 'required|string'
+        ]);
+
+        $route->update([
+            'starting_point' => $request->starting_point,
+            'destination' => $request->destination
+        ]);
+
+        if($route) {
+            return redirect()->route('routes.index')->with('message', 'Route updated successfully!');
+        }
+        return back()->with('error', 'Route failed to update');
     }
 
     /**
