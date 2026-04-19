@@ -367,6 +367,34 @@
     </div>
 
 
+    <div id="limit-modal"
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel p-8 rounded-[2.5rem] w-full max-w-sm mx-4 text-center border-white/20 shadow-2xl transform scale-95 transition-transform duration-300"
+            id="limit-modal-content">
+
+            <div class="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-hourglass-end text-amber-500 text-xl"></i>
+            </div>
+
+            <h3 class="text-xl font-bold text-white mb-2">Daily Limit Reached</h3>
+            <p class="text-sm text-white/60 mb-8">Guests are limited to 3 actions per day. Please sign in to continue
+                without limits!</p>
+
+            <div class="grid gap-3 grid-row-2 grid-col-1">
+                <button onclick="toggleLimitModal(false)"
+                    class="flex-1 px-6 py-3 rounded-2xl bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition">
+                    Maybe Later
+                </button>
+
+                <a href="/login"
+                    class="w-full px-6 py-3 rounded-2xl bg-amber-500 text-white text-xs font-bold uppercase tracking-widest hover:bg-amber-600 shadow-lg shadow-amber-500/20 transition inline-block">
+                    Sign In / Register
+                </a>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Mobile Bottom Navigation -->
     <div class="fixed bottom-6 left-6 right-6 z-50 md:hidden">
         <div class="glass-panel p-4 rounded-3xl flex justify-around items-center">
@@ -446,7 +474,7 @@
                                             </div>
                                         </div>
                                         <span
-                                            class="justify-center text-xs font-bold uppercase tracking-widest text-white/70">Discount</span>
+                                            class="justify-center text-xs font-bold uppercase tracking-widest text-white/70">Student/Elderly/Disabled</span>
                                         <div class="flex gap-2 items-center">
                                             <div class="relative flex-1">
                                                 <i
@@ -464,9 +492,9 @@
                                     </button>
                                     <button
                                         class="mt-6 flex items-center justify-center gap-2 w-full bg-gradient-to-r
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            py-4 px-6 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all duration-300
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                py-4 px-6 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all duration-300
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                shadow-lg shadow-blue-500/20 active:scale-[0.98]"
                                         type="submit">
                                         <span>Buy a ride</span>
                                         <i class="fa-solid fa-arrow-right text-[10px]"></i>
@@ -492,10 +520,10 @@
                     @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter')
                         <a href="{{ route('tutorial') }}"
                             class=" glass-panel p-5 rounded-3xl flex items-center space-x-4 border-yellow-500/30 group
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                hover:bg-yellow-500/10 transition">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    hover:bg-yellow-500/10 transition">
                             <div
                                 class=" w-10 h-10 bg-yellow-500/30 rounded-xl flex items-center justify-center
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            group-hover:rotate-12 transition">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                group-hover:rotate-12 transition">
                                 <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i>
                             </div>
                             <div>
@@ -504,6 +532,34 @@
                                 </p>
                             </div>
                         </a>
+                    @endif
+
+                    @if (!Auth::check())
+                        <div class="glass-panel p-8 rounded-[2.5rem] mt-6">
+                            <h3
+                                class="text-xs font-bold mb-6 uppercase text-white tracking-widest opacity-80 flex items-center">
+                                <i class="fa-solid fa-bolt mr-2 text-amber-400"></i>Daily Usage
+                            </h3>
+
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-end mb-1">
+                                    <span class="text-[10px] font-bold uppercase tracking-widest text-white/60">Limit
+                                        Status</span>
+                                    <span id="usage-text" class="text-xs font-bold text-white tracking-widest">0 / 3</span>
+                                </div>
+
+                                <div
+                                    class="w-full bg-white/10 border border-white/20 rounded-full h-3 overflow-hidden p-[2px]">
+                                    <div id="usage-bar"
+                                        class="h-full bg-gradient-to-r from-amber-500 to-orange-400 rounded-full transition-all duration-500"
+                                        style="width: 0%"></div>
+                                </div>
+
+                                <p class="text-[9px] uppercase tracking-[0.15em] text-white/40 text-center mt-2">
+                                    Guests get 3 free fare checks per day
+                                </p>
+                            </div>
+                        </div>
                     @endif
 
                     @if(Auth::check() && Auth::user()->roles[0]->name === 'commuter')
@@ -576,9 +632,9 @@
                                     <span><i class="fa-solid fa-location-dot text-blue-400 mr-1"></i> Destination:</span>
                                     <span
                                         class="font-mono"">IT Park</span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <div class="
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <div class="
                                         flex justify-between items-start mb-4">
                                         <div>
                                             <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">
@@ -630,6 +686,15 @@
                         </div>
                     @endif
 
+                    @if (!Auth::check())
+
+                        <div class="sidebar-toggle rounded-rect right" onclick="toggleSidebar('right')">
+
+                            &larr;
+
+                        </div>
+                    @endif
+
                 </div>
 
             </div>
@@ -644,6 +709,7 @@
             const pusherKey = '{{ env("PUSHER_APP_KEY") }}';
             const pusherCluster = '{{ env("PUSHER_APP_CLUSER") }}';
 
+            const DAILY_LIMIT = 3;
 
             window.Pusher = Pusher;
             window.Echo = new Echo({
@@ -1446,17 +1512,88 @@
                 directions = new MapLibreGlDirections(map);
             });
 
+            const modal = document.getElementById('limit-modal');
+            const modalContent = document.getElementById('limit-modal-content');
+
+            // Function to open/close the modal
+            function toggleLimitModal(show) {
+                if (show) {
+                    modal.classList.remove('opacity-0', 'pointer-events-none');
+                    modalContent.classList.remove('scale-95');
+                    modalContent.classList.add('scale-100');
+                } else {
+                    modal.classList.add('opacity-0', 'pointer-events-none');
+                    modalContent.classList.remove('scale-100');
+                    modalContent.classList.add('scale-95');
+                }
+                resetForm();
+            }
+
+            window.toggleLimitModal = toggleLimitModal;
+
+
+            function getUsageData() {
+                const today = new Date().toDateString();
+                const stored = localStorage.getItem('guest_usage');
+
+                // If it's null, return a fresh starting object
+                if (!stored) {
+                    return { count: 0, date: today };
+                }
+
+                let data = JSON.parse(stored);
+
+                // If the date in storage isn't today, reset to 0
+                if (data.date !== today) {
+                    return { count: 0, date: today };
+                }
+
+                return data;
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                updateUsageUI();
+            });
+
+            function updateUsageUI() {
+                let usageData = getUsageData();
+
+                const textElem = document.getElementById('usage-text');
+                const barElem = document.getElementById('usage-bar');
+
+                console.log("usage data: ", usageData);
+
+                if (textElem && barElem) {
+                    textElem.innerText = `${usageData.count} / ${DAILY_LIMIT}`;
+                    const percentage = (usageData.count / DAILY_LIMIT) * 100;
+                    barElem.style.width = `${percentage}%`;
+
+                    // Visual indicator if maxed out
+                    if (usageData.count >= DAILY_LIMIT) {
+                        barElem.classList.add('from-red-500', 'to-red-400');
+                    }
+                }
+            }
+
+
             function drawRoute() {
                 if (!directions) return;
 
+                let usageData = getUsageData();
+
+
                 if (pickupLng && pickupLat && destinationLng && destinationLat) {
+                    if (usageData.count >= DAILY_LIMIT) {
+                        toggleLimitModal(true); // Show the modal
+                        return; // Stop the function here
+                    }
+
                     directions.setWaypoints([
                         [parseFloat(pickupLng), parseFloat(pickupLat)],
                         [parseFloat(destinationLng), parseFloat(destinationLat)]
                     ]);
 
                     directions.on("fetchroutesend", async (e) => {
-
                         console.log(e.data.directions.routes[0].distance);
                         const distanceMeters = e.data.directions.routes[0].distance;
                         const distanceKM = distanceMeters / 1000;
@@ -1466,9 +1603,18 @@
                         let rate = getFareRate(Math.round(distanceKM));
                         priceRegular.value = rate['regular'];
                         priceDiscount.value = rate['discount'];
+
+                        usageData.count += 1;
+                        localStorage.setItem('guest_usage', JSON.stringify(usageData));
+                        updateUsageUI();
                     });
                 }
             }
+
+            // Close when clicking outside the glass panel
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) toggleLimitModal(false);
+            });
 
             window.drawRoute = drawRoute;
 
