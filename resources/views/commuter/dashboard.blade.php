@@ -393,27 +393,35 @@
                                     class="text-xs font-bold mb-6 uppercase text-white tracking-widest opacity-80 flex items-center">
                                     <i class="fa-solid fa-money-bill mr-2 text-blue-400"></i>Fare Price
                                 </h3>
+                                <div id="status-indicator"
+                                    class="hidden mb-4 p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                                    <span id="status-text"
+                                        class="text-[10px] uppercase tracking-widest text-blue-400 font-bold">
+                                        Selecting Pick-up...
+                                    </span>
+                                </div>
                                 <div class="space-y-4">
-                                    <div class="relative group">
-                                        <i
-                                            class="fa-solid fa-circle-dot absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-blue-400"></i>
-                                        <input type="text" placeholder="Pick-up point" name="pickup" id="pickup" readonly
-                                            class="w-full bg-white/10 border border-white/20 rounded-2xl pl-10 pr-4 py-3 text-xs text-white focus:bg-white/20 focus:border-blue-500/50 outline-none transition cursor-pointer">
-                                        <button type="button" onclick="getStartingPoint()"
-                                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                            <!-- Invisible button for functionality -->
+                                    <div class="flex gap-2 items-center">
+                                        <button type="button" onclick="toggleSelection('pickup')"
+                                            class="flex items-center justify-center w-11 h-11 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 p-3 rounded-2xl border border-blue-500/30 transition">
+                                            <i class="fa-solid fa-circle-dot text-xs text-blue-400"></i>
                                         </button>
+                                        <div class="relative flex-1">
+                                            <input type="text" placeholder="Pick-up point" name="pickup" id="pickup"
+                                                class="w-full bg-white/10 border border-white/20 rounded-2xl pl-4 pr-4 py-3 text-xs text-white outline-none">
+                                        </div>
                                     </div>
-                                    <div class="relative group">
-                                        <i
-                                            class="fa-solid fa-location-dot absolute left-4 top-1/2 -translate-y-1/2 text-[10px] text-red-400"></i>
-                                        <input type="text" placeholder="Destination" name="destination" id="destination"
-                                            readonly
-                                            class="w-full bg-white/10 border border-white/20 rounded-2xl pl-10 pr-4 py-3 text-xs text-white focus:bg-white/20 focus:border-red-500/50 outline-none transition cursor-pointer">
-                                        <button type="button" onclick="getDestination()"
-                                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                            <!-- Invisible button for functionality -->
+
+                                    <div class="flex gap-2 items-center">
+                                        <button type="button" onclick="toggleSelection('destination')"
+                                            class="flex items-center justify-center w-11 h-11 bg-red-500/20 hover:bg-red-500/40 text-red-400 p-3 rounded-2xl border border-red-500/30 transition">
+                                            <i class="fa-solid fa-location-dot  text-xs text-red-400"></i>
                                         </button>
+                                        <div class="relative flex-1">
+                                            <input type="text" placeholder="Destination" name="destination" id="destination"
+                                                class="w-full bg-white/10 border border-white/20 rounded-2xl pl-4 pr-4 py-3 text-xs text-white outline-none">
+                                        </div>
                                     </div>
                                     <h3
                                         class="text-xs font-bold mb-2 uppercase tracking-widest text-white/80 justify-center flex items-center">
@@ -425,10 +433,8 @@
                                             value="0">
                                         <span class="text-xs font-bold uppercase tracking-widest text-white/70">KM</span>
                                     </div>
-                                    <h3
-                                        class="text-xs font-bold mb-2 uppercase tracking-widest text-white/80 justify-center flex items-center">
-                                        Price
-                                    </h3>
+                                    <span
+                                        class="justify-center text-xs font-bold uppercase tracking-widest text-white/70 ">Regular</span>
                                     <div class="space-y-3">
                                         <div class="flex gap-2 items-center">
                                             <div class="relative flex-1">
@@ -438,9 +444,9 @@
                                                     class="w-full bg-white/10 border border-white/20 rounded-2xl pl-8 pr-4 py-3 text-xs text-white text-center"
                                                     value="0">
                                             </div>
-                                            <span
-                                                class="text-xs font-bold uppercase tracking-widest text-white/70">Regular</span>
                                         </div>
+                                        <span
+                                            class="justify-center text-xs font-bold uppercase tracking-widest text-white/70">Discount</span>
                                         <div class="flex gap-2 items-center">
                                             <div class="relative flex-1">
                                                 <i
@@ -449,15 +455,18 @@
                                                     class="w-full bg-white/10 border border-white/20 rounded-2xl pl-8 pr-4 py-3 text-xs text-white text-center"
                                                     value="0">
                                             </div>
-                                            <span
-                                                class="text-xs font-bold uppercase tracking-widest text-white/70">Discount</span>
                                         </div>
                                     </div>
+                                    <button type="button" onclick="resetForm()"
+                                        class="mt-2 flex items-center justify-center gap-2 w-full bg-white/5 hover:bg-red-500/20 text-white/70 hover:text-red-400 font-bold py-3 px-6 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all duration-300 border border-white/10 hover:border-red-500/30">
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                        <span>Reset Route</span>
+                                    </button>
                                     <button
                                         class="mt-6 flex items-center justify-center gap-2 w-full bg-gradient-to-r
-                                                                                                                                            from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold
-                                                                                                                                            py-4 px-6 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all duration-300
-                                                                                                                                            shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            py-4 px-6 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all duration-300
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            shadow-lg shadow-blue-500/20 active:scale-[0.98]"
                                         type="submit">
                                         <span>Buy a ride</span>
                                         <i class="fa-solid fa-arrow-right text-[10px]"></i>
@@ -483,10 +492,10 @@
                     @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter')
                         <a href="{{ route('tutorial') }}"
                             class=" glass-panel p-5 rounded-3xl flex items-center space-x-4 border-yellow-500/30 group
-                                                                                                                                                                hover:bg-yellow-500/10 transition">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                hover:bg-yellow-500/10 transition">
                             <div
                                 class=" w-10 h-10 bg-yellow-500/30 rounded-xl flex items-center justify-center
-                                                                                                                                                                            group-hover:rotate-12 transition">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            group-hover:rotate-12 transition">
                                 <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i>
                             </div>
                             <div>
@@ -565,10 +574,12 @@
                                 </div>
                                 <div class="flex justify-between">
                                     <span><i class="fa-solid fa-location-dot text-blue-400 mr-1"></i> Destination:</span>
-                                    <span class="font-mono"">IT Park</span>
-                                                                            </div>
-                                                                        </div>
-                                                                    <div class=" flex justify-between items-start mb-4">
+                                    <span
+                                        class="font-mono"">IT Park</span>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <div class="
+                                        flex justify-between items-start mb-4">
                                         <div>
                                             <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">
                                                 Live
@@ -1172,77 +1183,77 @@
                 //     }
                 // }
 
-function updateVehicleMarkerOnMap(vehicleId, longitude, latitude, speed) {
-    if (vehicleMarkers.has(vehicleId)) {
-        const marker = vehicleMarkers.get(vehicleId);
-        marker.setLngLat([longitude, latitude]);
-        marker.vehicleData = { longitude, latitude, speed: speed || 0 };
+                function updateVehicleMarkerOnMap(vehicleId, longitude, latitude, speed) {
+                    if (vehicleMarkers.has(vehicleId)) {
+                        const marker = vehicleMarkers.get(vehicleId);
+                        marker.setLngLat([longitude, latitude]);
+                        marker.vehicleData = { longitude, latitude, speed: speed || 0 };
 
-        // If this bus is the one being tracked, move the popup and the line
-        if (activeTrackedVehicle === vehicleId) {
-            // Update the line
-            directions.setWaypoints([[userLng, userLat], [longitude, latitude]]);
-            
-            // Move the popup to follow the bus
-            if (infoPopup.isOpen()) {
-                infoPopup.setLngLat([longitude, latitude]);
-            }
-        }
-    } else {
-        const markerElement = document.createElement('div');
-        markerElement.className = 'custom-vehicle-marker';
-        markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
-        markerElement.style.backgroundColor = getRandomColor(vehicleId);
+                        // If this bus is the one being tracked, move the popup and the line
+                        if (activeTrackedVehicle === vehicleId) {
+                            // Update the line
+                            directions.setWaypoints([[userLng, userLat], [longitude, latitude]]);
 
-        const marker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
-            .setLngLat([longitude, latitude])
-            .addTo(map);
+                            // Move the popup to follow the bus
+                            if (infoPopup.isOpen()) {
+                                infoPopup.setLngLat([longitude, latitude]);
+                            }
+                        }
+                    } else {
+                        const markerElement = document.createElement('div');
+                        markerElement.className = 'custom-vehicle-marker';
+                        markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
+                        markerElement.style.backgroundColor = getRandomColor(vehicleId);
 
-        marker.vehicleData = { longitude, latitude, speed: speed || 0 };
+                        const marker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
+                            .setLngLat([longitude, latitude])
+                            .addTo(map);
 
-        markerElement.addEventListener('click', (e) => {
-            e.stopPropagation();
+                        marker.vehicleData = { longitude, latitude, speed: speed || 0 };
 
-            // TOGGLE OFF
-            if (activeTrackedVehicle === vehicleId) {
-                directions.clear();
-                infoPopup.remove();
-                activeTrackedVehicle = null;
-                return;
-            }
+                        markerElement.addEventListener('click', (e) => {
+                            e.stopPropagation();
 
-            activeTrackedVehicle = vehicleId;
-            
-            // Clear old listeners before starting new route
-            directions.off("fetchroutesend");
+                            // TOGGLE OFF
+                            if (activeTrackedVehicle === vehicleId) {
+                                directions.clear();
+                                infoPopup.remove();
+                                activeTrackedVehicle = null;
+                                return;
+                            }
 
-            directions.setWaypoints([[userLng, userLat], [longitude, latitude]]);
+                            activeTrackedVehicle = vehicleId;
 
-            directions.on("fetchroutesend", (ev) => {
-                if (activeTrackedVehicle !== vehicleId) return;
+                            // Clear old listeners before starting new route
+                            directions.off("fetchroutesend");
 
-                const route = ev.data.directions.routes[0];
-                const dist = (route.distance / 1000).toFixed(2);
-                const eta = Math.round(route.duration / 60);
+                            directions.setWaypoints([[userLng, userLat], [longitude, latitude]]);
 
-                // Simply update the EXISTING popup
-                infoPopup.setLngLat([longitude, latitude])
-                    .setHTML(`
+                            directions.on("fetchroutesend", (ev) => {
+                                if (activeTrackedVehicle !== vehicleId) return;
+
+                                const route = ev.data.directions.routes[0];
+                                const dist = (route.distance / 1000).toFixed(2);
+                                const eta = Math.round(route.duration / 60);
+
+                                // Simply update the EXISTING popup
+                                infoPopup.setLngLat([longitude, latitude])
+                                    .setHTML(`
                         <div class="p-2 text-black">
                             <strong>Vehicle: ${vehicleId}</strong><br>
                             Dist: ${dist} km | ETA: ~${eta} mins
                         </div>
                     `);
 
-                if (!infoPopup.isOpen()) {
-                    infoPopup.addTo(map);
-                }
-            });
-        });
+                                if (!infoPopup.isOpen()) {
+                                    infoPopup.addTo(map);
+                                }
+                            });
+                        });
 
-        vehicleMarkers.set(vehicleId, marker);
-    }
-}
+                        vehicleMarkers.set(vehicleId, marker);
+                    }
+                }
 
                 window.updateVehicleMarkerOnMap = updateVehicleMarkerOnMap;
 
@@ -1369,14 +1380,14 @@ function updateVehicleMarkerOnMap(vehicleId, longitude, latitude, speed) {
                 }
             };
 
-            map.addControl(
-                new MaplibreGeocoder(geocoderApi, {
-                    maplibregl,
-                    minLength: 3,        // Only start searching after 3 characters are typed
-                    debounceSearch: 300, // Wait 300ms after the last keystroke before calling the API
-                    showResultsWhileTyping: true // Ensures the dropdown updates dynamically
-                }), 'bottom-left'
-            );
+            // map.addControl(
+            //     new MaplibreGeocoder(geocoderApi, {
+            //         maplibregl,
+            //         minLength: 3,        // Only start searching after 3 characters are typed
+            //         debounceSearch: 300, // Wait 300ms after the last keystroke before calling the API
+            //         showResultsWhileTyping: true // Ensures the dropdown updates dynamically
+            //     }), 'bottom-left'
+            // );
 
             const startPoint = {
                 'type': 'FeatureCollection',
@@ -1461,56 +1472,127 @@ function updateVehicleMarkerOnMap(vehicleId, longitude, latitude, speed) {
 
             window.drawRoute = drawRoute;
 
-            function getStartingPoint() {
-                map.once('mousemove', (e) => {
-                    map.getCanvas().style.cursor = 'crosshair';
-                });
+            // function getStartingPoint() {
+            //     document.body.style.cursor = 'crosshair';
+            //     map.getCanvas().style.cursor = 'crosshair';
 
-                map.once('click', (e) => {
-                    const coords = e.lngLat;
+            //     map.once('click', (e) => {
+            //         const coords = e.lngLat;
+
+            //         startPoint.features[0].geometry.coordinates = [coords.lng, coords.lat];
+            //         map.getSource('point').setData(startPoint);
+
+            //         let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
+            //         let coordinatesArray = coordinates.split(" ");
+
+            //         pickupLng = coordinatesArray[0];
+            //         pickupLat = coordinatesArray[1];
+
+            //         pickup.value = coordinates;
+
+            //         document.body.style.cursor = 'default';
+            //         map.getCanvas().style.cursor = 'pointer';
+            //         drawRoute();
+            //     });
+            // }
+
+            // window.getStartingPoint = getStartingPoint;
+
+            // function getDestination() {
+            //     document.body.style.cursor = 'crosshair';
+            //     map.getCanvas().style.cursor = 'crosshair';
+
+            //     map.once('click', (e) => {
+            //         let longLat = e.lngLat;
+
+            //         let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
+            //         let coordinatesArray = coordinates.split(" ");
+
+            //         destinationLng = coordinatesArray[0];
+            //         destinationLat = coordinatesArray[1];
+
+            //         marker.setLngLat([longLat.lng, longLat.lat]);
+
+            //         destination.value = coordinates;
+
+            //         document.body.style.cursor = 'default';
+            //         map.getCanvas().style.cursor = 'pointer';
+            //         drawRoute();
+            //     });
+            // }
+
+            // window.getDestination = getDestination;
+            let activeMode = null; // Can be 'pickup', 'destination', or null
+
+            const indicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+
+            function toggleSelection(mode) {
+                // 1. If clicking the SAME button again, turn it OFF
+                if (activeMode === mode) {
+                    cancelSelection();
+                    return;
+                }
+
+                // 2. If a different mode was active, cancel it first
+                if (activeMode !== null) {
+                    cancelSelection();
+                }
+
+                // 3. Set the new active mode
+                activeMode = mode;
+
+                if (activeMode === 'pickup') {
+                    statusText.innerText = "Click on the map for Pick-up";
+                    indicator.className = "mb-4 p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center gap-3";
+                } else if (activeMode === 'destination') {
+                    statusText.innerText = "Click on the map for Destination";
+                    indicator.className = "mb-4 p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center gap-3";
+                }
+
+                indicator.classList.remove('hidden');
+                document.body.style.cursor = 'crosshair';
+                map.getCanvas().style.cursor = 'crosshair';
+
+                // 4. Add the click listener
+                // Note: We use a named function so we can remove it if canceled
+                map.once('click', handleMapClick);
+            }
+
+            window.toggleSelection = toggleSelection;
+
+            function handleMapClick(e) {
+                if (!activeMode) return;
+
+                const coords = e.lngLat;
+
+                if (activeMode === 'pickup') {
 
                     startPoint.features[0].geometry.coordinates = [coords.lng, coords.lat];
                     map.getSource('point').setData(startPoint);
+                    pickup.value = `${coords.lng} ${coords.lat}`;
+                    pickupLng = coords.lng;
+                    pickupLat = coords.lat;
+                } else if (activeMode === 'destination') {
 
-                    let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
-                    let coordinatesArray = coordinates.split(" ");
+                    marker.setLngLat([coords.lng, coords.lat]);
+                    destination.value = `${coords.lng} ${coords.lat}`;
+                    destinationLng = coords.lng;
+                    destinationLat = coords.lat;
+                }
 
-                    pickupLng = coordinatesArray[0];
-                    pickupLat = coordinatesArray[1];
-
-                    pickup.value = coordinates;
-
-                    map.getCanvas().style.cursor = 'pointer';
-                    drawRoute();
-                });
+                drawRoute();
+                cancelSelection(); // Reset cursor and state after successful click
             }
 
-            window.getStartingPoint = getStartingPoint;
-
-            function getDestination() {
-                map.once('mousemove', (e) => {
-                    map.getCanvas().style.cursor = 'crosshair';
-                });
-
-                map.once('click', (e) => {
-                    let longLat = e.lngLat;
-
-                    let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
-                    let coordinatesArray = coordinates.split(" ");
-
-                    destinationLng = coordinatesArray[0];
-                    destinationLat = coordinatesArray[1];
-
-                    marker.setLngLat([longLat.lng, longLat.lat]);
-
-                    destination.value = coordinates;
-
-                    map.getCanvas().style.cursor = 'pointer';
-                    drawRoute();
-                });
+            function cancelSelection() {
+                activeMode = null;
+                indicator.classList.add('hidden');
+                document.body.style.cursor = 'default';
+                map.getCanvas().style.cursor = 'grab';
+                // Remove the listener in case they haven't clicked yet
+                map.off('click', handleMapClick);
             }
-
-            window.getDestination = getDestination;
 
             // // Optional: Auto - start GPS tracking when page loads
             // setTimeout(() => {
@@ -1519,6 +1601,154 @@ function updateVehicleMarkerOnMap(vehicleId, longitude, latitude, speed) {
 
             // Initialize the functions
 
+            function resetForm() {
+                // Clear Input Fields
+
+                pickup.value = "";
+                destination.value = "";
+                distanceCoordinate.value = "0";
+                priceRegular.value = "0";
+                priceDiscount.value = "0";
+
+                startPoint.features[0].geometry.coordinates = [];
+                if (map.getSource('point')) {
+                    map.getSource('point').setData(startPoint);
+                }
+
+                // 4. Remove or Hide the Destination Marker
+                // Depending on your Mapbox/Leaflet version, you can remove it or set it to null
+                if (marker) {
+                    marker.setLngLat([0, 0]); // Move to a null island or hide it
+                    // Or if you want to remove it entirely from the map:
+                    // marker.remove(); 
+                }
+
+                // 5. Clear the Route Line
+                // Assuming 'route' is the source ID for your polyline/path
+                if (map.getSource('route')) {
+                    map.getSource('route').setData({
+                        'type': 'FeatureCollection',
+                        'features': []
+                    });
+                }
+
+                // 6. Reset global coordinate variables
+                pickupLng = null;
+                pickupLat = null;
+                destinationLng = null;
+                destinationLat = null;
+
+                directions.clear();
+
+                // Optional: If you are using Google Maps API, clear markers here
+                // e.g., if (marker) marker.setMap(null);
+
+                console.log("Form reset successfully.");
+            }
+
+            window.resetForm = resetForm;
+
+            const PHOTON_URL = "https://photon.komoot.io/api/?q=";
+            const BBOX = "123.77516124821591, 10.229235293025951,123.91768276426876, 10.332535160307074";
+
+            async function searchAddress(query) {
+                if (query.length < 3) return []; // Don't search for tiny strings
+                try {
+                    const response = await fetch(`${PHOTON_URL}${encodeURIComponent(query)}&bbox=${BBOX}&limit=5`);
+                    const data = await response.json();
+                    return data.features; // Photon returns GeoJSON
+                } catch (error) {
+                    console.error("Geocoding failed", error);
+                    return [];
+                }
+            }
+
+            window.searchAddress = searchAddress;
+
+            const pickupInput = document.getElementById('pickup');
+            const destinationInput = document.getElementById('destination');
+
+            // Listener for Pick-up
+            pickupInput.addEventListener('input', async (e) => {
+                // updateStatus("Selecting Pick-up...", "blue");
+                const results = await searchAddress(e.target.value);
+                // Pass 'pickup' as the type
+                showSuggestions(e.target, results, 'pickup');
+            });
+
+            // Listener for Destination
+            destinationInput.addEventListener('input', async (e) => {
+                // updateStatus("Selecting Destination...", "red");
+                const results = await searchAddress(e.target.value);
+                // Pass 'destination' as the type
+                showSuggestions(e.target, results, 'destination');
+            });
+
+            // // Helper to update your UI status bar
+            // function updateStatus(text, color) {
+            //     const indicator = document.getElementById('status-indicator');
+            //     const statusText = document.getElementById('status-text');
+            //     indicator.classList.remove('hidden');
+            //     statusText.innerText = text;
+            //     // You could dynamically swap classes here for blue/red themes
+            // }
+
+            function showSuggestions(inputElement, features, type) {
+                // 1. Remove existing dropdowns
+                closeAllLists();
+                if (!features.length) return;
+
+                // 2. Create the container
+                const listContainer = document.createElement("div");
+                listContainer.setAttribute("class", "absolute z-50 w-full mt-2 bg-slate-800 border border-white/10 rounded-xl overflow-hidden shadow-2xl");
+
+                // 3. Populate results
+                features.forEach(feature => {
+                    const { name, city, country } = feature.properties;
+                    const displayName = `${name}${city ? ', ' + city : ''}`;
+
+                    const item = document.createElement("div");
+                    item.className = "px-4 py-3 text-xs text-white/80 hover:bg-blue-500/20 cursor-pointer transition-colors border-b border-white/5 last:border-0";
+                    item.innerHTML = `<strong>${name}</strong> <span class="opacity-50 text-[10px] block">${city || ''} ${country || ''}</span>`;
+
+                    item.onclick = () => {
+                        // 1. Set the text value for the user to see
+                        const cityName = feature.properties.city || feature.properties.country || "";
+                        inputElement.value = `${feature.properties.name}${cityName ? ', ' + cityName : ''}`;
+
+                        // 2. Save the coordinates into the HTML element itself
+                        const lat = inputElement.dataset.lat = feature.geometry.coordinates[1]; // Latitude is index 1
+                        const long = inputElement.dataset.lon = feature.geometry.coordinates[0]; // Longitude is index 0
+
+                        if (type === 'pickup') {
+                            startPoint.features[0].geometry.coordinates = [long, lat];
+                            map.getSource('point').setData(startPoint);
+                            pickup.value = `${long} ${lat}`;
+                            pickupLng = long;
+                            pickupLat = lat;
+                        } else if (type === 'destination') {
+                            marker.setLngLat([long, lat]);
+                            destination.value = `${long} ${lat}`;
+                            destinationLng = long;
+                            destinationLat = lat;
+                        }
+
+                        drawRoute();
+                        closeAllLists();
+                    };
+                    listContainer.appendChild(item);
+                });
+
+                inputElement.parentNode.appendChild(listContainer);
+            }
+
+            function closeAllLists() {
+                const items = document.querySelectorAll(".absolute.z-50");
+                items.forEach(item => item.remove());
+            }
+
+            // Close dropdown when clicking outside
+            document.addEventListener("click", (e) => closeAllLists());
         </script>
 </body>
 
