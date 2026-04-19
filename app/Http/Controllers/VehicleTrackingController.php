@@ -6,12 +6,11 @@ use App\Events\LocationUpdated;
 use App\Models\VehicleLocation;
 use App\Models\VehicleLocationHistory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class VehicleTrackingController extends Controller
 {
-
-
     private function haversineDistance($lat1, $lon1, $lat2, $lon2, $unit = 'km') {
         $theta = $lon1 - $lon2;
         $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) + 
@@ -38,13 +37,15 @@ class VehicleTrackingController extends Controller
             'longitude' => 'required|numeric',
             'speed' => 'nullable|numeric',
             'accuracy' => 'nullable|numeric',
+            'user_id' => 'required',
         ]);
         
         $vehicleLocation = VehicleLocation::updateOrCreate(
             [
-                'vehicle_id' => $validated['vehicle_id']
+                'vehicle_id' => $validated['vehicle_id'],
                 ],
-            [
+                [
+                'user_id' => $validated['user_id'],
                 'latitude' => $validated['latitude'],
                 'longitude' => $validated['longitude'],
                 'speed' => $validated['speed'] ?? null,
@@ -93,13 +94,16 @@ class VehicleTrackingController extends Controller
                 $validated['longitude'],
                 $validated['latitude'],
                 $finalSpeed,
-                $validated['accuracy']
+                $validated['accuracy'],
+                $validated['user_id']
             ));
 
         VehicleLocationHistory::create([
             'vehicle_location_id' => $vehicleLocation->id,
             'longitude' => $validated['longitude'],
             'latitude' => $validated['latitude'],
+            'user_id' => $validated['user_id'],
+            'distance_from_last_pos' => $distance = ($latitude1 && $longitude1 && $latitude2 && $longitude2) ? $this->haversineDistance($latitude1, $longitude1, $latitude2, $longitude2) : 0
         ]);
 
         return response()->json([

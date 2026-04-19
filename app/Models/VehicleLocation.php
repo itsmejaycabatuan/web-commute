@@ -15,6 +15,7 @@ class VehicleLocation extends Model
         'longitude',
         'speed',
         'accuracy',
-        'last_update'
+        'last_update',
+        'user_id',
     ];
 }

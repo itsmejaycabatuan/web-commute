@@ -141,6 +141,7 @@
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
             cursor: pointer;
             transition: all 0.3s ease;
+            pointer-events: auto;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -217,7 +218,7 @@
             height: 100%;
         }
 
-        
+
 
         /*
   The sidebar styling has them "expanded" by default, we use CSS transforms to push them offscreen
@@ -249,20 +250,24 @@
             </div>
 
             @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter' && isset($balance))
-            <a  href="{{ route('payment.topup') }}">
-                <div class="glass-panel p-2 pr-5 rounded-full flex items-center space-x-3 group cursor-pointer hover:bg-white/10 transition-all">
-                    <div class="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-500/30">
-                        <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
+                <a href="{{ route('payment.topup') }}">
+                    <div
+                        class="glass-panel p-2 pr-5 rounded-full flex items-center space-x-3 group cursor-pointer hover:bg-white/10 transition-all">
+                        <div
+                            class="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-500/30">
+                            <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span
+                                class="text-[8px] uppercase tracking-widest text-white/40 font-black leading-none">Balance</span>
+                            <span class="text-white font-bold text-xs">₱{{ $balance }}</span>
+                        </div>
+                        <div
+                            class="ml-1 w-4 h-4 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-blue-500 transition-colors">
+                            <i class="fa-solid fa-plus text-[8px] text-white"></i>
+                        </div>
                     </div>
-                    <div class="flex flex-col">
-                        <span class="text-[8px] uppercase tracking-widest text-white/40 font-black leading-none">Balance</span>
-                        <span class="text-white font-bold text-xs">₱{{ $balance }}</span>
-                    </div>
-                    <div class="ml-1 w-4 h-4 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-blue-500 transition-colors">
-                        <i class="fa-solid fa-plus text-[8px] text-white"></i>
-                    </div>
-                </div>
-            </a>
+                </a>
             @endif
         </div>
 
@@ -292,21 +297,21 @@
                 @endif
 
                 @if (Auth::check() && Auth::user()->roles[0]->name === 'admin')
-                <a href="{{ route('adminprofile') }}">
-                    <div
-                        class="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-white/10 transition">
-                        <i class="fa-solid fa-user text-xs"></i>
-                    </div>
-                </a>
+                    <a href="{{ route('adminprofile') }}">
+                        <div
+                            class="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-white/10 transition">
+                            <i class="fa-solid fa-user text-xs"></i>
+                        </div>
+                    </a>
                 @endif
 
                 @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter')
-                <a href="{{ route('commuter.profile') }}">
-                    <div
-                        class="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-white/10 transition">
-                        <i class="fa-solid fa-user text-xs"></i>
-                    </div>
-                </a>
+                    <a href="{{ route('commuter.profile') }}">
+                        <div
+                            class="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-white/10 transition">
+                            <i class="fa-solid fa-user text-xs"></i>
+                        </div>
+                    </a>
                 @endif
 
                 <div class="flex items-center space-x-3 pointer-events-auto">
@@ -344,20 +349,20 @@
             <h3 class="text-xl font-bold text-white mb-2">Sign Out?</h3>
             <p class="text-sm text-white/60 mb-8">Are you sure you want to log out of SmartCommute?</p>
 
-           <div class="grid gap-3 grid-row-2 grid-col-1">
-    <button onclick="toggleLogoutModal()"
-        class="flex-1 px-6 py-3 rounded-2xl bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition">
-        Cancel
-    </button>
+            <div class="grid gap-3 grid-row-2 grid-col-1">
+                <button onclick="toggleLogoutModal()"
+                    class="flex-1 px-6 py-3 rounded-2xl bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition">
+                    Cancel
+                </button>
 
-    <form action="{{ route('users.logout') }}" method="POST" class="flex-1">
-        @csrf
-        <button type="submit"
-            class="w-full px-6 py-3 rounded-2xl bg-red-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-600/20 transition">
-            Logout
-        </button>
-    </form>
-</div>
+                <form action="{{ route('users.logout') }}" method="POST" class="flex-1">
+                    @csrf
+                    <button type="submit"
+                        class="w-full px-6 py-3 rounded-2xl bg-red-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-600/20 transition">
+                        Logout
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -450,9 +455,9 @@
                                     </div>
                                     <button
                                         class="mt-6 flex items-center justify-center gap-2 w-full bg-gradient-to-r
-                                                                                                    from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold
-                                                                                                    py-4 px-6 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all duration-300
-                                                                                                    shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                                                                                                                                            from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold
+                                                                                                                                            py-4 px-6 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all duration-300
+                                                                                                                                            shadow-lg shadow-blue-500/20 active:scale-[0.98]"
                                         type="submit">
                                         <span>Buy a ride</span>
                                         <i class="fa-solid fa-arrow-right text-[10px]"></i>
@@ -478,10 +483,10 @@
                     @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter')
                         <a href="{{ route('tutorial') }}"
                             class=" glass-panel p-5 rounded-3xl flex items-center space-x-4 border-yellow-500/30 group
-                                                                                                                        hover:bg-yellow-500/10 transition">
+                                                                                                                                                                hover:bg-yellow-500/10 transition">
                             <div
                                 class=" w-10 h-10 bg-yellow-500/30 rounded-xl flex items-center justify-center
-                                                                                                                                    group-hover:rotate-12 transition">
+                                                                                                                                                                            group-hover:rotate-12 transition">
                                 <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i>
                             </div>
                             <div>
@@ -500,10 +505,12 @@
                                 <div class="flex justify-between items-center mb-6">
                                     <h3 class="text-[10px] font-black uppercase tracking-widest text-white/60">Recent Receipts
                                     </h3>
-                                    <a href="{{ route('payment.history') }}" class="text-[10px] font-bold text-blue-400 hover:underline">
+                                    <a href="{{ route('payment.history') }}"
+                                        class="text-[10px] font-bold text-blue-400 hover:underline">
                                         History
                                     </a>
-                                    {{-- <button class="text-[10px] font-bold text-blue-400 hover:underline">History</button> --}}
+                                    {{-- <button class="text-[10px] font-bold text-blue-400 hover:underline">History</button>
+                                    --}}
                                 </div>
                                 <div class="space-y-4 custom-scroll overflow-y-auto pr-2">
                                     @if (isset($recentReceipts) && count($recentReceipts) > 0)
@@ -524,12 +531,14 @@
                                             </div>
                                         @endforeach
                                     @else
-                                        <div class="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-white/5 rounded-xl">
+                                        <div
+                                            class="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-white/5 rounded-xl">
                                             <div class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-3">
                                                 <i class="fa-solid fa-file-invoice text-white/20 text-lg"></i>
                                             </div>
                                             <p class="text-[11px] font-medium text-white/50 text-center">No receipts found</p>
-                                            <p class="text-[9px] text-white/30 text-center mt-1">New transactions will appear here.</p>
+                                            <p class="text-[9px] text-white/30 text-center mt-1">New transactions will appear here.
+                                            </p>
                                         </div>
                                     @endif
                                 </div>
@@ -537,805 +546,980 @@
                         @endif
                     @endif
                     @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
-                        
-                    <div
+
+                        <div
                             class="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-green-600/30 to-transparent border-green-500/30">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">Active Trip</p>
+                                    <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">Active Trip
+                                    </p>
                                     <h2 class="text-lg font-bold text-white">Current Route</h2>
                                 </div>
                                 <i class="fa-solid fa-route text-blue-400 opacity-80"></i>
                             </div>
                             <div id="live-location-info" class="text-xs text-white/80 space-y-1 mb-6">
-                                    <div class="flex justify-between">
-                                        <span><i class="fa-solid fa-location-dot text-green-400 mr-1"></i> Starting Point:</span>
-                                        <span class="font-mono">Minglanilla</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span><i class="fa-solid fa-location-dot text-blue-400 mr-1"></i> Destination:</span>
-                                        <span class="font-mono"">IT Park</span>
-                                    </div>
+                                <div class="flex justify-between">
+                                    <span><i class="fa-solid fa-location-dot text-green-400 mr-1"></i> Starting
+                                        Point:</span>
+                                    <span class="font-mono">Minglanilla</span>
                                 </div>
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">Live
-                                        Vehicle Status</p>
-                                    <h2 class="text-lg font-bold text-white">GPS Tracking</h2>
+                                <div class="flex justify-between">
+                                    <span><i class="fa-solid fa-location-dot text-blue-400 mr-1"></i> Destination:</span>
+                                    <span class="font-mono"">IT Park</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    <div class=" flex justify-between items-start mb-4">
+                                        <div>
+                                            <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">
+                                                Live
+                                                Vehicle Status</p>
+                                            <h2 class="text-lg font-bold text-white">GPS Tracking</h2>
+                                        </div>
+                                        <i class="fa-solid fa-satellite-dish text-green-400 opacity-80"></i>
                                 </div>
-                                <i class="fa-solid fa-satellite-dish text-green-400 opacity-80"></i>
-                            </div>
 
-                            <div id="gps-status" class="tracking-controls-panel text-center">
-                                <div class="flex items-center justify-center space-x-2 mb-3">
-                                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" id="gps-indicator"></div>
-                                    <span class="text-xs text-white/70" id="gps-status-text">GPS: Not active</span>
+                                <div id="gps-status" class="tracking-controls-panel text-center">
+                                    <div class="flex items-center justify-center space-x-2 mb-3">
+                                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" id="gps-indicator">
+                                        </div>
+                                        <span class="text-xs text-white/70" id="gps-status-text">GPS: Not active</span>
+                                    </div>
+                                    <div id="live-location-info" class="text-xs text-white/80 space-y-1">
+                                        <div class="flex justify-between">
+                                            <span><i class="fa-solid fa-location-dot text-green-400 mr-1"></i>
+                                                Position:</span>
+                                            <span class="font-mono" id="current-coords">--, --</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span><i class="fa-solid fa-gauge-high text-blue-400 mr-1"></i> Accuracy:</span>
+                                            <span id="current-accuracy">-- m</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span><i class="fa-regular fa-clock text-yellow-400 mr-1"></i> Updated:</span>
+                                            <span id="update-time">--:--:--</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div id="live-location-info" class="text-xs text-white/80 space-y-1">
-                                    <div class="flex justify-between">
-                                        <span><i class="fa-solid fa-location-dot text-green-400 mr-1"></i> Position:</span>
-                                        <span class="font-mono" id="current-coords">--, --</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span><i class="fa-solid fa-gauge-high text-blue-400 mr-1"></i> Accuracy:</span>
-                                        <span id="current-accuracy">-- m</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span><i class="fa-regular fa-clock text-yellow-400 mr-1"></i> Updated:</span>
-                                        <span id="update-time">--:--:--</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Vehicle Tracking Info Panel -->
+                                <!-- Vehicle Tracking Info Panel -->
 
-                            <div class="mt-3 text-[10px] text-white/40 text-center">
-                                <i class="fa-solid fa-map-marker-alt"></i> Click the GPS button (📍) on the map to track
-                                your location
+                                <div class="mt-3 text-[10px] text-white/40 text-center">
+                                    <i class="fa-solid fa-map-marker-alt"></i> Click the GPS button (📍) on the map to track
+                                    your location
+                                </div>
                             </div>
+                    @endif
+                    </div>
+
+                    @if (Auth::check() && Auth::user()->roles[0]->name !== 'admin')
+
+                        <div class="sidebar-toggle rounded-rect right" onclick="toggleSidebar('right')">
+
+                            &larr;
+
                         </div>
                     @endif
-                </div>
-
-                @if (Auth::check() && Auth::user()->roles[0]->name !== 'admin')
-                
-                <div class="sidebar-toggle rounded-rect right" onclick="toggleSidebar('right')">
-
-                    &larr;
 
                 </div>
-                @endif
 
             </div>
-
         </div>
-    </div>
 
-    <script type="module">
-        const userRole = @json(Auth::user())?.roles[0]?.name ?? 'guest';
-        import MapLibreGlDirections from 'https://esm.sh/@maplibre/maplibre-gl-directions';
+        <script type="module">
+            const userRole = @json(Auth::user())?.roles[0]?.name ?? 'guest';
+            const userId = @json(Auth::user())?.id ?? null;
 
-        const pusherKey = '{{ env("PUSHER_APP_KEY") }}';
-        const pusherCluster = '{{ env("PUSHER_APP_CLUSER") }}';
+            import MapLibreGlDirections from 'https://esm.sh/@maplibre/maplibre-gl-directions';
 
-
-        window.Pusher = Pusher;
-        window.Echo = new Echo({
-            broadcaster: 'pusher',
-            key: pusherKey,
-            cluster: pusherCluster,
-            forceTLS: true
-        });
+            const pusherKey = '{{ env("PUSHER_APP_KEY") }}';
+            const pusherCluster = '{{ env("PUSHER_APP_CLUSER") }}';
 
 
-
-        maplibregl.setRTLTextPlugin(
-            'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js'
-        );
-
-        const bounds = [
-            [123.77516124821591, 10.229235293025951],
-            [123.91768276426876, 10.332535160307074]
-        ];
-
-        const viewbox = "123.77516124821591,10.332535160307074,123.91768276426876,10.229235293025951";
-
-        const map = new maplibregl.Map({
-            container: 'map',
-            style: 'https://tiles.openfreemap.org/styles/bright',
-            center: [123.79, 10.24],
-            zoom: 13,
-            rollEnabled: true,
-            maxBounds: bounds
-        });
-
-        function toggleSidebar(id) {
-            const elem = document.getElementById(id);
-            const classes = elem.className.split(' ');
-            const collapsed = classes.indexOf('collapsed') !== -1;
-
-            const padding = {};
-
-            if (collapsed) {
-                classes.splice(classes.indexOf('collapsed'), 1);
-
-                padding[id] = 300;
-                map.easeTo({
-                    padding,
-                    duration: 1000
-                });
-            } else {
-                padding[id] = 0;
-                classes.push('collapsed');
-
-                map.easeTo({
-                    padding,
-                    duration: 1000
-                });
-            }
-            elem.className = classes.join(' ');
-        }
-
-        window.toggleSidebar = toggleSidebar;
-
-        map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
-
-        const geolocate = new maplibregl.GeolocateControl({
-            positionOptions: {
-                enableHighAccuracy: true,
-                timeout: 6000,
-                maximumAge: 0
-            },
-            trackUserLocation: true,
-            showUserLocation: true,
-            showAccuracyCircle: true,
-            fitBoundsOptions: {
-                maxZoom: 15,
-                duration: 1000
-            }
-        });
-        
-        map.addControl(geolocate, 'bottom-right');
-
-        geolocate.on('geolocate', (event) => {
-            const lng = event.coords.longitude;
-            const lat = event.coords.latitude;
-
-            console.log(`Longitude: ${lng}, Latitude: ${lat}`);
-            
-            // You can now use these variables to filter data, 
-            // center the map, or send them to a database.
-        })
-
-        let vehicleMarker = null;
-        let vehiclePathCoordinates = [];
-        let watchId = null;
-        let currentLocation = null;
-        let currentVehicleId = 'vehicle-{{ Auth::id() ?? "guest" }}';
-
-        const gpsIndicator = document.getElementById('gps-indicator');
-        const gpsStatusText = document.getElementById('gps-status-text');
-        const currentCoords = document.getElementById('current-coords');
-        const currentAccuracy = document.getElementById('current-accuracy');
-        const updateTime = document.getElementById('update-time');
-
-        if(userRole === 'driver') {
-
-            let lastKnownLocation = null;
-
-            // Function to start broadcasting location
-            function startBroadcastingLocation() {
-                if (!navigator.geolocation) {
-                    console.error('Geolocation not supported');
-                    return;
-                }
-
-                if(watchId !== null ) return;
-    
-                watchId = navigator.geolocation.watchPosition(
-                    async (position) => {
-                        const { latitude, longitude, accuracy, speed } = position.coords;
-                        currentLocation = { latitude, longitude, accuracy, speed };
-    
-                        console.log("coords: ", latitude, longitude);
-                        // Update local map marker
-                        updateVehicleMarker(latitude, longitude);
-
-                        setInterval(async() => {
-                            if(!lastKnownLocation) return;
-                            // BROADCAST TO ALL USERS via Pusher
-                            try {
-                                await fetch(`/track/vehicle/broadcast`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                    },
-                                    body: JSON.stringify({
-                                        vehicle_id: '{{ "vehicle-" . Auth::id() ?? "default-vehicle" }}',
-                                        latitude: latitude,
-                                        longitude: longitude,
-                                        accuracy: accuracy,
-                                        speed: speed,
-                                        timestamp: new Date().toISOString(),
-                                        latitude: lastKnownLocation.latitude,
-                                        longitude: lastKnownLocation.longitude
-                                    })
-                                });
-                            } catch (error) {
-                                console.error('Error broadcasting location:', error);
-                            }
-                        }, 5000)
-    
-                    },
-                    (error) => {
-                        console.error('Geolocation error:', error);
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 15000,
-                        maximumAge: 0
-                    }
-                );
-            }
-    
-            window.startBroadcastingLocation = startBroadcastingLocation;
-
-            // // Broadcast the location every 5 seconds
-            // setInterval(startBroadcastingLocation, 5000);
-        }
-
-        // Function to update vehicle marker on map
-        function updateVehicleMarker(latitude, longitude) {
-            if (!vehicleMarker) {
-                // Create marker if it doesn't exist
-                const markerElement = document.createElement('div');
-                markerElement.className = 'custom-vehicle-marker';
-                markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
-                vehicleMarker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
-                    .setLngLat([longitude, latitude])
-                    .addTo(map);
-            } else {
-                vehicleMarker.setLngLat([longitude, latitude]);
-            }
-        }
-
-        window.updateVehicleMarker = updateVehicleMarker;
-
-        function updateLiveDate() {
-            const dateElement = document.getElementById('current-date');
-            const now = new Date();
-            const options = {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            };
-            dateElement.textContent = now.toLocaleDateString('en-US', options);
-        }
-
-        updateLiveDate();
-
-        setInterval(updateLiveDate, 3600000);
-
-        function toggleLogoutModal() {
-            const modal = document.getElementById('logout-modal');
-            const content = document.getElementById('modal-content');
-
-            if (modal.classList.contains('opacity-0')) {
-                modal.classList.remove('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
-            } else {
-                modal.classList.add('opacity-0', 'pointer-events-none');
-                content.classList.remove('scale-100');
-                content.classList.add('scale-95');
-            }
-        }
-
-        window.toggleLogoutModal = toggleLogoutModal;
-
-        window.onclick = function (event) {
-            const modal = document.getElementById('logout-modal');
-            if (event.target == modal) {
-                toggleLogoutModal();
-            }
-        }
-
-        map.on('load', () => {
-            // Create custom vehicle marker
-            const markerElement = document.createElement('div');
-            markerElement.className = 'vehicle-marker';
-            // markerElement.innerHTML = '<i class="fa-solid fa-bus" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; color: white;"></i>';
-
-            vehicleMarker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
-                .setLngLat([123.79, 10.24])
-                .addTo(map);
-
-            // Add source for vehicle path
-            map.addSource('vehicle-path', {
-                type: 'geojson',
-                data: {
-                    type: 'FeatureCollection',
-                    features: []
-                }
+            window.Pusher = Pusher;
+            window.Echo = new Echo({
+                broadcaster: 'pusher',
+                key: pusherKey,
+                cluster: pusherCluster,
+                forceTLS: true
             });
 
-            // Add layer for vehicle path
-            map.addLayer({
-                id: 'vehicle-path-line',
-                type: 'line',
-                source: 'vehicle-path',
-                paint: {
-                    'line-color': '#3b82f6',
-                    'line-width': 3,
-                    'line-opacity': 0.7,
-                    'line-dasharray': [2, 2]
-                }
+
+
+            maplibregl.setRTLTextPlugin(
+                'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js'
+            );
+
+            const bounds = [
+                [123.77516124821591, 10.229235293025951],
+                [123.91768276426876, 10.332535160307074]
+            ];
+
+            const viewbox = "123.77516124821591,10.332535160307074,123.91768276426876,10.229235293025951";
+
+            const map = new maplibregl.Map({
+                container: 'map',
+                style: 'https://tiles.openfreemap.org/styles/bright',
+                center: [123.79, 10.24],
+                zoom: 13,
+                rollEnabled: true,
+                maxBounds: bounds
             });
 
-            vehicleMarker.remove();
-        });
+            function toggleSidebar(id) {
+                const elem = document.getElementById(id);
+                const classes = elem.className.split(' ');
+                const collapsed = classes.indexOf('collapsed') !== -1;
 
-        if(userRole === 'driver') {
-            let lastBroadcastTime = 0;
-            const broadcastInterval = 5000; // 5 seconds
-            let currentPosition = null; // Store latest position
+                const padding = {};
 
-            // Listen for geolocation updates (just store the position)
-            geolocate.on('geolocate', (position) => {
-                const { latitude, longitude, accuracy, speed } = position.coords;
-                
-                // Store the latest position
-                currentPosition = {
-                    latitude,
-                    longitude,
-                    accuracy,
-                    speed,
-                    timestamp: Date.now()
-                };
-                
-                console.log('📍 GPS fix acquired:', { latitude, longitude, accuracy });
-                
-                // Update UI
-                gpsIndicator.className = 'w-2 h-2 bg-green-500 rounded-full animate-pulse';
-                gpsStatusText.textContent = 'GPS: Active';
-                currentCoords.textContent = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-                currentAccuracy.textContent = `${accuracy.toFixed(1)} m`;
-                updateTime.textContent = new Date().toLocaleTimeString();
-                
-                // Update vehicle marker
-                if (vehicleMarker) {
-                    vehicleMarker.setLngLat([longitude, latitude]);
-                    vehicleMarker.addTo(map);
-                }
-                
-                // Update path
-                vehiclePathCoordinates.push([longitude, latitude]);
-                if (vehiclePathCoordinates.length > 100) {
-                    vehiclePathCoordinates.shift();
-                }
-                
-                const pathSource = map.getSource('vehicle-path');
-                if (pathSource && vehiclePathCoordinates.length > 1) {
-                    pathSource.setData({
-                        type: 'FeatureCollection',
-                        features: [{
-                            type: 'Feature',
-                            geometry: {
-                                type: 'LineString',
-                                coordinates: vehiclePathCoordinates
-                            },
-                            properties: {}
-                        }]
+                if (collapsed) {
+                    classes.splice(classes.indexOf('collapsed'), 1);
+
+                    padding[id] = 300;
+                    map.easeTo({
+                        padding,
+                        duration: 1000
+                    });
+                } else {
+                    padding[id] = 0;
+                    classes.push('collapsed');
+
+                    map.easeTo({
+                        padding,
+                        duration: 1000
                     });
                 }
-            });
-            
-            // Separate interval for broadcasting (runs every 5 seconds)
-            setInterval(async () => {
-                const currentTime = Date.now();
-                
-                // Only broadcast if we have a valid position
-                if (currentPosition && (currentTime - lastBroadcastTime > broadcastInterval)) {
-                    lastBroadcastTime = currentTime;
-                    
-                    console.log("Broadcasting at:", currentTime);
-                    console.log("Time since last broadcast:", currentTime - lastBroadcastTime);
-                    
-                    // Get CSRF token safely
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]');
-                    if (!csrfToken) {
-                        console.error('CSRF token not found');
-                        return;
-                    }
-                    
-                    const requestData = {
-                        vehicle_id: currentVehicleId,
-                        latitude: currentPosition.latitude.toFixed(6),
-                        longitude: currentPosition.longitude.toFixed(6),
-                        speed: currentPosition.speed || 0,
-                        accuracy: currentPosition.accuracy || 0,
-                    };
-                    
-                    console.log('Sending location data:', requestData);
-                    
-                    fetch(`/track/vehicle/broadcast`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken.content,
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify(requestData)
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            return response.json().then(errorData => {
-                                console.error('Server error:', errorData);
-                                throw new Error(JSON.stringify(errorData));
-                            });
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('Location sent successfully:', data);
-                    })
-                    .catch(error => console.error('Error broadcasting:', error));
+                elem.className = classes.join(' ');
+            }
+
+            window.toggleSidebar = toggleSidebar;
+
+            map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+
+            const geolocate = new maplibregl.GeolocateControl({
+                positionOptions: {
+                    enableHighAccuracy: true,
+                    timeout: 6000,
+                    maximumAge: 0
+                },
+                trackUserLocation: true,
+                showUserLocation: true,
+                showAccuracyCircle: true,
+                fitBoundsOptions: {
+                    maxZoom: 15,
+                    duration: 1000
                 }
-            }, 1000); // Check every second (or use broadcastInterval directly)
-            
-            // OR simpler - just use broadcastInterval directly:
-            // setInterval(() => {
-            //     if (currentPosition) {
-            //         // broadcast logic here...
+            });
+
+            map.addControl(geolocate, 'bottom-right');
+
+            let userLng = null;
+            let userLat = null;
+            let vehicleLng = null;
+            let vehicleLat = null;
+            let vehicleMarker = null;
+            let vehiclePathCoordinates = [];
+            let watchId = null;
+            let currentLocation = null;
+            let currentVehicleId = 'vehicle-{{ Auth::id() ?? "guest" }}';
+
+            const gpsIndicator = document.getElementById('gps-indicator');
+            const gpsStatusText = document.getElementById('gps-status-text');
+            const currentCoords = document.getElementById('current-coords');
+            const currentAccuracy = document.getElementById('current-accuracy');
+            const updateTime = document.getElementById('update-time');
+
+            geolocate.on('geolocate', (event) => {
+                userLng = event.coords.longitude;
+                userLat = event.coords.latitude;
+                // You can now use these variables to filter data, 
+                // center the map, or send them to a database.
+            })
+
+            // if(userRole === 'driver') {
+
+            //     let lastKnownLocation = null;
+
+            //     // Function to start broadcasting location
+            //     function startBroadcastingLocation() {
+            //         if (!navigator.geolocation) {
+            //             console.error('Geolocation not supported');
+            //             return;
+            //         }
+
+            //         if(watchId !== null ) return;
+
+            //         watchId = navigator.geolocation.watchPosition(
+            //             async (position) => {
+            //                 const { latitude, longitude, accuracy, speed } = position.coords;
+            //                 currentLocation = { latitude, longitude, accuracy, speed };
+
+            //                 console.log("coords: ", latitude, longitude);
+            //                 // Update local map marker
+            //                 updateVehicleMarker(latitude, longitude);
+
+            //                 setInterval(async() => {
+            //                     if(!lastKnownLocation) return;
+            //                     // BROADCAST TO ALL USERS via Pusher
+            //                     try {
+            //                         await fetch(`/track/vehicle/broadcast`, {
+            //                             method: 'POST',
+            //                             headers: {
+            //                                 'Content-Type': 'application/json',
+            //                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            //                             },
+            //                             body: JSON.stringify({
+            //                                 vehicle_id: '{{ "vehicle-" . Auth::id() ?? "default-vehicle" }}',
+            //                                 latitude: latitude,
+            //                                 longitude: longitude,
+            //                                 accuracy: accuracy,
+            //                                 speed: speed,
+            //                                 timestamp: new Date().toISOString(),
+            //                                 latitude: lastKnownLocation.latitude,
+            //                                 longitude: lastKnownLocation.longitude
+            //                             })
+            //                         });
+            //                     } catch (error) {
+            //                         console.error('Error broadcasting location:', error);
+            //                     }
+            //                 }, 5000)
+
+            //             },
+            //             (error) => {
+            //                 console.error('Geolocation error:', error);
+            //             },
+            //             {
+            //                 enableHighAccuracy: true,
+            //                 timeout: 15000,
+            //                 maximumAge: 0
+            //             }
+            //         );
             //     }
-            // }, broadcastInterval);
-            
-            geolocate.on('error', (error) => {
-                console.error('Geolocation error:', error);
-                gpsIndicator.className = 'w-2 h-2 bg-red-500 rounded-full';
-                gpsStatusText.textContent = 'GPS: Error - ' + error.message;
-            });
-            
-            geolocate.on('outofmaxbounds', () => {
-                console.log('GPS out of bounds');
-            });
-        }
 
-        if(userRole !== 'driver') {
-            // Listen for ALL vehicle location updates (this runs for every user)
-            window.Echo.channel('vehicle-locations')
-                .listen('vehicle-location-updated', (e) => {
-                    console.log('🚍 Vehicle location update:', e);
-    
-                    if(e.vehicleId === currentVehicleId) {
-                        return;
-                    }
+            //     window.startBroadcastingLocation = startBroadcastingLocation;
 
-                    console.log("coordinates:", e.coordinates[0], e.coordinates[1]);
-    
-                    // Update or create marker for this vehicle
-                    updateVehicleMarkerOnMap(e.vehicleId, e.coordinates[0], e.coordinates[1]);
-    
-                    // Update vehicle info panel if visible
-                    updateVehicleInfoPanel(e.vehicleId, e.coordinates, e.speed, e.timestamp);
-                });
-    
-            const vehicleMarkers = new Map();
-            function updateVehicleMarkerOnMap(vehicleId, longitude, latitude) {
-                if (vehicleMarkers.has(vehicleId)) {
-                    // Update existing marker
-                    const marker = vehicleMarkers.get(vehicleId);
-                    marker.setLngLat([longitude, latitude]);
-                } else {
-                    // Create new marker for this vehicle
+            //     // // Broadcast the location every 5 seconds
+            //     // setInterval(startBroadcastingLocation, 5000);
+            // }
+
+            // Function to update vehicle marker on map
+            function updateVehicleMarker(latitude, longitude) {
+                if (!vehicleMarker) {
+                    // Create marker if it doesn't exist
                     const markerElement = document.createElement('div');
                     markerElement.className = 'custom-vehicle-marker';
                     markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
-                    markerElement.style.backgroundColor = getRandomColor(vehicleId);
-    
-                    const marker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
+                    vehicleMarker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
                         .setLngLat([longitude, latitude])
                         .addTo(map);
-    
-                    vehicleMarkers.set(vehicleId, marker);
-    
-                    // Add popup with vehicle info
-                    const popup = new maplibregl.Popup({ offset: 25 })
-                        .setHTML(`
-                    <div style="background: #1e293b; color: white; padding: 8px; border-radius: 8px;">
-                        <strong>Vehicle: ${vehicleId}</strong><br>
-                        Last update: ${new Date().toLocaleTimeString()}
-                    </div>
-                `);
-    
-                    marker.setPopup(popup);
+                } else {
+                    vehicleMarker.setLngLat([longitude, latitude]);
                 }
             }
-    
-            window.updateVehicleMarkerOnMap = updateVehicleMarkerOnMap;
-    
-            function getRandomColor(vehicleId) {
-                // Generate consistent color based on vehicle ID
-                const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
-                let hash = 0;
-                for (let i = 0; i < vehicleId.length; i++) {
-                    hash = vehicleId.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                return colors[Math.abs(hash) % colors.length];
+
+            window.updateVehicleMarker = updateVehicleMarker;
+
+            function updateLiveDate() {
+                const dateElement = document.getElementById('current-date');
+                const now = new Date();
+                const options = {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                };
+                dateElement.textContent = now.toLocaleDateString('en-US', options);
             }
-    
-            window.getRandomColor = getRandomColor;
+
+            updateLiveDate();
+
+            setInterval(updateLiveDate, 3600000);
+
+            function toggleLogoutModal() {
+                const modal = document.getElementById('logout-modal');
+                const content = document.getElementById('modal-content');
+
+                if (modal.classList.contains('opacity-0')) {
+                    modal.classList.remove('opacity-0', 'pointer-events-none');
+                    content.classList.remove('scale-95');
+                    content.classList.add('scale-100');
+                } else {
+                    modal.classList.add('opacity-0', 'pointer-events-none');
+                    content.classList.remove('scale-100');
+                    content.classList.add('scale-95');
+                }
+            }
+
+            window.toggleLogoutModal = toggleLogoutModal;
+
+            window.onclick = function (event) {
+                const modal = document.getElementById('logout-modal');
+                if (event.target == modal) {
+                    toggleLogoutModal();
+                }
+            }
+
+            map.on('load', () => {
+                // Create custom vehicle marker
+                const markerElement = document.createElement('div');
+                markerElement.className = 'vehicle-marker';
+                // markerElement.innerHTML = '<i class="fa-solid fa-bus" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; color: white;"></i>';
+
+                vehicleMarker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
+                    .setLngLat([123.79, 10.24])
+                    .addTo(map);
+
+                // Add source for vehicle path
+                map.addSource('vehicle-path', {
+                    type: 'geojson',
+                    data: {
+                        type: 'FeatureCollection',
+                        features: []
+                    }
+                });
+
+                // Add layer for vehicle path
+                map.addLayer({
+                    id: 'vehicle-path-line',
+                    type: 'line',
+                    source: 'vehicle-path',
+                    paint: {
+                        'line-color': '#3b82f6',
+                        'line-width': 3,
+                        'line-opacity': 0.7,
+                        'line-dasharray': [2, 2]
+                    }
+                });
+
+                vehicleMarker.remove();
+            });
+
+            if (userRole === 'driver') {
+                let lastBroadcastTime = 0;
+                const broadcastInterval = 5000; // 5 seconds
+                let currentPosition = null; // Store latest position
+
+                // Listen for geolocation updates (just store the position)
+                geolocate.on('geolocate', (position) => {
+                    const { latitude, longitude, accuracy, speed } = position.coords;
+
+                    // Store the latest position
+                    currentPosition = {
+                        latitude,
+                        longitude,
+                        accuracy,
+                        speed,
+                        timestamp: Date.now()
+                    };
+
+                    console.log('📍 GPS fix acquired:', { latitude, longitude, accuracy });
+
+                    // Update UI
+                    gpsIndicator.className = 'w-2 h-2 bg-green-500 rounded-full animate-pulse';
+                    gpsStatusText.textContent = 'GPS: Active';
+                    currentCoords.textContent = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+                    currentAccuracy.textContent = `${accuracy.toFixed(1)} m`;
+                    updateTime.textContent = new Date().toLocaleTimeString();
+
+                    // Update vehicle marker
+                    if (vehicleMarker) {
+                        vehicleMarker.setLngLat([longitude, latitude]);
+                        vehicleMarker.addTo(map);
+                    }
+
+                    // Update path
+                    vehiclePathCoordinates.push([longitude, latitude]);
+                    if (vehiclePathCoordinates.length > 100) {
+                        vehiclePathCoordinates.shift();
+                    }
+
+                    const pathSource = map.getSource('vehicle-path');
+                    if (pathSource && vehiclePathCoordinates.length > 1) {
+                        pathSource.setData({
+                            type: 'FeatureCollection',
+                            features: [{
+                                type: 'Feature',
+                                geometry: {
+                                    type: 'LineString',
+                                    coordinates: vehiclePathCoordinates
+                                },
+                                properties: {}
+                            }]
+                        });
+                    }
+                });
+
+                // Separate interval for broadcasting (runs every 5 seconds)
+                setInterval(async () => {
+                    const currentTime = Date.now();
+
+                    // Only broadcast if we have a valid position
+                    if (currentPosition && (currentTime - lastBroadcastTime > broadcastInterval)) {
+                        lastBroadcastTime = currentTime;
+
+                        console.log("Broadcasting at:", currentTime);
+                        console.log("Time since last broadcast:", currentTime - lastBroadcastTime);
+
+                        // Get CSRF token safely
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                        if (!csrfToken) {
+                            console.error('CSRF token not found');
+                            return;
+                        }
+
+                        const requestData = {
+                            vehicle_id: currentVehicleId,
+                            latitude: currentPosition.latitude.toFixed(6),
+                            longitude: currentPosition.longitude.toFixed(6),
+                            speed: currentPosition.speed || 0,
+                            accuracy: currentPosition.accuracy || 0,
+                            user_id: userId
+                        };
+
+                        console.log('Sending location data:', requestData);
+
+                        fetch(`/track/vehicle/broadcast`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken.content,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(requestData)
+                        })
+                            .then(response => {
+                                if (!response.ok) {
+                                    return response.json().then(errorData => {
+                                        console.error('Server error:', errorData);
+                                        throw new Error(JSON.stringify(errorData));
+                                    });
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('Location sent successfully:', data);
+                            })
+                            .catch(error => console.error('Error broadcasting:', error));
+                    }
+                }, 1000); // Check every second (or use broadcastInterval directly)
+
+                // OR simpler - just use broadcastInterval directly:
+                // setInterval(() => {
+                //     if (currentPosition) {
+                //         // broadcast logic here...
+                //     }
+                // }, broadcastInterval);
+
+                geolocate.on('error', (error) => {
+                    console.error('Geolocation error:', error);
+                    gpsIndicator.className = 'w-2 h-2 bg-red-500 rounded-full';
+                    gpsStatusText.textContent = 'GPS: Error - ' + error.message;
+                });
+
+                geolocate.on('outofmaxbounds', () => {
+                    console.log('GPS out of bounds');
+                });
+            }
+
+            // Add this helper to calculate straight-line distance (optional, for immediate feedback)
+            function calculateDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371; // Radius of the earth in km
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                return R * c; // Distance in km
+            }
+
+            const vehicleMarkers = new Map();
+
+            if (userRole !== 'driver') {
+                // Listen for ALL vehicle location updates (this runs for every user)
+                window.Echo.channel('vehicle-locations')
+                    .listen('vehicle-location-updated', (e) => {
+
+                        if (e.vehicleId === currentVehicleId) {
+                            return;
+                        }
+
+                        // Update or create marker for this vehicle
+                        updateVehicleMarkerOnMap(e.vehicleId, e.coordinates[0], e.coordinates[1], e.speed);
+
+                        // Update vehicle info panel if visible
+                        // updateVehicleInfoPanel(e.vehicleId, e.coordinates, e.speed, e.timestamp);
+                    });
+
+
+                // function updateVehicleMarkerOnMap(vehicleId, longitude, latitude, speed) {
+                //     if (vehicleMarkers.has(vehicleId)) {
+                //         // Update existing marker
+                //         vehicleLng = longitude;
+                //         vehicleLat = latitude;
+                //         const marker = vehicleMarkers.get(vehicleId);
+                //         marker.setLngLat([longitude, latitude]);
+                //     } else {
+                //         // Create new marker for this vehicle
+                //         const markerElement = document.createElement('div');
+                //         markerElement.className = 'custom-vehicle-marker';
+                //         markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
+                //         markerElement.style.backgroundColor = getRandomColor(vehicleId);
+                //         vehicleLng = longitude;
+                //         vehicleLat = latitude;
+
+                //         const marker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
+                //             .setLngLat([longitude, latitude])
+                //             .addTo(map);
+
+                //         vehicleMarkers.set(vehicleId, marker);
+
+                //         // Add popup with vehicle info
+                //         const popup = new maplibregl.Popup({ offset: 25 })
+                //             .setHTML(`
+                //         <div>
+                //             <strong>Vehicle: ${vehicleId}</strong><br>
+                //             <strong>Distance: ${vehicleDistance}</strong><br>
+                //             <strong>Speed: ${speed}</strong><br>
+                //             <strong>ETA: ${vehicleETA}</strong><br>
+                //             Last update: ${new Date().toLocaleTimeString()}
+                //         </div>
+                //     `);
+
+                //         marker.setPopup(popup);
+                //     }
+                // }
+
+                let activeTrackedVehicle = null;
+
+                const infoPopup = new maplibregl.Popup({
+                    offset: 25,
+                    closeOnClick: false,
+                    closeButton: true
+                });
+
+                // function updateVehicleMarkerOnMap(vehicleId, longitude, latitude, speed) {
+                //     // 1. Check if marker exists in our SINGLE global map
+                //     if (vehicleMarkers.has(vehicleId)) {
+                //         const marker = vehicleMarkers.get(vehicleId);
+                //         marker.setLngLat([longitude, latitude]);
+
+                //         // Update data for the click event
+                //         marker.vehicleData = { longitude, latitude, speed: speed || 0 };
+
+                //         // If this is the vehicle currently being tracked, update the route line!
+                //         if (activeTrackedVehicle === vehicleId && userLng && userLat) {
+                //             directions.setWaypoints([
+                //                 [userLng, userLat],
+                //                 [longitude, latitude]
+                //             ]);
+                //         }
+                //     } else {
+                //         // 2. Create new marker
+                //         const markerElement = document.createElement('div');
+                //         markerElement.className = 'custom-vehicle-marker';
+                //         markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
+                //         markerElement.style.backgroundColor = getRandomColor(vehicleId);
+
+                //         const marker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
+                //             .setLngLat([longitude, latitude])
+                //             .addTo(map);
+
+                //         marker.vehicleData = { longitude, latitude, speed: speed || 0 };
+
+                //         // Toggle logic
+                //         markerElement.addEventListener('click', (e) => {
+                //             e.stopPropagation();
+
+                //             if (activeTrackedVehicle === vehicleId) {
+                //                 directions.clear();
+                //                 marker.togglePopup();
+                //                 activeTrackedVehicle = null;
+                //                 return;
+                //             }
+
+                //             if (!userLat || !userLng) {
+                //                 alert("Please enable GPS to track vehicle.");
+                //                 geolocate.trigger();
+                //                 return;
+                //             }
+
+                //             activeTrackedVehicle = vehicleId;
+                //             directions.setWaypoints([[userLng, userLat], [longitude, latitude]]);
+
+                //             directions.once("fetchroutesend", (ev) => {
+                //                 if (activeTrackedVehicle !== vehicleId) return;
+                //                 const route = ev.data.directions.routes[0];
+                //                 const popup = new maplibregl.Popup({ offset: 25 })
+                //                     // .setLngLat([longitude, latitude])
+                //                     .setHTML(`
+                //                             <div class="p-2 z-100">
+                //                                 <strong>Vehicle: ${vehicleId}</strong><br>
+                //                                 Dist: ${(route.distance / 1000).toFixed(2)} km<br>
+                //                                 ETA: ${Math.round(route.duration / 60)} mins
+                //                             </div>
+                //                         `);
+                //                 // .addTo(map);
+
+                //                 if (marker.getPopup()) {
+                //                     market.getPopup.remove();
+                //                 }
+                //                 marker.setPopup(popup).togglePopup();
+                //             });
+                //         });
+
+                //         // Store in the global map
+                //         vehicleMarkers.set(vehicleId, marker);
+                //     }
+                // }
+
+function updateVehicleMarkerOnMap(vehicleId, longitude, latitude, speed) {
+    if (vehicleMarkers.has(vehicleId)) {
+        const marker = vehicleMarkers.get(vehicleId);
+        marker.setLngLat([longitude, latitude]);
+        marker.vehicleData = { longitude, latitude, speed: speed || 0 };
+
+        // If this bus is the one being tracked, move the popup and the line
+        if (activeTrackedVehicle === vehicleId) {
+            // Update the line
+            directions.setWaypoints([[userLng, userLat], [longitude, latitude]]);
+            
+            // Move the popup to follow the bus
+            if (infoPopup.isOpen()) {
+                infoPopup.setLngLat([longitude, latitude]);
+            }
         }
+    } else {
+        const markerElement = document.createElement('div');
+        markerElement.className = 'custom-vehicle-marker';
+        markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
+        markerElement.style.backgroundColor = getRandomColor(vehicleId);
+
+        const marker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
+            .setLngLat([longitude, latitude])
+            .addTo(map);
+
+        marker.vehicleData = { longitude, latitude, speed: speed || 0 };
+
+        markerElement.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            // TOGGLE OFF
+            if (activeTrackedVehicle === vehicleId) {
+                directions.clear();
+                infoPopup.remove();
+                activeTrackedVehicle = null;
+                return;
+            }
+
+            activeTrackedVehicle = vehicleId;
+            
+            // Clear old listeners before starting new route
+            directions.off("fetchroutesend");
+
+            directions.setWaypoints([[userLng, userLat], [longitude, latitude]]);
+
+            directions.on("fetchroutesend", (ev) => {
+                if (activeTrackedVehicle !== vehicleId) return;
+
+                const route = ev.data.directions.routes[0];
+                const dist = (route.distance / 1000).toFixed(2);
+                const eta = Math.round(route.duration / 60);
+
+                // Simply update the EXISTING popup
+                infoPopup.setLngLat([longitude, latitude])
+                    .setHTML(`
+                        <div class="p-2 text-black">
+                            <strong>Vehicle: ${vehicleId}</strong><br>
+                            Dist: ${dist} km | ETA: ~${eta} mins
+                        </div>
+                    `);
+
+                if (!infoPopup.isOpen()) {
+                    infoPopup.addTo(map);
+                }
+            });
+        });
+
+        vehicleMarkers.set(vehicleId, marker);
+    }
+}
+
+                window.updateVehicleMarkerOnMap = updateVehicleMarkerOnMap;
+
+                function getRandomColor(vehicleId) {
+                    // Generate consistent color based on vehicle ID
+                    const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
+                    let hash = 0;
+                    for (let i = 0; i < vehicleId.length; i++) {
+                        hash = vehicleId.charCodeAt(i) + ((hash << 5) - hash);
+                    }
+                    return colors[Math.abs(hash) % colors.length];
+                }
+
+                window.getRandomColor = getRandomColor;
+            }
 
 
-        // Fare calculation functions (existing)
-        let marker = new maplibregl.Marker({ draggable: false });
-        const activeVehicleMarkers = {};
+            // Fare calculation functions (existing)
+            let marker = new maplibregl.Marker({ draggable: false });
+            const activeVehicleMarkers = {};
 
-        if(userRole !== 'driver') {
+            if (userRole !== 'driver') {
+                // Function to fetch and display active vehicles from database
+                function refreshActiveVehicles() {
+                    fetch('/track/vehicles/active')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (Array.isArray(data)) {
+                                const activeIds = new Set(data.map(v => v.vehicle_id));
 
-            // Function to fetch and display active vehicles from database
-            function refreshActiveVehicles() {
-                fetch('/track/vehicles/active').then(response => response.json()).then(data => {
-                    console.log('Active vehicles from DB:', data);
-                    if (Array.isArray(data)) {
-                        const activeIds = new Set(data.map(v => v.vehicle_id));
-    
-                        Object.keys(activeVehicleMarkers).forEach(vehicleId => {
-                            if(!activeIds.has(vehicleId)) {
-                                activeVehicleMarkers[vehicleId].remove();
-                                delete activeVehicleMarkers[vehicleId];
+                                // Remove markers from map that aren't in the active database list
+                                vehicleMarkers.forEach((marker, id) => {
+                                    if (!activeIds.has(id)) {
+                                        marker.remove();
+                                        vehicleMarkers.delete(id);
+                                        if (activeTrackedVehicle === id) {
+                                            directions.clear();
+                                            activeTrackedVehicle = null;
+                                        }
+                                    }
+                                });
+
+                                // Update/Create markers for all active vehicles
+                                data.forEach(v => updateVehicleMarkerOnMap(v.vehicle_id, v.longitude, v.latitude, v.speed));
                             }
                         });
-    
-                        data.forEach(vehicle => {
-                            updateVehicleMarkerOnMap(
-                                vehicle.vehicle_id,
-                                vehicle.longitude,
-                                vehicle.latitude
-                            );
-                        });
-                        console.log(`✅ Loaded ${data.length} active vehicles`);
-                    }
-                }).catch(error => console.error('Error fetching active vehicles:', error));
+                }
+
+                window.refreshActiveVehicles = refreshActiveVehicles;
+
+                // Refresh active vehicles every 10 seconds
+                setInterval(refreshActiveVehicles, 10000);
+                // Initial refresh after 2 seconds
+                setTimeout(refreshActiveVehicles, 2000);
             }
-    
-            window.refreshActiveVehicles = refreshActiveVehicles;
-
-            // Refresh active vehicles every 10 seconds
-            setInterval(refreshActiveVehicles, 10000);
-            // Initial refresh after 2 seconds
-            setTimeout(refreshActiveVehicles, 2000);
-        }
 
 
+            const distanceCoordinate = document.getElementById('distance');
+            const pickup = document.getElementById('pickup');
+            const destination = document.getElementById('destination');
+            const priceRegular = document.getElementById('price-regular');
+            const priceDiscount = document.getElementById('price-discount');
 
-        if(userRole === 'admin') {
-  
-        }
+            pickup.value = "";
+            destination.value = "";
+            distanceCoordinate.value = "0";
+            priceRegular.value = "0";
+            priceDiscount.value = "0";
 
+            let rates = {!! $rates !!};
 
-        const distanceCoordinate = document.getElementById('distance');
-        const pickup = document.getElementById('pickup');
-        const destination = document.getElementById('destination');
-        const priceRegular = document.getElementById('price-regular');
-        const priceDiscount = document.getElementById('price-discount');
-
-        pickup.value = "";
-        destination.value = "";
-        distanceCoordinate.value = "0";
-        priceRegular.value = "0";
-        priceDiscount.value = "0";
-
-        let rates = {!! $rates !!};
-
-        function getFareRate(km) {
-            if (km >= 1 && km < 50) {
-                for (let i = 0; i < 50; i++) {
-                    if (km == rates[i]['km']) {
-                        return rates[i];
+            function getFareRate(km) {
+                if (km >= 1 && km < 50) {
+                    for (let i = 0; i < 50; i++) {
+                        if (km == rates[i]['km']) {
+                            return rates[i];
+                        }
                     }
                 }
-            }
-            if (km < 1) {
+                if (km < 1) {
+                    return rates[0];
+                }
+                if (km >= 50) {
+                    return rates[49];
+                }
                 return rates[0];
             }
-            if (km >= 50) {
-                return rates[49];
-            }
-            return rates[0];
-        }
-        
-        window.getFareRate = getFareRate;
 
-       
-        
-        const geocoderApi = {
-            forwardGeocode: async (config) => {
-                const features = [];
-                try {
-                    const request =
-                        `https://nominatim.openstreetmap.org/search?q=${config.query}&format=geojson&polygon_geojson=1&addressdetails=1&viewbox=${viewbox}&bounded=1`;
+            window.getFareRate = getFareRate;
+
+
+
+            const geocoderApi = {
+                forwardGeocode: async (config) => {
+                    const features = [];
+                    try {
+                        const request =
+                            `https://nominatim.openstreetmap.org/search?q=${config.query}&format=geojson&polygon_geojson=1&addressdetails=1&viewbox=${viewbox}&bounded=1`;
                         const response = await fetch(request);
                         const geojson = await response.json();
                         for (const feature of geojson.features) {
                             const center = [
                                 feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
                                 feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2
-                                ];
-                                const point = {
-                                    type: 'Feature',
-                                    geometry: {
-                                type: 'Point',
-                                coordinates: center
-                            },
-                            place_name: feature.properties.display_name,
-                            properties: feature.properties,
-                            text: feature.properties.display_name,
-                            place_type: ['place'],
-                            center
-                        };
-                        features.push(point);
+                            ];
+                            const point = {
+                                type: 'Feature',
+                                geometry: {
+                                    type: 'Point',
+                                    coordinates: center
+                                },
+                                place_name: feature.properties.display_name,
+                                properties: feature.properties,
+                                text: feature.properties.display_name,
+                                place_type: ['place'],
+                                center
+                            };
+                            features.push(point);
+                        }
+                    } catch (e) {
+                        console.error(`Failed to forwardGeocode with error: ${e}`);
                     }
-                } catch (e) {
-                    console.error(`Failed to forwardGeocode with error: ${e}`);
+                    return { features };
                 }
-                return { features };
-            }
-        };
-        
-        map.addControl(
-            new MaplibreGeocoder(geocoderApi, {
-                maplibregl,
-                minLength: 3,        // Only start searching after 3 characters are typed
-                debounceSearch: 300, // Wait 300ms after the last keystroke before calling the API
-                showResultsWhileTyping: true // Ensures the dropdown updates dynamically
-            }), 'bottom-left'
-        );
+            };
 
-        const startPoint = {
-            'type': 'FeatureCollection',
-            'features': [{
-                'type': 'Feature',
-                'geometry': {
-                    'type': 'Point',
-                }
-            }]
-        };
+            map.addControl(
+                new MaplibreGeocoder(geocoderApi, {
+                    maplibregl,
+                    minLength: 3,        // Only start searching after 3 characters are typed
+                    debounceSearch: 300, // Wait 300ms after the last keystroke before calling the API
+                    showResultsWhileTyping: true // Ensures the dropdown updates dynamically
+                }), 'bottom-left'
+            );
 
-        map.on('load', () => {
-            map.addSource('point', {
-                'type': 'geojson',
-                'data': startPoint
-            });
+            const startPoint = {
+                'type': 'FeatureCollection',
+                'features': [{
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Point',
+                    }
+                }]
+            };
 
-            map.addLayer({
-                'id': 'point',
-                'type': 'circle',
-                'source': 'point',
-                'paint': {
-                    'circle-radius': 10,
-                    'circle-color': '#3887be'
-                }
-            });
+            map.on('load', () => {
+                map.addSource('point', {
+                    'type': 'geojson',
+                    'data': startPoint
+                });
 
-            map.setLayoutProperty('label_country', 'text-field', [
-                'format',
-                ['get', 'name_en'],
-                { 'font-scale': 1.2 },
-                '\n',
-                {},
-                ['get', 'name'],
-                {
-                    'font-scale': 0.8,
-                    'text-font': [
-                        'literal',
-                        ['Noto Sans Regular']
-                    ]
-                }
-            ]);
+                map.addLayer({
+                    'id': 'point',
+                    'type': 'circle',
+                    'source': 'point',
+                    'paint': {
+                        'circle-radius': 10,
+                        'circle-color': '#3887be'
+                    }
+                });
 
-            marker.setLngLat([0, 0]).addTo(map);
-            
-        });
-        
-        let destinationLat = null;
-        let destinationLng = null;
-        let pickupLng = null;
-        let pickupLat = null;
-
-        let directions = null;
-        
-        map.on('load', () => {
-            directions = new MapLibreGlDirections(map); 
-        });
-        
-        function drawRoute() {
-            if(!directions) return;
-            
-            if(pickupLng && pickupLat && destinationLng && destinationLat) {
-                directions.setWaypoints([
-                    [parseFloat(pickupLng), parseFloat(pickupLat)],
-                    [parseFloat(destinationLng), parseFloat(destinationLat)]
+                map.setLayoutProperty('label_country', 'text-field', [
+                    'format',
+                    ['get', 'name_en'],
+                    { 'font-scale': 1.2 },
+                    '\n',
+                    {},
+                    ['get', 'name'],
+                    {
+                        'font-scale': 0.8,
+                        'text-font': [
+                            'literal',
+                            ['Noto Sans Regular']
+                        ]
+                    }
                 ]);
 
-                directions.on("fetchroutesend", async (e) => {
+                marker.setLngLat([0, 0]).addTo(map);
 
-                    console.log(e.data.directions.routes[0].distance);
-                    const distanceMeters = e.data.directions.routes[0].distance;
-                    const distanceKM = distanceMeters / 1000;
+            });
 
-                    distanceCoordinate.value = distanceKM.toFixed(2);
+            let destinationLat = null;
+            let destinationLng = null;
+            let pickupLng = null;
+            let pickupLat = null;
 
-                    let rate = getFareRate(Math.round(distanceKM));
-                    priceRegular.value = rate['regular'];
-                    priceDiscount.value = rate['discount'];
+            let directions = null;
+
+            map.on('load', () => {
+                directions = new MapLibreGlDirections(map);
+            });
+
+            function drawRoute() {
+                if (!directions) return;
+
+                if (pickupLng && pickupLat && destinationLng && destinationLat) {
+                    directions.setWaypoints([
+                        [parseFloat(pickupLng), parseFloat(pickupLat)],
+                        [parseFloat(destinationLng), parseFloat(destinationLat)]
+                    ]);
+
+                    directions.on("fetchroutesend", async (e) => {
+
+                        console.log(e.data.directions.routes[0].distance);
+                        const distanceMeters = e.data.directions.routes[0].distance;
+                        const distanceKM = distanceMeters / 1000;
+
+                        distanceCoordinate.value = distanceKM.toFixed(2);
+
+                        let rate = getFareRate(Math.round(distanceKM));
+                        priceRegular.value = rate['regular'];
+                        priceDiscount.value = rate['discount'];
+                    });
+                }
+            }
+
+            window.drawRoute = drawRoute;
+
+            function getStartingPoint() {
+                map.once('mousemove', (e) => {
+                    map.getCanvas().style.cursor = 'crosshair';
+                });
+
+                map.once('click', (e) => {
+                    const coords = e.lngLat;
+
+                    startPoint.features[0].geometry.coordinates = [coords.lng, coords.lat];
+                    map.getSource('point').setData(startPoint);
+
+                    let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
+                    let coordinatesArray = coordinates.split(" ");
+
+                    pickupLng = coordinatesArray[0];
+                    pickupLat = coordinatesArray[1];
+
+                    pickup.value = coordinates;
+
+                    map.getCanvas().style.cursor = 'pointer';
+                    drawRoute();
                 });
             }
-        }
 
-        window.drawRoute = drawRoute;
+            window.getStartingPoint = getStartingPoint;
 
-        function getStartingPoint() {
-            map.once('mousemove', (e) => {
-                map.getCanvas().style.cursor = 'crosshair';
-            });
+            function getDestination() {
+                map.once('mousemove', (e) => {
+                    map.getCanvas().style.cursor = 'crosshair';
+                });
 
-            map.once('click', (e) => {
-                const coords = e.lngLat;
+                map.once('click', (e) => {
+                    let longLat = e.lngLat;
 
-                startPoint.features[0].geometry.coordinates = [coords.lng, coords.lat];
-                map.getSource('point').setData(startPoint);
+                    let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
+                    let coordinatesArray = coordinates.split(" ");
 
-                let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
-                let coordinatesArray = coordinates.split(" ");
+                    destinationLng = coordinatesArray[0];
+                    destinationLat = coordinatesArray[1];
 
-                pickupLng = coordinatesArray[0];
-                pickupLat = coordinatesArray[1];
+                    marker.setLngLat([longLat.lng, longLat.lat]);
 
-                pickup.value = coordinates;
+                    destination.value = coordinates;
 
-                map.getCanvas().style.cursor = 'pointer';
-                drawRoute();
-            });
-        }
+                    map.getCanvas().style.cursor = 'pointer';
+                    drawRoute();
+                });
+            }
 
-        window.getStartingPoint = getStartingPoint;
+            window.getDestination = getDestination;
 
-        function getDestination() {
-            map.once('mousemove', (e) => {
-                map.getCanvas().style.cursor = 'crosshair';
-            });
+            // // Optional: Auto - start GPS tracking when page loads
+            // setTimeout(() => {
+            //     geolocate.trigger();
+            // }, 1000);
 
-            map.once('click', (e) => {
-                let longLat = e.lngLat;
+            // Initialize the functions
 
-                let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
-                let coordinatesArray = coordinates.split(" ");
-
-                destinationLng = coordinatesArray[0];
-                destinationLat = coordinatesArray[1];
-
-                marker.setLngLat([longLat.lng, longLat.lat]);
-
-                destination.value = coordinates;
-
-                map.getCanvas().style.cursor = 'pointer';
-                drawRoute();
-            });
-        }
-
-        window.getDestination = getDestination;
-
-        // // Optional: Auto - start GPS tracking when page loads
-        // setTimeout(() => {
-        //     geolocate.trigger();
-        // }, 1000);
-
-        // Initialize the functions
-       
-    </script>
+        </script>
 </body>
 
 </html>

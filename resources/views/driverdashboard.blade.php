@@ -91,67 +91,27 @@
         <header class="mb-12 flex justify-between items-end">
             <div>
                 <h2 class="text-3xl font-black tracking-tight">Driver <span class="text-blue-500">Dashboard</span></h2>
-                <p class="text-gray-500 text-sm mt-1">Unit #PJ-442 | Route: 14B</p>
-            </div>
-            <div class="px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full">
-                <span class="text-green-400 text-[10px] font-black uppercase tracking-widest animate-pulse">● On
-                    Duty</span>
+                <p class="text-gray-500 text-sm mt-1">Route: <span class="text-white font-bold">Minglanilla - IT
+                        Park</span></p>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-            <div class="glass p-8 rounded-[2.5rem] border-l-4 border-blue-500 shadow-xl shadow-blue-500/5">
-                <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Today's Commuters</p>
-                <h3 class="text-5xl font-black tracking-tighter">142</h3>
-            </div>
-            <div class="glass p-8 rounded-[2.5rem] border-l-4 border-yellow-500">
-                <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Est. Earnings</p>
-                <h3 class="text-5xl font-black tracking-tighter">₱1,840</h3>
-            </div>
-        </div>
-
-        <div class="glass p-8 rounded-[3rem]">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div class="grid grid-cols-1 gap-6 mb-10">
+            <div
+                class="glass p-10 rounded-[3rem] border-l-4 border-blue-500 shadow-xl shadow-blue-500/5 flex flex-col md:flex-row justify-between items-center">
                 <div>
-                    <h4 class="text-xs font-black uppercase tracking-[0.2em] text-blue-400">Current Trip Info</h4>
-                    <p class="text-[10px] text-gray-500 uppercase mt-1">Status: En Route</p>
-                </div>
-                <button
-                    class="bg-blue-600 hover:bg-blue-500 text-[10px] font-black uppercase px-6 py-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-600/20">
-                    Start New Trip
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <div class="space-y-8 py-4">
-                    <div class="relative pl-8 border-l-2 border-dashed border-white/10">
-                        <div
-                            class="absolute -left-[9px] top-0 w-4 h-4 bg-blue-600 rounded-full ring-4 ring-blue-600/20">
-                        </div>
-                        <p class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Origin</p>
-                        <p class="font-bold text-lg">Downtown Terminal</p>
-                    </div>
-                    <div class="relative pl-8">
-                        <div class="absolute -left-[9px] top-0 w-4 h-4 bg-white/20 rounded-full"></div>
-                        <p class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Destination</p>
-                        <p class="font-bold text-lg">North View Heights</p>
+                    <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">Distance Traveled
+                        Today</p>
+                    <div class="flex items-baseline gap-2">
+                        <h3 class="text-7xl font-black tracking-tighter text-white">{{ $total_distance }}</h3>
+                        <span class="text-2xl font-bold text-blue-500">KM</span>
                     </div>
                 </div>
 
-                <div
-                    class="flex flex-col justify-center items-center p-8 bg-white/5 rounded-[2rem] border border-white/5">
-                    <p class="text-[10px] text-gray-500 uppercase font-black mb-4 tracking-widest">Current Capacity</p>
-                    <div class="text-center">
-                        <span class="text-7xl font-black text-blue-500 tracking-tighter">12</span>
-                        <span class="text-2xl font-bold text-gray-600">/ 18</span>
-                    </div>
-                    <div class="w-full bg-white/5 h-2 rounded-full mt-6 overflow-hidden">
-                        <div class="bg-blue-600 h-full w-[66%] rounded-full"></div>
-                    </div>
-                    <p class="text-[10px] font-bold mt-4 uppercase text-blue-400">6 seats available</p>
-                </div>
+                <div class="hidden md:block w-px h-16 bg-white/10 mx-8"></div>
             </div>
         </div>
+
     </main>
 
     <div x-show="showLogoutModal"

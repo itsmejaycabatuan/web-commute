@@ -312,10 +312,7 @@ Route::middleware(['auth', 'verified'])->group(function (){
     })->name('admin.dashboard');
      
   
-    Route::get('/driverdashboard',function (){
-
-        return view('driverdashboard');
-    })->name('driver.dashboard');
+    Route::get('/driverdashboard', [DriverController::class, 'index'])->name('driver.dashboard');
 
     Route::get('/profile', function () {
         return view('profile');

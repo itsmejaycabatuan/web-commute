@@ -13,7 +13,9 @@ class VehicleLocationHistory extends Model
         'vehicle_location_id',
         'longitude',
         'latitude',
-        'created_at'
+        'created_at',
+        'user_id',
+        'distance_from_last_pos'
     ];
 
     public function location() {

@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\VehicleLocationHistory;
+use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class DriverController extends Controller
@@ -40,5 +43,19 @@ class DriverController extends Controller
         return redirect()
             ->route('login')
             ->with('success', 'Driver registration submitted. Please wait for admin approval before signing in.');
+    }
+
+    public function index() {
+        $userId = Auth::user()->id;
+
+        $distance = VehicleLocationHistory::where('user_id', $userId)
+        ->whereDate('created_at', Carbon::today())
+        ->sum('distance_from_last_pos');
+
+        $totalDistance = number_format($distance, 1);
+
+        return view('driverdashboard', [
+            'total_distance' => $totalDistance
+        ]);
     }
 }

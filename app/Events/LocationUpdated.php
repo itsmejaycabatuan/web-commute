@@ -20,19 +20,21 @@ class LocationUpdated implements ShouldBroadcast
     public $heading;
     public $accuracy;
     public $timestamp;
+    public $userId;
 
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct($trackingId, $latitude, $longitude, $speed, $accuracy)
+    public function __construct($trackingId, $latitude, $longitude, $speed, $accuracy, $userId)
     {
         $this->trackingId = $trackingId;
         $this->coordinates = [$longitude, $latitude];
         $this->speed = $speed;
         $this->accuracy = $accuracy;
         $this->timestamp = now()->toDateTimeString();
+        $this->userId = $userId;
     }
 
     /**
@@ -57,7 +59,8 @@ class LocationUpdated implements ShouldBroadcast
             'coordinates' => $this->coordinates,
             'speed' => $this->speed,
             'accuracy' => $this->accuracy,
-            'timestamp' => $this->timestamp
+            'timestamp' => $this->timestamp,
+            'user_id' => $this->userId
         ];
     }
 }
