@@ -176,9 +176,7 @@ Route::middleware('guest')->group(function() {
     })->name('guest.map');
 
 
-    Route::get('/tutorial', function () {
-        return view('tutorial');
-    })->name('tutorial');
+    ;
 
 });
 
@@ -187,6 +185,10 @@ Route::middleware(['auth', 'verified'])->group(function (){
     // Route::get('/dashboard/commuter', function () {
     //     return view('commuter.dashboard');
     // })->name('commuter.dashboard');
+
+    Route::get('/tutorial', function () {
+        return view('tutorial');
+    })->name('tutorial');
 
     Route::get('/commuter/profile', function () {
         $userId = Auth::user()->id;
