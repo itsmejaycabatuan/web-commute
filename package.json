@@ -13,10 +13,14 @@
         "axios": "^0.25",
         "laravel-mix": "^6.0.6",
         "lodash": "^4.17.19",
+        "maplibre-gl": "^5.20.2",
         "postcss": "^8.1.14"
     },
     "dependencies": {
+        "@maplibre/maplibre-gl-directions": "^0.9.1",
         "bootstrap": "^5.3.8",
-        "bootstrap-icons": "^1.13.1"
+        "bootstrap-icons": "^1.13.1",
+        "laravel-echo": "^2.3.1",
+        "pusher-js": "^8.4.0"
     }
 }

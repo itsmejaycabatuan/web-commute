@@ -31,7 +31,7 @@ class ViewsTest extends TestCase
 
     public function test_user_profile_page_can_be_rendered() {
         $user = User::factory()->create();
-        $response = $this->actingAs($user)->get(route('commuter.commuter'));
+        $response = $this->actingAs($user)->get(route(name: 'commuter.profile'));
 
         $response->assertOk();
     }

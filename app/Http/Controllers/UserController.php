@@ -7,10 +7,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Mail\EmailVerification;
+use App\Models\Wallet;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Password;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -101,12 +103,19 @@ class UserController extends Controller
 
         $user = User::create([
             'email' => $request->email,
-            'password' => Hash::make($request->password)
+            'password' => Hash::make($request->password),
+            'driver_approval_status' => null,
         ]);
 
         if($user) {
             Auth::login($user);
             event(new Registered($user));
+            $user->assignRole('commuter');
+
+            Wallet::create([
+                'user_id' => $user->id
+            ]);
+            
             return redirect()->route('commuter.dashboard')->with('success', 'User Successfully Registered!');
         }
         return back()->with('error', 'User Failed to Register.');
@@ -120,9 +129,28 @@ class UserController extends Controller
             'password' => 'required|min:8'
         ]);
 
-        if(Auth::attempt($validated)) {
+        if (Auth::attempt($validated)) {
+            $user = Auth::user();
+
+            if ($user->hasRole('driver') && $user->driver_approval_status === 'pending') {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('login')->with('driver_pending', true);
+            }
+
+            if ($user->hasRole('driver') && $user->driver_approval_status === 'rejected') {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('login')->with('driver_rejected', true);
+            }
+
             $request->session()->regenerate();
-            return redirect()->route('commuter.dashboard')->with('success','Logged in Successfully!');
+
+            return redirect()->route('commuter.dashboard')->with('success', 'Logged in Successfully!');
         }
 
         throw ValidationException::withMessages([
