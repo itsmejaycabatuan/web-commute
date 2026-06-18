@@ -492,9 +492,9 @@
                                     </button>
                                     <button
                                         class="mt-6 flex items-center justify-center gap-2 w-full bg-gradient-to-r
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    py-4 px-6 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all duration-300
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    shadow-lg shadow-blue-500/20 active:scale-[0.98]"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                py-4 px-6 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all duration-300
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                shadow-lg shadow-blue-500/20 active:scale-[0.98]"
                                         type="submit">
                                         <span>Buy a ride</span>
                                         <i class="fa-solid fa-arrow-right text-[10px]"></i>
@@ -518,12 +518,11 @@
             <div class="sidebar-content flex-center">
                 <div class="fixed top-28 right-6 w-80 z-40 hidden lg:flex flex-col gap-4 max-h-[calc(100vh-140px)]">
                     @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter')
-                        <a href="{{ route('tutorial') }}"
-                            class=" glass-panel p-5 rounded-3xl flex items-center space-x-4 border-yellow-500/30 group
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        hover:bg-yellow-500/10 transition">
-                            <div
-                                class=" w-10 h-10 bg-yellow-500/30 rounded-xl flex items-center justify-center
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    group-hover:rotate-12 transition">
+                        {{-- Trigger Button --}}
+                        <button onclick="openTutorialModal()" class="glass-panel p-5 rounded-3xl flex items-center space-x-4 border-yellow-500/30 group
+                                                            hover:bg-yellow-500/10 transition w-full text-left">
+                            <div class="w-10 h-10 bg-yellow-500/30 rounded-xl flex items-center justify-center
+                                                                    group-hover:rotate-12 transition">
                                 <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i>
                             </div>
                             <div>
@@ -531,7 +530,97 @@
                                 <p class="text-[9px] text-white/50 uppercase tracking-wider font-bold">New user? Start here
                                 </p>
                             </div>
-                        </a>
+                        </button>
+
+                        {{-- Modal Backdrop --}}
+                        <div id="tutorialModalBackdrop" class="fixed inset-0 z-50 hidden" onclick="closeTutorialModal()">
+                            <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+                        </div>
+
+                        {{-- Modal Panel — Top Right Corner --}}
+                        <div id="tutorialModal" class="fixed top-28 right-4 z-50 hidden w-[340px] max-h-[calc(100vh-2rem)] overflow-y-auto
+                                                                rounded-[1.5rem] border border-white/10 shadow-2xl shadow-black/40
+                                                                transition-all duration-300 opacity-0 translate-y-2"
+                            style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px);">
+
+                            {{-- Header --}}
+                            <div class="flex items-center justify-between p-5 pb-0">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 bg-yellow-500/20 rounded-xl flex items-center justify-center">
+                                        <i class="fa-solid fa-wand-magic-sparkles text-yellow-500 text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-sm font-bold text-white leading-tight">App Tutorial</h2>
+                                        <p class="text-[9px] text-white/50 uppercase tracking-wider font-bold">Quick start
+                                            guide</p>
+                                    </div>
+                                </div>
+                                <button onclick="closeTutorialModal()"
+                                    class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition">
+                                    <i class="fa-solid fa-xmark text-white/60 text-xs"></i>
+                                </button>
+                            </div>
+
+                            <div class="p-5">
+                                <p class="text-white/50 text-[11px] mb-5 leading-relaxed">
+                                    New to SmartCommute? Follow these steps to get started.
+                                </p>
+
+                                {{-- Steps --}}
+                                <div class="space-y-4">
+                                    {{-- Step 1 --}}
+                                    <div class="flex gap-3 group/step">
+                                        <span
+                                            class="w-7 h-7 rounded-full bg-blue-600/30 flex items-center justify-center text-blue-400 text-[10px] font-bold shrink-0 mt-0.5">1</span>
+                                        <div>
+                                            <h3 class="font-bold text-[12px] mb-0.5 text-white">Enter Your Location</h3>
+                                            <p class="text-white/50 text-[10px] leading-relaxed">Type your starting point or
+                                                click the crosshairs icon to use your current GPS location.</p>
+                                        </div>
+                                    </div>
+                                    {{-- Step 2 --}}
+                                    <div class="flex gap-3 group/step">
+                                        <span
+                                            class="w-7 h-7 rounded-full bg-blue-600/30 flex items-center justify-center text-blue-400 text-[10px] font-bold shrink-0 mt-0.5">2</span>
+                                        <div>
+                                            <h3 class="font-bold text-[12px] mb-0.5 text-white">Enter Destination</h3>
+                                            <p class="text-white/50 text-[10px] leading-relaxed">Type where you want to go
+                                                (e.g., "Ayala, Cebu" or "SM City").</p>
+                                        </div>
+                                    </div>
+                                    {{-- Step 3 --}}
+                                    <div class="flex gap-3 group/step">
+                                        <span
+                                            class="w-7 h-7 rounded-full bg-blue-600/30 flex items-center justify-center text-blue-400 text-[10px] font-bold shrink-0 mt-0.5">3</span>
+                                        <div>
+                                            <h3 class="font-bold text-[12px] mb-0.5 text-white">Calculate Fare</h3>
+                                            <p class="text-white/50 text-[10px] leading-relaxed">Click "Calculate Fare" to
+                                                see the estimated cost and travel time. Fare is automatically deducted from
+                                                your Digital Wallet.</p>
+                                        </div>
+                                    </div>
+                                    {{-- Step 4 --}}
+                                    <div class="flex gap-3 group/step">
+                                        <span
+                                            class="w-7 h-7 rounded-full bg-blue-600/30 flex items-center justify-center text-blue-400 text-[10px] font-bold shrink-0 mt-0.5">4</span>
+                                        <div>
+                                            <h3 class="font-bold text-[12px] mb-0.5 text-white">View History</h3>
+                                            <p class="text-white/50 text-[10px] leading-relaxed">Check "Recent Receipts" or
+                                                "History" to see past trips and spending.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- CTA --}}
+
+
+                                {{-- Dismiss link --}}
+                                <button onclick="closeTutorialModal()"
+                                    class="mt-3 block w-full text-center text-white/30 hover:text-white/50 text-[10px] font-semibold uppercase tracking-wider transition">
+                                    Dismiss
+                                </button>
+                            </div>
+                        </div>
                     @endif
 
                     @if (!Auth::check())
@@ -632,9 +721,9 @@
                                     <span><i class="fa-solid fa-location-dot text-blue-400 mr-1"></i> Destination:</span>
                                     <span
                                         class="font-mono"">IT Park</span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <div class="
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <div class="
                                         flex justify-between items-start mb-4">
                                         <div>
                                             <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">
@@ -768,7 +857,7 @@
                 elem.className = classes.join(' ');
             }
 
-            window.toggleSidebar = toggleSidebar;
+            window.toggleSidebar = toggleSidebar; 3
 
             map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
 
@@ -782,8 +871,7 @@
                 showUserLocation: true,
                 showAccuracyCircle: true,
                 fitBoundsOptions: {
-                    maxZoom: 15,
-                    duration: 1000
+                    maxZoom: 15
                 }
             });
 
@@ -1092,8 +1180,9 @@
                     gpsStatusText.textContent = 'GPS: Error - ' + error.message;
                 });
 
-                geolocate.on('outofmaxbounds', () => {
+                geolocate.on('outofmaxbounds', (error) => {
                     console.log('GPS out of bounds');
+                    console.error("error: ", error);
                 });
             }
 
@@ -1897,6 +1986,45 @@
 
             // Close dropdown when clicking outside
             document.addEventListener("click", (e) => closeAllLists());
+
+            function openTutorialModal() {
+                const backdrop = document.getElementById('tutorialModalBackdrop');
+                const modal = document.getElementById('tutorialModal');
+                backdrop.classList.remove('hidden');
+                modal.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    modal.classList.remove('opacity-0', 'translate-y-2');
+                    modal.classList.add('opacity-100', 'translate-y-0');
+                });
+            }
+
+            window.openTutorialModal = openTutorialModal;
+
+            function closeTutorialModal() {
+                const backdrop = document.getElementById('tutorialModalBackdrop');
+                const modal = document.getElementById('tutorialModal');
+                modal.classList.remove('opacity-100', 'translate-y-0');
+                modal.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    backdrop.classList.add('hidden');
+                }, 300);
+                sessionStorage.setItem('tutorialDismissed', 'true');
+            }
+
+            window.closeTutorialModal = closeTutorialModal;
+
+            // Auto-open on first visit of the session
+            document.addEventListener('DOMContentLoaded', () => {
+                if (!sessionStorage.getItem('tutorialDismissed')) {
+                    setTimeout(openTutorialModal, 800);
+                }
+            });
+
+            // Close on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeTutorialModal();
+            });
         </script>
 </body>
 

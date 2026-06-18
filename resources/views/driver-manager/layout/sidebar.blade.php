@@ -21,20 +21,6 @@
                 <a href="{{ route('commuter.dashboard') }}"
                     class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('commuter.dashboard') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
                     <div class="min-w-[24px] flex justify-center">
-                        {{-- <i class="fa-solid fa-user-circle text-lg"></i> --}}
-                        <i class="fa-solid fa-gauge-high text-lg"></i>
-                    </div>
-                    <span x-show="open" x-transition.opacity
-                        class="text-xs font-bold uppercase tracking-widest">Map</span>
-                </a>
-            </nav>
-        </nav>
-
-        <nav class="space-y-2">
-            <nav class="space-y-2">
-                <a href="{{ route('admin.dashboard') }}"
-                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('admin.dashboard') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                    <div class="min-w-[24px] flex justify-center">
                         <i class="fa-solid fa-user-circle text-lg"></i>
                     </div>
                     <span x-show="open" x-transition.opacity
@@ -42,67 +28,44 @@
                 </a>
             </nav>
         </nav>
+
         <nav class="space-y-2">
-            <a href="{{ route('admin.commuters.index') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('admin.commuters.index') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                <div class="min-w-[24px] flex justify-center">
-                    <i class="fa-solid fa-users text-lg"></i>
-                </div>
-                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Manage PUJ
-                    commuter</span>
-            </a>
-        </nav>
-        <nav class="space-y-2">
-            <a href="{{ route('admin.drivers.index') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('admin.drivers.index') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                <div class="min-w-[24px] flex justify-center">
-                    <i class="fa-solid fa-id-card text-lg"></i>
-                </div>
-                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">PUJ
-                    drivers</span>
-            </a>
-        </nav>
-        {{-- <nav class="space-y-2">
-            <a href="{{ route('routes.index') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('routes.index') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                <div class="min-w-[24px] flex justify-center">
-                    <i class="fa-solid fa-route text-lg"></i>
-                </div>
-                <span x-show="open" x-transition.opacity
-                    class="text-xs font-bold uppercase tracking-widest">Routes</span>
-            </a>
-        </nav> --}}
-        <nav class="space-y-2">
-            <a href="{{ route('fares.index') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('fares.index') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                <div class="min-w-[24px] flex justify-center">
-                    <i class="fa-solid fa-money-bill text-lg"></i>
-                </div>
-                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Fare
-                    rates</span>
-            </a>
+            <nav class="space-y-2">
+                <a href="{{ route('driver-manager.time-keeping') }}"
+                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('driver-manager.time-keeping') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+                    <div class="min-w-[24px] flex justify-center">
+                        <i class="fa-solid fa-clock text-lg"></i>
+                    </div>
+                    <span x-show="open" x-transition.opacity
+                        class="text-xs font-bold uppercase tracking-widest">Time Keeping</span>
+                </a>
+            </nav>
         </nav>
 
         <nav class="space-y-2">
-            <a href="{{ route('faretransactions') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('faretransactions') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                <div class="min-w-[24px] flex justify-center">
-                    <i class="fa-solid fa-receipt text-lg"></i>
-                </div>
-                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Fare
-                    Transactions</span>
-            </a>
+            <nav class="space-y-2">
+                <a href="{{ route('driver-manager.violations-log') }}"
+                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('driver-manager.violations-log') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+                    <div class="min-w-[24px] flex justify-center">
+                        <i class="fa-solid fa-list text-lg"></i>
+                    </div>
+                    <span x-show="open" x-transition.opacity
+                        class="text-xs font-bold uppercase tracking-widest">Violations Log</span>
+                </a>
+            </nav>
         </nav>
 
         <nav class="space-y-2">
-            <a href="{{ route('admin.topups') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('admin.topups') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                <div class="min-w-[24px] flex justify-center">
-                    <i class="fa-solid fa-wallet text-lg"></i>
-                </div>
-                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Top
-                    ups</span>
-            </a>
+            <nav class="space-y-2">
+                <a href="{{ route('driver-manager.violation-codes') }}"
+                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('driver-manager.violation-codes') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+                    <div class="min-w-[24px] flex justify-center">
+                        <i class="fa-solid fa-road text-lg"></i>
+                    </div>
+                    <span x-show="open" x-transition.opacity
+                        class="text-xs font-bold uppercase tracking-widest">Violation Codes</span>
+                </a>
+            </nav>
         </nav>
 
         <nav class="space-y-2">

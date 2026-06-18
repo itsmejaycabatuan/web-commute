@@ -1,34 +1,32 @@
-    <?php
+<?php
 
+use App\Http\Controllers\Admin\CommuterController;
+use App\Http\Controllers\Admin\DriverApprovalController;
+use App\Http\Controllers\DriverController;
+use App\Http\Controllers\DriverManagerController;
+use App\Http\Controllers\DriverProfileController;
 use App\Http\Controllers\FareController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PusherController;
 use App\Http\Controllers\RateController;
 use App\Http\Controllers\RouteController;
-use App\Http\Controllers\TrackingController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleTrackingController;
-use App\Http\Controllers\DriverController;
-use App\Http\Controllers\Admin\CommuterController;
-use App\Http\Controllers\Admin\DriverApprovalController;
-use App\Http\Controllers\DriverProfileController;
-use App\Http\Controllers\PaymentController;
-use App\Models\User;
 use App\Models\Fare;
 use App\Models\FareRate;
 use App\Models\Payment;
 use App\Models\TopupHistory;
+use App\Models\User;
 use App\Models\Wallet;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
-use Spatie\Permission\Models\Role;
 
 /*
 |--------------------------------------------------------------------------
@@ -63,49 +61,47 @@ Route::get('/register', function () {
     return view('register');
 })->name('register');
 
-Route::get('/login',function (){
+Route::get('/login', function () {
     return view('login');
 })->name('login');
 
-
-
 Route::post('/users/logout', [UserController::class, 'logout'])->name('users.logout');
-Route::post('/users/register', [UserController::class,'register'])->name('users.register');
+Route::post('/users/register', [UserController::class, 'register'])->name('users.register');
 Route::post('/users/login', [UserController::class, 'login'])->name('users.login');
 
-Route::get('/email/verify', function() {
+Route::get('/email/verify', function () {
     return view('auth.verify-email');
 })->middleware('auth')->name('verification.notice');
 
-Route::post('/email/verification-notification', function(Request $request) {
+Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
+
     return back()->with('message', 'Verification link sent!');
 })->middleware(['auth', 'throttle:6.1'])->name('verification.send');
 
-Route::get('/email/verify/{id}/{hash}', function(EmailVerificationRequest $request) {
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
     $latestFare = Fare::get()->last();
 
     $rates = FareRate::get();
 
-    if($latestFare) {
+    if ($latestFare) {
         $latestFareId = $latestFare->id;
         $rates = FareRate::where('fare_id', $latestFareId)->get();
     }
 
     $request->fulfill();
+
     return view('commuter.dashboard', [
-        'rates' => $rates
+        'rates' => $rates,
     ]);
-})->middleware(['auth','signed'])->name('verification.verify');
+})->middleware(['auth', 'signed'])->name('verification.verify');
 
+Route::middleware('guest')->group(function () {
 
-Route::middleware('guest')->group(function() {
-
-    Route::post('/users/register', [UserController::class,'register'])->name('users.register');
+    Route::post('/users/register', [UserController::class, 'register'])->name('users.register');
     Route::post('/users/login', [UserController::class, 'login'])->name('users.login');
 
-   
-     Route::get('/driver/register', function () {
+    Route::get('/driver/register', function () {
         return view('driver-register');
     })->name('driver.register.page');
 
@@ -114,15 +110,15 @@ Route::middleware('guest')->group(function() {
         return view('register');
     })->name('register');
 
-    Route::get('/login',function (){
+    Route::get('/login', function () {
         return view('login');
     })->name('login');
 
-    Route::get('/forgot-password', function() {
+    Route::get('/forgot-password', function () {
         return view('auth.forgot-password');
     })->name('password.request');
 
-    Route::post('/forgot-password', function(Request $request) {
+    Route::post('/forgot-password', function (Request $request) {
         $request->validate(['email' => 'required|email']);
 
         $status = Password::sendResetLink(
@@ -132,23 +128,23 @@ Route::middleware('guest')->group(function() {
         return $status === Password::RESET_LINK_SENT ? back()->with(['status' => __($status)]) : back()->withErrors(['email' => __($status)]);
     })->name('password.email');
 
-    Route::get('/reset-password/{token}', function(string $token) {
+    Route::get('/reset-password/{token}', function (string $token) {
         return view('auth.reset-password', ['token' => $token]);
     })->name('password.reset');
 
-    Route::post('/reset-password', function(Request $request) {
+    Route::post('/reset-password', function (Request $request) {
         $request->validate([
             'token' => 'required',
             'email' => 'required|email',
             'password' => 'required|min:8',
-            'confirm-password' => 'required|same:password'
+            'confirm-password' => 'required|same:password',
         ]);
 
         $status = Password::reset(
             $request->only('email', 'password', 'confirm-password', 'token'),
             function (User $user, string $password) {
                 $user->forceFill([
-                    'password' => Hash::make($password)
+                    'password' => Hash::make($password),
                 ])->setRememberToken(Str::random(60));
 
                 $user->save();
@@ -165,22 +161,19 @@ Route::middleware('guest')->group(function() {
 
         $rates = FareRate::get();
 
-        if($latestFare) {
+        if ($latestFare) {
             $latestFareId = $latestFare->id;
             $rates = FareRate::where('fare_id', $latestFareId)->get();
         }
 
         return view('commuter.dashboard', [
-            'rates' => $rates
+            'rates' => $rates,
         ]);
     })->name('guest.map');
 
-
-    ;
-
 });
 
-Route::middleware(['auth', 'verified'])->group(function (){
+Route::middleware(['auth', 'verified'])->group(function () {
 
     // Route::get('/dashboard/commuter', function () {
     //     return view('commuter.dashboard');
@@ -199,14 +192,14 @@ Route::middleware(['auth', 'verified'])->group(function (){
         return view('commuter.profile', [
             'payments' => $payments,
             'topups' => $topups,
-            'wallet' => $wallet
+            'wallet' => $wallet,
         ]);
     })->name('commuter.profile');
 
     // Route::get('/dashboard', function () {
     //     return view('commuter.dashboard');
     // })->name('commuter.dashboard');Q
-    Route::middleware('role:commuter|admin|driver')->group(function() {
+    Route::middleware('role:commuter|admin|driver|driver_manager')->group(function () {
         Route::get('/dashboard', function () {
             $user = Auth::user();
             $userId = Auth::user()->id;
@@ -218,42 +211,48 @@ Route::middleware(['auth', 'verified'])->group(function (){
 
             $rates = FareRate::get();
 
-            if($latestFare) {
+            if ($latestFare) {
                 $latestFareId = $latestFare->id;
                 $rates = FareRate::where('fare_id', $latestFareId)->get();
             }
 
-            if($role == 'admin') {
-                return view('commuter.dashboard', [
-                    'rates' => $rates
-                ]);
-            }
-
-            if($role == 'driver') {
-                
-                if ($user->driver_approval_status !== 'approved') {
-                    Auth::logout();
-                    return redirect()->route('login')->with('driver_pending', true);
-                }
+            if ($role == 'admin') {
                 return view('commuter.dashboard', [
                     'rates' => $rates,
-                    'recentReceipts' => $recentReceipts
                 ]);
-                    // return view('driverdashboard');
             }
 
-            if($role == 'commuter') {
+            if ($role == 'driver') {
+
+                if ($user->driver_approval_status !== 'approved') {
+                    Auth::logout();
+
+                    return redirect()->route('login')->with('driver_pending', true);
+                }
+
                 return view('commuter.dashboard', [
                     'rates' => $rates,
                     'recentReceipts' => $recentReceipts,
-                    'balance' => $wallet->balance ?? 0.00
                 ]);
+                // return view('driverdashboard');
+            }
+
+            if ($role == 'commuter') {
+                return view('commuter.dashboard', [
+                    'rates' => $rates,
+                    'recentReceipts' => $recentReceipts,
+                    'balance' => $wallet->balance ?? 0.00,
+                ]);
+            }
+
+            if ($role == 'driver_manager') {
+                return view('driver-manager.dashboard');
             }
 
         })->name('commuter.dashboard');
     });
 
-    Route::get('/payment', function() {
+    Route::get('/payment', function () {
         return view('commuter.payment');
     })->name('payment');
 
@@ -266,7 +265,7 @@ Route::middleware(['auth', 'verified'])->group(function (){
     Route::get('/payment/topup/history', [PaymentController::class, 'topupHistory'])->name('payment.topup.history');
 
     Route::get('/admin/topups', [PaymentController::class, 'showTopupsAdmin'])->name('admin.topups');
-    Route::get('/transactions', [PaymentController::class, 'showTransactions'])->name('faretransactions'); 
+    Route::get('/transactions', [PaymentController::class, 'showTransactions'])->name('faretransactions');
     Route::get('/trasanctions/receipt/{id}', [PaymentController::class, 'showReceiptAdmin'])->name('admin.receipt.show');
 
     Route::middleware('role:admin')->group(function () {
@@ -294,15 +293,21 @@ Route::middleware(['auth', 'verified'])->group(function (){
         Route::put('/driverprofile', [DriverProfileController::class, 'update'])->name('driverprofile.update');
     });
 
+    Route::middleware('role:driver_manager')->group(function () {
+        Route::get('/time-keeping', [DriverManagerController::class, 'timeKeeping'])->name('driver-manager.time-keeping');
+        Route::get('/violations-log', [DriverManagerController::class, 'violationsLog'])->name('driver-manager.violations-log');
+        Route::get('/violation-codes', [DriverManagerController::class, 'violationCodes'])->name('driver-manager.violation-codes');
+    });
+
     Route::get('/adminprofile', function () {
         $info = Auth::user();
 
         return view('admin.adminprofile', [
-            'info' => $info
+            'info' => $info,
         ]);
     })->name('adminprofile');
 
-    Route::get('/admindashboard',function (){
+    Route::get('/admindashboard', function () {
 
         return view('admin.dashboard', [
             'totalRevenue' => Payment::sum('price'),
@@ -312,31 +317,30 @@ Route::middleware(['auth', 'verified'])->group(function (){
             'recentTopups' => TopupHistory::with('user')->latest()->take(5)->get(),
         ]);
     })->name('admin.dashboard');
-     
-  
+
     Route::get('/driverdashboard', [DriverController::class, 'index'])->name('driver.dashboard');
 
     Route::get('/profile', function () {
         return view('profile');
     })->name('profile');
 
-    Route::get('/profile/edit', function() {
+    Route::get('/profile/edit', function () {
         return view('commuter.editprofile');
     })->name('profile.edit');
 
-    Route::patch('/profile/update', function(Request $request) {
+    Route::patch('/profile/update', function (Request $request) {
 
         $request->validate([
             'current_password' => 'required',
             'password' => 'required|min:8',
-            'password_confirmation' => 'required|same:password'
+            'password_confirmation' => 'required|same:password',
         ]);
 
         $userId = Auth::user()->id;
         $user = User::where('id', $userId)->first();
 
-        if($user->update([
-            'password' => $request->password_confirmation
+        if ($user->update([
+            'password' => $request->password_confirmation,
         ])) {
             return redirect()->route('commuter.profile')->with('success', 'password successfully updated');
         }
@@ -359,7 +363,3 @@ Route::middleware(['auth', 'verified'])->group(function (){
     Route::resource('rates', RateController::class)->middleware('role:admin');
 
 });
-
-
-
-

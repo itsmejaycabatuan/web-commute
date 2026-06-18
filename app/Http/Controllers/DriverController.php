@@ -45,17 +45,18 @@ class DriverController extends Controller
             ->with('success', 'Driver registration submitted. Please wait for admin approval before signing in.');
     }
 
-    public function index() {
+    public function index()
+    {
         $userId = Auth::user()->id;
 
         $distance = VehicleLocationHistory::where('user_id', $userId)
-        ->whereDate('created_at', Carbon::today())
-        ->sum('distance_from_last_pos');
+            ->whereDate('created_at', Carbon::today())
+            ->sum('distance_from_last_pos');
 
         $totalDistance = number_format($distance, 1);
 
         return view('driverdashboard', [
-            'total_distance' => $totalDistance
+            'total_distance' => $totalDistance,
         ]);
     }
 }
