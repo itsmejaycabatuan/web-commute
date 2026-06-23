@@ -7,6 +7,7 @@ use App\Http\Controllers\DriverManagerController;
 use App\Http\Controllers\DriverProfileController;
 use App\Http\Controllers\FareController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\MaintenanceManagerController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PusherController;
 use App\Http\Controllers\RateController;
@@ -199,7 +200,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route::get('/dashboard', function () {
     //     return view('commuter.dashboard');
     // })->name('commuter.dashboard');Q
-    Route::middleware('role:commuter|admin|driver|driver_manager')->group(function () {
+    Route::middleware('role:commuter|admin|driver|driver_manager|maintenance_manager')->group(function () {
         Route::get('/dashboard', function () {
             $user = Auth::user();
             $userId = Auth::user()->id;
@@ -247,6 +248,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             if ($role == 'driver_manager') {
                 return view('driver-manager.dashboard');
+            }
+
+            if ($role == 'maintenance_manager') {
+                return view('maintenance-manager.dashboard');
             }
 
         })->name('commuter.dashboard');
@@ -299,6 +304,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/violation-codes', [DriverManagerController::class, 'violationCodes'])->name('driver-manager.violation-codes');
     });
 
+    Route::middleware('role:maintenance_manager')->group(function () {
+        Route::get('/preventive-maintenance', [MaintenanceManagerController::class, 'preventiveMaintenance'])->name('maintenance-manager.preventive-maintenance');
+        Route::get('/maintenance-calendar', [MaintenanceManagerController::class, 'maintenanceCalendar'])->name('maintenance-manager.maintenance-calendar');
+        Route::get('/maintenance-tasks', [MaintenanceManagerController::class, 'maintenanceTasks'])->name('maintenance-manager.maintenance-tasks');
+        Route::get('/vehicle-maintenance-log', [MaintenanceManagerController::class, 'vehicleLog'])->name('maintenance-manager.vehicle-maintenance-log');
+        Route::get('/fleet-maintenance-log', [MaintenanceManagerController::class, 'fleetLog'])->name('maintenance-manager.fleet-maintenance-log');
+        Route::get('/fleet-inventory', [MaintenanceManagerController::class, 'fleetInventory'])->name('maintenance-manager.fleet-inventory');
+        Route::get('/profile/maintenance-manager', [MaintenanceManagerController::class, 'profile'])->name('maintenance-manager.profile');
+        Route::patch('/profile/maintenance-manager/update', [MaintenanceManagerController::class, 'updateProfile'])->name('maintenance-manager.update-profile');
+    });
+
     Route::get('/adminprofile', function () {
         $info = Auth::user();
 
@@ -319,6 +335,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('admin.dashboard');
 
     Route::get('/driverdashboard', [DriverController::class, 'index'])->name('driver.dashboard');
+
+    Route::get('/profile/driver-manager', [DriverManagerController::class, 'profile'])->name('driver-manager.profile');
+    Route::patch('/profile/driver-manager/update', [DriverManagerController::class, 'updateProfile'])->name('driver-manager.update-profile');
 
     Route::get('/profile', function () {
         return view('profile');

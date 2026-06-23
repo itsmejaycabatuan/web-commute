@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Wallet;
-use Hash as HashHash;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
@@ -35,6 +34,7 @@ class RolePermissionSeeder extends Seeder
         $commuterRole = Role::firstOrCreate(['name' => 'commuter']);
         $driverRole = Role::firstOrCreate(['name' => 'driver']);
         $driverManagerRole = Role::firstOrCreate(['name' => 'driver_manager']);
+        $maintenanceManagerRole = Role::firstOrCreate(['name' => 'maintenance_manager']);
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $superAdmin = Role::firstOrCreate(['name' => 'superadmin']);
         $ownerRole = Role::firstOrCreate(['name' => 'owner']);
@@ -81,7 +81,15 @@ class RolePermissionSeeder extends Seeder
         $driverManager = User::firstOrCreate(
             ['email' => 'drivermanager@gmail.com'],
             [
-                'password' => HashHash::make('admin123'),
+                'password' => Hash::make('admin123'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $maintenanceManager = User::firstOrCreate(
+            ['email' => 'maintenancemanager@gmail.com'],
+            [
+                'password' => Hash::make('admin123'),
                 'email_verified_at' => now(),
             ]
         );
@@ -92,5 +100,6 @@ class RolePermissionSeeder extends Seeder
         $commuter->assignRole($commuterRole);
         $driver->assignRole($driverRole);
         $driverManager->assignRole($driverManagerRole);
+        $maintenanceManager->assignRole($maintenanceManagerRole);
     }
 }

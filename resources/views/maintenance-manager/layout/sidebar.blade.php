@@ -31,46 +31,85 @@
 
         <nav class="space-y-2">
             <nav class="space-y-2">
-                <a href="{{ route('driver-manager.time-keeping') }}"
-                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('driver-manager.time-keeping') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+                <a href="{{ route('maintenance-manager.preventive-maintenance') }}"
+                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('maintenance-manager.preventive-maintenance') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
                     <div class="min-w-[24px] flex justify-center">
-                        <i class="fa-solid fa-clock text-lg"></i>
+                        <i class="fa-solid fa-calendar text-lg"></i>
                     </div>
                     <span x-show="open" x-transition.opacity
-                        class="text-xs font-bold uppercase tracking-widest">Time Keeping</span>
+                        class="text-xs font-bold uppercase tracking-widest">Preventive Maintenance Schedule</span>
                 </a>
             </nav>
         </nav>
 
         <nav class="space-y-2">
             <nav class="space-y-2">
-                <a href="{{ route('driver-manager.violations-log') }}"
-                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('driver-manager.violations-log') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+                <a href="{{ route('maintenance-manager.maintenance-calendar') }}"
+                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('maintenance-manager.maintenance-calendar') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
                     <div class="min-w-[24px] flex justify-center">
-                        <i class="fa-solid fa-list text-lg"></i>
+                        <i class="fa-solid fa-calendar-check text-lg"></i>
                     </div>
                     <span x-show="open" x-transition.opacity
-                        class="text-xs font-bold uppercase tracking-widest">Violations Log</span>
+                        class="text-xs font-bold uppercase tracking-widest">Preventive Maintenance Calendar</span>
                 </a>
             </nav>
         </nav>
 
         <nav class="space-y-2">
             <nav class="space-y-2">
-                <a href="{{ route('driver-manager.violation-codes') }}"
+                <a href="{{ route('maintenance-manager.maintenance-tasks') }}"
+                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('maintenance-manager.maintenance-tasks') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+                    <div class="min-w-[24px] flex justify-center">
+                        <i class="fa-solid fa-list-check text-lg"></i>
+                    </div>
+                    <span x-show="open" x-transition.opacity
+                        class="text-xs font-bold uppercase tracking-widest">Maintenance Tasks</span>
+                </a>
+            </nav>
+        </nav>
+
+        <nav class="space-y-2">
+            <nav class="space-y-2">
+                <a href="{{ route('maintenance-manager.vehicle-maintenance-log') }}"
+                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('maintenance-manager.vehicle-maintenance-log') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+                    <div class="min-w-[24px] flex justify-center">
+                        <i class="fa-solid fa-car text-lg"></i>
+                    </div>
+                    <span x-show="open" x-transition.opacity
+                        class="text-xs font-bold uppercase tracking-widest">Vehicle Maintenance Log</span>
+                </a>
+            </nav>
+        </nav>
+
+        <nav class="space-y-2">
+            <nav class="space-y-2">
+                <a href="{{ route('maintenance-manager.fleet-maintenance-log') }}"
+                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('maintenance-manager.fleet-maintenance-log') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+                    <div class="min-w-[24px] flex justify-center">
+                        <i class="fa-solid fa-person-running text-lg"></i>
+                    </div>
+                    <span x-show="open" x-transition.opacity
+                        class="text-xs font-bold uppercase tracking-widest">Fleet Maintenance Log</span>
+                </a>
+            </nav>
+        </nav>
+
+        <nav class="space-y-2">
+            <nav class="space-y-2">
+                <a href="{{ route('maintenance-manager.fleet-inventory') }}"
                     class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('driver-manager.violation-codes') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
                     <div class="min-w-[24px] flex justify-center">
-                        <i class="fa-solid fa-road text-lg"></i>
+                        <i class="fa-solid fa-box text-lg"></i>
                     </div>
                     <span x-show="open" x-transition.opacity
-                        class="text-xs font-bold uppercase tracking-widest">Violation Codes</span>
+                        class="text-xs font-bold uppercase tracking-widest">Fleet Inventory</span>
                 </a>
             </nav>
         </nav>
 
         <nav class="space-y-2">
-            <a href="{{ route('driver-manager.profile') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('driver-manager.profile') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+            <a href="{{ route('adminprofile') }}"
+                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('adminprofile') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
                 <div class="min-w-[24px] flex justify-center"><i class="fa-solid fa-circle-user text-lg"></i></div>
                 <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">My
                     Profile</span>

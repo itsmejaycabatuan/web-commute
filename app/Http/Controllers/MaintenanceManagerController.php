@@ -6,21 +6,36 @@ use App\Models\User;
 use Auth;
 use Request;
 
-class DriverManagerController extends Controller
+class MaintenanceManagerController extends Controller
 {
-    public function timeKeeping()
+    public function preventiveMaintenance()
     {
-        return view('driver-manager.time-keeping');
+        return view('maintenance-manager.preventive-maintenance');
     }
 
-    public function violationsLog()
+    public function maintenanceCalendar()
     {
-        return view('driver-manager.violations-log');
+        return view('maintenance-manager.maintenance-calendar');
     }
 
-    public function violationCodes()
+    public function maintenanceTasks()
     {
-        return view('driver-manager.violation-codes');
+        return view('maintenance-manager.maintenance-tasks');
+    }
+
+    public function vehicleLog()
+    {
+        return view('maintenance-manager.vehicle-maintenance-log');
+    }
+
+    public function fleetLog()
+    {
+        return view('maintenance-manager.fleet-maintenance-log');
+    }
+
+    public function fleetInventory()
+    {
+        return view('maintenance-manager.fleet-inventory');
     }
 
     public function profile()
