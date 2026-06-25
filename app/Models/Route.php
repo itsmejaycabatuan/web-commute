@@ -21,6 +21,14 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|Route whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Route whereStartingPoint($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Route whereUpdatedAt($value)
+ * @property string $code
+ * @property string $name
+ * @property string $description
+ * @property string $total_distance
+ * @method static \Illuminate\Database\Eloquent\Builder|Route whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Route whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Route whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Route whereTotalDistance($value)
  * @mixin \Eloquent
  */
 class Route extends Model

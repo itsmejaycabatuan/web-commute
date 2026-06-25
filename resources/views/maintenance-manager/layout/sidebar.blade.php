@@ -84,7 +84,7 @@
         <nav class="space-y-2">
             <nav class="space-y-2">
                 <a href="{{ route('maintenance-manager.fleet-maintenance-log') }}"
-                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('maintenance-manager.fleet-maintenance-log') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+                   class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('maintenance-manager.fleet-maintenance-log') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
                     <div class="min-w-[24px] flex justify-center">
                         <i class="fa-solid fa-person-running text-lg"></i>
                     </div>

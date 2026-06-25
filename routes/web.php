@@ -302,6 +302,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/time-keeping', [DriverManagerController::class, 'timeKeeping'])->name('driver-manager.time-keeping');
         Route::get('/violations-log', [DriverManagerController::class, 'violationsLog'])->name('driver-manager.violations-log');
         Route::get('/violation-codes', [DriverManagerController::class, 'violationCodes'])->name('driver-manager.violation-codes');
+        Route::put('/violation-codes/{id}/update', [DriverManagerController::class, 'updateViolationCode'])->name('violation-codes.update');
+        Route::post('/violation-codes/store', [DriverManagerController::class, 'storeViolationCode'])->name('violation-codes.store');
+        Route::delete('/violation-codes/{id}/delete', [DriverManagerController::class, 'destroyViolationCode'])->name('violation-codes.destroy');
     });
 
     Route::middleware('role:maintenance_manager')->group(function () {

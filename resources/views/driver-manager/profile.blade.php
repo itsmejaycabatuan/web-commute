@@ -70,7 +70,7 @@
                         </div>
 
                         <div class="pt-4 border-t border-white/10 grid grid-cols-1 md:grid-cols-1 gap-8">
-                            <form action="{{ route('driver-manager-profile-update') }}" method="POST" class="space-y-4 max-w-md">
+                            <form action="{{ route('driver-manager.update-profile') }}" method="POST" class="space-y-4 max-w-md">
                                 @csrf
                                 @method('PUT')
                                 <div>

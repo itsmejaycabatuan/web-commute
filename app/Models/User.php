@@ -57,6 +57,10 @@ use Spatie\Permission\Traits\HasRoles;
  * @method static \Illuminate\Database\Eloquent\Builder|User whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|User withoutPermission($permissions)
  * @method static \Illuminate\Database\Eloquent\Builder|User withoutRole($roles, $guard = null)
+ * @property string|null $expiration_date
+ * @property string|null $contact_info
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereContactInfo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereExpirationDate($value)
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
