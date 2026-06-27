@@ -16,11 +16,10 @@ class DriverController extends Controller
     {
         $request->validate([
             'email' => 'required|email|unique:users,email',
+            'contact_info' => 'required|string|max:255',
             'password' => 'required|string|min:8',
             'confirm-password' => 'required|same:password',
             'terms' => 'required',
-            'license_number' => 'required|string|max:255',
-            'license_code' => 'required|string|max:255',
             'license_image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
@@ -28,9 +27,8 @@ class DriverController extends Controller
 
         $user = User::create([
             'email' => $request->email,
+            'contact_info' => $request->contact_info,
             'password' => Hash::make($request->password),
-            'license_number' => $request->license_number,
-            'license_code' => $request->license_code,
             'license_image_path' => $path,
             'license_image_data' => null,
             'license_image_mime' => null,

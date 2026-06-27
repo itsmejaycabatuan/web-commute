@@ -45,6 +45,14 @@
                 <form action="{{ route('admin.drivers.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
                     @csrf
                     <div>
+                        <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Driver Code</label>
+                        <input type="text" name="driver_code" value="{{ old('driver_code') }}" required
+                            class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm focus:ring-2 focus:ring-blue-500/40 focus:outline-none">
+                        @error('driver_code')
+                            <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
                         <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Email</label>
                         <input type="email" name="email" value="{{ old('email') }}" required
                             class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm focus:ring-2 focus:ring-blue-500/40 focus:outline-none">
@@ -82,25 +90,22 @@
                         @enderror
                     </div>
                     <div>
-                        <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">License photo</label>
-                        <input type="file" name="license_image" accept="image/jpeg,image/png,image/jpg" required
-                            class="w-full text-xs text-gray-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-blue-600 file:text-white file:text-xs file:font-bold">
-                        @error('license_image')
+                        <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Expiration Date</label>
+                        <input type="text" name="license_code" value="{{ old('expiration_date') }}" required
+                            class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm focus:ring-2 focus:ring-blue-500/40 focus:outline-none">
+                        @error('expiration_date')
                             <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Approval status</label>
-                        <select name="driver_approval_status"
+                        <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Contact Information</label>
+                        <input type="text" name="contact_info" value="{{ old('contact_info') }}" required
                             class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm focus:ring-2 focus:ring-blue-500/40 focus:outline-none">
-                            <option value="pending" {{ old('driver_approval_status', 'pending') === 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="approved" {{ old('driver_approval_status') === 'approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="rejected" {{ old('driver_approval_status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
-                        </select>
-                        @error('driver_approval_status')
+                        @error('contact_info')
                             <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
+
                     <button type="submit"
                         class="w-full py-3 rounded-xl text-xs font-bold uppercase tracking-widest bg-blue-600 hover:bg-blue-500 text-white transition">
                         Create driver

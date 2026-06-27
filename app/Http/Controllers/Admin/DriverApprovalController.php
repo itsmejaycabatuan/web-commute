@@ -29,7 +29,7 @@ class DriverApprovalController extends Controller
             ->addSelect(DB::raw('CASE WHEN users.license_image_data IS NOT NULL AND LENGTH(users.license_image_data) > 0 THEN 1 ELSE 0 END as has_license_in_db'))
             ->orderByDesc('created_at')
             ->get()
-            ->sortBy(fn (User $u) => match ($u->driver_approval_status) {
+            ->sortBy(fn(User $u) => match ($u->driver_approval_status) {
                 'pending' => 0,
                 'rejected' => 1,
                 'approved' => 2,
@@ -48,25 +48,28 @@ class DriverApprovalController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'driver_code' => 'reqired|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'license_number' => 'required|string|max:255',
             'license_code' => 'required|string|max:255',
-            'license_image' => 'required|image|mimes:jpg,jpeg,png|max:4096',
-            'driver_approval_status' => 'required|in:pending,approved,rejected',
+            'expiration_date' => 'required|string|max:255',
+            'contact_info' => 'required|string|max:255',
         ]);
 
         $path = $request->file('license_image')->store('licenses', 'public');
 
         $user = User::create([
+            'driver_code' => $validated['driver_code'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
+            'expiration_date' => $validated['expiration_date'],
+            'contact_info' => $validated['contact_info'],
             'license_number' => $validated['license_number'],
             'license_code' => $validated['license_code'],
-            'license_image_path' => $path,
             'license_image_data' => null,
             'license_image_mime' => null,
-            'driver_approval_status' => $validated['driver_approval_status'],
+            'driver_approval_status' => 'approved',
             'email_verified_at' => now(),
         ]);
 
@@ -132,6 +135,14 @@ class DriverApprovalController extends Controller
 
     public function approve(Request $request, User $user)
     {
+        $request->validate([
+            'license_number' => 'required|string|max:255',
+            'license_code' => 'required|string|max:255',
+            'expiration_date' => 'required|string|max:255',
+            'contact_info' => 'required|string|max:255',
+            'driver_code' => 'required|string|max:255',
+        ]);
+
         if (! $user->hasRole('driver')) {
             abort(404);
         }
@@ -148,7 +159,14 @@ class DriverApprovalController extends Controller
                 ->with('error', 'Only pending or rejected drivers can be approved.');
         }
 
-        $user->update(['driver_approval_status' => 'approved']);
+        $user->update([
+            'driver_approval_status' => 'approved',
+            'license_number' => $request->license_number,
+            'license_code' => $request->license_code,
+            'expiration_date' => $request->expiration_date,
+            'contact_info' => $request->contact_info,
+            'driver_code' => $request->driver_code,
+        ]);
 
         return redirect()
             ->route('admin.drivers.index')
@@ -229,7 +247,7 @@ class DriverApprovalController extends Controller
             if ($request->boolean('embed')) {
                 return response()->view('admin.drivers.license-embed', [
                     'imageUrl' => $this->licenseAbsoluteUrl($request, $user),
-                    'title' => 'License — '.$user->email,
+                    'title' => 'License — ' . $user->email,
                 ]);
             }
 
@@ -247,7 +265,7 @@ class DriverApprovalController extends Controller
             abort(404);
         }
 
-        $full = storage_path('app/public/'.$relative);
+        $full = storage_path('app/public/' . $relative);
         if (! is_file($full)) {
             abort(404);
         }
@@ -255,12 +273,12 @@ class DriverApprovalController extends Controller
         if ($request->boolean('embed')) {
             return response()->view('admin.drivers.license-embed', [
                 'imageUrl' => $this->licenseAbsoluteUrl($request, $user),
-                'title' => 'License — '.$user->email,
+                'title' => 'License — ' . $user->email,
             ]);
         }
 
         if ($request->boolean('download')) {
-            return response()->download($full, 'license-'.$user->id.'-'.basename($full));
+            return response()->download($full, 'license-' . $user->id . '-' . basename($full));
         }
 
         $mime = @mime_content_type($full) ?: 'application/octet-stream';
@@ -276,7 +294,7 @@ class DriverApprovalController extends Controller
 
         return response()->file($full, [
             'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="'.basename($full).'"',
+            'Content-Disposition' => 'inline; filename="' . basename($full) . '"',
             'Cache-Control' => 'private, max-age=3600',
         ]);
     }
@@ -287,8 +305,8 @@ class DriverApprovalController extends Controller
     private function licenseAbsoluteUrl(Request $request, User $user): string
     {
         return rtrim($request->getSchemeAndHttpHost(), '/')
-            .rtrim($request->getBasePath(), '/')
-            .route('admin.drivers.license', $user, false);
+            . rtrim($request->getBasePath(), '/')
+            . route('admin.drivers.license', $user, false);
     }
 
     /**
@@ -296,13 +314,13 @@ class DriverApprovalController extends Controller
      */
     private function rawBinaryResponse(string $binary, string $mime, bool $asDownload, int $userId, string $ext): Response
     {
-        $filename = 'license-'.$userId.'.'.$ext;
+        $filename = 'license-' . $userId . '.' . $ext;
         $disp = $asDownload ? 'attachment' : 'inline';
 
         return new Response($binary, 200, [
             'Content-Type' => $mime,
             'Content-Length' => (string) strlen($binary),
-            'Content-Disposition' => $disp.'; filename="'.$filename.'"',
+            'Content-Disposition' => $disp . '; filename="' . $filename . '"',
             'Cache-Control' => 'private, max-age=3600',
         ]);
     }
@@ -399,7 +417,7 @@ class DriverApprovalController extends Controller
             }
         }
 
-        $full = storage_path('app/public/'.$path);
+        $full = storage_path('app/public/' . $path);
         if (is_file($full)) {
             return $path;
         }
@@ -411,8 +429,8 @@ class DriverApprovalController extends Controller
 
         $basename = basename($path);
         if ($basename !== '' && $basename !== '.' && $basename !== '..') {
-            $tryLicenses = 'licenses/'.$basename;
-            if (is_file(storage_path('app/public/'.$tryLicenses))) {
+            $tryLicenses = 'licenses/' . $basename;
+            if (is_file(storage_path('app/public/' . $tryLicenses))) {
                 return $tryLicenses;
             }
         }

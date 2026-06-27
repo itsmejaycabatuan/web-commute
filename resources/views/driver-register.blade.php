@@ -16,6 +16,16 @@
             background-size: cover;
             background-position: center;
         }
+
+        /* Remove default number input spinners */
+        input[type="tel"]::-webkit-inner-spin-button,
+        input[type="tel"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="tel"] {
+            -moz-appearance: textfield;
+        }
     </style>
 </head>
 
@@ -63,6 +73,27 @@
 
             <div>
                 <label class="block mb-1 ml-1 font-bold tracking-widest uppercase opacity-50 text-[10px]">
+                    Contact Info
+                </label>
+                <div class="flex">
+                    <div class="flex items-center gap-1.5 px-3 rounded-l-xl border border-r-0 bg-white/5 border-white/10">
+                        <span class="text-xs font-bold opacity-60">+63</span>
+                    </div>
+                    <input type="tel" name="contact_info" id="contact-info"
+                        placeholder="9XX XXX XXXX"
+                        maxlength="11"
+                        value="{{ old('contact_info') }}"
+                        oninput="formatPhoneNumber(this)"
+                        class="py-2.5 px-4 w-full text-sm rounded-r-xl border focus:ring-2 focus:outline-none bg-white/5 border-white/10 focus:ring-white/30 placeholder:text-white/30">
+                </div>
+                <p class="mt-1 ml-1 text-[10px] opacity-30">Philippine mobile number (e.g., 917 123 4567)</p>
+            </div>
+            @error('contact_info')
+                <p class="text-amber-300 text-xs">{{ $message }}</p>
+            @enderror
+
+            <div>
+                <label class="block mb-1 ml-1 font-bold tracking-widest uppercase opacity-50 text-[10px]">
                     Password
                 </label>
                 <div class="relative">
@@ -92,28 +123,6 @@
                 </div>
             </div>
             @error('confirm-password')
-                <p class="text-amber-300 text-xs">{{ $message }}</p>
-            @enderror
-
-            <div>
-                <label class="block mb-1 ml-1 font-bold tracking-widest uppercase opacity-50 text-[10px]">
-                    License Number
-                </label>
-                <input type="text" name="license_number" value="{{ old('license_number') }}"
-                    class="py-2.5 px-4 w-full text-sm rounded-xl border focus:ring-2 focus:outline-none bg-white/5 border-white/10 focus:ring-white/30">
-            </div>
-            @error('license_number')
-                <p class="text-amber-300 text-xs">{{ $message }}</p>
-            @enderror
-
-            <div>
-                <label class="block mb-1 ml-1 font-bold tracking-widest uppercase opacity-50 text-[10px]">
-                    License Code
-                </label>
-                <input type="text" name="license_code" value="{{ old('license_code') }}"
-                    class="py-2.5 px-4 w-full text-sm rounded-xl border focus:ring-2 focus:outline-none bg-white/5 border-white/10 focus:ring-white/30">
-            </div>
-            @error('license_code')
                 <p class="text-amber-300 text-xs">{{ $message }}</p>
             @enderror
 
@@ -166,6 +175,30 @@
                 input.type = "password";
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
+            }
+        }
+
+        function formatPhoneNumber(input) {
+            // Strip all non-digit characters
+            let digits = input.value.replace(/\D/g, '');
+
+            // Remove leading 0 if user typed 09XX (we already show +63 prefix)
+            if (digits.startsWith('0')) {
+                digits = digits.substring(1);
+            }
+
+            // Cap at 10 digits (since +63 is already shown)
+            if (digits.length > 10) {
+                digits = digits.substring(0, 10);
+            }
+
+            // Format: 9XX XXX XXXX
+            if (digits.length > 7) {
+                input.value = digits.slice(0, 3) + ' ' + digits.slice(3, 7) + ' ' + digits.slice(7);
+            } else if (digits.length > 3) {
+                input.value = digits.slice(0, 3) + ' ' + digits.slice(3);
+            } else {
+                input.value = digits;
             }
         }
     </script>

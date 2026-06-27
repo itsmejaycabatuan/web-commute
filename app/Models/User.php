@@ -2,12 +2,19 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Contracts\Auth\CanResetPassword;
+use Laravel\Sanctum\PersonalAccessToken;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -15,7 +22,7 @@ use Spatie\Permission\Traits\HasRoles;
  *
  * @property int $id
  * @property string $email
- * @property \Illuminate\Support\Carbon|null $email_verified_at
+ * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $license_number
  * @property string|null $license_code
@@ -24,18 +31,19 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $license_image_mime
  * @property string|null $driver_approval_status
  * @property string|null $remember_token
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Payment> $payment
+ * @property-read Collection<int, Payment> $payment
  * @property-read int|null $payment_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Permission\Models\Permission> $permissions
+ * @property-read Collection<int, Permission> $permissions
  * @property-read int|null $permissions_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Permission\Models\Role> $roles
+ * @property-read Collection<int, Role> $roles
  * @property-read int|null $roles_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
+ * @property-read Collection<int, PersonalAccessToken> $tokens
  * @property-read int|null $tokens_count
+ *
  * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|User newQuery()
@@ -57,15 +65,21 @@ use Spatie\Permission\Traits\HasRoles;
  * @method static \Illuminate\Database\Eloquent\Builder|User whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|User withoutPermission($permissions)
  * @method static \Illuminate\Database\Eloquent\Builder|User withoutRole($roles, $guard = null)
+ *
  * @property string|null $expiration_date
  * @property string|null $contact_info
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|User whereContactInfo($value)
  * @method static \Illuminate\Database\Eloquent\Builder|User whereExpirationDate($value)
+ *
  * @mixin \Eloquent
  */
-class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
+class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens;
+    use HasFactory;
+    use HasRoles;
+    use Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -73,10 +87,13 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
      * @var array<int, string>
      */
     protected $fillable = [
+        'driver_code',
         'email',
+        'contact_info',
         'password',
         'license_number',
         'license_code',
+        'expiration_date',
         'license_image_path',
         'license_image_data',
         'license_image_mime',
@@ -103,7 +120,8 @@ class User extends Authenticatable implements MustVerifyEmail, CanResetPassword
         'email_verified_at' => 'datetime',
     ];
 
-    public function payment() {
+    public function payment()
+    {
         return $this->hasMany(Payment::class);
     }
 }
