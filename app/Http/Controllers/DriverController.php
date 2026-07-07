@@ -53,7 +53,7 @@ class DriverController extends Controller
 
         $totalDistance = number_format($distance, 1);
 
-        return view('driverdashboard', [
+        return view('driver.dashboard', [
             'total_distance' => $totalDistance,
         ]);
     }

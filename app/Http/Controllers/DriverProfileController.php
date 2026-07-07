@@ -9,7 +9,7 @@ class DriverProfileController extends Controller
 {
     public function show()
     {
-        return view('driverprofile', [
+        return view('driver.profile', [
             'user' => auth()->user(),
         ]);
     }

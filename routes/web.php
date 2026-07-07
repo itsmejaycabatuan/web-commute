@@ -59,11 +59,11 @@ Route::get('/track/vehicles/active', [VehicleTrackingController::class, 'getActi
 // Route::post('/track/{vehicleId}/update', [VehicleTrackingController::class, 'updateLocation']);
 
 Route::get('/register', function () {
-    return view('register');
+    return view('auth.register');
 })->name('register');
 
 Route::get('/login', function () {
-    return view('login');
+    return view('auth.login');
 })->name('login');
 
 Route::post('/users/logout', [UserController::class, 'logout'])->name('users.logout');
@@ -98,22 +98,14 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
 })->middleware(['auth', 'signed'])->name('verification.verify');
 
 Route::middleware('guest')->group(function () {
-
     Route::post('/users/register', [UserController::class, 'register'])->name('users.register');
     Route::post('/users/login', [UserController::class, 'login'])->name('users.login');
 
-    Route::get('/driver/register', function () {
-        return view('driver-register');
+    Route::get('/register/driver', function () {
+        return view('auth.driver.register');
     })->name('driver.register.page');
 
     Route::post('/driver/register', [DriverController::class, 'store'])->name('driver.register');
-    Route::get('/register', function () {
-        return view('register');
-    })->name('register');
-
-    Route::get('/login', function () {
-        return view('login');
-    })->name('login');
 
     Route::get('/forgot-password', function () {
         return view('auth.forgot-password');
@@ -269,7 +261,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/payment/topup/process', [PaymentController::class, 'topupProcess'])->name('payment.topup.process');
     Route::get('/payment/topup/history', [PaymentController::class, 'topupHistory'])->name('payment.topup.history');
 
-    Route::get('/admin/topups', [PaymentController::class, 'showTopupsAdmin'])->name('admin.topups');
+    Route::get('/topups', [PaymentController::class, 'showTopupsAdmin'])->name('admin.topups');
     Route::get('/transactions', [PaymentController::class, 'showTransactions'])->name('faretransactions');
     Route::get('/trasanctions/receipt/{id}', [PaymentController::class, 'showReceiptAdmin'])->name('admin.receipt.show');
 
@@ -294,8 +286,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::middleware('role:driver')->group(function () {
-        Route::get('/driverprofile', [DriverProfileController::class, 'show'])->name('driverprofile');
-        Route::put('/driverprofile', [DriverProfileController::class, 'update'])->name('driverprofile.update');
+        Route::get('/dashboard/driver', [DriverController::class, 'index'])->name('driver.dashboard');
+        Route::get('/profile/driver', [DriverProfileController::class, 'show'])->name('driverprofile');
+        Route::put('/profile/driver', [DriverProfileController::class, 'update'])->name('driverprofile.update');
     });
 
     Route::middleware('role:driver_manager')->group(function () {
@@ -318,13 +311,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/profile/maintenance-manager/update', [MaintenanceManagerController::class, 'updateProfile'])->name('maintenance-manager.update-profile');
     });
 
-    Route::get('/adminprofile', function () {
+    Route::get('/profile/admin', function () {
         $info = Auth::user();
 
-        return view('admin.adminprofile', [
+        return view('admin.profile', [
             'info' => $info,
         ]);
-    })->name('adminprofile');
+    })->name('profile.admin');
 
     Route::get('/admindashboard', function () {
 
@@ -336,8 +329,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'recentTopups' => TopupHistory::with('user')->latest()->take(5)->get(),
         ]);
     })->name('admin.dashboard');
-
-    Route::get('/driverdashboard', [DriverController::class, 'index'])->name('driver.dashboard');
 
     Route::get('/profile/driver-manager', [DriverManagerController::class, 'profile'])->name('driver-manager.profile');
     Route::patch('/profile/driver-manager/update', [DriverManagerController::class, 'updateProfile'])->name('driver-manager.update-profile');

@@ -108,8 +108,8 @@
         </nav>
 
         <nav class="space-y-2">
-            <a href="{{ route('adminprofile') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('adminprofile') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
+            <a href="{{ route('profile.admin') }}"
+                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('profile.admin') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
                 <div class="min-w-[24px] flex justify-center"><i class="fa-solid fa-circle-user text-lg"></i></div>
                 <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">My
                     Profile</span>

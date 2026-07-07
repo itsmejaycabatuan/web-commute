@@ -297,7 +297,7 @@
                 @endif
 
                 @if (Auth::check() && Auth::user()->roles[0]->name === 'admin')
-                    <a href="{{ route('adminprofile') }}">
+                    <a href="{{ route('profile.admin') }}">
                         <div
                             class="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-white/10 transition">
                             <i class="fa-solid fa-user text-xs"></i>
@@ -896,7 +896,7 @@
             geolocate.on('geolocate', (event) => {
                 userLng = event.coords.longitude;
                 userLat = event.coords.latitude;
-                // You can now use these variables to filter data, 
+                // You can now use these variables to filter data,
                 // center the map, or send them to a database.
             })
 
@@ -1857,7 +1857,7 @@
                 if (marker) {
                     marker.setLngLat([0, 0]); // Move to a null island or hide it
                     // Or if you want to remove it entirely from the map:
-                    // marker.remove(); 
+                    // marker.remove();
                 }
 
                 // 5. Clear the Route Line
