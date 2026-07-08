@@ -105,7 +105,7 @@ Route::middleware('guest')->group(function () {
         return view('auth.driver.register');
     })->name('driver.register.page');
 
-    Route::post('/driver/register', [DriverController::class, 'store'])->name('driver.register');
+    Route::post('/register/driver', [DriverController::class, 'store'])->name('driver.register');
 
     Route::get('/forgot-password', function () {
         return view('auth.forgot-password');
@@ -163,7 +163,6 @@ Route::middleware('guest')->group(function () {
             'rates' => $rates,
         ]);
     })->name('guest.map');
-
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -176,7 +175,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('tutorial');
     })->name('tutorial');
 
-    Route::get('/commuter/profile', function () {
+    Route::get('/profile/commuter', function () {
         $userId = Auth::user()->id;
         $payments = Payment::where('paid_by', $userId)->get();
         $topups = TopupHistory::where('user_id', $userId)->get();
@@ -319,7 +318,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('profile.admin');
 
-    Route::get('/admindashboard', function () {
+    Route::get('/dashboard/admin', function () {
 
         return view('admin.dashboard', [
             'totalRevenue' => Payment::sum('price'),

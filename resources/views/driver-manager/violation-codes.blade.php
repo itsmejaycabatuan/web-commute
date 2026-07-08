@@ -29,7 +29,7 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-      .modal-overlay {
+        .modal-overlay {
             background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(8px);
         }
@@ -55,6 +55,11 @@
 
         .input-field::placeholder {
             color: rgba(255, 255, 255, 0.2);
+        }
+
+        .input-field.input-error {
+            border-color: rgba(239, 68, 68, 0.5) !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08) !important;
         }
 
         .btn-primary {
@@ -174,6 +179,32 @@
         .toggle-track.active .toggle-knob {
             transform: translateX(20px);
         }
+
+        /* Bulk row error shake */
+        .row-error {
+            animation: rowShake 0.4s ease;
+        }
+
+        @keyframes rowShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-4px); }
+            40% { transform: translateX(4px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+        }
+
+        /* Progress bar */
+        .progress-fill {
+            transition: width 0.3s ease;
+        }
+
+        /* Bulk row hover */
+        .bulk-row {
+            transition: background 0.15s ease;
+        }
+        .bulk-row:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
     </style>
 </head>
 
@@ -194,10 +225,16 @@
                     <h2 class="text-3xl font-black tracking-tight mb-2">Violation <span class="text-blue-500">Codes</span></h2>
                     <p class="text-white/40 text-sm">Reference guide for traffic violation fines and penalties.</p>
                 </div>
-                <button @click="openAddModal()"
-                    class="px-5 py-2.5 rounded-xl btn-primary text-white text-sm font-semibold inline-flex items-center gap-2">
-                    <i class="fa-solid fa-plus text-xs"></i> Add Code
-                </button>
+                <div class="flex items-center gap-3">
+                    <button @click="openBulkModal()"
+                        class="px-5 py-2.5 rounded-xl btn-ghost text-white/50 text-sm font-semibold inline-flex items-center gap-2 hover:text-emerald-400 hover:border-emerald-500/25 hover:bg-emerald-500/5">
+                        <i class="fa-solid fa-layer-group text-xs"></i> Bulk Add
+                    </button>
+                    <button @click="openAddModal()"
+                        class="px-5 py-2.5 rounded-xl btn-primary text-white text-sm font-semibold inline-flex items-center gap-2">
+                        <i class="fa-solid fa-plus text-xs"></i> Add Code
+                    </button>
+                </div>
             </header>
 
             <!-- Table -->
@@ -436,7 +473,7 @@
                         <button type="submit"
                             class="px-6 py-2.5 rounded-xl text-sm font-bold text-white inline-flex items-center gap-2 transition-all shadow-lg"
                             :class="isEditing
-                                ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-900/30'  // Edit mode (orange)
+                                ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-900/30'
                                 : 'btn-primary'">
 
                         <!-- Dynamic Icon -->
@@ -525,6 +562,217 @@
     </div>
 </div>
 
+<!-- ==================== BULK ADD MODAL ==================== -->
+<div x-show="showBulkModal" x-cloak
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay"
+    @click.self="closeBulkModal()"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0">
+
+    <div class="modal-panel rounded-2xl w-full max-w-5xl shadow-2xl shadow-black/50 flex flex-col"
+        :class="bulkModalAnimating ? (bulkModalClosing ? 'modal-leave' : 'modal-enter') : ''"
+        style="max-height: 90vh;">
+
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-7 py-5 border-b border-white/5 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-500/10">
+                    <i class="fa-solid fa-layer-group text-emerald-400 text-sm"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-base">Bulk Add Violation Codes</h3>
+                    <p class="text-white/30 text-xs">Add multiple violation codes at once. Only rows with both Code and Name will be created.</p>
+                </div>
+            </div>
+            <button @click="closeBulkModal()"
+                class="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/5 transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Column Headers -->
+        <div class="px-7 pt-5 pb-2 flex-shrink-0">
+            <div class="grid gap-1.5 items-center text-[9px] font-black uppercase tracking-[0.2em] text-white/20"
+                 style="grid-template-columns: 28px 100px 1fr 85px 85px 85px 90px 44px 32px;">
+                <span class="text-center">#</span>
+                <span>Code</span>
+                <span>Violation Name</span>
+                <span class="text-right">1st</span>
+                <span class="text-right">2nd</span>
+                <span class="text-right">3rd</span>
+                <span class="text-right">4th+</span>
+                <span class="text-center">Rev</span>
+                <span></span>
+            </div>
+        </div>
+
+        <!-- Scrollable Rows Area -->
+        <div id="bulkRowsContainer" class="overflow-y-auto flex-1 px-7 pb-2">
+            <div class="space-y-1">
+                <template x-for="(row, idx) in bulkRows" :key="idx">
+                    <div class="bulk-row grid gap-1.5 items-center rounded-lg px-1.5 py-1.5"
+                         :class="row._error ? 'bg-red-500/5 row-error' : ''"
+                         style="grid-template-columns: 28px 100px 1fr 85px 85px 85px 90px 44px 32px;">
+
+                        <!-- Row number -->
+                        <span class="text-white/15 text-[11px] font-mono text-center select-none" x-text="idx + 1"></span>
+
+                        <!-- Code -->
+                        <input type="text"
+                            x-model="row.code"
+                            maxlength="10"
+                            class="input-field w-full px-2.5 py-2 rounded-lg text-xs font-mono font-bold"
+                            :class="row._error && !row.code.trim() ? 'input-error' : ''"
+                            placeholder="UV06"
+                            @input="row._error = false">
+
+                        <!-- Name -->
+                        <input type="text"
+                            x-model="row.name"
+                            class="input-field w-full px-2.5 py-2 rounded-lg text-xs font-semibold"
+                            :class="row._error && !row.name.trim() ? 'input-error' : ''"
+                            placeholder="e.g. Beating the Red Light"
+                            @input="row._error = false">
+
+                        <!-- 1st Offense -->
+                        <input type="number"
+                            x-model="row.first"
+                            min="0"
+                            step="100"
+                            class="input-field w-full px-2.5 py-2 rounded-lg text-xs font-mono text-right"
+                            placeholder="0">
+
+                        <!-- 2nd Offense -->
+                        <input type="number"
+                            x-model="row.second"
+                            min="0"
+                            step="100"
+                            class="input-field w-full px-2.5 py-2 rounded-lg text-xs font-mono text-right"
+                            placeholder="0">
+
+                        <!-- 3rd Offense -->
+                        <input type="number"
+                            x-model="row.third"
+                            min="0"
+                            step="100"
+                            class="input-field w-full px-2.5 py-2 rounded-lg text-xs font-mono text-right"
+                            placeholder="0">
+
+                        <!-- 4th+ Offense -->
+                        <div class="relative">
+                            <input type="number"
+                                x-show="!row.is_revocation"
+                                x-model="row.fourth_plus"
+                                min="0"
+                                step="100"
+                                class="input-field w-full px-2.5 py-2 rounded-lg text-xs font-mono text-right"
+                                placeholder="0"
+                                x-transition>
+                            <div x-show="row.is_revocation"
+                                class="flex items-center justify-center h-[34px] rounded-lg border border-red-500/15 bg-red-500/5"
+                                x-transition>
+                                <span class="text-red-400 text-[9px] font-bold uppercase tracking-wider">Revoked</span>
+                            </div>
+                        </div>
+
+                        <!-- Revocation Toggle Badge -->
+                        <div class="flex justify-center">
+                            <button type="button"
+                                @click="row.is_revocation = !row.is_revocation"
+                                class="text-[9px] font-black px-2 py-1 rounded-md transition-all tracking-wider select-none"
+                                :class="row.is_revocation
+                                    ? 'bg-red-500/15 text-red-400 border border-red-500/30'
+                                    : 'bg-white/[0.03] text-white/15 border border-white/[0.06] hover:border-white/15 hover:text-white/30'">
+                                REV
+                            </button>
+                        </div>
+
+                        <!-- Delete Row -->
+                        <div class="flex justify-center">
+                            <button type="button"
+                                @click="removeBulkRow(idx)"
+                                :class="bulkRows.length <= 1 ? 'opacity-20 pointer-events-none' : 'opacity-0 group-hover:opacity-100'"
+                                class="w-7 h-7 rounded-md flex items-center justify-center text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                :title="bulkRows.length <= 1 ? 'Cannot remove last row' : 'Remove row'">
+                                <i class="fa-solid fa-xmark text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Bulk Modal Footer -->
+        <div class="flex-shrink-0 border-t border-white/5 bg-white/[0.01] rounded-b-2xl">
+            <!-- Progress bar (visible during submission) -->
+            <div x-show="bulkSubmitting" x-transition class="h-1 bg-white/5">
+                <div class="h-full bg-emerald-500 progress-fill"
+                     :style="'width: ' + (bulkTotalCount > 0 ? (bulkSubmittedCount / bulkTotalCount * 100) : 0) + '%'"></div>
+            </div>
+
+            <div class="flex items-center justify-between px-7 py-4">
+                <!-- Left side: row actions + count -->
+                <div class="flex items-center gap-4">
+                    <button type="button"
+                        @click="addBulkRow()"
+                        :disabled="bulkSubmitting"
+                        class="px-3.5 py-2 rounded-lg text-xs font-semibold text-emerald-400/70 hover:text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/15 hover:border-emerald-500/30 transition-all inline-flex items-center gap-1.5 disabled:opacity-30 disabled:pointer-events-none">
+                        <i class="fa-solid fa-plus text-[9px]"></i> Add Row
+                    </button>
+                    <button type="button"
+                        @click="clearBulkRows()"
+                        :disabled="bulkSubmitting"
+                        class="px-3 py-2 rounded-lg text-xs font-semibold text-white/20 hover:text-white/40 hover:bg-white/5 transition-all disabled:opacity-30 disabled:pointer-events-none">
+                        Clear
+                    </button>
+                    <div class="h-4 w-px bg-white/10"></div>
+                    <p class="text-white/20 text-xs">
+                        <span x-text="bulkFilledCount" class="font-bold" :class="bulkFilledCount > 0 ? 'text-emerald-400/70' : ''"></span>
+                        <span> of </span>
+                        <span x-text="bulkRows.length" class="font-bold text-white/40"></span>
+                        <span> rows ready</span>
+                    </p>
+                </div>
+
+                <!-- Right side: cancel + submit -->
+                <div class="flex items-center gap-3">
+                    <button type="button"
+                        @click="closeBulkModal()"
+                        :disabled="bulkSubmitting"
+                        class="btn-ghost px-5 py-2.5 rounded-xl text-sm font-semibold text-white/60 hover:text-white/90 disabled:opacity-30 disabled:pointer-events-none">
+                        Cancel
+                    </button>
+                    <button type="button"
+                        @click="submitBulk()"
+                        :disabled="bulkSubmitting || bulkFilledCount === 0"
+                        class="px-6 py-2.5 rounded-xl text-sm font-bold text-white inline-flex items-center gap-2 transition-all shadow-lg bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/30 disabled:opacity-30 disabled:pointer-events-none disabled:transform-none">
+
+                        <!-- Submitting state -->
+                        <template x-if="bulkSubmitting">
+                            <span class="inline-flex items-center gap-2">
+                                <i class="fa-solid fa-spinner fa-spin text-xs"></i>
+                                <span x-text="'Adding ' + bulkSubmittedCount + ' of ' + bulkTotalCount + '...'"></span>
+                            </span>
+                        </template>
+
+                        <!-- Idle state -->
+                        <template x-if="!bulkSubmitting">
+                            <span class="inline-flex items-center gap-2">
+                                <i class="fa-solid fa-layer-group text-xs"></i>
+                                <span x-text="'Create ' + bulkFilledCount + ' Code' + (bulkFilledCount !== 1 ? 's' : '')"></span>
+                            </span>
+                        </template>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
     <script>
         function violationManager() {
             return {
@@ -532,6 +780,7 @@
 
                 violations: @json($violation_codes ?? []),
 
+                // Single Add/Edit Modal
                 showModal: false,
                 showDeleteModal: false,
                 isEditing: false,
@@ -539,6 +788,15 @@
                 modalClosing: false,
                 deleteModalAnimating: false,
                 deleteModalClosing: false,
+
+                // Bulk Add Modal
+                showBulkModal: false,
+                bulkModalAnimating: false,
+                bulkModalClosing: false,
+                bulkRows: [],
+                bulkSubmitting: false,
+                bulkSubmittedCount: 0,
+                bulkTotalCount: 0,
 
                 form: {
                     id: null,
@@ -553,9 +811,12 @@
 
                 deleteTarget: null,
 
-                toasts: [],
-                toastId: 0,
+                // ── Computed: how many bulk rows are fill-ready ──
+                get bulkFilledCount() {
+                    return this.bulkRows.filter(r => r.code.trim() && r.name.trim()).length;
+                },
 
+                // ── Single Add/Edit ──
                 openAddModal() {
                     this.isEditing = false;
                     this.form = {
@@ -568,7 +829,6 @@
                         fourth_plus: '0',
                         is_revocation: false
                     };
-                // ✅ RESET FORM ACTION URL for creating
                     const form = document.getElementById('violationForm');
                     form.action = '{{ route('violation-codes.store') }}';
                     this._openModal('showModal', 'modalAnimating', 'modalClosing');
@@ -586,7 +846,6 @@
                         fourth_plus: item.fourth_offense || '',
                         is_revocation: !!item.is_revoked
                     };
-                // ✅ UPDATE FORM ACTION URL for editing
                     const form = document.getElementById('violationForm');
                     form.action = '{{ route("violation-codes.update", ":id") }}'.replace(':id', item.id);
                     this._openModal('showModal', 'modalAnimating', 'modalClosing');
@@ -596,15 +855,13 @@
                     this._closeModal('showModal', 'modalAnimating', 'modalClosing');
                 },
 
+                // ── Delete ──
                 openDeleteModal(item) {
                     this.deleteTarget = { ...item };
-
-                    // ✅ Update the delete form action URL with the item ID
                     const deleteForm = document.getElementById('deleteForm');
                     if (deleteForm) {
                         deleteForm.action = '{{ route("violation-codes.destroy", ":id") }}'.replace(':id', item.id);
                     }
-
                     this._openModal('showDeleteModal', 'deleteModalAnimating', 'deleteModalClosing');
                 },
 
@@ -612,6 +869,139 @@
                     this._closeModal('showDeleteModal', 'deleteModalAnimating', 'deleteModalClosing');
                 },
 
+                // ── Bulk Add ──
+                _newBulkRow() {
+                    return {
+                        code: '',
+                        name: '',
+                        first: '0',
+                        second: '0',
+                        third: '0',
+                        fourth_plus: '0',
+                        is_revocation: false,
+                        _error: false
+                    };
+                },
+
+                openBulkModal() {
+                    this.bulkRows = Array.from({ length: 3 }, () => this._newBulkRow());
+                    this.bulkSubmitting = false;
+                    this.bulkSubmittedCount = 0;
+                    this.bulkTotalCount = 0;
+                    this._openModal('showBulkModal', 'bulkModalAnimating', 'bulkModalClosing');
+                },
+
+                closeBulkModal() {
+                    if (this.bulkSubmitting) return;
+                    this._closeModal('showBulkModal', 'bulkModalAnimating', 'bulkModalClosing');
+                },
+
+                addBulkRow() {
+                    this.bulkRows.push(this._newBulkRow());
+                    this.$nextTick(() => {
+                        const container = document.getElementById('bulkRowsContainer');
+                        if (container) {
+                            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+                        }
+                    });
+                },
+
+                removeBulkRow(index) {
+                    if (this.bulkRows.length > 1) {
+                        this.bulkRows.splice(index, 1);
+                    }
+                },
+
+                clearBulkRows() {
+                    this.bulkRows = [this._newBulkRow()];
+                },
+
+                async submitBulk() {
+                    // Validate: mark rows missing code or name
+                    let hasError = false;
+                    this.bulkRows.forEach(row => {
+                        const isEmpty = !row.code.trim() || !row.name.trim();
+                        row._error = isEmpty;
+                        if (isEmpty && (row.code.trim() || row.name.trim())) {
+                            // Partially filled row — that's an error
+                            hasError = true;
+                        }
+                    });
+
+                    // Only submit fully filled rows; skip completely empty ones
+                    const validRows = this.bulkRows.filter(r => r.code.trim() && r.name.trim());
+                    if (validRows.length === 0) return;
+
+                    if (hasError) {
+                        // Shake the error rows but still submit the valid ones
+                        // (or you could block — here we proceed with valid rows)
+                    }
+
+                    this.bulkSubmitting = true;
+                    this.bulkSubmittedCount = 0;
+                    this.bulkTotalCount = validRows.length;
+
+                    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+                    if (!token) {
+                        this.bulkSubmitting = false;
+                        this._showToast('CSRF token not found. Please refresh the page.', 'error');
+                        return;
+                    }
+
+                    for (const row of validRows) {
+                        const formData = new FormData();
+                        formData.append('_token', token);
+                        formData.append('code', row.code.trim());
+                        formData.append('name', row.name.trim());
+                        formData.append('first', row.first || '0');
+                        formData.append('second', row.second || '0');
+                        formData.append('third', row.third || '0');
+                        formData.append('fourth_plus', row.is_revocation ? '0' : (row.fourth_plus || '0'));
+                        formData.append('is_revocation', row.is_revocation ? '1' : '0');
+
+                        try {
+                            const response = await fetch('{{ route("violation-codes.store") }}', {
+                                method: 'POST',
+                                body: formData,
+                                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                            });
+
+                            if (!response.ok) {
+                                const text = await response.text().catch(() => '');
+                                throw new Error(text || 'Server error');
+                            }
+
+                            this.bulkSubmittedCount++;
+                        } catch (e) {
+                            this.bulkSubmitting = false;
+                            this._showToast('Failed to add "' + row.code + ' — ' + row.name + '". Stopped at ' + this.bulkSubmittedCount + ' of ' + this.bulkTotalCount + '.', 'error');
+                            return;
+                        }
+                    }
+
+                    // All succeeded — reload to see new data
+                    window.location.reload();
+                },
+
+                // ── Toast (standalone, doesn't depend on flash component) ──
+                _showToast(message, type = 'success') {
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed bottom-6 right-6 z-[100] px-5 py-3.5 rounded-xl text-sm font-semibold shadow-2xl toast-enter flex items-center gap-3 max-w-md ' + (
+                        type === 'error'
+                            ? 'bg-red-600/95 text-white border border-red-500/30'
+                            : 'bg-emerald-600/95 text-white border border-emerald-500/30'
+                    );
+                    toast.innerHTML = '<i class="fa-solid ' + (type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check') + ' text-white/80"></i><span>' + message + '</span>';
+                    document.body.appendChild(toast);
+
+                    setTimeout(() => {
+                        toast.classList.remove('toast-enter');
+                        toast.classList.add('toast-leave');
+                        setTimeout(() => toast.remove(), 300);
+                    }, 4000);
+                },
+
+                // ── Modal Animation Helpers ──
                 _openModal(showProp, animProp, closeProp) {
                     this[closeProp] = false;
                     this[showProp] = true;
