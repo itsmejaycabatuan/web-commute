@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\ViolationCode;
 use App\Models\Wallet;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -68,15 +69,17 @@ class RolePermissionSeeder extends Seeder
             'user_id' => $commuter->id,
         ]);
 
-        $driver = User::firstOrCreate(
+        $driverUser = User::firstOrCreate(
             ['email' => 'driver@gmail.com'],
             ['password' => Hash::make('admin123'),
                 'email_verified_at' => now(),
-                'license_number' => 'DEMO-LIC-001',
-                'license_code' => 'A',
-                'license_image_path' => null,
-                'driver_approval_status' => 'approved'],
+            ],
         );
+
+        $driver = $driverUser->driver()->create([
+            'name' => 'driver',
+            'is_approved' => true,
+        ]);
 
         $driverManager = User::firstOrCreate(
             ['email' => 'drivermanager@gmail.com'],
@@ -94,11 +97,21 @@ class RolePermissionSeeder extends Seeder
             ]
         );
 
+        $violationCode = ViolationCode::firstOrCreate([
+            'code' => 'UV01',
+            'violation_name' => 'Disregarding Traffic Sign',
+            'first_offense' => '1000',
+            'second_offense' => '1000',
+            'third_offense' => '1000',
+            'fourth_offense' => '1000',
+            'is_revoked' => false,
+        ]);
+
         // Assign Roles to users here
         $markj->assignRole($adminRole);
         $admin->assignRole($adminRole);
         $commuter->assignRole($commuterRole);
-        $driver->assignRole($driverRole);
+        $driverUser->assignRole($driverRole);
         $driverManager->assignRole($driverManagerRole);
         $maintenanceManager->assignRole($maintenanceManagerRole);
     }

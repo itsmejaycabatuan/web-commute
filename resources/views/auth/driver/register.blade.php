@@ -31,6 +31,13 @@
 
 <body class="flex relative justify-center items-center p-6 min-h-screen register-bg">
 
+    @if (session('success'))
+        <div class="fixed top-6 left-1/2 z-[90] px-4 py-3 max-w-md text-sm text-center text-white -translate-x-1/2 bg-emerald-600/95 rounded-xl border border-emerald-500/30 shadow-lg"
+            id="login-flash-success">
+            {{ session('success') }}
+        </div>
+    @endif
+
     <a href="{{ route('register') }}"
         class="flex absolute top-8 left-8 items-center space-x-2 transition hover:text-white text-white/70 group">
         <div
@@ -150,7 +157,7 @@
 
             <button type="submit"
                 class="py-3 mt-4 w-full text-xs font-bold tracking-widest text-black uppercase bg-white rounded-xl transition-all hover:bg-gray-200 active:scale-95">
-                Register as Driver
+                Register
             </button>
         </form>
 
@@ -193,8 +200,8 @@
             }
 
             // Format: 9XX XXX XXXX
-            if (digits.length > 7) {
-                input.value = digits.slice(0, 3) + ' ' + digits.slice(3, 7) + ' ' + digits.slice(7);
+            if (digits.length > 6) {
+                input.value = digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(6);
             } else if (digits.length > 3) {
                 input.value = digits.slice(0, 3) + ' ' + digits.slice(3);
             } else {

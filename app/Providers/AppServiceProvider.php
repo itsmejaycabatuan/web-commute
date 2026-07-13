@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Driver;
 use App\Models\User;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -34,9 +35,8 @@ class AppServiceProvider extends ServiceProvider
                 'total_users' => User::count(),
                 'total_commuters' => User::role('commuter')->count(),
                 'total_drivers' => User::role('driver')->count(),
-                'pending_drivers' => User::role('driver')->where('driver_approval_status', 'pending')->count(),
-                'approved_drivers' => User::role('driver')->where('driver_approval_status', 'approved')->count(),
-                'rejected_drivers' => User::role('driver')->where('driver_approval_status', 'rejected')->count(),
+                'approved_drivers' => Driver::where('is_approved', true)->count(),
+                'rejected_drivers' => Driver::where('is_approved', false)->count(),
                 'total_applications' => User::role('driver')->count(),
             ]);
         });

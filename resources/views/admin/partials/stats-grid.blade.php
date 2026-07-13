@@ -24,15 +24,7 @@
             <p class="text-[10px] text-gray-600 mt-1">PUJ operator accounts</p>
         </div>
     </div>
-    <div class="glass rounded-2xl border border-amber-500/30 ring-1 ring-amber-500/20 p-6 flex items-start gap-4 bg-amber-500/[0.03]">
-        <span class="text-2xl shrink-0" aria-hidden="true">⏳</span>
-        <div>
-            <p class="text-[10px] font-bold uppercase tracking-widest text-amber-400/90 mb-1">Pending drivers</p>
-            <p class="text-3xl font-black tracking-tight text-amber-400">{{ number_format($stats['pending_drivers']) }}</p>
-            <p class="text-[10px] text-amber-400/50 mt-1 font-semibold">Needs your review</p>
-        </div>
-    </div>
-    <div class="glass rounded-2xl border border-emerald-500/20 p-6 flex items-start gap-4">
+        <div class="glass rounded-2xl border border-emerald-500/20 p-6 flex items-start gap-4">
         <span class="text-2xl shrink-0" aria-hidden="true">✅</span>
         <div>
             <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Approved drivers</p>

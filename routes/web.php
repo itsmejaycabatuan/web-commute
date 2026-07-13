@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CommuterController;
 use App\Http\Controllers\Admin\DriverApprovalController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\DriverManagerController;
 use App\Http\Controllers\DriverProfileController;
@@ -265,6 +266,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/trasanctions/receipt/{id}', [PaymentController::class, 'showReceiptAdmin'])->name('admin.receipt.show');
 
     Route::middleware('role:admin')->group(function () {
+        Route::get('/dashboard/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+
         Route::get('/admin/commuters/create', [CommuterController::class, 'create'])->name('admin.commuters.create');
         Route::post('/admin/commuters', [CommuterController::class, 'store'])->name('admin.commuters.store');
         Route::get('/admin/commuters/{user}/edit', [CommuterController::class, 'edit'])->name('admin.commuters.edit');
@@ -272,16 +275,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/admin/commuters/{user}', [CommuterController::class, 'destroy'])->name('admin.commuters.destroy');
         Route::get('/admin/commuters', [CommuterController::class, 'index'])->name('admin.commuters.index');
 
-        Route::get('/admin/drivers/create', [DriverApprovalController::class, 'create'])->name('admin.drivers.create');
+        Route::get('/admin/drivers', [DriverApprovalController::class, 'index'])->name('admin.drivers.index');
         Route::post('/admin/drivers', [DriverApprovalController::class, 'store'])->name('admin.drivers.store');
+        Route::get('/admin/drivers/create', [DriverApprovalController::class, 'create'])->name('admin.drivers.create');
         Route::get('/admin/drivers/{user}/edit', [DriverApprovalController::class, 'edit'])->name('admin.drivers.edit');
         Route::put('/admin/drivers/{user}', [DriverApprovalController::class, 'update'])->name('admin.drivers.update');
-        Route::delete('/admin/drivers/{user}', [DriverApprovalController::class, 'destroy'])->name('admin.drivers.destroy');
+        Route::delete('/admin/drivers/{driver}', [DriverApprovalController::class, 'destroy'])->name('admin.drivers.destroy');
         Route::get('/admin/drivers/{user}/license', [DriverApprovalController::class, 'showLicense'])->name('admin.drivers.license');
         Route::post('/admin/drivers/{user}/approve', [DriverApprovalController::class, 'approve'])->name('admin.drivers.approve');
         // Route::post('/admin/drivers/{user}/unapprove', [DriverApprovalController::class, 'unapprove'])->name('admin.drivers.unapprove');
-        Route::post('/admin/drivers/{user}/reject', [DriverApprovalController::class, 'reject'])->name('admin.drivers.reject');
-        Route::get('/admin/drivers', [DriverApprovalController::class, 'index'])->name('admin.drivers.index');
+        Route::put('/admin/drivers/{user}/reject', [DriverApprovalController::class, 'reject'])->name('admin.drivers.reject');
     });
 
     Route::middleware('role:driver')->group(function () {
@@ -293,6 +296,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:driver_manager')->group(function () {
         Route::get('/time-keeping', [DriverManagerController::class, 'timeKeeping'])->name('driver-manager.time-keeping');
         Route::get('/violations-log', [DriverManagerController::class, 'violationsLog'])->name('driver-manager.violations-log');
+        Route::post('/violations-log', [DriverManagerController::class, 'storeViolationLog'])->name('driver-manager.violations-log.store');
+        Route::post('/violations-log/bulk', [DriverManagerController::class, 'storeViolationLogBulk'])->name('driver-manager.violations-log.store-bulk');
         Route::get('/violation-codes', [DriverManagerController::class, 'violationCodes'])->name('driver-manager.violation-codes');
         Route::put('/violation-codes/{id}/update', [DriverManagerController::class, 'updateViolationCode'])->name('violation-codes.update');
         Route::post('/violation-codes/store', [DriverManagerController::class, 'storeViolationCode'])->name('violation-codes.store');
@@ -317,17 +322,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'info' => $info,
         ]);
     })->name('profile.admin');
-
-    Route::get('/dashboard/admin', function () {
-
-        return view('admin.dashboard', [
-            'totalRevenue' => Payment::sum('price'),
-            'totalFundsAdded' => TopupHistory::sum('amount_added'),
-            'activeUsersCount' => Payment::distinct('paid_by')->count(), // Or your preferred logic
-            'recentFares' => Payment::with('user')->latest()->take(5)->get(),
-            'recentTopups' => TopupHistory::with('user')->latest()->take(5)->get(),
-        ]);
-    })->name('admin.dashboard');
 
     Route::get('/profile/driver-manager', [DriverManagerController::class, 'profile'])->name('driver-manager.profile');
     Route::patch('/profile/driver-manager/update', [DriverManagerController::class, 'updateProfile'])->name('driver-manager.update-profile');

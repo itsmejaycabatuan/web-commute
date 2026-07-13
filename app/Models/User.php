@@ -72,6 +72,10 @@ use Spatie\Permission\Traits\HasRoles;
  * @method static \Illuminate\Database\Eloquent\Builder|User whereContactInfo($value)
  * @method static \Illuminate\Database\Eloquent\Builder|User whereExpirationDate($value)
  *
+ * @property string|null $driver_code
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereDriverCode($value)
+ *
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
@@ -123,5 +127,10 @@ class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
     public function payment()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function driver()
+    {
+        return $this->hasOne(Driver::class);
     }
 }

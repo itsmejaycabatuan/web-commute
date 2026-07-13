@@ -27,13 +27,20 @@ class DriverController extends Controller
 
         $user = User::create([
             'email' => $request->email,
-            'contact_info' => $request->contact_info,
             'password' => Hash::make($request->password),
+            'email_verified_at' => now(),
+        ]);
+
+        $driver = $user->driver()->create([
+            'contact_info' => $request->contact_info,
             'license_image_path' => $path,
             'license_image_data' => null,
             'license_image_mime' => null,
-            'driver_approval_status' => 'pending',
         ]);
+
+        if (! ($user && $driver)) {
+            return back()->with('error', 'Driver registration failed.');
+        }
 
         $user->assignRole('driver');
         event(new Registered($user));

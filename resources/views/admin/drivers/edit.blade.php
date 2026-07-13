@@ -39,15 +39,15 @@
                 <i class="fa-solid fa-arrow-left"></i> Back to list
             </a>
             <h2 class="text-2xl font-black tracking-tight mb-2">Edit PUJ driver</h2>
-            <p class="text-gray-500 text-sm mb-8">{{ $user->email }}</p>
+            <p class="text-gray-500 text-sm mb-8">{{ $driver->user->email }}</p>
 
             <div class="glass rounded-2xl border border-white/10 p-8">
-                <form action="{{ route('admin.drivers.update', $user) }}" method="POST" enctype="multipart/form-data" class="space-y-5">
+                <form action="{{ route('admin.drivers.update', $driver) }}" method="POST" enctype="multipart/form-data" class="space-y-5">
                     @csrf
                     @method('PUT')
                     <div>
                         <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Email</label>
-                        <input type="email" name="email" value="{{ old('email', $user->email) }}" required
+                        <input type="email" name="email" value="{{ old('email', $driver->user->email) }}" required
                             class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm focus:ring-2 focus:ring-blue-500/40 focus:outline-none">
                         @error('email')
                             <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
@@ -68,7 +68,7 @@
                     </div>
                     <div>
                         <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">License number</label>
-                        <input type="text" name="license_number" value="{{ old('license_number', $user->license_number) }}" required
+                        <input type="text" name="license_number" value="{{ old('license_number', $driver->license_number) }}" required
                             class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm focus:ring-2 focus:ring-blue-500/40 focus:outline-none">
                         @error('license_number')
                             <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
@@ -76,17 +76,17 @@
                     </div>
                     <div>
                         <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">License code</label>
-                        <input type="text" name="license_code" value="{{ old('license_code', $user->license_code) }}" required
+                        <input type="text" name="license_code" value="{{ old('license_code', $driver->license_code) }}" required
                             class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm focus:ring-2 focus:ring-blue-500/40 focus:outline-none">
                         @error('license_code')
                             <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
                     @php
-                        $hasCurrentLicense = $user->license_image_path || filled($user->license_image_data);
-                        $licenseFileUrl = $user->license_image_path ? asset('storage/'.$user->license_image_path) : null;
-                        $licenseViewUrl = $licenseFileUrl ?? route('admin.drivers.license', $user, true);
-                        $licenseDownloadUrl = $licenseFileUrl ?? route('admin.drivers.license', ['user' => $user, 'download' => 1], true);
+                        $hasCurrentLicense = $driver->license_image_path || filled($driver->license_image_data);
+                        $licenseFileUrl = $driver->license_image_path ? asset('storage/'.$driver->license_image_path) : null;
+                        $licenseViewUrl = $licenseFileUrl ?? route('admin.drivers.license', $driver, true);
+                        $licenseDownloadUrl = $licenseFileUrl ?? route('admin.drivers.license', ['user' => $driver, 'download' => 1], true);
                     @endphp
                     @if ($hasCurrentLicense)
                         <div>
@@ -115,9 +115,9 @@
                         <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Approval status</label>
                         <select name="driver_approval_status"
                             class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm focus:ring-2 focus:ring-blue-500/40 focus:outline-none">
-                            <option value="pending" {{ old('driver_approval_status', $user->driver_approval_status) === 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="approved" {{ old('driver_approval_status', $user->driver_approval_status) === 'approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="rejected" {{ old('driver_approval_status', $user->driver_approval_status) === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            <option value="pending" {{ old('driver_approval_status', $driver->is_approved) === 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="approved" {{ old('driver_approval_status', $driver->is_approved) === 'approved' ? 'selected' : '' }}>Approved</option>
+                            <option value="rejected" {{ old('driver_approval_status', $driver->is_approved) === 'rejected' ? 'selected' : '' }}>Rejected</option>
                         </select>
                         @error('driver_approval_status')
                             <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
