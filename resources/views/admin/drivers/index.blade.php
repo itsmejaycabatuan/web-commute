@@ -154,7 +154,7 @@
                                     </td>
                                     <td class="px-4 py-4 text-right">
                                         <div class="flex flex-wrap gap-1.5 justify-end items-center">
-                                            @if ($driver->is_approved === true || $driver->is_rejected === true)
+                                            @if ($driver->is_approved === 0 && $driver->is_rejected === 0)
                                                 <button type="button"
                                                     data-did="{{ $driver->id }}"
                                                     data-email="{{ $driver->email }}"

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Driver;
+use App\Models\TimeKeeping;
 use App\Models\User;
 use App\Models\ViolationCode;
 use App\Models\ViolationLog;
@@ -13,7 +15,48 @@ class DriverManagerController extends Controller
 {
     public function timeKeeping()
     {
-        return view('driver-manager.time-keeping');
+        $drivers = Driver::with('user')
+            ->get()
+            ->map(fn($driver) => [
+                'id' => $driver->id,
+                'name' => "{$driver->name}",
+            ]);
+
+        $entries = TimeKeeping::with('driver.user')
+            ->latest()
+            ->paginate(10);
+
+        return view('driver-manager.time-keeping', compact('drivers', 'entries'));
+    }
+
+    public function timeKeepingStore(Request $request)
+    {
+        $validated = $request->validate([
+            'driver_id' => 'required|exists:drivers,id',
+            'date' => 'required|date',
+        ]);
+
+        $timeIn = Carbon::parse($validated['date'] . ' ' . $request->time_in);
+        $timeOut = Carbon::parse($validated['date'] . ' ' . $request->time_out);
+
+        $totalHours = $timeIn->diffInMinutes($timeOut) / 60;
+        $overtime = max(0, $totalHours - 8);
+
+        TimeKeeping::create([
+            'driver_id' => $validated['driver_id'],
+            'date' => $validated['date'],
+            'time_in' => $request->time_in,
+            'time_out' => $request->time_out,
+            'hours_worked' => round($totalHours, 2),
+            'overtime_hours' => round($overtime, 2),
+            'sick' => $request->sick,
+            'vacation' => $request->vacation,
+        ]);
+
+        return back()
+            ->with('success', 'Time entry saved successfully.');
+
+        return back();
     }
 
     public function violationsLog()

@@ -201,7 +201,7 @@
 
             // Format: 9XX XXX XXXX
             if (digits.length > 6) {
-                input.value = digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(6);
+                input.value = digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(5);
             } else if (digits.length > 3) {
                 input.value = digits.slice(0, 3) + ' ' + digits.slice(3);
             } else {

@@ -15,12 +15,16 @@ use App\Http\Controllers\RateController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleTrackingController;
+use App\Models\Driver;
 use App\Models\Fare;
 use App\Models\FareRate;
 use App\Models\Payment;
+use App\Models\TimeKeeping;
 use App\Models\TopupHistory;
 use App\Models\User;
+use App\Models\ViolationLog;
 use App\Models\Wallet;
+use Carbon\Carbon;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
@@ -239,7 +243,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
             }
 
             if ($role == 'driver_manager') {
-                return view('driver-manager.dashboard');
+                $drivers = Driver::with('user')->get()->map(fn($d) => [
+                    'id' => $d->id,
+                    'user_id' => $d->user_id,
+                    'name' => $d->name,
+                    'driver_code' => $d->driver_code ?? 'N/A',
+                    'license_number' => $d->license_number ?? 'N/A',
+                    'expiration_date' => $d->expiration_date
+                                            ? Carbon::parse($d->expiration_date)->format('F d, Y')
+                                            : 'N/A',
+                ])->values();
+
+                $timeKeepings = TimeKeeping::with('driver')->get()->map(fn($tk) => [
+                    'driver_id' => $tk->driver_id,
+                    'driver_name' => $tk->driver->name ?? 'Unknown',
+                    'driver_user_id' => $tk->driver->user_id ?? null,
+                    'date' => (string) $tk->date,
+                    'time_in' => $tk->time_in ? (string) $tk->time_in : null,
+                    'time_out' => $tk->time_out ? (string) $tk->time_out : null,
+                    'hours_worked' => (float) ($tk->hours_worked ?? 0),
+                    'overtime_hours' => (float) ($tk->overtime_hours ?? 0),
+                    'sick' => (int) $tk->sick,
+                    'vacation' => (int) $tk->vacation,
+                ])->values();
+
+                $violationLogs = ViolationLog::with('user')->get()->map(fn($v) => [
+                    'id' => $v->id,
+                    'user_id' => $v->user_id,
+                    'user_name' => $v->user->name ?? 'Unknown',
+                    'violation_instance' => $v->violation_instance,
+                    'violation_fine' => (float) ($v->violation_fine ?? 0),
+                    'created_at' => $v->created_at ? $v->created_at->format('M d, Y') : '',
+                    'time' => $v->created_at ? $v->created_at->format('g:i A') : '',
+                ])->values();
+
+                return view('driver-manager.dashboard', compact('drivers', 'timeKeepings', 'violationLogs'));
             }
 
             if ($role == 'maintenance_manager') {
@@ -295,6 +333,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('role:driver_manager')->group(function () {
         Route::get('/time-keeping', [DriverManagerController::class, 'timeKeeping'])->name('driver-manager.time-keeping');
+        Route::post('/time-keeping', [DriverManagerController::class, 'timeKeepingStore'])->name('driver-manager.time-keeping.store');
         Route::get('/violations-log', [DriverManagerController::class, 'violationsLog'])->name('driver-manager.violations-log');
         Route::post('/violations-log', [DriverManagerController::class, 'storeViolationLog'])->name('driver-manager.violations-log.store');
         Route::post('/violations-log/bulk', [DriverManagerController::class, 'storeViolationLogBulk'])->name('driver-manager.violations-log.store-bulk');
@@ -311,6 +350,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/vehicle-maintenance-log', [MaintenanceManagerController::class, 'vehicleLog'])->name('maintenance-manager.vehicle-maintenance-log');
         Route::get('/fleet-maintenance-log', [MaintenanceManagerController::class, 'fleetLog'])->name('maintenance-manager.fleet-maintenance-log');
         Route::get('/fleet-inventory', [MaintenanceManagerController::class, 'fleetInventory'])->name('maintenance-manager.fleet-inventory');
+        Route::post('/fleet-inventory', [MaintenanceManagerController::class, 'fleetInventoryStore'])->name('maintenance-manager.fleet-inventory.store');
+        Route::delete('/fleet-inventory/{id}/delete', [MaintenanceManagerController::class, 'fleetInventoryDelete'])->name('maintenance-manager.fleet-inventory.destroy');
+        Route::patch('/fleet-inventory/{id}/update', [MaintenanceManagerController::class, 'fleetInventoryUpdate'])->name('maintenance-manager.fleet-inventory.update');
         Route::get('/profile/maintenance-manager', [MaintenanceManagerController::class, 'profile'])->name('maintenance-manager.profile');
         Route::patch('/profile/maintenance-manager/update', [MaintenanceManagerController::class, 'updateProfile'])->name('maintenance-manager.update-profile');
     });

@@ -29,4 +29,9 @@ class Driver extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function timeKeeping()
+    {
+        return $this->hasMany(TimeKeeping::class);
+    }
 }
