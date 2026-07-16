@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FleetInventory;
+use App\Models\MaintenanceTask;
 use App\Models\User;
 use Auth;
 use Illuminate\Http\Request;
@@ -21,7 +22,54 @@ class MaintenanceManagerController extends Controller
 
     public function maintenanceTasks()
     {
-        return view('maintenance-manager.maintenance-tasks');
+        $tasks = MaintenanceTask::all();
+
+        return view('maintenance-manager.maintenance-tasks', compact('tasks'));
+    }
+
+    public function maintenanceTasksStore(Request $request)
+    {
+        $request->validate([
+            'tasks_performed' => 'required|string|max:255',
+            'miles_between_service' => 'nullable|integer',
+            'months_between_service' => 'nullable|integer',
+        ]);
+
+        $task = MaintenanceTask::create([
+            'tasks_performed' => $request->tasks_performed,
+            'miles_between_service' => $request->miles_between_service,
+            'months_between_service' => $request->months_between_service,
+        ]);
+
+        if (! $task) {
+            return back()->with('error', 'Failed to add task');
+        }
+
+        return back()->with('success', 'Task successfully added!');
+    }
+
+    public function maintenanceTasksUpdate(Request $request, MaintenanceTask $task)
+    {
+        $request->validate([
+            'tasks_performed' => 'required|string|max:255',
+            'miles_between_service' => 'nullable|integer',
+            'months_between_service' => 'nullable|integer',
+        ]);
+
+        $task->update([
+            'tasks_performed' => $request->tasks_performed,
+            'miles_between_service' => $request->miles_between_service,
+            'months_between_service' => $request->months_between_service,
+        ]);
+
+        return back()->with('success', 'Task successfully updated!');
+    }
+
+    public function maintenanceTasksDestroy(MaintenanceTask $task)
+    {
+        $task->delete();
+
+        return back()->with('success', 'Task successfully deleted!');
     }
 
     public function vehicleLog()
