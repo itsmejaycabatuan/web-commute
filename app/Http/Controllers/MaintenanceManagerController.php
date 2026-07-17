@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\FleetInventory;
 use App\Models\MaintenanceTask;
 use App\Models\User;
+use App\Models\VehicleMaintenanceLog;
 use Auth;
 use Illuminate\Http\Request;
 
@@ -72,9 +73,114 @@ class MaintenanceManagerController extends Controller
         return back()->with('success', 'Task successfully deleted!');
     }
 
-    public function vehicleLog()
+    public function vehicleLog(Request $request)
     {
-        return view('maintenance-manager.vehicle-maintenance-log');
+        $vehicles = FleetInventory::orderBy('fleet_id')->get();
+
+        if ($vehicles->isEmpty()) {
+            return view('maintenance-manager.vehicle-maintenance-log', [
+                'vehicles' => collect(),
+                'vehicle' => null,
+                'maintenanceTasks' => collect(),
+                'logs' => collect(),
+                'totalCost' => 0,
+                'totalServices' => 0,
+                'latestOdometer' => 0,
+                'costPerMile' => 0,
+            ]);
+        }
+
+        $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
+        $vehicle = FleetInventory::find($selectedId) ?? $vehicles->first();
+
+        // Fetch logs with their related maintenance task
+        $logs = VehicleMaintenanceLog::where('fleet_id', $vehicle->id)
+            ->with('maintenanceTask')
+            ->orderByDesc('service_date')
+            ->get();
+
+        $logs->transform(function ($log) {
+            // Y-m-d is the exact format HTML date inputs require
+            $log->service_date_formatted = $log->service_date->format('Y-m-d');
+
+            return $log;
+        });
+
+        // Calculate summary values
+        $totalCost = $logs->sum('cost');
+        $totalServices = $logs->count();
+        $latestOdometer = $logs->first()?->mileage_at_service ?? 0;
+        $costPerMile = $latestOdometer > 0 ? round($totalCost / $latestOdometer, 2) : 0;
+
+        $maintenanceTasks = MaintenanceTask::orderBy('tasks_performed')->get();
+
+        return view('maintenance-manager.vehicle-maintenance-log', compact(
+            'vehicles',
+            'vehicle',
+            'maintenanceTasks',
+            'logs',
+            'totalCost',
+            'totalServices',
+            'latestOdometer',
+            'costPerMile'
+        ));
+    }
+
+    public function vehicleLogStore(Request $request, string $id)
+    {
+        $request->validate([
+            'service_date' => 'required|date',
+            'mileage_at_service' => 'required|integer',
+            'task_id' => 'required',
+            'performed_by' => 'required|string',
+            'cost' => 'required|integer',
+            'invoice_number' => 'nullable|string',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $log = VehicleMaintenanceLog::create([
+            'fleet_id' => $request->vehicle_id,
+            'maintenance_task_id' => $request->task_id,
+            'service_date' => $request->service_date,
+            'mileage_at_service' => $request->mileage_at_service,
+            'performed_by' => $request->performed_by,
+            'cost' => $request->cost,
+            'invoice_number' => $request->invoice_number,
+            'remarks' => $request->remarks,
+        ]);
+
+        if (! $log) {
+            return back()->with('error', 'Error logging maintenance info.');
+        }
+
+        return back()->with('success', 'Maintenance info logged!');
+    }
+
+    public function vehicleLogUpdate(Request $request)
+    {
+        $log = VehicleMaintenanceLog::findOrFail($request->id);
+
+        $request->validate([
+            'service_date' => 'required|date',
+            'mileage_at_service' => 'required|integer',
+            'task_id' => 'required|exists:maintenance_tasks,id',
+            'performed_by' => 'required|string',
+            'cost' => 'required',
+            'invoice_number' => 'nullable|string',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $log->update([
+            'maintenance_task_id' => $request->task_id,
+            'service_date' => $request->service_date,
+            'mileage_at_service' => $request->mileage_at_service,
+            'performed_by' => $request->performed_by,
+            'cost' => $request->cost,
+            'invoice_number' => $request->invoice_number,
+            'remarks' => $request->remarks,
+        ]);
+
+        return back()->with('success', 'Maintenance log updated!');
     }
 
     public function fleetLog()

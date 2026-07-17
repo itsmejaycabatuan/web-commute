@@ -351,6 +351,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/maintenance-tasks/{task}', [MaintenanceManagerController::class, 'maintenanceTasksUpdate'])->name('maintenance-manager.maintenance-tasks.update');
         Route::delete('/maintenance-tasks/{task}', [MaintenanceManagerController::class, 'maintenanceTasksDestroy'])->name('maintenance-manager.maintenance-tasks.destroy');
         Route::get('/vehicle-maintenance-log', [MaintenanceManagerController::class, 'vehicleLog'])->name('maintenance-manager.vehicle-maintenance-log');
+        Route::post('/vehicle-maintenance-log/{id}', [MaintenanceManagerController::class, 'vehicleLogStore'])->name('maintenance-manager.vehicle-maintenance-log.store');
+        Route::patch('/vehicle-maintenance-log', [MaintenanceManagerController::class, 'vehicleLogUpdate'])->name('maintenance-manager.vehicle-maintenance-log.update');
         Route::get('/fleet-maintenance-log', [MaintenanceManagerController::class, 'fleetLog'])->name('maintenance-manager.fleet-maintenance-log');
         Route::get('/fleet-inventory', [MaintenanceManagerController::class, 'fleetInventory'])->name('maintenance-manager.fleet-inventory');
         Route::post('/fleet-inventory', [MaintenanceManagerController::class, 'fleetInventoryStore'])->name('maintenance-manager.fleet-inventory.store');
