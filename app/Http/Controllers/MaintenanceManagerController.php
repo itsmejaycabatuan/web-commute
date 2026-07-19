@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Driver;
 use App\Models\FleetInventory;
 use App\Models\MaintenanceTask;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Models\VehicleMaintenanceLog;
 use Auth;
 use Illuminate\Http\Request;
@@ -75,7 +77,7 @@ class MaintenanceManagerController extends Controller
 
     public function vehicleLog(Request $request)
     {
-        $vehicles = FleetInventory::orderBy('fleet_id')->get();
+        $vehicles = Vehicle::orderBy('brand')->get();
 
         if ($vehicles->isEmpty()) {
             return view('maintenance-manager.vehicle-maintenance-log', [
@@ -91,22 +93,19 @@ class MaintenanceManagerController extends Controller
         }
 
         $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
-        $vehicle = FleetInventory::find($selectedId) ?? $vehicles->first();
+        $vehicle = Vehicle::find($selectedId) ?? $vehicles->first();
 
-        // Fetch logs with their related maintenance task
-        $logs = VehicleMaintenanceLog::where('fleet_id', $vehicle->id)
+        $logs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
             ->with('maintenanceTask')
             ->orderByDesc('service_date')
             ->get();
 
         $logs->transform(function ($log) {
-            // Y-m-d is the exact format HTML date inputs require
-            $log->service_date_formatted = $log->service_date->format('Y-m-d');
+            $log->service_date_formatted = $log->service_date?->format('Y-m-d');
 
             return $log;
         });
 
-        // Calculate summary values
         $totalCost = $logs->sum('cost');
         $totalServices = $logs->count();
         $latestOdometer = $logs->first()?->mileage_at_service ?? 0;
@@ -126,137 +125,262 @@ class MaintenanceManagerController extends Controller
         ));
     }
 
-    public function vehicleLogStore(Request $request, string $id)
+    public function vehicleLogStore(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'maintenance_task_id' => 'required|exists:maintenance_tasks,id',
             'service_date' => 'required|date',
-            'mileage_at_service' => 'required|integer',
-            'task_id' => 'required',
-            'performed_by' => 'required|string',
-            'cost' => 'required|integer',
-            'invoice_number' => 'nullable|string',
-            'remarks' => 'nullable|string',
+            'mileage_at_service' => 'required|integer|min:0',
+            'performed_by' => 'required|string|max:255',
+            'cost' => 'required|numeric|min:0',
+            'invoice_number' => 'nullable|string|max:100',
+            'remarks' => 'nullable|string|max:500',
         ]);
 
-        $log = VehicleMaintenanceLog::create([
-            'fleet_id' => $request->vehicle_id,
-            'maintenance_task_id' => $request->task_id,
-            'service_date' => $request->service_date,
-            'mileage_at_service' => $request->mileage_at_service,
-            'performed_by' => $request->performed_by,
-            'cost' => $request->cost,
-            'invoice_number' => $request->invoice_number,
-            'remarks' => $request->remarks,
-        ]);
-
-        if (! $log) {
-            return back()->with('error', 'Error logging maintenance info.');
-        }
+        VehicleMaintenanceLog::create($validated);
 
         return back()->with('success', 'Maintenance info logged!');
     }
 
-    public function vehicleLogUpdate(Request $request)
+    public function vehicleLogUpdate(Request $request, VehicleMaintenanceLog $log)
     {
-        $log = VehicleMaintenanceLog::findOrFail($request->id);
-
-        $request->validate([
+        $validated = $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'maintenance_task_id' => 'required|exists:maintenance_tasks,id',
             'service_date' => 'required|date',
-            'mileage_at_service' => 'required|integer',
-            'task_id' => 'required|exists:maintenance_tasks,id',
-            'performed_by' => 'required|string',
-            'cost' => 'required',
-            'invoice_number' => 'nullable|string',
-            'remarks' => 'nullable|string',
+            'mileage_at_service' => 'required|integer|min:0',
+            'performed_by' => 'required|string|max:255',
+            'cost' => 'required|numeric|min:0',
+            'invoice_number' => 'nullable|string|max:100',
+            'remarks' => 'nullable|string|max:500',
         ]);
 
-        $log->update([
-            'maintenance_task_id' => $request->task_id,
-            'service_date' => $request->service_date,
-            'mileage_at_service' => $request->mileage_at_service,
-            'performed_by' => $request->performed_by,
-            'cost' => $request->cost,
-            'invoice_number' => $request->invoice_number,
-            'remarks' => $request->remarks,
-        ]);
+        $log->update($validated);
 
         return back()->with('success', 'Maintenance log updated!');
     }
 
-    public function fleetLog()
+    public function vehicleLogDelete(VehicleMaintenanceLog $log)
     {
-        return view('maintenance-manager.fleet-maintenance-log');
+        $log->delete();
+
+        return back()->with('success', 'Maintenance log deleted.');
+    }
+
+    public function fleetLog(Request $request)
+    {
+        $vehicles = Vehicle::with('driver')->orderBy('brand')->get();
+        $drivers = Driver::orderBy('name')->get();
+
+        if ($vehicles->isEmpty()) {
+            return view('maintenance-manager.fleet-maintenance-log', [
+                'vehicles' => collect(),
+                'drivers' => $drivers,
+                'monthlyMileage' => array_fill(1, 12, 0),
+                'monthlyStartOdo' => array_fill(1, 12, null),
+                'monthlyEndOdo' => array_fill(1, 12, null),
+                'yearStartOdo' => null,
+                'yearEndOdo' => 0,
+                'vehicle' => null,
+                'costSummary' => collect(),
+                'monthlyTotals' => array_fill(1, 12, 0),
+                'ytdTotal' => 0,
+                'allLogs' => collect(),
+                'totalServiceCost' => 0,
+                'costPerMile' => 0,
+                'annualMileage' => 0,
+                'year' => now()->year,
+                'monthlyCpm' => array_fill(1, 12, null),
+            ]);
+        }
+
+        $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
+        $vehicle = Vehicle::with('driver')->find($selectedId) ?? $vehicles->first();
+
+        $year = now()->year;
+
+        // Logs for current year — used for cost summary table
+        $yearLogs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
+            ->with('maintenanceTask')
+            ->whereYear('service_date', $year)
+            ->whereNotNull('service_date')
+            ->orderBy('service_date')
+            ->get();
+
+        // Build cost summary: task_name => [month => cost]
+        $costSummary = [];
+        $monthlyTotals = array_fill(1, 12, 0);
+        $ytdTotal = 0;
+
+        foreach ($yearLogs as $log) {
+            $taskName = $log->maintenanceTask?->tasks_performed ?? 'Unknown Task';
+            $month = $log->service_date->month;
+            $cost = (float) $log->cost;
+
+            if (! isset($costSummary[$taskName])) {
+                $costSummary[$taskName] = array_fill(1, 12, 0);
+            }
+
+            $costSummary[$taskName][$month] += $cost;
+            $monthlyTotals[$month] += $cost;
+            $ytdTotal += $cost;
+        }
+
+        ksort($costSummary);
+        $costSummary = collect($costSummary);
+
+        // All logs for the log tab (all time, newest first)
+        $allLogs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
+            ->with('maintenanceTask')
+            ->orderByDesc('service_date')
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'task_name' => $log->maintenanceTask?->tasks_performed ?? 'Unknown Task',
+                    'service_date' => $log->service_date?->format('M d, Y'),
+                    'mileage' => $log->mileage_at_service,
+                    'cost' => $log->cost,
+                    'performed_by' => $log->performed_by,
+                    'invoice_number' => $log->invoice_number,
+                    'remarks' => $log->remarks,
+                ];
+            });
+
+        // Stats
+        $totalServiceCost = $ytdTotal;
+
+        // Monthly mileage calculation (matches Excel fallback to annual baseline)
+        $allOrderedLogs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
+            ->whereNotNull('mileage_at_service')
+            ->whereNotNull('service_date')
+            ->orderBy('service_date')
+            ->get();
+
+        $monthlyMileage = array_fill(1, 12, 0);
+        $monthlyStartOdo = array_fill(1, 12, null);
+        $monthlyEndOdo = array_fill(1, 12, null);
+        $monthlyCpm = array_fill(1, 12, null);
+        $runningOdo = null;
+
+        // Find annual starting baseline: the odometer reading before the first log of this year
+        $firstLogOfYear = $allOrderedLogs->first(fn($l) => $l->service_date && $l->service_date->year === $year);
+        $annualStartingOdo = 0;
+        if ($firstLogOfYear) {
+            $prevLog = $allOrderedLogs->where('id', '<', $firstLogOfYear->id)->last();
+            $annualStartingOdo = $prevLog ? $prevLog->mileage_at_service : 0;
+        }
+
+        foreach ($allOrderedLogs as $log) {
+            $m = $log->service_date->month;
+            $monthlyStartOdo[$m] ??= $runningOdo;
+            $monthlyEndOdo[$m] = $log->mileage_at_service;
+
+            // Use previous month's ending, or annual starting baseline as fallback
+            $baseline = $monthlyStartOdo[$m] ?? $annualStartingOdo;
+
+            if ($baseline !== null) {
+                $delta = $log->mileage_at_service - $baseline;
+                if ($delta > 0) {
+                    $monthlyMileage[$m] += $delta;
+                }
+            }
+            $runningOdo = $log->mileage_at_service;
+        }
+
+        $yearStartOdo = $monthlyStartOdo[1];
+        $yearEndOdo = $runningOdo;
+        $annualMileage = array_sum($monthlyMileage);
+
+        // Pre-calculate cost per mile per month
+        for ($m = 1; $m <= 12; $m++) {
+            if ($monthlyMileage[$m] > 0) {
+                $monthlyCpm[$m] = round($monthlyTotals[$m] / $monthlyMileage[$m], 2);
+            }
+        }
+
+        $costPerMile = $annualMileage > 0 ? round($totalServiceCost / $annualMileage, 2) : 0;
+
+        return view('maintenance-manager.fleet-maintenance-log', compact(
+            'vehicles',
+            'drivers',
+            'vehicle',
+            'costSummary',
+            'monthlyTotals',
+            'ytdTotal',
+            'allLogs',
+            'totalServiceCost',
+            'costPerMile',
+            'annualMileage',
+            'year',
+            'monthlyMileage',
+            'monthlyStartOdo',
+            'monthlyEndOdo',
+            'yearStartOdo',
+            'yearEndOdo',
+            'monthlyCpm',
+        ));
     }
 
     public function fleetInventory()
     {
-        $inventories = FleetInventory::orderBy('created_at', 'desc')->get();
+        $inventories = FleetInventory::with('vehicle.driver')->latest()->get()->map(function ($inv) {
+            $v = $inv->vehicle;
 
-        return view('maintenance-manager.fleet-inventory', compact('inventories'));
+            return [
+                'id' => $inv->id,
+                'vehicle_id' => $inv->vehicle_id,
+                'maintenance_cost' => $inv->maintenance_cost,
+                'notes' => $inv->notes,
+                // From the linked vehicle
+                'vehicle_name' => $v ? "{$v->brand} {$v->model}" : 'Deleted Vehicle',
+                'vehicle_year' => $v?->year,
+                'plate_number' => $v?->plate_number,
+                'driver_name' => $v?->driver?->name,
+                'vehicle_status' => $v?->status,
+                // ISO strings for timestamps
+                'created_at' => $inv->created_at?->toISOString(),
+                'updated_at' => $inv->updated_at?->toISOString(),
+            ];
+        });
+
+        $vehicles = Vehicle::orderBy('brand')->get();
+
+        return view('maintenance-manager.fleet-inventory', compact('inventories', 'vehicles'));
     }
 
     public function fleetInventoryStore(Request $request)
     {
         $validated = $request->validate([
-            'fleet_id' => 'required|string|max:255|unique:fleet_inventories,fleet_id',
-            'make' => 'required|string|max:255',
-            'model' => 'required|string|max:255',
-            'year' => 'required|integer|min:1990|max:2030',
-            'engine' => 'required|string|max:255',
-            'purchase_date' => 'required|date',
-            'condition' => 'required|string|max:255',
-            'purchase_cost' => 'required|numeric|min:0',
+            'vehicle_id' => 'required|exists:vehicles,id',
             'maintenance_cost' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string',
+            'notes' => 'nullable|string|max:500',
         ]);
 
-        $fleetInventory = FleetInventory::create([
-            'fleet_id' => $validated['fleet_id'],
-            'make' => $validated['make'],
-            'model' => $validated['model'],
-            'year' => $validated['year'],
-            'engine' => $validated['engine'],
-            'purchase_date' => $validated['purchase_date'],
-            'purchase_cost' => $validated['purchase_cost'],
-            'maintenance_cost' => $validated['maintenance_cost'] ?? 0,
-            'condition' => $validated['condition'],
-            'notes' => $validated['notes'] ?? null,
-        ]);
+        FleetInventory::create($validated);
 
-        if (! $fleetInventory) {
-            return back()->with('error', 'Failed to add new entry.');
-        }
-
-        return redirect()->back()->with('success', 'New Entry Added');
+        return back()->with('success', 'Inventory record successfully added.');
     }
 
-    public function fleetInventoryUpdate(Request $request, string $id)
+    public function fleetInventoryUpdate(Request $request, FleetInventory $fleetInventory)
     {
-        $inventory = FleetInventory::findOrFail($id);
-
         $validated = $request->validate([
-            'fleet_id' => 'nullable|string',
-            'make' => 'required|string',
-            'model' => 'required|string',
-            'year' => 'nullable|string',
-            'engine' => 'nullable|string',
-            'purchase_date' => 'nullable|date',
-            'purchase_cost' => 'nullable|numeric',
-            'maintenance_cost' => 'nullable|numeric',
-            'condition' => 'nullable|string',
-            'notes' => 'nullable|string',
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'maintenance_cost' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string|max:500',
         ]);
 
-        $inventory->update($validated);
+        $fleetInventory->update($validated);
 
-        return back()->with('sucess', 'Vehicle successfully updated!');
+        return back()->with('success', 'Inventory record successfully updated.');
     }
 
-    public function fleetInventoryDelete(string $id)
+    public function fleetInventoryDelete(FleetInventory $fleetInventory)
     {
-        FleetInventory::findOrFail($id)->delete();
+        $fleetInventory->delete();
 
-        return back()->with('success', 'Vehicle deleted successfully');
+        return back()->with('success', 'Inventory record successfully deleted.');
     }
 
     public function profile()

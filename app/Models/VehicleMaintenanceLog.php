@@ -10,7 +10,7 @@ class VehicleMaintenanceLog extends Model
     use HasFactory;
 
     protected $fillable = [
-        'fleet_id',
+        'vehicle_id',
         'maintenance_task_id',
         'service_date',
         'mileage_at_service',
@@ -21,14 +21,14 @@ class VehicleMaintenanceLog extends Model
     ];
 
     protected $casts = [
-        'service_date' => 'date',       // <-- add this
-        'cost' => 'decimal:2',          // <-- add this
-        'mileage_at_service' => 'integer', // <-- add this
+        'service_date' => 'date',
+        'cost' => 'decimal:2',
+        'mileage_at_service' => 'integer',
     ];
 
-    public function fleet()
+    public function vehicle()
     {
-        return $this->belongsTo(FleetInventory::class);
+        return $this->belongsTo(Vehicle::class);
     }
 
     public function maintenanceTask()

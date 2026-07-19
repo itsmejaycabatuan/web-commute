@@ -14,14 +14,7 @@ return new class extends Migration {
     {
         Schema::create('fleet_inventories', function (Blueprint $table) {
             $table->id();
-            $table->string('fleet_id')->nullable();
-            $table->string('make')->nullable();
-            $table->string('model')->nullable();
-            $table->string('year')->nullable();
-            $table->string('engine')->nullable();
-            $table->date('purchase_date')->nullable();
-            $table->decimal('purchase_cost', 15, 2)->nullable();
-            $table->string('condition')->nullable();
+            $table->foreignId('vehicle_id')->constrained('vehicles')->cascadeOnDelete();
             $table->decimal('maintenance_cost', 15, 2)->nullable();
             $table->string('notes')->nullable();
             $table->timestamps();

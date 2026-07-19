@@ -10,15 +10,17 @@ class FleetInventory extends Model
     use HasFactory;
 
     protected $fillable = [
-        'fleet_id',
-        'make',
-        'model',
-        'year',
-        'engine',
-        'purchase_date',
-        'purchase_cost',
-        'condition',
+        'vehicle_id',
         'maintenance_cost',
         'notes',
     ];
+
+    protected $casts = [
+        'maintenance_cost' => 'decimal:2',
+    ];
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
 }

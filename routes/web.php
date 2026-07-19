@@ -14,6 +14,7 @@ use App\Http\Controllers\PusherController;
 use App\Http\Controllers\RateController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleTrackingController;
 use App\Models\Driver;
 use App\Models\Fare;
@@ -287,6 +288,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('commuter.dashboard');
     });
 
+    Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
+    Route::post('/vehicles', [VehicleController::class, 'store'])->name('vehicles.store');
+    Route::patch('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
+    Route::delete('/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
+
     Route::get('/payment', function () {
         return view('commuter.payment');
     })->name('payment');
@@ -351,8 +357,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/maintenance-tasks/{task}', [MaintenanceManagerController::class, 'maintenanceTasksUpdate'])->name('maintenance-manager.maintenance-tasks.update');
         Route::delete('/maintenance-tasks/{task}', [MaintenanceManagerController::class, 'maintenanceTasksDestroy'])->name('maintenance-manager.maintenance-tasks.destroy');
         Route::get('/vehicle-maintenance-log', [MaintenanceManagerController::class, 'vehicleLog'])->name('maintenance-manager.vehicle-maintenance-log');
-        Route::post('/vehicle-maintenance-log/{id}', [MaintenanceManagerController::class, 'vehicleLogStore'])->name('maintenance-manager.vehicle-maintenance-log.store');
-        Route::patch('/vehicle-maintenance-log', [MaintenanceManagerController::class, 'vehicleLogUpdate'])->name('maintenance-manager.vehicle-maintenance-log.update');
+        Route::post('/vehicle-maintenance-log', [MaintenanceManagerController::class, 'vehicleLogStore'])->name('maintenance-manager.vehicle-maintenance-log.store');
+        Route::patch('/vehicle-maintenance-log/{log}', [MaintenanceManagerController::class, 'vehicleLogUpdate'])->name('maintenance-manager.vehicle-maintenance-log.update');
+        Route::delete('/vehicle-maintenance-log/{log}', [MaintenanceManagerController::class, 'vehicleLogDelete'])->name('maintenance-manager.vehicle-maintenance-log.destroy');
         Route::get('/fleet-maintenance-log', [MaintenanceManagerController::class, 'fleetLog'])->name('maintenance-manager.fleet-maintenance-log');
         Route::get('/fleet-inventory', [MaintenanceManagerController::class, 'fleetInventory'])->name('maintenance-manager.fleet-inventory');
         Route::post('/fleet-inventory', [MaintenanceManagerController::class, 'fleetInventoryStore'])->name('maintenance-manager.fleet-inventory.store');
