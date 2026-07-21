@@ -101,9 +101,9 @@
 </head>
 
 <script>
-    document.getElementById('vehicle-selector')?.addEventListener('change', function () {
+    document.getElementById('fleet-selector')?.addEventListener('change', function () {
         const url = new URL(window.location.href);
-        url.searchParams.set('vehicle_id', this.value);
+        url.searchParams.set('fleet_id', this.value);
         window.location.href = url.toString();
     });
 </script>
@@ -121,7 +121,7 @@
         cost: '',
         invoice_number: '',
         remarks: '',
-        vehicle_id: ''
+        fleet_id: ''
     },
     openEdit(log) {
         this.editLog = {
@@ -133,7 +133,7 @@
             cost: log.cost,
             invoice_number: log.invoice_number || '',
             remarks: log.remarks || '',
-            vehicle_id: log.vehicle_id
+            fleet_id: log.fleet_id
         };
         this.showEditModal = true;
     }
@@ -149,15 +149,15 @@
             <!-- Page Header -->
             <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 shrink-0">
                 <div>
-                    <h2 class="text-3xl font-black tracking-tight mb-1">Vehicle Maintenance <span class="text-blue-500">Log</span></h2>
+                    <h2 class="text-3xl font-black tracking-tight mb-1">Fleet Maintenance <span class="text-blue-500">Log</span></h2>
                     <p class="text-white/40 text-sm">Detailed history, costs, and service records.</p>
                 </div>
                 <div class="flex gap-3 self-start">
-                    <select id="vehicle-selector"
+                    <select id="fleet-selector"
                             class="bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-1 focus:ring-blue-500/50 outline-none appearance-none cursor-pointer pr-10">
-                        @foreach($vehicles as $v)
-                            <option value="{{ $v->id }}" {{ $vehicle->id === $v->id ? 'selected' : '' }}>
-                                {{ $v->plate_number }} ({{ $v->brand }} {{ $v->model }})
+                        @foreach($fleets as $f)
+                            <option value="{{ $f->id }}" {{ $fleet->id === $f->id ? 'selected' : '' }}>
+                                {{ $f->vehicle?->plate_number }} ({{ $f->vehicle?->brand }} {{ $f->vehicle?->model }})
                             </option>
                         @endforeach
                     </select>
@@ -168,27 +168,27 @@
             <!-- TOP SECTION: Info & Guide -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 shrink-0">
 
-                <!-- LEFT: Vehicle Info & Cost Summary -->
+                <!-- LEFT: Fleet Info & Cost Summary -->
                 <div class="lg:col-span-2 glass rounded-[2rem] p-6 md:p-8 border border-white/5">
                     <div class="flex items-start justify-between mb-6">
                         <div>
-                            <h3 class="text-lg font-bold text-white mb-3">Vehicle Information</h3>
+                            <h3 class="text-lg font-bold text-white mb-3">Fleet Information</h3>
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-3 text-sm">
                                 <div>
                                     <span class="text-[10px] uppercase font-bold text-white/30 block">Plate Number</span>
-                                    <span class="text-white/80 font-medium font-mono">{{ $vehicle?->plate_number ?? '—' }}</span>
+                                    <span class="text-white/80 font-medium font-mono">{{ $fleet?->vehicle?->plate_number ?? '—' }}</span>
                                 </div>
                                 <div>
                                     <span class="text-[10px] uppercase font-bold text-white/30 block">Year</span>
-                                    <span class="text-white/80 font-medium">{{ $vehicle?->year ?? '—' }}</span>
+                                    <span class="text-white/80 font-medium">{{ $fleet?->vehicle?->year ?? '—' }}</span>
                                 </div>
                                 <div>
                                     <span class="text-[10px] uppercase font-bold text-white/30 block">Brand / Model</span>
-                                    <span class="text-white/80 font-medium">{{ $vehicle?->brand }} {{ $vehicle?->model }}</span>
+                                    <span class="text-white/80 font-medium">{{ $fleet?->vehicle?->brand }} {{ $fleet?->vehicle?->model }}</span>
                                 </div>
                                 <div>
                                     <span class="text-[10px] uppercase font-bold text-white/30 block">Driver</span>
-                                    <span class="text-white/80 font-medium">{{ $vehicle?->driver?->name ?? 'Unassigned' }}</span>
+                                    <span class="text-white/80 font-medium">{{ $fleet?->vehicle?->driver?->name ?? 'Unassigned' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -198,13 +198,13 @@
                         </div>
                     </div>
 
-                    <!-- Cost Per Mile Summary -->
+                    <!-- Cost Per Kilometer Summary -->
                     <div class="border-t border-white/5 pt-5">
-                        <h4 class="text-[10px] uppercase font-black text-white/30 tracking-widest mb-3">Cost Per Mile Summary</h4>
+                        <h4 class="text-[10px] uppercase font-black text-white/30 tracking-widest mb-3">Cost Per Kilometer Summary</h4>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                             <div class="bg-white/[0.02] rounded-lg p-3 border border-white/5">
                                 <span class="text-[10px] text-white/30 block mb-1">Current Odometer</span>
-                                <span class="text-white font-bold font-mono">{{ number_format($latestOdometer) }} mi</span>
+                                <span class="text-white font-bold font-mono">{{ number_format($latestOdometer) }} km</span>
                             </div>
                             <div class="bg-white/[0.02] rounded-lg p-3 border border-white/5">
                                 <span class="text-[10px] text-white/30 block mb-1">Total Services</span>
@@ -215,7 +215,7 @@
                                 <span class="text-white font-bold font-mono">₱ {{ $totalServices > 0 ? number_format($totalCost / $totalServices, 2) : '0.00' }}</span>
                             </div>
                             <div class="bg-white/[0.02] rounded-lg p-3 border border-white/5">
-                                <span class="text-[10px] text-white/30 block mb-1">Cost / Mile</span>
+                                <span class="text-[10px] text-white/30 block mb-1">Cost / Kilometer</span>
                                 <span class="text-emerald-400 font-bold font-mono">₱ {{ number_format($costPerMile, 2) }}</span>
                             </div>
                         </div>
@@ -259,7 +259,7 @@
                                 <tr class="hover:bg-white/[0.02] transition-colors" x-show="!search || $el.textContent.toLowerCase().includes(search.toLowerCase())" x-cloak>
                                     <td class="px-5 py-4">
                                         <div class="text-sm text-white/70 font-medium">{{ $log->service_date?->format('M d, Y') ?? '—' }}</div>
-                                        <div class="text-xs text-white/30 font-mono mt-0.5">{{ number_format($log->mileage_at_service) }} mi</div>
+                                        <div class="text-xs text-white/30 font-mono mt-0.5">{{ number_format($log->mileage_at_service) }} km</div>
                                     </td>
                                     <td class="px-5 py-4">
                                         <div class="text-sm text-white font-semibold">{{ $log->maintenanceTask?->tasks_performed ?? 'Unknown Task' }}</div>
@@ -282,7 +282,7 @@
                                     </td>
                                     <td class="px-5 py-4 text-center">
                                         <div class="flex items-center justify-center gap-1">
-                                            <button @click="openEdit(@js($log->only('id', 'vehicle_id', 'service_date_formatted', 'mileage_at_service', 'maintenance_task_id', 'performed_by', 'cost', 'invoice_number', 'remarks')))" class="w-8 h-8 rounded-lg hover:bg-white/[0.06] flex items-center justify-center text-white/30 hover:text-blue-400 transition-colors" title="Edit">
+                                            <button @click="openEdit(@js($log->only('id', 'fleet_id', 'service_date_formatted', 'mileage_at_service', 'maintenance_task_id', 'performed_by', 'cost', 'invoice_number', 'remarks')))" class="w-8 h-8 rounded-lg hover:bg-white/[0.06] flex items-center justify-center text-white/30 hover:text-blue-400 transition-colors" title="Edit">
                                                 <i class="fa-solid fa-pen text-xs"></i>
                                             </button>
                                             <form method="POST" :action="`{{ route('maintenance-manager.vehicle-maintenance-log.destroy', '__ID__') }}`.replace('__ID__', {{ $log->id }})" class="inline-flex">
@@ -347,7 +347,7 @@
 
                 @csrf
 
-                <input type="hidden" name="vehicle_id" value="{{ $vehicle->id }}">
+                <input type="hidden" name="fleet_id" value="{{ $fleet->id }}">
 
                 <!-- Header -->
                 <div class="flex items-center justify-between px-8 pt-7 pb-5 border-b border-white/5 shrink-0">
@@ -357,7 +357,7 @@
                         </div>
                         <div>
                             <h3 id="modal-title" class="text-lg font-black tracking-tight">Log New Service</h3>
-                            <p class="text-xs text-white/30 mt-0.5">{{ $vehicle?->plate_number }} &middot; {{ $vehicle?->brand }} {{ $vehicle?->model }} ({{ $vehicle?->year }})</p>
+                            <p class="text-xs text-white/30 mt-0.5">{{ $fleet?->vehicle?->plate_number }} &middot; {{ $fleet?->vehicle?->brand }} {{ $fleet?->vehicle?->model }} ({{ $fleet?->vehicle?->year }})</p>
                         </div>
                     </div>
                     <button type="button" @click="showModal = false"
@@ -371,7 +371,7 @@
                 <div class="px-8 pt-5 pb-0 shrink-0">
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-[9px] uppercase font-bold tracking-[0.12em] text-blue-400/60 bg-blue-500/5 border border-blue-500/10 px-2.5 py-1 rounded-md">Date</span>
-                        <span class="text-[9px] uppercase font-bold tracking-[0.12em] text-blue-400/60 bg-blue-500/5 border border-blue-500/10 px-2.5 py-1 rounded-md">Mileage</span>
+                        <span class="text-[9px] uppercase font-bold tracking-[0.12em] text-blue-400/60 bg-blue-500/5 border border-blue-500/10 px-2.5 py-1 rounded-md">Odometer</span>
                         <span class="text-[9px] uppercase font-bold tracking-[0.12em] text-blue-400/60 bg-blue-500/5 border border-blue-500/10 px-2.5 py-1 rounded-md">Work Performed</span>
                         <span class="text-[9px] uppercase font-bold tracking-[0.12em] text-blue-400/60 bg-blue-500/5 border border-blue-500/10 px-2.5 py-1 rounded-md">Performed By</span>
                         <span class="text-[9px] uppercase font-bold tracking-[0.12em] text-blue-400/60 bg-blue-500/5 border border-blue-500/10 px-2.5 py-1 rounded-md">Cost</span>
@@ -394,7 +394,7 @@
                         </div>
                     @endif
 
-                    <!-- Row 1: Service Date + Mileage -->
+                    <!-- Row 1: Service Date + Odometer -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label for="service_date" class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
@@ -409,7 +409,7 @@
                         </div>
                         <div>
                             <label for="mileage_at_service" class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
-                                Mileage at Service <span class="text-red-400/70">*</span>
+                                Odometer (km) <span class="text-red-400/70">*</span>
                             </label>
                             <input id="mileage_at_service"
                                    type="number"
@@ -536,7 +536,7 @@
                 @csrf
                 @method('PATCH')
 
-                <input type="hidden" name="vehicle_id" x-model="editLog.vehicle_id">
+                <input type="hidden" name="fleet_id" x-model="editLog.fleet_id">
 
                 <!-- Header -->
                 <div class="flex items-center justify-between px-8 pt-7 pb-5 border-b border-white/5 shrink-0">
@@ -547,7 +547,7 @@
                         <div>
                             <h3 class="text-lg font-black tracking-tight">Edit Service Log</h3>
                             <p class="text-xs text-white/30 mt-0.5">
-                                {{ $vehicle?->plate_number }} &middot; {{ $vehicle?->brand }} {{ $vehicle?->model }} ({{ $vehicle?->year }})
+                                {{ $fleet?->vehicle?->plate_number }} &middot; {{ $fleet?->vehicle?->brand }} {{ $fleet?->vehicle?->model }} ({{ $fleet?->vehicle?->year }})
                             </p>
                         </div>
                     </div>
@@ -562,7 +562,7 @@
                 <div class="px-8 pt-5 pb-0 shrink-0">
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-[9px] uppercase font-bold tracking-[0.12em] text-amber-400/60 bg-amber-500/5 border border-amber-500/10 px-2.5 py-1 rounded-md">Date</span>
-                        <span class="text-[9px] uppercase font-bold tracking-[0.12em] text-amber-400/60 bg-amber-500/5 border border-amber-500/10 px-2.5 py-1 rounded-md">Mileage</span>
+                        <span class="text-[9px] uppercase font-bold tracking-[0.12em] text-amber-400/60 bg-amber-500/5 border border-amber-500/10 px-2.5 py-1 rounded-md">Odometer</span>
                         <span class="text-[9px] uppercase font-bold tracking-[0.12em] text-amber-400/60 bg-amber-500/5 border border-amber-500/10 px-2.5 py-1 rounded-md">Work Performed</span>
                         <span class="text-[9px] uppercase font-bold tracking-[0.12em] text-amber-400/60 bg-amber-500/5 border border-amber-500/10 px-2.5 py-1 rounded-md">Performed By</span>
                         <span class="text-[9px] uppercase font-bold tracking-[0.12em] text-amber-400/60 bg-amber-500/5 border border-amber-500/10 px-2.5 py-1 rounded-md">Cost</span>
@@ -585,7 +585,7 @@
                         </div>
                     @endif
 
-                    <!-- Service Date + Mileage -->
+                    <!-- Service Date + Odometer -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
@@ -599,7 +599,7 @@
                         </div>
                         <div>
                             <label class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
-                                Mileage at Service <span class="text-red-400/70">*</span>
+                                Odometer (km) <span class="text-red-400/70">*</span>
                             </label>
                             <input type="number"
                                    name="mileage_at_service"

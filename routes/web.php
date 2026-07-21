@@ -19,7 +19,9 @@ use App\Http\Controllers\VehicleTrackingController;
 use App\Models\Driver;
 use App\Models\Fare;
 use App\Models\FareRate;
+use App\Models\FleetInventory;
 use App\Models\Payment;
+use App\Models\PreventiveMaintenance;
 use App\Models\TimeKeeping;
 use App\Models\TopupHistory;
 use App\Models\User;
@@ -198,7 +200,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //     return view('commuter.dashboard');
     // })->name('commuter.dashboard');Q
     Route::middleware('role:commuter|admin|driver|driver_manager|maintenance_manager')->group(function () {
-        Route::get('/dashboard', function () {
+        Route::get('/dashboard', function (Request $request) {
             $user = Auth::user();
             $userId = Auth::user()->id;
             $role = $user->roles->first()->name;
@@ -244,7 +246,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             }
 
             if ($role == 'driver_manager') {
-                $drivers = Driver::with('user')->get()->map(fn($d) => [
+                $drivers = Driver::with('user')->get()->map(fn ($d) => [
                     'id' => $d->id,
                     'user_id' => $d->user_id,
                     'name' => $d->name,
@@ -255,7 +257,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                                             : 'N/A',
                 ])->values();
 
-                $timeKeepings = TimeKeeping::with('driver')->get()->map(fn($tk) => [
+                $timeKeepings = TimeKeeping::with('driver')->get()->map(fn ($tk) => [
                     'driver_id' => $tk->driver_id,
                     'driver_name' => $tk->driver->name ?? 'Unknown',
                     'driver_user_id' => $tk->driver->user_id ?? null,
@@ -268,7 +270,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     'vacation' => (int) $tk->vacation,
                 ])->values();
 
-                $violationLogs = ViolationLog::with('user')->get()->map(fn($v) => [
+                $violationLogs = ViolationLog::with('user')->get()->map(fn ($v) => [
                     'id' => $v->id,
                     'user_id' => $v->user_id,
                     'user_name' => $v->user->name ?? 'Unknown',
@@ -282,7 +284,158 @@ Route::middleware(['auth', 'verified'])->group(function () {
             }
 
             if ($role == 'maintenance_manager') {
-                return view('maintenance-manager.dashboard');
+                $fleets = FleetInventory::with('vehicle.driver')
+                    ->join('vehicles', 'fleet_inventories.vehicle_id', '=', 'vehicles.id')
+                    ->orderBy('vehicles.plate_number')
+                    ->select('fleet_inventories.*')
+                    ->get();
+
+                $drivers = Driver::orderBy('name')->get();
+
+                if ($fleets->isEmpty()) {
+                    return view('maintenance-manager.dashboard', [
+                        'fleets' => collect(),
+                        'drivers' => $drivers,
+                        'monthlyKm' => array_fill(1, 12, 0),
+                        'monthlyStartOdo' => array_fill(1, 12, null),
+                        'monthlyEndOdo' => array_fill(1, 12, null),
+                        'yearStartOdo' => null,
+                        'yearEndOdo' => 0,
+                        'fleet' => null,
+                        'costSummary' => collect(),
+                        'monthlyTotals' => array_fill(1, 12, 0),
+                        'ytdTotal' => 0,
+                        'allLogs' => collect(),
+                        'totalServiceCost' => 0,
+                        'costPerKm' => 0,
+                        'annualKm' => 0,
+                        'year' => now()->year,
+                        'monthlyCpk' => array_fill(1, 12, null),
+                    ]);
+                }
+
+                $selectedId = $request->query('fleet_id', $fleets->first()->id);
+                $fleet = FleetInventory::with('vehicle.driver')->find($selectedId) ?? $fleets->first();
+
+                $year = now()->year;
+
+                // ── Logs for current year — cost summary table ──
+                $yearLogs = PreventiveMaintenance::where('fleet_id', $fleet->id)
+                    ->with('maintenanceTask')
+                    ->whereYear('last_service_date', $year)
+                    ->whereNotNull('last_service_date')
+                    ->orderBy('last_service_date')
+                    ->get();
+
+                $costSummary = [];
+                $monthlyTotals = array_fill(1, 12, 0);
+                $ytdTotal = 0;
+
+                foreach ($yearLogs as $log) {
+                    $taskName = $log->maintenanceTask?->tasks_performed ?? 'Unknown Task';
+                    $month = $log->last_service_date->month;
+                    $cost = (float) ($log->last_service_cost ?? 0);
+
+                    if (! isset($costSummary[$taskName])) {
+                        $costSummary[$taskName] = array_fill(1, 12, 0);
+                    }
+
+                    $costSummary[$taskName][$month] += $cost;
+                    $monthlyTotals[$month] += $cost;
+                    $ytdTotal += $cost;
+                }
+
+                ksort($costSummary);
+                $costSummary = collect($costSummary);
+
+                // ── All logs for the log tab (all time, newest first) ──
+                $allLogs = PreventiveMaintenance::where('fleet_id', $fleet->id)
+                    ->with('maintenanceTask')
+                    ->orderByDesc('last_service_date')
+                    ->get()
+                    ->map(function ($log) {
+                        return [
+                            'id' => $log->id,
+                            'task_name' => $log->maintenanceTask?->tasks_performed ?? 'Unknown Task',
+                            'service_date' => $log->last_service_date?->format('M d, Y'),
+                            'mileage' => $log->last_service_odo,
+                            'cost' => $log->last_service_cost,
+                            'remarks' => $log->comments,
+                        ];
+                    });
+
+                // ── Stats ──
+                $totalServiceCost = $ytdTotal;
+
+                // ── Monthly kilometer calculation ──
+                $allOrderedLogs = PreventiveMaintenance::where('fleet_id', $fleet->id)
+                    ->whereNotNull('last_service_odo')
+                    ->whereNotNull('last_service_date')
+                    ->orderBy('last_service_date')
+                    ->get();
+
+                $monthlyKm = array_fill(1, 12, 0);
+                $monthlyStartOdo = array_fill(1, 12, null);
+                $monthlyEndOdo = array_fill(1, 12, null);
+                $monthlyCpk = array_fill(1, 12, null);
+                $runningOdo = null;
+
+                // Find annual starting baseline
+                $firstLogOfYear = $allOrderedLogs->first(fn ($l) => $l->last_service_date && $l->last_service_date->year === $year);
+                $annualStartingOdo = 0;
+                if ($firstLogOfYear) {
+                    $prevLog = $allOrderedLogs->where('id', '<', $firstLogOfYear->id)->last();
+                    $annualStartingOdo = $prevLog ? $prevLog->last_service_odo : 0;
+                }
+
+                foreach ($allOrderedLogs as $log) {
+                    $m = $log->last_service_date->month;
+                    $monthlyStartOdo[$m] ??= $runningOdo;
+                    $monthlyEndOdo[$m] = $log->last_service_odo;
+
+                    $baseline = $monthlyStartOdo[$m] ?? $annualStartingOdo;
+
+                    if ($baseline !== null) {
+                        $delta = $log->last_service_odo - $baseline;
+                        if ($delta > 0) {
+                            $monthlyKm[$m] += $delta;
+                        }
+                    }
+                    $runningOdo = $log->last_service_odo;
+                }
+
+                $yearStartOdo = $monthlyStartOdo[1];
+                $yearEndOdo = $runningOdo;
+                $annualKm = array_sum($monthlyKm);
+
+                // Cost per km per month
+                for ($m = 1; $m <= 12; $m++) {
+                    if ($monthlyKm[$m] > 0) {
+                        $monthlyCpk[$m] = round($monthlyTotals[$m] / $monthlyKm[$m], 2);
+                    }
+                }
+
+                $costPerKm = $annualKm > 0 ? round($totalServiceCost / $annualKm, 2) : 0;
+
+                return view('maintenance-manager.dashboard', compact(
+                    'fleets',
+                    'drivers',
+                    'fleet',
+                    'costSummary',
+                    'monthlyTotals',
+                    'ytdTotal',
+                    'allLogs',
+                    'totalServiceCost',
+                    'costPerKm',
+                    'annualKm',
+                    'year',
+                    'monthlyKm',
+                    'monthlyStartOdo',
+                    'monthlyEndOdo',
+                    'yearStartOdo',
+                    'yearEndOdo',
+                    'monthlyCpk',
+                ));
             }
 
         })->name('commuter.dashboard');
@@ -351,6 +504,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('role:maintenance_manager')->group(function () {
         Route::get('/preventive-maintenance', [MaintenanceManagerController::class, 'preventiveMaintenance'])->name('maintenance-manager.preventive-maintenance');
+        Route::post('/preventive-maintenance', [MaintenanceManagerController::class, 'preventiveMaintenanceStore'])->name('maintenance-manager.preventive-maintenance.store');
         Route::get('/maintenance-calendar', [MaintenanceManagerController::class, 'maintenanceCalendar'])->name('maintenance-manager.maintenance-calendar');
         Route::get('/maintenance-tasks', [MaintenanceManagerController::class, 'maintenanceTasks'])->name('maintenance-manager.maintenance-tasks');
         Route::post('/maintenance-tasks', [MaintenanceManagerController::class, 'maintenanceTasksStore'])->name('maintenance-manager.maintenance-tasks.store');

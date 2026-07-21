@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Driver;
 use App\Models\FleetInventory;
 use App\Models\MaintenanceTask;
+use App\Models\PreventiveMaintenance;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleMaintenanceLog;
@@ -13,14 +14,82 @@ use Illuminate\Http\Request;
 
 class MaintenanceManagerController extends Controller
 {
-    public function preventiveMaintenance()
+    public function preventiveMaintenance(Request $request)
     {
-        return view('maintenance-manager.preventive-maintenance');
+        $fleets = FleetInventory::with('vehicle')
+            ->join('vehicles', 'fleet_inventories.vehicle_id', '=', 'vehicles.id')
+            ->orderBy('vehicles.plate_number')
+            ->select('fleet_inventories.*')
+            ->get();
+
+        if ($fleets->isEmpty()) {
+            return view('maintenance-manager.preventive-maintenance', [
+                'fleets' => collect(),
+                'fleet' => null,
+                'allTasks' => collect(),
+                'loggedTasks' => collect(),
+            ]);
+        }
+
+        $selectedId = $request->query('fleet_id', $fleets->first()->id);
+        $fleet = FleetInventory::with('vehicle')->find($selectedId) ?? $fleets->first();
+
+        // Get all defined maintenance tasks
+        $allTasks = MaintenanceTask::orderBy('tasks_performed')->get();
+
+        // Get logged tasks for this specific fleet, keyed by task_id for easy lookup
+        $loggedTasks = PreventiveMaintenance::where('fleet_id', $fleet->id)
+            ->get()
+            ->keyBy('task_id');
+
+        return view('maintenance-manager.preventive-maintenance', compact(
+            'fleets',
+            'fleet',
+            'allTasks',
+            'loggedTasks'
+        ));
+    }
+
+    public function preventiveMaintenanceStore(Request $request)
+    {
+        $validated = $request->validate([
+            'fleet_id' => 'required|exists:fleet_inventories,id',
+            'task_id' => 'required|exists:maintenance_tasks,id',
+            'last_service_odo' => 'required|integer|min:0',
+            'last_service_date' => 'required|date',
+            'last_service_cost' => 'required|numeric|min:0',
+            'comments' => 'nullable|string|max:500',
+        ]);
+
+        // updateOrCreate ensures that if a task is logged again for the same fleet, it updates the record
+        PreventiveMaintenance::updateOrCreate(
+            [
+                'fleet_id' => $validated['fleet_id'],
+                'task_id' => $validated['task_id'],
+            ],
+            $validated
+        );
+
+        return back()->with('success', 'Preventive maintenance logged successfully!');
     }
 
     public function maintenanceCalendar()
     {
-        return view('maintenance-manager.maintenance-calendar');
+        $fleetOptions = FleetInventory::with('vehicle')
+            ->get()
+            ->filter(fn($f) => $f->vehicle)
+            ->mapWithKeys(fn($f) => [
+                $f->id => $f->vehicle->plate_number . ' — ' . $f->vehicle->brand . ' ' . $f->vehicle->model,
+            ])
+            ->toArray();
+
+        $logs = PreventiveMaintenance::with(['fleet.vehicle', 'maintenanceTask'])
+            ->when(request('fleet'), fn($q, $fleet) => $q->where('fleet_id', $fleet))
+            ->orderBy('last_service_date', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('maintenance-manager.maintenance-calendar', compact('logs', 'fleetOptions'));
     }
 
     public function maintenanceTasks()
@@ -77,12 +146,16 @@ class MaintenanceManagerController extends Controller
 
     public function vehicleLog(Request $request)
     {
-        $vehicles = Vehicle::orderBy('brand')->get();
+        $fleets = FleetInventory::with('vehicle.driver')
+            ->join('vehicles', 'fleet_inventories.vehicle_id', '=', 'vehicles.id')
+            ->orderBy('vehicles.plate_number')
+            ->select('fleet_inventories.*')
+            ->get();
 
-        if ($vehicles->isEmpty()) {
+        if ($fleets->isEmpty()) {
             return view('maintenance-manager.vehicle-maintenance-log', [
-                'vehicles' => collect(),
-                'vehicle' => null,
+                'fleets' => collect(),
+                'fleet' => null,
                 'maintenanceTasks' => collect(),
                 'logs' => collect(),
                 'totalCost' => 0,
@@ -92,10 +165,11 @@ class MaintenanceManagerController extends Controller
             ]);
         }
 
-        $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
-        $vehicle = Vehicle::find($selectedId) ?? $vehicles->first();
+        $selectedId = $request->query('fleet_id', $fleets->first()->id);
+        $fleet = $fleets->firstWhere('id', $selectedId) ?? $fleets->first();
+        $fleet->load('vehicle.driver');
 
-        $logs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
+        $logs = VehicleMaintenanceLog::where('fleet_id', $fleet->id)
             ->with('maintenanceTask')
             ->orderByDesc('service_date')
             ->get();
@@ -114,8 +188,8 @@ class MaintenanceManagerController extends Controller
         $maintenanceTasks = MaintenanceTask::orderBy('tasks_performed')->get();
 
         return view('maintenance-manager.vehicle-maintenance-log', compact(
-            'vehicles',
-            'vehicle',
+            'fleets',
+            'fleet',
             'maintenanceTasks',
             'logs',
             'totalCost',
@@ -128,7 +202,7 @@ class MaintenanceManagerController extends Controller
     public function vehicleLogStore(Request $request)
     {
         $validated = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
+            'fleet_id' => 'required|exists:fleet_inventories,id',
             'maintenance_task_id' => 'required|exists:maintenance_tasks,id',
             'service_date' => 'required|date',
             'mileage_at_service' => 'required|integer|min:0',
@@ -146,7 +220,7 @@ class MaintenanceManagerController extends Controller
     public function vehicleLogUpdate(Request $request, VehicleMaintenanceLog $log)
     {
         $validated = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
+            'fleet_id' => 'required|exists:fleet_inventories,id',
             'maintenance_task_id' => 'required|exists:maintenance_tasks,id',
             'service_date' => 'required|date',
             'mileage_at_service' => 'required|integer|min:0',
@@ -170,38 +244,43 @@ class MaintenanceManagerController extends Controller
 
     public function fleetLog(Request $request)
     {
-        $vehicles = Vehicle::with('driver')->orderBy('brand')->get();
+        $fleets = FleetInventory::with('vehicle.driver')
+            ->join('vehicles', 'fleet_inventories.vehicle_id', '=', 'vehicles.id')
+            ->orderBy('vehicles.plate_number')
+            ->select('fleet_inventories.*')
+            ->get();
+
         $drivers = Driver::orderBy('name')->get();
 
-        if ($vehicles->isEmpty()) {
+        if ($fleets->isEmpty()) {
             return view('maintenance-manager.fleet-maintenance-log', [
-                'vehicles' => collect(),
+                'fleets' => collect(),
                 'drivers' => $drivers,
-                'monthlyMileage' => array_fill(1, 12, 0),
+                'monthlyKm' => array_fill(1, 12, 0),
                 'monthlyStartOdo' => array_fill(1, 12, null),
                 'monthlyEndOdo' => array_fill(1, 12, null),
                 'yearStartOdo' => null,
                 'yearEndOdo' => 0,
-                'vehicle' => null,
+                'fleet' => null,
                 'costSummary' => collect(),
                 'monthlyTotals' => array_fill(1, 12, 0),
                 'ytdTotal' => 0,
                 'allLogs' => collect(),
                 'totalServiceCost' => 0,
-                'costPerMile' => 0,
-                'annualMileage' => 0,
+                'costPerKm' => 0,
+                'annualKm' => 0,
                 'year' => now()->year,
-                'monthlyCpm' => array_fill(1, 12, null),
+                'monthlyCpk' => array_fill(1, 12, null),
             ]);
         }
 
-        $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
-        $vehicle = Vehicle::with('driver')->find($selectedId) ?? $vehicles->first();
+        $selectedId = $request->query('fleet_id', $fleets->first()->id);
+        $fleet = FleetInventory::with('vehicle.driver')->find($selectedId) ?? $fleets->first();
 
         $year = now()->year;
 
         // Logs for current year — used for cost summary table
-        $yearLogs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
+        $yearLogs = VehicleMaintenanceLog::where('fleet_id', $fleet->id)
             ->with('maintenanceTask')
             ->whereYear('service_date', $year)
             ->whereNotNull('service_date')
@@ -231,7 +310,7 @@ class MaintenanceManagerController extends Controller
         $costSummary = collect($costSummary);
 
         // All logs for the log tab (all time, newest first)
-        $allLogs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
+        $allLogs = VehicleMaintenanceLog::where('fleet_id', $fleet->id)
             ->with('maintenanceTask')
             ->orderByDesc('service_date')
             ->get()
@@ -251,17 +330,17 @@ class MaintenanceManagerController extends Controller
         // Stats
         $totalServiceCost = $ytdTotal;
 
-        // Monthly mileage calculation (matches Excel fallback to annual baseline)
-        $allOrderedLogs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
+        // Monthly kilometer calculation (matches Excel fallback to annual baseline)
+        $allOrderedLogs = VehicleMaintenanceLog::where('fleet_id', $fleet->id)
             ->whereNotNull('mileage_at_service')
             ->whereNotNull('service_date')
             ->orderBy('service_date')
             ->get();
 
-        $monthlyMileage = array_fill(1, 12, 0);
+        $monthlyKm = array_fill(1, 12, 0);
         $monthlyStartOdo = array_fill(1, 12, null);
         $monthlyEndOdo = array_fill(1, 12, null);
-        $monthlyCpm = array_fill(1, 12, null);
+        $monthlyCpk = array_fill(1, 12, null);
         $runningOdo = null;
 
         // Find annual starting baseline: the odometer reading before the first log of this year
@@ -283,7 +362,7 @@ class MaintenanceManagerController extends Controller
             if ($baseline !== null) {
                 $delta = $log->mileage_at_service - $baseline;
                 if ($delta > 0) {
-                    $monthlyMileage[$m] += $delta;
+                    $monthlyKm[$m] += $delta;
                 }
             }
             $runningOdo = $log->mileage_at_service;
@@ -291,35 +370,35 @@ class MaintenanceManagerController extends Controller
 
         $yearStartOdo = $monthlyStartOdo[1];
         $yearEndOdo = $runningOdo;
-        $annualMileage = array_sum($monthlyMileage);
+        $annualKm = array_sum($monthlyKm);
 
-        // Pre-calculate cost per mile per month
+        // Pre-calculate cost per km per month
         for ($m = 1; $m <= 12; $m++) {
-            if ($monthlyMileage[$m] > 0) {
-                $monthlyCpm[$m] = round($monthlyTotals[$m] / $monthlyMileage[$m], 2);
+            if ($monthlyKm[$m] > 0) {
+                $monthlyCpk[$m] = round($monthlyTotals[$m] / $monthlyKm[$m], 2);
             }
         }
 
-        $costPerMile = $annualMileage > 0 ? round($totalServiceCost / $annualMileage, 2) : 0;
+        $costPerKm = $annualKm > 0 ? round($totalServiceCost / $annualKm, 2) : 0;
 
         return view('maintenance-manager.fleet-maintenance-log', compact(
-            'vehicles',
+            'fleets',
             'drivers',
-            'vehicle',
+            'fleet',
             'costSummary',
             'monthlyTotals',
             'ytdTotal',
             'allLogs',
             'totalServiceCost',
-            'costPerMile',
-            'annualMileage',
+            'costPerKm',
+            'annualKm',
             'year',
-            'monthlyMileage',
+            'monthlyKm',
             'monthlyStartOdo',
             'monthlyEndOdo',
             'yearStartOdo',
             'yearEndOdo',
-            'monthlyCpm',
+            'monthlyCpk',
         ));
     }
 
