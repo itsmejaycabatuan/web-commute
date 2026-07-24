@@ -2,24 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\EmailVerification;
 use App\Models\User;
+use App\Models\Wallet;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use App\Mail\EmailVerification;
-use App\Models\Wallet;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Password;
-use Spatie\Permission\Models\Role;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function index()
     {
@@ -29,7 +29,7 @@ class UserController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function create()
     {
@@ -39,19 +39,15 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
-    public function store(Request $request)
-    {
-        
-    }
+    public function store(Request $request) {}
 
     /**
      * Display the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function show($id)
     {
@@ -62,7 +58,7 @@ class UserController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function edit($id)
     {
@@ -72,9 +68,8 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function update(Request $request, $id)
     {
@@ -85,68 +80,54 @@ class UserController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy($id)
     {
         //
     }
 
-    public function register(Request $request) {
-// dd($request->all());
+    public function register(Request $request)
+    {
+        // dd($request->all());
         $request->validate([
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'confirm-password' => 'required|same:password',
-            'terms' => 'required'
+            'terms' => 'required',
         ]);
 
         $user = User::create([
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'driver_approval_status' => null,
         ]);
 
-        if($user) {
+        if ($user) {
             Auth::login($user);
             event(new Registered($user));
             $user->assignRole('commuter');
 
             Wallet::create([
-                'user_id' => $user->id
+                'user_id' => $user->id,
             ]);
-            
+
             return redirect()->route('commuter.dashboard')->with('success', 'User Successfully Registered!');
         }
+
         return back()->with('error', 'User Failed to Register.');
     }
 
-    public function login(Request $request) {
-    
+    public function login(Request $request)
+    {
+
         // dd($request->all());
         $validated = $request->validate([
             'email' => 'required|email',
-            'password' => 'required|min:8'
+            'password' => 'required|min:8',
         ]);
 
         if (Auth::attempt($validated)) {
             $user = Auth::user();
-
-            if ($user->hasRole('driver') && $user->driver_approval_status === 'pending') {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                return redirect()->route('login')->with('driver_pending', true);
-            }
-
-            if ($user->hasRole('driver') && $user->driver_approval_status === 'rejected') {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                return redirect()->route('login')->with('driver_rejected', true);
-            }
 
             $request->session()->regenerate();
 
@@ -154,7 +135,7 @@ class UserController extends Controller
         }
 
         throw ValidationException::withMessages([
-            'credentials' => "Sorry, invalid credentials"
+            'credentials' => 'Sorry, invalid credentials',
         ]);
 
         // $user = User::where('email', $request->email)->first();
@@ -170,17 +151,20 @@ class UserController extends Controller
         // return back()->with('error', 'Password does not match.');
     }
 
-    public function logout(Request $request) {
+    public function logout(Request $request)
+    {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('login')->with('success','Successfully Logged out!');
+
+        return redirect()->route('login')->with('success', 'Successfully Logged out!');
     }
 
-    public function emailVerification() {
+    public function emailVerification()
+    {
         $userEmail = Auth::user()->email;
         Mail::to($userEmail)->send(new EmailVerification());
+
         return view('activate');
     }
-
 }
