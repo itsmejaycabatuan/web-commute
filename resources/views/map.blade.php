@@ -280,7 +280,7 @@
 
             @if (Auth::user())
                 @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
-                    <a href="{{ route('driver.dashboard') }}">
+                    <a href="{{ route('dashboard') }}">
                         <div
                             class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold cursor-pointer uppercase tracking-wider hover:bg-red-500/20 transition">
                             Dashboard
@@ -296,23 +296,12 @@
                     </a>
                 @endif
 
-                @if (Auth::check() && Auth::user()->roles[0]->name === 'admin')
-                    <a href="{{ route('profile.admin') }}">
+                    <a href="{{ route('profile') }}">
                         <div
                             class="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-white/10 transition">
                             <i class="fa-solid fa-user text-xs"></i>
                         </div>
                     </a>
-                @endif
-
-                @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter')
-                    <a href="{{ route('commuter.profile') }}">
-                        <div
-                            class="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-white/10 transition">
-                            <i class="fa-solid fa-user text-xs"></i>
-                        </div>
-                    </a>
-                @endif
 
                 <div class="flex items-center space-x-3 pointer-events-auto">
                     <button onclick="toggleLogoutModal()"

@@ -102,6 +102,8 @@
 
 <body class="flex relative justify-center items-center p-4 sm:p-6 min-h-screen login-bg font-sans text-white overflow-x-hidden">
 
+    @include('components.flash');
+
     @if (session('driver_pending'))
         <div id="driver-pending-modal" role="dialog" aria-modal="true"
             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -137,14 +139,6 @@
                     OK
                 </button>
             </div>
-        </div>
-    @endif
-
-    @if (session('success'))
-        <div class="fixed top-5 left-1/2 z-[90] px-5 py-3.5 max-w-md text-sm text-center text-white -translate-x-1/2 bg-emerald-600/95 backdrop-blur-md rounded-2xl border border-emerald-500/30 shadow-lg shadow-emerald-500/20 flash-animate flex items-center gap-2"
-            id="login-flash-success">
-            <i class="fa-solid fa-circle-check text-emerald-300"></i>
-            {{ session('success') }}
         </div>
     @endif
 

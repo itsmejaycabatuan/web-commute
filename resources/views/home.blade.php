@@ -312,12 +312,12 @@
             @endif
 
             @if (Auth::user())
-                <a href="{{ route('commuter.dashboard') }}" onclick="closeMobileMenu()" class="flex items-center gap-4 px-4 py-4 rounded-2xl hover:bg-white/5 transition group">
+                <a href="{{ route('map') }}" onclick="closeMobileMenu()" class="flex items-center gap-4 px-4 py-4 rounded-2xl hover:bg-white/5 transition group">
                     <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition">
                         <i class="fa-solid fa-gauge-high text-blue-400 text-sm"></i>
                     </div>
                     <div>
-                        <p class="font-semibold text-sm">Dashboard</p>
+                        <p class="font-semibold text-sm">Map</p>
                         <p class="text-[10px] text-gray-500">Your commute hub</p>
                     </div>
                 </a>
@@ -367,11 +367,21 @@
             @endif
 
             @if (Auth::user())
-                <div class="hidden md:flex items-center space-x-1 text-sm font-medium glass-card px-2 py-2 rounded-full">
-                    <a href="{{ route('commuter.dashboard') }}" class="px-5 py-2 rounded-full hover:bg-white/10 transition text-gray-300 hover:text-white flex items-center gap-2">
-                        <i class="fa-solid fa-gauge-high text-xs text-blue-400"></i> Dashboard
-                    </a>
-                </div>
+                @if (Auth::user()->roles->first()->name == 'admin' || Auth::user()->roles->first()->name == 'commuter' || Auth::user()->roles->first()->name == 'driver')
+                        <div class="hidden md:flex items-center space-x-1 text-sm font-medium glass-card px-2 py-2 rounded-full">
+                            <a href="{{ route('map') }}" class="px-5 py-2 rounded-full hover:bg-white/10 transition text-gray-300 hover:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-gauge-high text-xs text-blue-400"></i> Map
+                            </a>
+                        </div>
+                @endif
+
+                @if (Auth::user()->roles->first()->name == 'maintenance_manager' || Auth::user()->roles->first()->name == 'driver_manager')
+                        <div class="hidden md:flex items-center space-x-1 text-sm font-medium glass-card px-2 py-2 rounded-full">
+                            <a href="{{ route('dashboard') }}" class="px-5 py-2 rounded-full hover:bg-white/10 transition text-gray-300 hover:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-gauge-high text-xs text-blue-400"></i> Dashboard
+                            </a>
+                        </div>
+                @endif
             @endif
 
             <!-- Hamburger -->

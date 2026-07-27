@@ -48,7 +48,7 @@
                     <i class="fa-solid fa-plus text-xs"></i>
                     <span class="text-xs font-bold uppercase tracking-widest text-white">New Top-up</span>
                 </a>
-                <a href="{{ route('commuter.dashboard') }}"
+                <a href="{{ route('map') }}"
                     class="glass-panel px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-white/10 transition">
                     <i class="fa-solid fa-house text-xs text-white/60"></i>
                 </a>

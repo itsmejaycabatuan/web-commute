@@ -40,7 +40,7 @@
 
     <header class="max-w-6xl mx-auto mb-12 flex justify-between items-center">
         <div class="flex items-center space-x-4">
-            <a href="{{ route('commuter.dashboard') }}"
+            <a href="{{ route('map') }}"
                 class="glass-panel w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-white/10 transition">
                 <i class="fa-solid fa-arrow-left text-xs"></i>
             </a>

@@ -30,8 +30,7 @@ class DriverProfileController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        return redirect()
-            ->route('driverprofile')
+        return back()
             ->with('success', 'Password updated successfully.');
     }
 }

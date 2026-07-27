@@ -12,6 +12,11 @@ use Illuminate\Support\Facades\Hash;
 
 class DriverController extends Controller
 {
+    public function create()
+    {
+        return view('auth.driver.register');
+    }
+
     public function store(Request $request)
     {
         $request->validate([

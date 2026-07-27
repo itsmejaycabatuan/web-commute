@@ -31,85 +31,21 @@
 
 <body x-data="{ open: true, showLogoutModal: false }">
 
-    <aside :class="open ? 'w-72' : 'w-20'"
-        class="sidebar-transition fixed left-0 top-0 h-screen glass border-r border-white/10 z-50 flex flex-col justify-between p-4">
-        <div>
-            <button x-on:click="open = !open" class="w-full flex justify-end p-2 mb-8 hover:text-blue-400 transition">
-                <i class="fa-solid" :class="open ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
-            </button>
+    @include('components.flash')
 
-            <div class="flex items-center gap-3 px-2 mb-10 overflow-hidden whitespace-nowrap">
-                <div
-                    class="min-w-[40px] h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
-                    <i class="fa-solid fa-bus text-white"></i>
-                </div>
-                <span x-show="open" x-transition.opacity class="font-bold text-lg tracking-tighter">Smart<span
-                        class="text-blue-500">Commute</span></span>
-            </div>
-
-            <nav class="space-y-2">
-                <a href="{{ route('commuter.dashboard') }}"
-                    class="flex items-center gap-4 p-3 rounded-2xl text-gray-500 hover:bg-white/5 hover:text-white transition group">
-                    <div class="min-w-[24px] flex justify-center">
-                        <i class="fa-solid fa-gauge-high text-lg"></i>
-                    </div>
-                    <span x-show="open" x-transition.opacity
-                        class="text-xs font-bold uppercase tracking-widest">Map</span>
-                </a>
-                <a href="{{ route('driver.dashboard') }}"
-                    class="flex items-center gap-4 p-3 rounded-2xl text-gray-500 hover:bg-white/5 hover:text-white transition group">
-                    <div class="min-w-[24px] flex justify-center"><i class="fa-solid fa-gauge-high text-lg"></i></div>
-                    <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Driver
-                        Dashboard</span>
-                </a>
-                <a href="{{ route('driverprofile') }}"
-                    class="flex items-center gap-4 p-3 rounded-2xl bg-blue-600/10 text-blue-400 border border-blue-500/20 group">
-                    <div class="min-w-[24px] flex justify-center"><i class="fa-solid fa-circle-user text-lg"></i></div>
-                    <span x-show="open" x-transition.opacity
-                        class="text-xs font-bold uppercase tracking-widest">Profile</span>
-                </a>
-            </nav>
-        </div>
-
-        <button type="button" x-on:click="showLogoutModal = true"
-            class="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-all group">
-            <div class="min-w-[24px] flex justify-center"><i class="fa-solid fa-right-from-bracket text-lg"></i></div>
-            <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Exit
-                System</span>
-        </button>
-    </aside>
+    @include('driver.layout.sidebar');
 
     <main :class="open ? 'ml-72' : 'ml-20'" class="sidebar-transition p-8 md:p-12 min-h-screen">
         <div class="max-w-4xl mx-auto">
             <header class="mb-12">
                 <h2 class="text-3xl font-black tracking-tight mb-2">My <span class="text-blue-500">Profile</span></h2>
-                <p class="text-gray-500 text-sm">Your driver account details from registration.</p>
+                <p class="text-gray-500 text-sm">Your account details from registration.</p>
             </header>
-
-            @if (session('success'))
-                <div
-                    class="mb-6 px-4 py-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-sm">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if (session('info'))
-                <div class="mb-6 px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-gray-400 text-sm">
-                    {{ session('info') }}
-                </div>
-            @endif
 
             <div class="glass rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden">
                 <div class="absolute -top-24 -right-24 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl"></div>
 
                 <div class="relative z-10 flex flex-col md:flex-row items-center gap-10">
-                    <div class="relative">
-                        <div
-                            class="w-32 h-32 rounded-[2.5rem] glass border-2 border-white/10 flex items-center justify-center bg-white/5 overflow-hidden">
-                            <i class="fa-solid fa-id-card text-5xl text-blue-500/60"></i>
-                        </div>
-                    </div>
-
                     <div class="flex-1 space-y-6 w-full">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div class="space-y-1 md:col-span-2">
@@ -120,43 +56,34 @@
                                     {{ $user->email }}
                                 </div>
                             </div>
-                            <div class="space-y-1">
-                                <label class="text-[10px] uppercase font-black text-blue-500 tracking-[0.2em]">License
-                                    number</label>
-                                <div class="glass p-4 rounded-2xl text-sm font-semibold border-white/5 bg-white/[0.02]">
-                                    {{ $user->license_number ?? '—' }}
-                                </div>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-[10px] uppercase font-black text-blue-500 tracking-[0.2em]">License
-                                    code</label>
-                                <div class="glass p-4 rounded-2xl text-sm font-semibold border-white/5 bg-white/[0.02]">
-                                    {{ $user->license_code ?? '—' }}
-                                </div>
-                            </div>
                         </div>
 
-                        <div class="pt-4 border-t border-white/10">
-                            <p class="text-[10px] uppercase font-black text-gray-500 tracking-[0.2em] mb-4">Change
-                                password</p>
-                            <form action="{{ route('driverprofile.update') }}" method="POST" class="space-y-4 max-w-md">
+                        <div class="pt-4 border-t border-white/10 grid grid-cols-1 md:grid-cols-1 gap-8">
+                            <form action="{{ route('profile.update') }}" method="POST" class="space-y-4 max-w-md">
                                 @csrf
                                 @method('PUT')
                                 <div>
-                                    <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">New
-                                        password</label>
+                                    <p class="text-[10px] uppercase font-black text-gray-500 tracking-[0.2em] mb-4">Change
+                                        password</p>
+                                    <input type="password" name="current_password" autocomplete="current-password"
+                                        class="mt-1 w-full glass p-3 rounded-xl text-sm border border-white/10 bg-white/5 focus:ring-2 focus:ring-blue-500/40 focus:outline-none"
+                                        placeholder="Current Password">
+                                    @error('password')
+                                        <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
                                     <input type="password" name="password" autocomplete="new-password"
                                         class="mt-1 w-full glass p-3 rounded-xl text-sm border border-white/10 bg-white/5 focus:ring-2 focus:ring-blue-500/40 focus:outline-none"
-                                        placeholder="Leave blank to skip">
+                                        placeholder="New Password">
                                     @error('password')
                                         <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <div>
-                                    <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Confirm
-                                        new password</label>
                                     <input type="password" name="password_confirmation" autocomplete="new-password"
-                                        class="mt-1 w-full glass p-3 rounded-xl text-sm border border-white/10 bg-white/5 focus:ring-2 focus:ring-blue-500/40 focus:outline-none">
+                                        class="mt-1 w-full glass p-3 rounded-xl text-sm border border-white/10 bg-white/5 focus:ring-2 focus:ring-blue-500/40 focus:outline-none" placeholder="Confirm Password">
                                 </div>
                                 <button type="submit"
                                     class="bg-white text-black px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-50 transition active:scale-95 shadow-lg shadow-white/5">
@@ -169,24 +96,7 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                <div class="glass p-6 rounded-3xl border-white/5">
-                    <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Status</p>
-                    @if ($user->driver_approval_status === 'approved')
-                        <p class="text-sm font-bold text-emerald-400 flex items-center">
-                            <i class="fa-solid fa-circle-check mr-2 text-[10px]"></i> Approved driver
-                        </p>
-                    @elseif ($user->driver_approval_status === 'pending')
-                        <p class="text-sm font-bold text-amber-400 flex items-center">
-                            <i class="fa-solid fa-clock mr-2 text-[10px]"></i> Pending
-                        </p>
-                    @elseif ($user->driver_approval_status === 'rejected')
-                        <p class="text-sm font-bold text-red-400 flex items-center">
-                            <i class="fa-solid fa-ban mr-2 text-[10px]"></i> Rejected
-                        </p>
-                    @else
-                        <p class="text-sm font-bold text-gray-400">—</p>
-                    @endif
-                </div>
+
                 <div class="glass p-6 rounded-3xl border-white/5">
                     <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Joined</p>
                     <p class="text-sm font-bold">

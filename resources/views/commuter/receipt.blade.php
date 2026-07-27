@@ -115,9 +115,9 @@
             <i class="fa-solid fa-arrow-down-to-bracket text-blue-400"></i>
             Save as Image
         </button>
-        <a href="{{ route('commuter.dashboard') }}"
+        <a href="{{ route('map') }}"
             class="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 px-6 rounded-2xl text-[10px] uppercase tracking-[0.2em] text-center shadow-lg shadow-blue-600/20 transition-all active:scale-95">
-            Back to Dashboard
+            Back to Map
         </a>
     </div>
 

@@ -5,9 +5,7 @@ use App\Http\Controllers\Admin\DriverApprovalController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\DriverManagerController;
-use App\Http\Controllers\DriverProfileController;
 use App\Http\Controllers\FareController;
-use App\Http\Controllers\LocationController;
 use App\Http\Controllers\MaintenanceManagerController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PusherController;
@@ -16,26 +14,13 @@ use App\Http\Controllers\RouteController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleTrackingController;
-use App\Models\Driver;
 use App\Models\Fare;
 use App\Models\FareRate;
-use App\Models\FleetInventory;
-use App\Models\Payment;
-use App\Models\PreventiveMaintenance;
-use App\Models\TimeKeeping;
-use App\Models\TopupHistory;
 use App\Models\User;
-use App\Models\ViolationLog;
-use App\Models\Wallet;
-use Carbon\Carbon;
-use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Str;
 
 /*
 |--------------------------------------------------------------------------
@@ -60,12 +45,6 @@ Route::post('/fire-event', [PusherController::class, 'fireEvent'])->name('fire.e
 Route::post('/track/vehicle/broadcast', [VehicleTrackingController::class, 'broadcastLocation'])->name('vehicle.broadcast');
 Route::get('/track/vehicles/active', [VehicleTrackingController::class, 'getActiveVehicles']);
 
-// Route::get('/location', [LocationController::class, 'index'])->name('location.index');
-// Route::get('/location/update', [LocationController::class, 'update'])->name('location.update');
-
-// Route::get('/track/{vehicleId}', [VehicleTrackingController::class, 'show']);
-// Route::post('/track/{vehicleId}/update', [VehicleTrackingController::class, 'updateLocation']);
-
 Route::get('/register', function () {
     return view('auth.register');
 })->name('register');
@@ -74,9 +53,9 @@ Route::get('/login', function () {
     return view('auth.login');
 })->name('login');
 
-Route::post('/users/logout', [UserController::class, 'logout'])->name('users.logout');
-Route::post('/users/register', [UserController::class, 'register'])->name('users.register');
-Route::post('/users/login', [UserController::class, 'login'])->name('users.login');
+Route::post('/logout', [UserController::class, 'logout'])->name('users.logout');
+Route::post('/register', [UserController::class, 'register'])->name('users.register');
+Route::post('/login', [UserController::class, 'login'])->name('users.login');
 
 Route::get('/email/verify', function () {
     return view('auth.verify-email');
@@ -100,64 +79,13 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
 
     $request->fulfill();
 
-    return view('commuter.dashboard', [
+    return view('map', [
         'rates' => $rates,
     ]);
 })->middleware(['auth', 'signed'])->name('verification.verify');
 
 Route::middleware('guest')->group(function () {
-    Route::post('/users/register', [UserController::class, 'register'])->name('users.register');
-    Route::post('/users/login', [UserController::class, 'login'])->name('users.login');
-
-    Route::get('/register/driver', function () {
-        return view('auth.driver.register');
-    })->name('driver.register.page');
-
-    Route::post('/register/driver', [DriverController::class, 'store'])->name('driver.register');
-
-    Route::get('/forgot-password', function () {
-        return view('auth.forgot-password');
-    })->name('password.request');
-
-    Route::post('/forgot-password', function (Request $request) {
-        $request->validate(['email' => 'required|email']);
-
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
-
-        return $status === Password::RESET_LINK_SENT ? back()->with(['status' => __($status)]) : back()->withErrors(['email' => __($status)]);
-    })->name('password.email');
-
-    Route::get('/reset-password/{token}', function (string $token) {
-        return view('auth.reset-password', ['token' => $token]);
-    })->name('password.reset');
-
-    Route::post('/reset-password', function (Request $request) {
-        $request->validate([
-            'token' => 'required',
-            'email' => 'required|email',
-            'password' => 'required|min:8',
-            'confirm-password' => 'required|same:password',
-        ]);
-
-        $status = Password::reset(
-            $request->only('email', 'password', 'confirm-password', 'token'),
-            function (User $user, string $password) {
-                $user->forceFill([
-                    'password' => Hash::make($password),
-                ])->setRememberToken(Str::random(60));
-
-                $user->save();
-
-                event(new PasswordReset($user));
-            }
-        );
-
-        return $status === Password::PASSWORD_RESET ? redirect()->route('login')->with('status', __($status)) : back()->withErrors(['email' => [__($status)]]);
-    })->name('password.update');
-
-    Route::get('/map', function () {
+    Route::get('/map/guest', function () {
         $latestFare = Fare::get()->last();
 
         $rates = FareRate::get();
@@ -167,288 +95,34 @@ Route::middleware('guest')->group(function () {
             $rates = FareRate::where('fare_id', $latestFareId)->get();
         }
 
-        return view('commuter.dashboard', [
+        return view('map', [
             'rates' => $rates,
         ]);
     })->name('guest.map');
+
+    Route::get('/register/driver', [DriverController::class, 'create'])->name('driver.register.page');
+    Route::post('/register/driver', [DriverController::class, 'store'])->name('driver.register');
+
+    Route::get('/forgot-password', [UserController::class, 'forgotPassword'])->name('password.request');
+    Route::post('/forgot-password', [UserController::class, 'requestPassword'])->name('password.email');
+    Route::get('/reset-password/{token}', [UserController::class, 'resetPassword'])->name('password.reset');
+    Route::post('/reset-password', [UserController::class, 'updatePassword'])->name('password.update');
+});
+
+Route::middleware(['role:commuter|admin|driver|driver_manager|maintenance_manager', 'auth', 'verified'])->group(function () {
+    Route::get('/map', [UserController::class, 'map'])->name('map');
+    Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-
-    // Route::get('/dashboard/commuter', function () {
-    //     return view('commuter.dashboard');
-    // })->name('commuter.dashboard');
-
-    Route::get('/tutorial', function () {
-        return view('tutorial');
-    })->name('tutorial');
-
-    Route::get('/profile/commuter', function () {
-        $userId = Auth::user()->id;
-        $payments = Payment::where('paid_by', $userId)->get();
-        $topups = TopupHistory::where('user_id', $userId)->get();
-        $wallet = Wallet::where('user_id', $userId)->first();
-
-        return view('commuter.profile', [
-            'payments' => $payments,
-            'topups' => $topups,
-            'wallet' => $wallet,
-        ]);
-    })->name('commuter.profile');
-
-    // Route::get('/dashboard', function () {
-    //     return view('commuter.dashboard');
-    // })->name('commuter.dashboard');Q
-    Route::middleware('role:commuter|admin|driver|driver_manager|maintenance_manager')->group(function () {
-        Route::get('/dashboard', function (Request $request) {
-            $user = Auth::user();
-            $userId = Auth::user()->id;
-            $role = $user->roles->first()->name;
-            $latestFare = Fare::get()->last();
-            $wallet = Wallet::where('user_id', $userId)->first();
-
-            $recentReceipts = Payment::where('paid_by', $userId)->latest()->take(3)->get();
-
-            $rates = FareRate::get();
-
-            if ($latestFare) {
-                $latestFareId = $latestFare->id;
-                $rates = FareRate::where('fare_id', $latestFareId)->get();
-            }
-
-            if ($role == 'admin') {
-                return view('commuter.dashboard', [
-                    'rates' => $rates,
-                ]);
-            }
-
-            if ($role == 'driver') {
-
-                if ($user->driver_approval_status !== 'approved') {
-                    Auth::logout();
-
-                    return redirect()->route('login')->with('driver_pending', true);
-                }
-
-                return view('commuter.dashboard', [
-                    'rates' => $rates,
-                    'recentReceipts' => $recentReceipts,
-                ]);
-                // return view('driverdashboard');
-            }
-
-            if ($role == 'commuter') {
-                return view('commuter.dashboard', [
-                    'rates' => $rates,
-                    'recentReceipts' => $recentReceipts,
-                    'balance' => $wallet->balance ?? 0.00,
-                ]);
-            }
-
-            if ($role == 'driver_manager') {
-                $drivers = Driver::with('user')->get()->map(fn ($d) => [
-                    'id' => $d->id,
-                    'user_id' => $d->user_id,
-                    'name' => $d->name,
-                    'driver_code' => $d->driver_code ?? 'N/A',
-                    'license_number' => $d->license_number ?? 'N/A',
-                    'expiration_date' => $d->expiration_date
-                                            ? Carbon::parse($d->expiration_date)->format('F d, Y')
-                                            : 'N/A',
-                ])->values();
-
-                $timeKeepings = TimeKeeping::with('driver')->get()->map(fn ($tk) => [
-                    'driver_id' => $tk->driver_id,
-                    'driver_name' => $tk->driver->name ?? 'Unknown',
-                    'driver_user_id' => $tk->driver->user_id ?? null,
-                    'date' => (string) $tk->date,
-                    'time_in' => $tk->time_in ? (string) $tk->time_in : null,
-                    'time_out' => $tk->time_out ? (string) $tk->time_out : null,
-                    'hours_worked' => (float) ($tk->hours_worked ?? 0),
-                    'overtime_hours' => (float) ($tk->overtime_hours ?? 0),
-                    'sick' => (int) $tk->sick,
-                    'vacation' => (int) $tk->vacation,
-                ])->values();
-
-                $violationLogs = ViolationLog::with('user')->get()->map(fn ($v) => [
-                    'id' => $v->id,
-                    'user_id' => $v->user_id,
-                    'user_name' => $v->user->name ?? 'Unknown',
-                    'violation_instance' => $v->violation_instance,
-                    'violation_fine' => (float) ($v->violation_fine ?? 0),
-                    'created_at' => $v->created_at ? $v->created_at->format('M d, Y') : '',
-                    'time' => $v->created_at ? $v->created_at->format('g:i A') : '',
-                ])->values();
-
-                return view('driver-manager.dashboard', compact('drivers', 'timeKeepings', 'violationLogs'));
-            }
-
-            if ($role == 'maintenance_manager') {
-                $fleets = FleetInventory::with('vehicle.driver')
-                    ->join('vehicles', 'fleet_inventories.vehicle_id', '=', 'vehicles.id')
-                    ->orderBy('vehicles.plate_number')
-                    ->select('fleet_inventories.*')
-                    ->get();
-
-                $drivers = Driver::orderBy('name')->get();
-
-                if ($fleets->isEmpty()) {
-                    return view('maintenance-manager.dashboard', [
-                        'fleets' => collect(),
-                        'drivers' => $drivers,
-                        'monthlyKm' => array_fill(1, 12, 0),
-                        'monthlyStartOdo' => array_fill(1, 12, null),
-                        'monthlyEndOdo' => array_fill(1, 12, null),
-                        'yearStartOdo' => null,
-                        'yearEndOdo' => 0,
-                        'fleet' => null,
-                        'costSummary' => collect(),
-                        'monthlyTotals' => array_fill(1, 12, 0),
-                        'ytdTotal' => 0,
-                        'allLogs' => collect(),
-                        'totalServiceCost' => 0,
-                        'costPerKm' => 0,
-                        'annualKm' => 0,
-                        'year' => now()->year,
-                        'monthlyCpk' => array_fill(1, 12, null),
-                    ]);
-                }
-
-                $selectedId = $request->query('fleet_id', $fleets->first()->id);
-                $fleet = FleetInventory::with('vehicle.driver')->find($selectedId) ?? $fleets->first();
-
-                $year = now()->year;
-
-                // ── Logs for current year — cost summary table ──
-                $yearLogs = PreventiveMaintenance::where('fleet_id', $fleet->id)
-                    ->with('maintenanceTask')
-                    ->whereYear('last_service_date', $year)
-                    ->whereNotNull('last_service_date')
-                    ->orderBy('last_service_date')
-                    ->get();
-
-                $costSummary = [];
-                $monthlyTotals = array_fill(1, 12, 0);
-                $ytdTotal = 0;
-
-                foreach ($yearLogs as $log) {
-                    $taskName = $log->maintenanceTask?->tasks_performed ?? 'Unknown Task';
-                    $month = $log->last_service_date->month;
-                    $cost = (float) ($log->last_service_cost ?? 0);
-
-                    if (! isset($costSummary[$taskName])) {
-                        $costSummary[$taskName] = array_fill(1, 12, 0);
-                    }
-
-                    $costSummary[$taskName][$month] += $cost;
-                    $monthlyTotals[$month] += $cost;
-                    $ytdTotal += $cost;
-                }
-
-                ksort($costSummary);
-                $costSummary = collect($costSummary);
-
-                // ── All logs for the log tab (all time, newest first) ──
-                $allLogs = PreventiveMaintenance::where('fleet_id', $fleet->id)
-                    ->with('maintenanceTask')
-                    ->orderByDesc('last_service_date')
-                    ->get()
-                    ->map(function ($log) {
-                        return [
-                            'id' => $log->id,
-                            'task_name' => $log->maintenanceTask?->tasks_performed ?? 'Unknown Task',
-                            'service_date' => $log->last_service_date?->format('M d, Y'),
-                            'mileage' => $log->last_service_odo,
-                            'cost' => $log->last_service_cost,
-                            'remarks' => $log->comments,
-                        ];
-                    });
-
-                // ── Stats ──
-                $totalServiceCost = $ytdTotal;
-
-                // ── Monthly kilometer calculation ──
-                $allOrderedLogs = PreventiveMaintenance::where('fleet_id', $fleet->id)
-                    ->whereNotNull('last_service_odo')
-                    ->whereNotNull('last_service_date')
-                    ->orderBy('last_service_date')
-                    ->get();
-
-                $monthlyKm = array_fill(1, 12, 0);
-                $monthlyStartOdo = array_fill(1, 12, null);
-                $monthlyEndOdo = array_fill(1, 12, null);
-                $monthlyCpk = array_fill(1, 12, null);
-                $runningOdo = null;
-
-                // Find annual starting baseline
-                $firstLogOfYear = $allOrderedLogs->first(fn ($l) => $l->last_service_date && $l->last_service_date->year === $year);
-                $annualStartingOdo = 0;
-                if ($firstLogOfYear) {
-                    $prevLog = $allOrderedLogs->where('id', '<', $firstLogOfYear->id)->last();
-                    $annualStartingOdo = $prevLog ? $prevLog->last_service_odo : 0;
-                }
-
-                foreach ($allOrderedLogs as $log) {
-                    $m = $log->last_service_date->month;
-                    $monthlyStartOdo[$m] ??= $runningOdo;
-                    $monthlyEndOdo[$m] = $log->last_service_odo;
-
-                    $baseline = $monthlyStartOdo[$m] ?? $annualStartingOdo;
-
-                    if ($baseline !== null) {
-                        $delta = $log->last_service_odo - $baseline;
-                        if ($delta > 0) {
-                            $monthlyKm[$m] += $delta;
-                        }
-                    }
-                    $runningOdo = $log->last_service_odo;
-                }
-
-                $yearStartOdo = $monthlyStartOdo[1];
-                $yearEndOdo = $runningOdo;
-                $annualKm = array_sum($monthlyKm);
-
-                // Cost per km per month
-                for ($m = 1; $m <= 12; $m++) {
-                    if ($monthlyKm[$m] > 0) {
-                        $monthlyCpk[$m] = round($monthlyTotals[$m] / $monthlyKm[$m], 2);
-                    }
-                }
-
-                $costPerKm = $annualKm > 0 ? round($totalServiceCost / $annualKm, 2) : 0;
-
-                return view('maintenance-manager.dashboard', compact(
-                    'fleets',
-                    'drivers',
-                    'fleet',
-                    'costSummary',
-                    'monthlyTotals',
-                    'ytdTotal',
-                    'allLogs',
-                    'totalServiceCost',
-                    'costPerKm',
-                    'annualKm',
-                    'year',
-                    'monthlyKm',
-                    'monthlyStartOdo',
-                    'monthlyEndOdo',
-                    'yearStartOdo',
-                    'yearEndOdo',
-                    'monthlyCpk',
-                ));
-            }
-
-        })->name('commuter.dashboard');
-    });
+    Route::get('/profile', [UserController::class, 'profile'])->name('profile');
+    Route::get('/profile/edit', [UserController::class, 'editProfile'])->name('profile.edit');
+    Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
 
     Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
     Route::post('/vehicles', [VehicleController::class, 'store'])->name('vehicles.store');
     Route::patch('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
     Route::delete('/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
-
-    Route::get('/payment', function () {
-        return view('commuter.payment');
-    })->name('payment');
 
     Route::get('/payment', [PaymentController::class, 'index'])->name('payment.index');
     Route::post('/payment/process', [PaymentController::class, 'process'])->name('payment.process');
@@ -480,14 +154,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/admin/drivers/{driver}', [DriverApprovalController::class, 'destroy'])->name('admin.drivers.destroy');
         Route::get('/admin/drivers/{user}/license', [DriverApprovalController::class, 'showLicense'])->name('admin.drivers.license');
         Route::post('/admin/drivers/{user}/approve', [DriverApprovalController::class, 'approve'])->name('admin.drivers.approve');
-        // Route::post('/admin/drivers/{user}/unapprove', [DriverApprovalController::class, 'unapprove'])->name('admin.drivers.unapprove');
         Route::put('/admin/drivers/{user}/reject', [DriverApprovalController::class, 'reject'])->name('admin.drivers.reject');
-    });
-
-    Route::middleware('role:driver')->group(function () {
-        Route::get('/dashboard/driver', [DriverController::class, 'index'])->name('driver.dashboard');
-        Route::get('/profile/driver', [DriverProfileController::class, 'show'])->name('driverprofile');
-        Route::put('/profile/driver', [DriverProfileController::class, 'update'])->name('driverprofile.update');
     });
 
     Route::middleware('role:driver_manager')->group(function () {
@@ -519,58 +186,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/fleet-inventory', [MaintenanceManagerController::class, 'fleetInventoryStore'])->name('maintenance-manager.fleet-inventory.store');
         Route::delete('/fleet-inventory/{id}/delete', [MaintenanceManagerController::class, 'fleetInventoryDelete'])->name('maintenance-manager.fleet-inventory.destroy');
         Route::patch('/fleet-inventory/{id}/update', [MaintenanceManagerController::class, 'fleetInventoryUpdate'])->name('maintenance-manager.fleet-inventory.update');
-        Route::get('/profile/maintenance-manager', [MaintenanceManagerController::class, 'profile'])->name('maintenance-manager.profile');
-        Route::patch('/profile/maintenance-manager/update', [MaintenanceManagerController::class, 'updateProfile'])->name('maintenance-manager.update-profile');
     });
-
-    Route::get('/profile/admin', function () {
-        $info = Auth::user();
-
-        return view('admin.profile', [
-            'info' => $info,
-        ]);
-    })->name('profile.admin');
-
-    Route::get('/profile/driver-manager', [DriverManagerController::class, 'profile'])->name('driver-manager.profile');
-    Route::patch('/profile/driver-manager/update', [DriverManagerController::class, 'updateProfile'])->name('driver-manager.update-profile');
-
-    Route::get('/profile', function () {
-        return view('profile');
-    })->name('profile');
-
-    Route::get('/profile/edit', function () {
-        return view('commuter.editprofile');
-    })->name('profile.edit');
-
-    Route::patch('/profile/update', function (Request $request) {
-
-        $request->validate([
-            'current_password' => 'required',
-            'password' => 'required|min:8',
-            'password_confirmation' => 'required|same:password',
-        ]);
-
-        $userId = Auth::user()->id;
-        $user = User::where('id', $userId)->first();
-
-        if ($user->update([
-            'password' => $request->password_confirmation,
-        ])) {
-            return redirect()->route('commuter.profile')->with('success', 'password successfully updated');
-        }
-
-        return back()->with('error', 'Failed to update password');
-    })->name('profile.update');
 
     Route::get('/fare/{id}', [FareController::class, 'view'])->middleware('role:admin')->name('fares.view');
     Route::get('/fares', [FareController::class, 'index'])->middleware('role:admin')->name('fares.index');
     Route::put('/fare/upload', [FareController::class, 'upload'])->middleware('role:admin')->name('fares.upload');
     Route::put('/fare/update', [FareController::class, 'bulkUpdate'])->middleware('role:admin')->name('fares.bulk-update');
     Route::delete('/fare/{id}/delete', [FareController::class, 'delete'])->middleware('role:admin')->name('fares.destroy');
-
-    // Route::get('/commuter/commuter', function () {
-    //     return view('commuter.commuter');
-    // })->name('commuter.commuter');
 
     Route::resource('users', UserController::class);
     Route::resource('routes', RouteController::class)->middleware('role:admin');

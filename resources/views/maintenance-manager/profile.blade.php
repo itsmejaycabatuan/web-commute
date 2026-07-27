@@ -31,27 +31,16 @@
 
 <body x-data="{ open: true, showLogoutModal: false }">
 
+    @include('components.flash')
+
     @include('maintenance-manager.layout.sidebar');
 
     <main :class="open ? 'ml-72' : 'ml-20'" class="sidebar-transition p-8 md:p-12 min-h-screen">
         <div class="max-w-4xl mx-auto">
             <header class="mb-12">
                 <h2 class="text-3xl font-black tracking-tight mb-2">My <span class="text-blue-500">Profile</span></h2>
-                <p class="text-gray-500 text-sm">Your driver account details from registration.</p>
+                <p class="text-gray-500 text-sm">Your account details from registration.</p>
             </header>
-
-            @if (session('success'))
-                <div
-                    class="mb-6 px-4 py-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-sm">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if (session('info'))
-                <div class="mb-6 px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-gray-400 text-sm">
-                    {{ session('info') }}
-                </div>
-            @endif
 
             <div class="glass rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden">
                 <div class="absolute -top-24 -right-24 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl"></div>
@@ -70,26 +59,31 @@
                         </div>
 
                         <div class="pt-4 border-t border-white/10 grid grid-cols-1 md:grid-cols-1 gap-8">
-                            <form action="{{ route('maintenance-manager-update-profile') }}" method="POST" class="space-y-4 max-w-md">
+                            <form action="{{ route('profile.update') }}" method="POST" class="space-y-4 max-w-md">
                                 @csrf
                                 @method('PUT')
                                 <div>
                                     <p class="text-[10px] uppercase font-black text-gray-500 tracking-[0.2em] mb-4">Change
                                         password</p>
-                                    <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">New
-                                        password</label>
+                                    <input type="password" name="current_password" autocomplete="current-password"
+                                        class="mt-1 w-full glass p-3 rounded-xl text-sm border border-white/10 bg-white/5 focus:ring-2 focus:ring-blue-500/40 focus:outline-none"
+                                        placeholder="Current Password">
+                                    @error('password')
+                                        <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
                                     <input type="password" name="password" autocomplete="new-password"
                                         class="mt-1 w-full glass p-3 rounded-xl text-sm border border-white/10 bg-white/5 focus:ring-2 focus:ring-blue-500/40 focus:outline-none"
-                                        placeholder="Leave blank to skip">
+                                        placeholder="New Password">
                                     @error('password')
                                         <p class="text-red-400 text-xs mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
                                 <div>
-                                    <label class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Confirm
-                                        new password</label>
                                     <input type="password" name="password_confirmation" autocomplete="new-password"
-                                        class="mt-1 w-full glass p-3 rounded-xl text-sm border border-white/10 bg-white/5 focus:ring-2 focus:ring-blue-500/40 focus:outline-none">
+                                        class="mt-1 w-full glass p-3 rounded-xl text-sm border border-white/10 bg-white/5 focus:ring-2 focus:ring-blue-500/40 focus:outline-none" placeholder="Confirm Password">
                                 </div>
                                 <button type="submit"
                                     class="bg-white text-black px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-50 transition active:scale-95 shadow-lg shadow-white/5">

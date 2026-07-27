@@ -52,7 +52,7 @@ class PaymentController extends Controller
         }
 
         if ($newBalance < 0) {
-            return redirect()->route('commuter.dashboard')->with('error', "You don't have enough balance");
+            return back()->with('error', "You don't have enough balance");
         }
 
         $payment = Payment::create([
@@ -171,7 +171,7 @@ class PaymentController extends Controller
                 'payment_method' => $request->{'payment-method'},
             ]);
 
-            return redirect()->route('commuter.dashboard')->with('success', 'Successfully topped up!');
+            return back()->with('success', 'Successfully topped up!');
         }
 
         return back()->with('error', 'Topup failed.');

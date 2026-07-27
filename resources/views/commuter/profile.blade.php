@@ -88,7 +88,7 @@
                     class="bg-blue-600 text-white px-5 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-600/20">
                     Edit Profile
                 </a>
-                <a href="{{ route('commuter.dashboard') }}" class="group flex items-center gap-2">
+                <a href="{{ route('map') }}" class="group flex items-center gap-2">
                     <div
                         class="w-8 h-8 glass rounded-lg flex items-center justify-center group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-all">
                         <i class="fa-solid fa-arrow-left text-[10px]"></i>

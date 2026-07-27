@@ -46,7 +46,7 @@
     <div class="w-full max-w-md">
         <div
             class="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest opacity-50 mb-8 justify-center">
-            <a href="{{ route('commuter.dashboard') }}" class="hover:text-blue-400 transition">Dashboard</a>
+            <a href="{{ route('map') }}" class="hover:text-blue-400 transition">map</a>
             <span>/</span>
             <span class="text-blue-400">Checkout</span>
         </div>

@@ -60,7 +60,7 @@
 
     <div class="w-full max-w-xl">
         <div class="flex items-center justify-between mb-8">
-            <a href="{{ route('commuter.dashboard') }}"
+            <a href="{{ route('map') }}"
                 class="glass-panel px-4 py-2 rounded-2xl flex items-center gap-2 hover:bg-white/10 transition group">
                 <i class="fa-solid fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
                 <span class="text-xs font-bold uppercase tracking-wider">Back</span>

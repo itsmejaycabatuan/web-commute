@@ -68,10 +68,12 @@
 
 <body class="antialiased">
 
+    @include('components.flash')
+
     <div class="max-w-4xl mx-auto p-10">
 
         <nav class="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest opacity-50 mb-6">
-            <a href="{{ route('commuter.profile') }}" class="hover:text-blue-400 transition">Profile</a>
+            <a href="{{ route('profile') }}" class="hover:text-blue-400 transition">Profile</a>
             <span>/</span>
             <span class="text-blue-400">Edit Settings</span>
         </nav>
@@ -95,7 +97,7 @@
             <div class="lg:col-span-2">
                 <form action="{{ route('profile.update') }}" method="POST" class="grid gap-4">
                     @csrf
-                    @method('PATCH')
+                    @method('PUT')
 
                     <div class="glass p-8 rounded-[2.5rem] space-y-6">
                         <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">General Information
@@ -167,7 +169,7 @@
                     </div>
 
                     <div class="flex items-center justify-end gap-4 pt-4">
-                        <a href="{{ route('commuter.profile') }}"
+                        <a href="{{ route('profile') }}"
                             class="text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-white transition">
                             Discard Changes
                         </a>
