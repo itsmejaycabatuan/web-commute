@@ -5,810 +5,744 @@
     <meta charset="UTF-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartCommute | Live Dashboard</title>
+    <title>SmartCommute | Live Map</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.18.0/dist/maplibre-gl.css' />
     <script src="https://unpkg.com/@maplibre/maplibre-gl-directions@latest/dist/maplibre-gl-directions.js"></script>
     <script src='https://unpkg.com/maplibre-gl@5.18.0/dist/maplibre-gl.js'></script>
     <script src="https://unpkg.com/laravel-echo@1.15.3/dist/echo.iife.js"></script>
     <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
-    <script
-        src="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.umd.js"></script>
-    <script src="https://unpkg.com/@maplibre/maplibre-gl-geocoder@1.5.0/dist/maplibre-gl-geocoder.min.js"></script>
-    <link rel="stylesheet"
-        href="https://unpkg.com/@maplibre/maplibre-gl-geocoder@1.5.0/dist/maplibre-gl-geocoder.css" />
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.umd.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.css" />
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+        }
+    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
-
-        body,
-        html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            overflow: hidden;
-            background: #0f172a;
-        }
-
-        #map {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 100%;
-            z-index: 0;
-        }
-
-        /* Fixed glass classes - moved outside of #map selector */
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-        }
-
-        .glass-inset {
-            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
-        }
-
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-        }
-
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.85) !important;
-            /* Increased opacity */
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .bus-pulse {
-            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-            animation: pulse-blue 2s infinite;
-        }
-
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: 'Inter', sans-serif; overflow: hidden; background: #050505; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; z-index: 0; }
+        .glass { background: #111111; border: 1px solid #1e1e1e; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.8); }
+        .glass-panel { background: #111111 !important; border: 1px solid #1e1e1e; box-shadow: 0 4px 24px rgba(0,0,0,0.6); }
+        .glass-card { background: #161616; border: 1px solid #222222; box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        .custom-scroll::-webkit-scrollbar { width: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .map-input { background: #0e0e0e !important; border: 1px solid #222222 !important; transition: all 0.3s ease; }
+        .map-input::placeholder { color: #555; }
+        .map-input:focus { background: #0e0e0e !important; border-color: #2563eb !important; box-shadow: 0 0 0 3px rgba(37,99,235,0.15) !important; outline: none; }
+        button { color: white; }
+        .bus-pulse { box-shadow: 0 0 0 0 rgba(59,130,246,0.7); animation: pulse-blue 2s infinite; }
         @keyframes pulse-blue {
-            0% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-            }
-
-            70% {
-                transform: scale(1);
-                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-            }
-
-            100% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-            }
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59,130,246,0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(59,130,246,0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59,130,246,0); }
         }
-
-        .custom-scroll::-webkit-scrollbar {
-            width: 4px;
+        .custom-vehicle-marker {
+            width: 34px; height: 34px; background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: 3px solid white; border-radius: 50%;
+            box-shadow: 0 0 20px rgba(59,130,246,0.6), 0 0 40px rgba(59,130,246,0.2);
+            cursor: pointer; transition: all 0.3s ease; pointer-events: auto;
+            display: flex; align-items: center; justify-content: center;
         }
+        .custom-vehicle-marker:hover { transform: scale(1.2); box-shadow: 0 0 25px rgba(59,130,246,0.8), 0 0 50px rgba(59,130,246,0.3); }
+        .custom-vehicle-marker i { font-size: 14px; color: white; }
+        .rounded-rect { background: #111111; border: 1px solid #1e1e1e; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); color: #666; transition: all 0.3s ease; }
+        .rounded-rect:hover { color: #60a5fa; border-color: #2563eb; background: #1a1a1a; }
+        .flex-center { position: absolute; display: flex; justify-content: center; align-items: center; }
+        .flex-center.left { left: 0; }
+        .flex-center.right { right: 0; }
+        .sidebar-content { position: absolute; width: 95%; height: 95%; }
+        .sidebar-toggle { position: absolute; width: 2em; height: 2em; overflow: visible; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.3s ease; font-size: 16px; font-weight: 300; }
+        .sidebar-toggle.left { right: -2.4em; }
+        .sidebar-toggle.right { left: -2.4em; }
+        .sidebar { transition: transform 0.6s cubic-bezier(0.16,1,0.3,1); z-index: 1; width: 360px; height: 100%; }
+        .left.collapsed { transform: translateX(-300px); }
+        .right.collapsed { transform: translateX(300px); }
+        .modal-backdrop { transition: opacity 0.3s ease; }
+        .modal-content { transition: all 0.35s cubic-bezier(0.16,1,0.3,1); }
+        .modal-backdrop.active { opacity: 1; pointer-events: auto; }
+        .modal-backdrop.active .modal-content { transform: scale(1); opacity: 1; }
+        .header-btn { transition: all 0.3s ease; }
+        .header-btn:hover { background: #1a1a1a !important; border-color: #333 !important; }
+        .maplibregl-ctrl-group { background: #111111 !important; border: 1px solid #1e1e1e !important; border-radius: 14px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important; overflow: hidden; }
+        .maplibregl-ctrl-group button { width: 40px !important; height: 40px !important; border-bottom: 1px solid #1a1a1a !important; transition: background 0.2s ease; }
+        .maplibregl-ctrl-group button:hover { background: #1a1a1a !important; }
+        .maplibregl-ctrl-group button span { filter: invert(1) opacity(0.5); }
+        .maplibregl-ctrl-group button:hover span { filter: invert(1) opacity(0.9); }
+        .line-glow { background: #222; height: 1px; }
+        @keyframes nav-slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .mobile-nav-animate { animation: nav-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both; }
+        @keyframes dot-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .dot-pulse { animation: dot-pulse 2s ease-in-out infinite; }
 
-        .custom-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
+        /* ── Search Dropdown ── */
+        .search-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 9999;
+            display: none;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
         }
-
-        /* Fixed input styles */
-        input {
-            background: rgba(255, 255, 255, 0.08) !important;
+        .search-dropdown.active { display: block; }
+        .search-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            border-bottom: 1px solid #1a1a1a;
         }
+        .search-item:last-child { border-bottom: none; }
+        .search-item:hover,
+        .search-item.highlighted { background: #1a1a1a; }
+        .search-item .result-name { color: #ddd; font-size: 12px; font-weight: 600; }
+        .search-item .result-detail { color: #555; font-size: 10px; margin-top: 2px; }
+        .search-loading { padding: 14px; text-align: center; color: #555; font-size: 11px; }
+        .search-no-results { padding: 14px; text-align: center; color: #444; font-size: 11px; }
 
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
-        }
-
-        input:focus {
-            background: rgba(255, 255, 255, 0.12) !important;
-        }
-
-        /* Fixed button styles */
-        button {
-            color: white;
-        }
-
-        /* Modal styles */
-        #logout-modal {
+        /* ── Mobile Bottom Sheet Modal ── */
+        .mobile-sheet-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+            background: rgba(0,0,0,0.6);
+            opacity: 0;
+            pointer-events: none;
             transition: opacity 0.3s ease;
         }
-
-        /* Custom vehicle marker style */
-        .custom-vehicle-marker {
+        .mobile-sheet-backdrop.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .mobile-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 91;
+            background: #0a0a0a;
+            border-top: 1px solid #1e1e1e;
+            border-radius: 1.5rem 1.5rem 0 0;
+            max-height: 88vh;
+            overflow: hidden;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+        .mobile-sheet.open {
+            transform: translateY(0);
+        }
+        .mobile-sheet-handle {
+            display: flex;
+            justify-content: center;
+            padding: 12px 0 4px;
+            flex-shrink: 0;
+        }
+        .mobile-sheet-handle div {
+            width: 40px;
+            height: 4px;
+            background: #333;
+            border-radius: 9999px;
+        }
+        .mobile-sheet-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 20px 12px;
+            flex-shrink: 0;
+        }
+        .mobile-sheet-close {
             width: 32px;
             height: 32px;
-            background: #3b82f6;
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
+            border-radius: 12px;
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
             cursor: pointer;
-            transition: all 0.3s ease;
-            pointer-events: auto;
+            transition: background 0.2s;
+        }
+        .mobile-sheet-close:hover { background: #222; }
+        .mobile-sheet-body {
+            padding: 0 20px 32px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* ── Mobile FAB Buttons ── */
+        .mobile-fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        .custom-vehicle-marker:hover {
-            transform: scale(1.2);
-            background: #60a5fa;
-        }
-
-        .custom-vehicle-marker i {
-            font-size: 16px;
-            color: white;
-        }
-
-
-        .rounded-rect {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 0 50px -25px black;
-        }
-
-        .flex-center {
-            position: absolute;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .flex-center.left {
-            left: 0px;
-        }
-
-        .flex-center.right {
-            right: 0px;
-        }
-
-        .sidebar-content {
-            position: absolute;
-            width: 95%;
-            height: 95%;
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 32px;
-            color: gray;
-        }
-
-        .sidebar-toggle {
-            position: absolute;
-            width: 1.3em;
-            height: 1.3em;
-            overflow: visible;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .sidebar-toggle.left {
-            right: -1.5em;
-        }
-
-        .sidebar-toggle.right {
-            left: -1.5em;
-        }
-
-        .sidebar-toggle:hover {
-            color: #0aa1cf;
+            border: none;
             cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .mobile-fab:active { transform: scale(0.92); }
+        .mobile-fab-left {
+            background: #2563eb;
+            box-shadow: 0 4px 20px rgba(37,99,235,0.35);
+        }
+        .mobile-fab-right {
+            background: #111;
+            border: 1px solid #1e1e1e;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
 
-        .sidebar {
-            transition: transform 1s;
+        /* ── Tutorial Modal (centered) ── */
+        .tutorial-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 60;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .tutorial-backdrop.open {
+            display: flex;
+        }
+        .tutorial-backdrop-bg {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+        }
+        .tutorial-modal-box {
+            position: relative;
             z-index: 1;
-            width: 350px;
-            height: 100%;
+            width: 340px;
+            max-width: calc(100vw - 2rem);
+            max-height: calc(100vh - 4rem);
+            overflow-y: auto;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 1.5rem;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+            transform: scale(0.95);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
-
-
-
-        /*
-  The sidebar styling has them "expanded" by default, we use CSS transforms to push them offscreen
-  The toggleSidebar() function removes this class from the element in order to expand it.
- */
-        .left.collapsed {
-            transform: translateX(-295px);
-        }
-
-        .right.collapsed {
-            transform: translateX(295px);
+        .tutorial-backdrop.open .tutorial-modal-box {
+            transform: scale(1);
+            opacity: 1;
         }
     </style>
 </head>
 
-<body class="antialiased bg-slate-900">
+<body class="antialiased">
 
     @include('components.flash');
 
-    <header
-        class="fixed top-6 left-6 right-6 z-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pointer-events-none">
-        <div class="glass-panel p-4 rounded-3xl pointer-events-auto flex items-center space-x-4">
-            <div
-                class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/30">
-                <i class="fa-solid fa-bus text-white"></i>
+    <header class="fixed top-4 left-4 right-4 sm:top-5 sm:left-5 sm:right-5 z-50 flex flex-col sm:flex-row justify-between items-center sm:items-center gap-3 pointer-events-none">
+        <div class="glass-panel p-3 sm:p-3.5 rounded-2xl pointer-events-auto flex items-center gap-3">
+            <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-bus text-white text-sm"></i>
             </div>
-            <div>
-                <h1 class="text-white font-bold text-sm">SmartCommute</h1>
-            </div>
-
+            <span class="text-sm font-bold tracking-tight text-white">Smart<span class="text-blue-400">Commute</span></span>
             @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter' && isset($balance))
-                <a href="{{ route('payment.topup') }}">
-                    <div
-                        class="glass-panel p-2 pr-5 rounded-full flex items-center space-x-3 group cursor-pointer hover:bg-white/10 transition-all">
-                        <div
-                            class="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-500/30">
-                            <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
+                <div class="w-px h-6 bg-[#222] mx-1"></div>
+                <a href="{{ route('payment.topup') }}" class="group">
+                    <div class="flex items-center gap-2.5 py-1.5 px-3 rounded-xl hover:bg-[#1a1a1a] transition-all cursor-pointer">
+                        <div class="w-7 h-7 bg-emerald-500/15 rounded-lg flex items-center justify-center border border-emerald-500/20">
+                            <i class="fa-solid fa-wallet text-emerald-400 text-[10px]"></i>
                         </div>
                         <div class="flex flex-col">
-                            <span
-                                class="text-[8px] uppercase tracking-widest text-white/40 font-black leading-none">Balance</span>
-                            <span class="text-white font-bold text-xs">₱{{ $balance }}</span>
+                            <span class="text-[7px] uppercase tracking-[0.15em] text-[#555] font-bold leading-none">Balance</span>
+                            <span class="text-white font-bold text-[11px] leading-tight mt-0.5">₱{{ $balance }}</span>
                         </div>
-                        <div
-                            class="ml-1 w-4 h-4 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-blue-500 transition-colors">
-                            <i class="fa-solid fa-plus text-[8px] text-white"></i>
+                        <div class="w-5 h-5 rounded-md bg-[#1a1a1a] flex items-center justify-center group-hover:bg-blue-600 transition-colors ml-0.5">
+                            <i class="fa-solid fa-plus text-[7px] text-[#666] group-hover:text-white transition"></i>
                         </div>
                     </div>
                 </a>
             @endif
         </div>
-
-        <div class="flex items-center space-x-3 pointer-events-auto z-50">
-            <div
-                class="glass-panel px-4 py-2.5 rounded-full hidden md:flex items-center text-white text-xs font-medium">
-                <i class="fa-solid fa-calendar-day mr-2 opacity-70"></i>
-                <span id="current-date">Loading date...</span>
+        <div class="flex items-center gap-2 pointer-events-auto z-50 flex-wrap">
+            <div class="glass-panel px-3.5 py-2 rounded-xl md:flex items-center gap-2 text-[11px] font-medium">
+                <i class="fa-regular fa-calendar text-[10px] text-[#555]"></i>
+                <span id="current-date" class="text-[#888]">Loading...</span>
             </div>
-
             @if (Auth::user())
                 @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
                     <a href="{{ route('dashboard') }}">
-                        <div
-                            class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold cursor-pointer uppercase tracking-wider hover:bg-red-500/20 transition">
-                            Dashboard
+                        <div class="header-btn glass-panel px-4 py-2 rounded-xl text-white text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-gauge-high text-[9px] text-blue-400"></i> Dashboard
                         </div>
                     </a>
                 @endif
                 @if (Auth::check() && Auth::user()->roles[0]->name === 'admin')
                     <a href="{{ route('admin.dashboard') }}">
-                        <div
-                            class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold cursor-pointer uppercase tracking-wider hover:bg-red-500/20 transition">
-                            Dashboard
+                        <div class="header-btn glass-panel px-4 py-2 rounded-xl text-white text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-[9px] text-purple-400"></i> Admin
                         </div>
                     </a>
                 @endif
-
-                    <a href="{{ route('profile') }}">
-                        <div
-                            class="glass-panel w-10 h-10 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-white/10 transition">
-                            <i class="fa-solid fa-user text-xs"></i>
-                        </div>
-                    </a>
-
-                <div class="flex items-center space-x-3 pointer-events-auto">
-                    <button onclick="toggleLogoutModal()"
-                        class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold uppercase tracking-wider hover:bg-red-500/20 transition">
-                        Logout
-                    </button>
-                </div>
-            @else
-                <a href="{{ route('register') }}">
-                    <div
-                        class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold cursor-pointer uppercase tracking-wider hover:bg-red-500/20 transition">
-                        Sign up
+                <a href="{{ route('profile') }}">
+                    <div class="header-btn glass-panel w-9 h-9 rounded-xl flex items-center justify-center text-white cursor-pointer">
+                        <i class="fa-solid fa-user text-[10px] text-[#666]"></i>
                     </div>
                 </a>
+                <button onclick="toggleLogoutModal()" class="header-btn glass-panel px-4 h-9 py-2 rounded-xl text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 hover:!border-red-500/30 hover:!bg-red-500/10">
+                    <i class="fa-solid fa-right-from-bracket text-[9px] text-red-400"></i>
+                    <span class="sm:inline">Logout</span>
+                </button>
+            @else
+                <a href="{{ route('register') }}">
+                    <div class="header-btn glass-panel px-4 py-2 rounded-xl text-white text-[10px] font-bold cursor-pointer uppercase tracking-wider">Sign up</div>
+                </a>
                 <a href="{{ route('login') }}">
-                    <div
-                        class="glass-panel px-5 py-2.5 rounded-full text-white text-xs font-bold cursor-pointer uppercase tracking-wider hover:bg-red-500/20 transition">
-                        Log in
-                    </div>
+                    <div class="header-btn px-4 py-2 rounded-xl text-black text-[10px] font-bold cursor-pointer uppercase tracking-wider bg-white border border-white hover:bg-gray-200 transition">Log in</div>
                 </a>
             @endif
         </div>
     </header>
 
-    <!-- Logout Modal -->
-    <div id="logout-modal"
-        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div class="glass-panel p-8 rounded-[2.5rem] w-full max-w-sm mx-4 text-center border-white/20 shadow-2xl transform scale-95 transition-transform duration-300"
-            id="modal-content">
-            <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fa-solid fa-right-from-bracket text-red-500 text-xl"></i>
+    <div id="logout-modal" class="modal-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-black/70 opacity-0 pointer-events-none">
+        <div class="modal-content bg-[#111] border border-[#222] p-7 sm:p-8 rounded-[2rem] w-full max-w-[360px] mx-4 text-center transform scale-95 opacity-0 shadow-2xl shadow-black/50">
+            <div class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-red-500/20">
+                <i class="fa-solid fa-right-from-bracket text-red-400 text-lg"></i>
             </div>
-
-            <h3 class="text-xl font-bold text-white mb-2">Sign Out?</h3>
-            <p class="text-sm text-white/60 mb-8">Are you sure you want to log out of SmartCommute?</p>
-
-            <div class="grid gap-3 grid-row-2 grid-col-1">
-                <button onclick="toggleLogoutModal()"
-                    class="flex-1 px-6 py-3 rounded-2xl bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition">
-                    Cancel
-                </button>
-
-                <form action="{{ route('users.logout') }}" method="POST" class="flex-1">
+            <h3 class="text-lg font-bold text-white mb-1.5">Sign Out?</h3>
+            <p class="text-xs text-[#666] mb-7 leading-relaxed">Are you sure you want to log out of SmartCommute?</p>
+            <div class="grid gap-2.5">
+                <button onclick="toggleLogoutModal()" class="px-5 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] transition">Cancel</button>
+                <form action="{{ route('users.logout') }}" method="POST">
                     @csrf
-                    <button type="submit"
-                        class="w-full px-6 py-3 rounded-2xl bg-red-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-600/20 transition">
-                        Logout
-                    </button>
+                    <button type="submit" class="w-full px-5 py-3 rounded-xl bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 transition active:scale-[0.98]">Logout</button>
                 </form>
             </div>
         </div>
     </div>
 
-
-    <div id="limit-modal"
-        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
-        <div class="glass-panel p-8 rounded-[2.5rem] w-full max-w-sm mx-4 text-center border-white/20 shadow-2xl transform scale-95 transition-transform duration-300"
-            id="limit-modal-content">
-
-            <div class="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fa-solid fa-hourglass-end text-amber-500 text-xl"></i>
+    <div id="limit-modal" class="modal-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-black/70 opacity-0 pointer-events-none">
+        <div class="modal-content bg-[#111] border border-[#222] p-7 sm:p-8 rounded-[2rem] w-full max-w-[360px] mx-4 text-center transform scale-95 opacity-0 shadow-2xl shadow-black/50">
+            <div class="w-14 h-14 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-amber-500/20">
+                <i class="fa-solid fa-hourglass-end text-amber-400 text-lg"></i>
             </div>
-
-            <h3 class="text-xl font-bold text-white mb-2">Daily Limit Reached</h3>
-            <p class="text-sm text-white/60 mb-8">Guests are limited to 3 actions per day. Please sign in to continue
-                without limits!</p>
-
-            <div class="grid gap-3 grid-row-2 grid-col-1">
-                <button onclick="toggleLimitModal(false)"
-                    class="flex-1 px-6 py-3 rounded-2xl bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition">
-                    Maybe Later
-                </button>
-
-                <a href="/login"
-                    class="w-full px-6 py-3 rounded-2xl bg-amber-500 text-white text-xs font-bold uppercase tracking-widest hover:bg-amber-600 shadow-lg shadow-amber-500/20 transition inline-block">
-                    Sign In / Register
-                </a>
+            <h3 class="text-lg font-bold text-white mb-1.5">Daily Limit Reached</h3>
+            <p class="text-xs text-[#666] mb-7 leading-relaxed">Guests are limited to 3 actions per day. Sign in to continue without limits.</p>
+            <div class="grid gap-2.5">
+                <button onclick="toggleLimitModal(false)" class="px-5 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] transition">Maybe Later</button>
+                <a href="/login" class="block px-5 py-3 rounded-xl bg-amber-500 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-amber-600 transition text-center active:scale-[0.98]">Sign In / Register</a>
             </div>
         </div>
     </div>
 
-
-    <!-- Mobile Bottom Navigation -->
-    <div class="fixed bottom-6 left-6 right-6 z-50 md:hidden">
-        <div class="glass-panel p-4 rounded-3xl flex justify-around items-center">
-            <i class="fa-solid fa-map-location-dot text-blue-400 text-lg"></i>
-            <i class="fa-solid fa-wallet text-white/60 text-lg"></i>
-            <div
-                class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center -mt-10 shadow-lg shadow-blue-600/40">
-                <i class="fa-solid fa-bus text-white"></i>
-            </div>
-            <i class="fa-solid fa-receipt text-white/60 text-lg"></i>
-            <i class="fa-solid fa-user text-white/60 text-lg"></i>
+    <!-- ══════════ MOBILE FAB BUTTONS (stacked on bottom-right) ══════════ -->
+    @if(Auth::check() && Auth::user()->roles[0]->name === 'commuter' || Auth::guest())
+        <div class="fixed bottom-[8.5rem] left-5 z-50 md:hidden">
+            <button onclick="openMobileSidebar('left')" class="mobile-fab mobile-fab-left">
+                <i class="fa-solid fa-route text-white text-base"></i>
+            </button>
         </div>
+    @endif
+    @if(Auth::check() && Auth::user()->roles[0]->name !== 'admin' || !Auth::check())
+        <div class="fixed bottom-[4.5rem] left-5 z-50 md:hidden">
+            <button onclick="openMobileSidebar('right')" class="mobile-fab mobile-fab-right">
+                <i class="fa-solid fa-ellipsis-vertical text-white text-base"></i>
+            </button>
+        </div>
+    @endif
+
+    <!-- ══════════ MOBILE LEFT SIDEBAR MODAL (Bottom Sheet) ══════════ -->
+    <div id="mobile-left-backdrop" class="mobile-sheet-backdrop md:hidden" onclick="closeMobileSidebar('left')"></div>
+    <div id="mobile-left-sheet" class="mobile-sheet md:hidden">
+        <div class="mobile-sheet-handle"><div></div></div>
+        <div class="mobile-sheet-header">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 bg-blue-500/15 rounded-lg flex items-center justify-center">
+                    <i class="fa-solid fa-money-bill-wave text-blue-400 text-xs"></i>
+                </div>
+                <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#666]">Fare Calculator</h3>
+            </div>
+            <button onclick="closeMobileSidebar('left')" class="mobile-sheet-close">
+                <i class="fa-solid fa-xmark text-[#555] text-xs"></i>
+            </button>
+        </div>
+        <div id="mobile-left-body" class="mobile-sheet-body custom-scroll"></div>
+    </div>
+
+    <!-- ══════════ MOBILE RIGHT SIDEBAR MODAL (Bottom Sheet) ══════════ -->
+    <div id="mobile-right-backdrop" class="mobile-sheet-backdrop md:hidden" onclick="closeMobileSidebar('right')"></div>
+    <div id="mobile-right-sheet" class="mobile-sheet md:hidden">
+        <div class="mobile-sheet-handle"><div></div></div>
+        <div class="mobile-sheet-header">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#666]">Details</h3>
+            <button onclick="closeMobileSidebar('right')" class="mobile-sheet-close">
+                <i class="fa-solid fa-xmark text-[#555] text-xs"></i>
+            </button>
+        </div>
+        <div id="mobile-right-body" class="mobile-sheet-body custom-scroll"></div>
     </div>
 
     <div id="map">
+
+        <!-- LEFT SIDEBAR -->
         <div id="left" class="sidebar flex-center left collapsed">
             <div class="sidebar-content flex-center">
                 @if(Auth::check() && Auth::user()->roles[0]->name === 'commuter' || Auth::guest())
-                    <div class="fixed top-28 left-6 w-80 z-40 hidden md:flex flex-col gap-4 max-h-[calc(100vh-140px)]">
+                    <div id="left-sidebar-anchor"></div>
+                    <div id="left-sidebar-form" class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]">
                         <form action="{{ route('payment.index') }}" method="GET">
-                            {{-- @csrf --}}
-                            <div class="glass-panel p-8 rounded-[2.5rem]"> <!-- Fixed class -->
-                                <h3
-                                    class="text-xs font-bold mb-6 uppercase text-white tracking-widest opacity-80 flex items-center">
-                                    <i class="fa-solid fa-money-bill mr-2 text-blue-400"></i>Fare Price
-                                </h3>
-                                <div id="status-indicator"
-                                    class="hidden mb-4 p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center gap-3">
-                                    <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                                    <span id="status-text"
-                                        class="text-[10px] uppercase tracking-widest text-blue-400 font-bold">
-                                        Selecting Pick-up...
-                                    </span>
+                            <div class="glass-card p-6 rounded-[1.5rem]">
+                                <div class="flex items-center gap-2.5 mb-5">
+                                    <div class="w-8 h-8 bg-blue-500/15 rounded-lg flex items-center justify-center">
+                                        <i class="fa-solid fa-money-bill-wave text-blue-400 text-xs"></i>
+                                    </div>
+                                    <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#666]">Fare Calculator</h3>
                                 </div>
-                                <div class="space-y-4">
+                                <div id="status-indicator" class="hidden mb-4 p-3 rounded-xl bg-blue-500/8 border border-blue-500/20 flex items-center gap-2.5">
+                                    <div class="w-2 h-2 rounded-full bg-blue-500 dot-pulse"></div>
+                                    <span id="status-text" class="text-[9px] uppercase tracking-[0.15em] text-blue-400 font-bold">Selecting Pick-up...</span>
+                                </div>
+                                <div class="space-y-3">
+                                    <!-- Pickup with search -->
                                     <div class="flex gap-2 items-center">
-                                        <button type="button" onclick="toggleSelection('pickup')"
-                                            class="flex items-center justify-center w-11 h-11 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 p-3 rounded-2xl border border-blue-500/30 transition">
+                                        <button type="button" onclick="handlePickupBtn()" class="flex items-center justify-center w-10 h-10 bg-blue-500/10 hover:bg-blue-500/20 p-2.5 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition shrink-0">
                                             <i class="fa-solid fa-circle-dot text-xs text-blue-400"></i>
                                         </button>
                                         <div class="relative flex-1">
-                                            <input type="text" placeholder="Pick-up point" name="pickup" id="pickup"
-                                                class="w-full bg-white/10 border border-white/20 rounded-2xl pl-4 pr-4 py-3 text-xs text-white outline-none">
+                                            <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                                <i class="fa-solid fa-magnifying-glass text-[10px] text-[#444]"></i>
+                                            </div>
+                                            <input type="text" placeholder="Search pick-up point" name="pickup" id="pickup"
+                                                autocomplete="off"
+                                                class="map-input w-full rounded-xl pl-9 pr-4 py-2.5 text-xs text-white">
+                                            <div id="pickup-dropdown" class="search-dropdown"></div>
                                         </div>
                                     </div>
 
+                                    <!-- Destination with search -->
                                     <div class="flex gap-2 items-center">
-                                        <button type="button" onclick="toggleSelection('destination')"
-                                            class="flex items-center justify-center w-11 h-11 bg-red-500/20 hover:bg-red-500/40 text-red-400 p-3 rounded-2xl border border-red-500/30 transition">
-                                            <i class="fa-solid fa-location-dot  text-xs text-red-400"></i>
+                                        <button type="button" onclick="handleDestinationBtn()" class="flex items-center justify-center w-10 h-10 bg-red-500/10 hover:bg-red-500/20 p-2.5 rounded-xl border border-red-500/20 hover:border-red-500/40 transition shrink-0">
+                                            <i class="fa-solid fa-location-dot text-xs text-red-400"></i>
                                         </button>
                                         <div class="relative flex-1">
-                                            <input type="text" placeholder="Destination" name="destination" id="destination"
-                                                class="w-full bg-white/10 border border-white/20 rounded-2xl pl-4 pr-4 py-3 text-xs text-white outline-none">
-                                        </div>
-                                    </div>
-                                    <h3
-                                        class="text-xs font-bold mb-2 uppercase tracking-widest text-white/80 justify-center flex items-center">
-                                        Distance
-                                    </h3>
-                                    <div class="flex gap-2 items-center pb-2">
-                                        <input type="text" readonly name="distance" id="distance"
-                                            class="w-full bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-xs text-white text-center"
-                                            value="0">
-                                        <span class="text-xs font-bold uppercase tracking-widest text-white/70">KM</span>
-                                    </div>
-                                    <span
-                                        class="justify-center text-xs font-bold uppercase tracking-widest text-white/70 ">Regular</span>
-                                    <div class="space-y-3">
-                                        <div class="flex gap-2 items-center pb-2">
-                                            <div class="relative flex-1">
-                                                <i
-                                                    class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-70 text-white/60"></i>
-                                                <input type="text" readonly name="price-regular" id="price-regular"
-                                                    class="w-full bg-white/10 border border-white/20 rounded-2xl pl-8 pr-4 py-3 text-xs text-white text-center"
-                                                    value="0">
+                                            <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                                <i class="fa-solid fa-magnifying-glass text-[10px] text-[#444]"></i>
                                             </div>
-                                        </div>
-                                        <span
-                                            class="justify-center text-xs font-bold uppercase tracking-widest text-white/70">Student/Elderly/Disabled</span>
-                                        <div class="flex gap-2 items-center">
-                                            <div class="relative flex-1">
-                                                <i
-                                                    class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-xs opacity-70 text-white/60"></i>
-                                                <input type="text" readonly name="price-discount" id="price-discount"
-                                                    class="w-full bg-white/10 border border-white/20 rounded-2xl pl-8 pr-4 py-3 text-xs text-white text-center"
-                                                    value="0">
-                                            </div>
+                                            <input type="text" placeholder="Search destination" name="destination" id="destination"
+                                                autocomplete="off"
+                                                class="map-input w-full rounded-xl pl-9 pr-4 py-2.5 text-xs text-white">
+                                            <div id="destination-dropdown" class="search-dropdown"></div>
                                         </div>
                                     </div>
-                                    <button type="button" onclick="resetForm()"
-                                        class="mt-2 flex items-center justify-center gap-2 w-full bg-white/5 hover:bg-red-500/20 text-white/70 hover:text-red-400 font-bold py-3 px-6 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all duration-300 border border-white/10 hover:border-red-500/30">
-                                        <i class="fa-solid fa-rotate-left"></i>
-                                        <span>Reset Route</span>
+
+                                    <div class="line-glow w-full my-1"></div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444]">Distance</span>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="text" readonly name="distance" id="distance" class="map-input w-20 text-center rounded-lg px-3 py-2 text-xs text-white font-semibold" value="0">
+                                            <span class="text-[10px] font-bold text-[#444] uppercase">km</span>
+                                        </div>
+                                    </div>
+                                    <div class="bg-[#111] rounded-xl p-3 border border-[#1e1e1e]">
+                                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-2">Regular</span>
+                                        <div class="relative flex-1">
+                                            <i class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#555]"></i>
+                                            <input type="text" readonly name="price-regular" id="price-regular" class="map-input w-full rounded-lg pl-7 pr-3 py-2 text-xs text-white text-center font-semibold" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="bg-[#111] rounded-xl p-3 border border-[#1e1e1e]">
+                                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-2">Student / Elderly / PWD</span>
+                                        <div class="relative flex-1">
+                                            <i class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#555]"></i>
+                                            <input type="text" readonly name="price-discount" id="price-discount" class="map-input w-full rounded-lg pl-7 pr-3 py-2 text-xs text-white text-center font-semibold" value="0">
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="resetForm()" class="flex items-center justify-center gap-2 w-full bg-[#111] hover:bg-red-500/10 text-[#555] hover:text-red-400 font-bold py-2.5 px-4 rounded-xl text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border border-[#1e1e1e] hover:border-red-500/20">
+                                        <i class="fa-solid fa-rotate-left text-[8px]"></i> <span>Reset Route</span>
                                     </button>
-                                    <button
-                                        class="mt-6 flex items-center justify-center gap-2 w-full bg-gradient-to-r
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                py-4 px-6 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all duration-300
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                shadow-lg shadow-blue-500/20 active:scale-[0.98]"
-                                        type="submit">
-                                        <span>Buy a ride</span>
-                                        <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                    <button class="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-5 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-all duration-300 active:scale-[0.98]" type="submit">
+                                        <span>Buy a Ride</span> <i class="fa-solid fa-arrow-right text-[9px]"></i>
                                     </button>
                                 </div>
                             </div>
                         </form>
                     </div>
-                    <div class="sidebar-toggle rounded-rect left" onclick="toggleSidebar('left')">
-
-                        &rarr;
-
+                    <!-- Arrow button: hidden on mobile, visible on md+ -->
+                    <div class="sidebar-toggle rounded-rect left hidden md:flex" onclick="toggleSidebar('left')">
+                        <i class="fa-solid fa-chevron-right text-base"></i>
                     </div>
                 @endif
             </div>
-
         </div>
 
+        <!-- RIGHT SIDEBAR -->
         <div id="right" class="sidebar flex-center right collapsed">
-
             <div class="sidebar-content flex-center">
-                <div class="fixed top-28 right-6 w-80 z-40 hidden lg:flex flex-col gap-4 max-h-[calc(100vh-140px)]">
+                <div id="right-sidebar-anchor"></div>
+                <div id="right-sidebar-content" class="fixed top-24 right-4 sm:right-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]">
+
                     @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter')
-                        {{-- Trigger Button --}}
-                        <button onclick="openTutorialModal()" class="glass-panel p-5 rounded-3xl flex items-center space-x-4 border-yellow-500/30 group
-                                                            hover:bg-yellow-500/10 transition w-full text-left">
-                            <div class="w-10 h-10 bg-yellow-500/30 rounded-xl flex items-center justify-center
-                                                                    group-hover:rotate-12 transition">
-                                <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i>
+                        <button onclick="openTutorialModal()" class="glass-card p-4 rounded-xl flex items-center gap-3 group hover:border-yellow-500/20 transition w-full text-left">
+                            <div class="w-9 h-9 bg-yellow-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition border border-yellow-500/15">
+                                <i class="fa-solid fa-wand-magic-sparkles text-yellow-400 text-xs"></i>
                             </div>
                             <div>
-                                <p class="text-xs font-bold text-white">App Tutorial</p>
-                                <p class="text-[9px] text-white/50 uppercase tracking-wider font-bold">New user? Start here
-                                </p>
+                                <p class="text-[11px] font-bold text-white">App Tutorial</p>
+                                <p class="text-[8px] text-[#444] uppercase tracking-wider font-bold">New user? Start here</p>
                             </div>
+                            <i class="fa-solid fa-chevron-right text-[8px] text-[#333] ml-auto group-hover:text-yellow-400 transition"></i>
                         </button>
 
-                        {{-- Modal Backdrop --}}
-                        <div id="tutorialModalBackdrop" class="fixed inset-0 z-50 hidden" onclick="closeTutorialModal()">
-                            <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-                        </div>
-
-                        {{-- Modal Panel — Top Right Corner --}}
-                        <div id="tutorialModal" class="fixed top-28 right-4 z-50 hidden w-[340px] max-h-[calc(100vh-2rem)] overflow-y-auto
-                                                                rounded-[1.5rem] border border-white/10 shadow-2xl shadow-black/40
-                                                                transition-all duration-300 opacity-0 translate-y-2"
-                            style="background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px);">
-
-                            {{-- Header --}}
-                            <div class="flex items-center justify-between p-5 pb-0">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 bg-yellow-500/20 rounded-xl flex items-center justify-center">
-                                        <i class="fa-solid fa-wand-magic-sparkles text-yellow-500 text-sm"></i>
+                        <!-- ══════════ TUTORIAL MODAL (centered) ══════════ -->
+                        <div id="tutorialModalBackdrop" class="tutorial-backdrop" onclick="closeTutorialModal()">
+                            <div class="tutorial-backdrop-bg"></div>
+                            <div class="tutorial-modal-box" onclick="event.stopPropagation()">
+                                <div class="flex items-center justify-between p-5 pb-0">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-8 h-8 bg-yellow-500/10 rounded-lg flex items-center justify-center">
+                                            <i class="fa-solid fa-wand-magic-sparkles text-yellow-400 text-xs"></i>
+                                        </div>
+                                        <div>
+                                            <h2 class="text-xs font-bold text-white leading-tight">Quick Start Guide</h2>
+                                            <p class="text-[8px] text-[#444] uppercase tracking-wider font-bold">4 easy steps</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h2 class="text-sm font-bold text-white leading-tight">App Tutorial</h2>
-                                        <p class="text-[9px] text-white/50 uppercase tracking-wider font-bold">Quick start
-                                            guide</p>
-                                    </div>
+                                    <button onclick="closeTutorialModal()" class="w-7 h-7 rounded-lg bg-[#1a1a1a] hover:bg-[#222] flex items-center justify-center transition">
+                                        <i class="fa-solid fa-xmark text-[#555] text-[10px]"></i>
+                                    </button>
                                 </div>
-                                <button onclick="closeTutorialModal()"
-                                    class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition">
-                                    <i class="fa-solid fa-xmark text-white/60 text-xs"></i>
-                                </button>
-                            </div>
-
-                            <div class="p-5">
-                                <p class="text-white/50 text-[11px] mb-5 leading-relaxed">
-                                    New to SmartCommute? Follow these steps to get started.
-                                </p>
-
-                                {{-- Steps --}}
-                                <div class="space-y-4">
-                                    {{-- Step 1 --}}
-                                    <div class="flex gap-3 group/step">
-                                        <span
-                                            class="w-7 h-7 rounded-full bg-blue-600/30 flex items-center justify-center text-blue-400 text-[10px] font-bold shrink-0 mt-0.5">1</span>
-                                        <div>
-                                            <h3 class="font-bold text-[12px] mb-0.5 text-white">Enter Your Location</h3>
-                                            <p class="text-white/50 text-[10px] leading-relaxed">Type your starting point or
-                                                click the crosshairs icon to use your current GPS location.</p>
-                                        </div>
-                                    </div>
-                                    {{-- Step 2 --}}
-                                    <div class="flex gap-3 group/step">
-                                        <span
-                                            class="w-7 h-7 rounded-full bg-blue-600/30 flex items-center justify-center text-blue-400 text-[10px] font-bold shrink-0 mt-0.5">2</span>
-                                        <div>
-                                            <h3 class="font-bold text-[12px] mb-0.5 text-white">Enter Destination</h3>
-                                            <p class="text-white/50 text-[10px] leading-relaxed">Type where you want to go
-                                                (e.g., "Ayala, Cebu" or "SM City").</p>
-                                        </div>
-                                    </div>
-                                    {{-- Step 3 --}}
-                                    <div class="flex gap-3 group/step">
-                                        <span
-                                            class="w-7 h-7 rounded-full bg-blue-600/30 flex items-center justify-center text-blue-400 text-[10px] font-bold shrink-0 mt-0.5">3</span>
-                                        <div>
-                                            <h3 class="font-bold text-[12px] mb-0.5 text-white">Calculate Fare</h3>
-                                            <p class="text-white/50 text-[10px] leading-relaxed">Click "Calculate Fare" to
-                                                see the estimated cost and travel time. Fare is automatically deducted from
-                                                your Digital Wallet.</p>
-                                        </div>
-                                    </div>
-                                    {{-- Step 4 --}}
-                                    <div class="flex gap-3 group/step">
-                                        <span
-                                            class="w-7 h-7 rounded-full bg-blue-600/30 flex items-center justify-center text-blue-400 text-[10px] font-bold shrink-0 mt-0.5">4</span>
-                                        <div>
-                                            <h3 class="font-bold text-[12px] mb-0.5 text-white">View History</h3>
-                                            <p class="text-white/50 text-[10px] leading-relaxed">Check "Recent Receipts" or
-                                                "History" to see past trips and spending.</p>
-                                        </div>
-                                    </div>
+                                <div class="p-5 space-y-4">
+                                    <div class="flex gap-3"><span class="w-6 h-6 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400 text-[9px] font-bold shrink-0 mt-0.5 border border-blue-500/20">1</span><div><h3 class="font-bold text-[11px] mb-0.5 text-white">Search Your Location</h3><p class="text-[#555] text-[10px] leading-relaxed">Type your starting point in the pick-up field.</p></div></div>
+                                    <div class="flex gap-3"><span class="w-6 h-6 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400 text-[9px] font-bold shrink-0 mt-0.5 border border-blue-500/20">2</span><div><h3 class="font-bold text-[11px] mb-0.5 text-white">Search Destination</h3><p class="text-[#555] text-[10px] leading-relaxed">Type where you want to go in the destination field.</p></div></div>
+                                    <div class="flex gap-3"><span class="w-6 h-6 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400 text-[9px] font-bold shrink-0 mt-0.5 border border-blue-500/20">3</span><div><h3 class="font-bold text-[11px] mb-0.5 text-white">Buy a Ride</h3><p class="text-[#555] text-[10px] leading-relaxed">Review the fare and proceed to payment.</p></div></div>
+                                    <div class="flex gap-3"><span class="w-6 h-6 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-400 text-[9px] font-bold shrink-0 mt-0.5 border border-blue-500/20">4</span><div><h3 class="font-bold text-[11px] mb-0.5 text-white">View History</h3><p class="text-[#555] text-[10px] leading-relaxed">Check "Recent Receipts" for past trips.</p></div></div>
+                                    <button onclick="closeTutorialModal()" class="mt-2 block w-full text-center text-[#333] hover:text-[#555] text-[9px] font-semibold uppercase tracking-wider transition">Dismiss</button>
                                 </div>
-
-                                {{-- CTA --}}
-
-
-                                {{-- Dismiss link --}}
-                                <button onclick="closeTutorialModal()"
-                                    class="mt-3 block w-full text-center text-white/30 hover:text-white/50 text-[10px] font-semibold uppercase tracking-wider transition">
-                                    Dismiss
-                                </button>
                             </div>
                         </div>
-                    @endif
 
-                    @if (!Auth::check())
-                        <div class="glass-panel p-8 rounded-[2.5rem] mt-6">
-                            <h3
-                                class="text-xs font-bold mb-6 uppercase text-white tracking-widest opacity-80 flex items-center">
-                                <i class="fa-solid fa-bolt mr-2 text-amber-400"></i>Daily Usage
-                            </h3>
-
-                            <div class="space-y-4">
-                                <div class="flex justify-between items-end mb-1">
-                                    <span class="text-[10px] font-bold uppercase tracking-widest text-white/60">Limit
-                                        Status</span>
-                                    <span id="usage-text" class="text-xs font-bold text-white tracking-widest">0 / 3</span>
+                        <div class="glass-card p-5 rounded-[1.5rem] flex flex-col overflow-hidden">
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 bg-[#1a1a1a] rounded-md flex items-center justify-center"><i class="fa-solid fa-receipt text-[9px] text-[#555]"></i></div>
+                                    <h3 class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Recent Receipts</h3>
                                 </div>
-
-                                <div
-                                    class="w-full bg-white/10 border border-white/20 rounded-full h-3 overflow-hidden p-[2px]">
-                                    <div id="usage-bar"
-                                        class="h-full bg-gradient-to-r from-amber-500 to-orange-400 rounded-full transition-all duration-500"
-                                        style="width: 0%"></div>
-                                </div>
-
-                                <p class="text-[9px] uppercase tracking-[0.15em] text-white/40 text-center mt-2">
-                                    Guests get 3 free fare checks per day
-                                </p>
+                                <a href="{{ route('payment.history') }}" class="text-[9px] font-bold text-blue-400 hover:text-blue-300 transition">View All</a>
                             </div>
-                        </div>
-                    @endif
-
-                    @if(Auth::check() && Auth::user()->roles[0]->name === 'commuter')
-
-                        @if (Auth::user())
-
-                            <div class="glass-panel p-6 rounded-[2.5rem] flex flex-col overflow-hidden">
-                                <div class="flex justify-between items-center mb-6">
-                                    <h3 class="text-[10px] font-black uppercase tracking-widest text-white/60">Recent Receipts
-                                    </h3>
-                                    <a href="{{ route('payment.history') }}"
-                                        class="text-[10px] font-bold text-blue-400 hover:underline">
-                                        History
-                                    </a>
-                                    {{-- <button class="text-[10px] font-bold text-blue-400 hover:underline">History</button>
-                                    --}}
-                                </div>
-                                <div class="space-y-4 custom-scroll overflow-y-auto pr-2">
-                                    @if (isset($recentReceipts) && count($recentReceipts) > 0)
-                                        @foreach ($recentReceipts as $receipt)
-                                            <div class="flex items-center justify-between group">
-                                                <div class="flex items-center space-x-3">
-                                                    <div
-                                                        class="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center border border-white/10 group-hover:border-blue-500/30 transition">
-                                                        <i
-                                                            class="fa-solid fa-receipt text-[10px] text-white/60 group-hover:text-blue-400"></i>
-                                                    </div>
-                                                    <div>
-                                                        <p class="text-[11px] font-bold text-white">{{ $receipt->transaction_id }}</p>
-                                                        <p class="text-[9px] text-white/40">Paid At: {{ $receipt->paid_at }}</p>
-                                                    </div>
+                            <div class="space-y-2.5 custom-scroll overflow-y-auto pr-1 max-h-[280px]">
+                                @if (isset($recentReceipts) && count($recentReceipts) > 0)
+                                    @foreach ($recentReceipts as $receipt)
+                                        <div class="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#1a1a1a] transition group cursor-default">
+                                            <div class="flex items-center gap-2.5">
+                                                <div class="w-8 h-8 bg-[#111] rounded-lg flex items-center justify-center border border-[#1e1e1e] group-hover:border-blue-500/20 transition"><i class="fa-solid fa-receipt text-[9px] text-[#444] group-hover:text-blue-400 transition"></i></div>
+                                                <div>
+                                                    <p class="text-[10px] font-semibold text-[#ccc]">{{ $receipt->transaction_id }}</p>
+                                                    <p class="text-[8px] text-[#444] mt-0.5">{{ $receipt->paid_at }}</p>
                                                 </div>
-                                                <span class="text-xs font-bold text-green-400">-₱{{ $receipt->price }}</span>
                                             </div>
-                                        @endforeach
-                                    @else
-                                        <div
-                                            class="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-white/5 rounded-xl">
-                                            <div class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-3">
-                                                <i class="fa-solid fa-file-invoice text-white/20 text-lg"></i>
-                                            </div>
-                                            <p class="text-[11px] font-medium text-white/50 text-center">No receipts found</p>
-                                            <p class="text-[9px] text-white/30 text-center mt-1">New transactions will appear here.
-                                            </p>
+                                            <span class="text-[11px] font-bold text-emerald-400">-₱{{ $receipt->price }}</span>
                                         </div>
-                                    @endif
-                                </div>
-                            </div>
-                        @endif
-                    @endif
-                    @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
-
-                        <div
-                            class="glass-panel p-6 rounded-[2rem] bg-gradient-to-br from-green-600/30 to-transparent border-green-500/30">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">Active Trip
-                                    </p>
-                                    <h2 class="text-lg font-bold text-white">Current Route</h2>
-                                </div>
-                                <i class="fa-solid fa-route text-blue-400 opacity-80"></i>
-                            </div>
-                            <div id="live-location-info" class="text-xs text-white/80 space-y-1 mb-6">
-                                <div class="flex justify-between">
-                                    <span><i class="fa-solid fa-location-dot text-green-400 mr-1"></i> Starting
-                                        Point:</span>
-                                    <span class="font-mono">Minglanilla</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span><i class="fa-solid fa-location-dot text-blue-400 mr-1"></i> Destination:</span>
-                                    <span
-                                        class="font-mono"">IT Park</span>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <div class="
-                                        flex justify-between items-start mb-4">
-                                        <div>
-                                            <p class="text-[9px] uppercase tracking-widest text-white/60 font-bold mb-1">
-                                                Live
-                                                Vehicle Status</p>
-                                            <h2 class="text-lg font-bold text-white">GPS Tracking</h2>
-                                        </div>
-                                        <i class="fa-solid fa-satellite-dish text-green-400 opacity-80"></i>
-                                </div>
-
-                                <div id="gps-status" class="tracking-controls-panel text-center">
-                                    <div class="flex items-center justify-center space-x-2 mb-3">
-                                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" id="gps-indicator">
-                                        </div>
-                                        <span class="text-xs text-white/70" id="gps-status-text">GPS: Not active</span>
+                                    @endforeach
+                                @else
+                                    <div class="flex flex-col items-center justify-center py-8 px-4 border border-dashed border-[#222] rounded-xl">
+                                        <div class="w-10 h-10 bg-[#111] rounded-full flex items-center justify-center mb-3"><i class="fa-solid fa-file-invoice text-[#333] text-sm"></i></div>
+                                        <p class="text-[10px] font-medium text-[#444] text-center">No receipts yet</p>
+                                        <p class="text-[8px] text-[#333] text-center mt-1">New trips will appear here</p>
                                     </div>
-                                    <div id="live-location-info" class="text-xs text-white/80 space-y-1">
-                                        <div class="flex justify-between">
-                                            <span><i class="fa-solid fa-location-dot text-green-400 mr-1"></i>
-                                                Position:</span>
-                                            <span class="font-mono" id="current-coords">--, --</span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span><i class="fa-solid fa-gauge-high text-blue-400 mr-1"></i> Accuracy:</span>
-                                            <span id="current-accuracy">-- m</span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span><i class="fa-regular fa-clock text-yellow-400 mr-1"></i> Updated:</span>
-                                            <span id="update-time">--:--:--</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Vehicle Tracking Info Panel -->
-
-                                <div class="mt-3 text-[10px] text-white/40 text-center">
-                                    <i class="fa-solid fa-map-marker-alt"></i> Click the GPS button (📍) on the map to track
-                                    your location
-                                </div>
+                                @endif
                             </div>
-                    @endif
-                    </div>
-
-                    @if (Auth::check() && Auth::user()->roles[0]->name !== 'admin')
-
-                        <div class="sidebar-toggle rounded-rect right" onclick="toggleSidebar('right')">
-
-                            &larr;
-
                         </div>
                     @endif
 
                     @if (!Auth::check())
+                        <div class="glass-card p-5 rounded-[1.5rem]">
+                            <div class="flex items-center gap-2.5 mb-4">
+                                <div class="w-8 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center"><i class="fa-solid fa-bolt text-amber-400 text-xs"></i></div>
+                                <h3 class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Daily Usage</h3>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-end">
+                                    <span class="text-[9px] font-bold uppercase tracking-widest text-[#444]">Limit</span>
+                                    <span id="usage-text" class="text-[11px] font-bold text-[#aaa] tracking-wider">0 / 3</span>
+                                </div>
+                                <div class="w-full bg-[#0e0e0e] border border-[#1e1e1e] rounded-full h-2 overflow-hidden p-[1px]">
+                                    <div id="usage-bar" class="h-full bg-gradient-to-r from-amber-500 to-orange-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                                <p class="text-[8px] uppercase tracking-[0.12em] text-[#333] text-center">Guests get 3 free fare checks per day</p>
+                            </div>
+                        </div>
+                    @endif
 
-                        <div class="sidebar-toggle rounded-rect right" onclick="toggleSidebar('right')">
-
-                            &larr;
-
+                    @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
+                        <div class="glass-card p-5 rounded-[1.5rem] border-green-500/15">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <p class="text-[8px] uppercase tracking-[0.15em] text-[#444] font-bold mb-0.5">Active Trip</p>
+                                    <h2 class="text-sm font-bold text-white">Current Route</h2>
+                                </div>
+                                <div class="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center border border-green-500/15"><i class="fa-solid fa-route text-green-400 text-xs"></i></div>
+                            </div>
+                            <div id="live-location-info" class="text-[11px] text-[#777] space-y-2 mb-5">
+                                <div class="flex justify-between items-center"><span class="flex items-center gap-1.5"><i class="fa-solid fa-circle-dot text-green-400 text-[8px]"></i> Start</span><span class="font-mono text-[#aaa] text-[10px]">Minglanilla</span></div>
+                                <div class="flex justify-between items-center"><span class="flex items-center gap-1.5"><i class="fa-solid fa-location-dot text-red-400 text-[8px]"></i> End</span><span class="font-mono text-[#aaa] text-[10px]">IT Park</span></div>
+                            </div>
+                            <div class="line-glow w-full mb-4"></div>
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <p class="text-[8px] uppercase tracking-[0.15em] text-[#444] font-bold mb-0.5">Live Status</p>
+                                    <h2 class="text-sm font-bold text-white">GPS Tracking</h2>
+                                </div>
+                                <div class="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center border border-blue-500/15"><i class="fa-solid fa-satellite-dish text-blue-400 text-xs"></i></div>
+                            </div>
+                            <div id="gps-status" class="tracking-controls-panel text-center">
+                                <div class="flex items-center justify-center gap-2 mb-3">
+                                    <div class="w-2 h-2 bg-[#555] rounded-full dot-pulse" id="gps-indicator"></div>
+                                    <span class="text-[10px] text-[#555]" id="gps-status-text">GPS: Not active</span>
+                                </div>
+                                <div id="live-location-info" class="text-[10px] text-[#555] space-y-1.5">
+                                    <div class="flex justify-between"><span><i class="fa-solid fa-location-dot text-green-400 mr-1 text-[8px]"></i> Position</span><span class="font-mono" id="current-coords">--, --</span></div>
+                                    <div class="flex justify-between"><span><i class="fa-solid fa-gauge-high text-blue-400 mr-1 text-[8px]"></i> Accuracy</span><span id="current-accuracy">-- m</span></div>
+                                    <div class="flex justify-between"><span><i class="fa-regular fa-clock text-yellow-400 mr-1 text-[8px]"></i> Updated</span><span id="update-time">--:--:--</span></div>
+                                </div>
+                            </div>
+                            <p class="mt-4 text-[8px] text-[#333] text-center"><i class="fa-solid fa-map-pin mr-0.5"></i> Tap the GPS button on the map to begin tracking</p>
                         </div>
                     @endif
 
                 </div>
 
+                @if (Auth::check() && Auth::user()->roles[0]->name !== 'admin')
+                    <!-- Arrow button: hidden on mobile, visible on lg+ -->
+                    <div class="sidebar-toggle rounded-rect right hidden md:flex" onclick="toggleSidebar('right')"><i class="fa-solid fa-chevron-left text-base"></i></div>
+                @endif
+                @if (!Auth::check())
+                    <div class="sidebar-toggle rounded-rect right hidden md:flex" onclick="toggleSidebar('right')"><i class="fa-solid fa-chevron-left text-base"></i></div>
+                @endif
+
             </div>
         </div>
 
+        <!-- ═══════════════ MOBILE SIDEBAR MODAL LOGIC ═══════════════ -->
+        <script>
+            window._leftMobileOpen = false;
+            window._rightMobileOpen = false;
+
+            var LEFT_DESKTOP_CLASSES = 'fixed top-24 left-4 sm:left-5 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]';
+            var LEFT_MOBILE_CLASSES = 'flex flex-col gap-3 w-full';
+            var RIGHT_DESKTOP_CLASSES = 'fixed top-24 right-4 sm:right-5 w-[340px] z-40 hidden lg:flex flex-col gap-3 max-h-[calc(100vh-120px)]';
+            var RIGHT_MOBILE_CLASSES = 'flex flex-col gap-3 w-full';
+
+            function openMobileSidebar(type) {
+                if (type === 'left') {
+                    var el = document.getElementById('left-sidebar-form');
+                    if (!el) return;
+                    document.getElementById('mobile-left-body').appendChild(el);
+                    el.className = LEFT_MOBILE_CLASSES;
+                    window._leftMobileOpen = true;
+
+                    var backdrop = document.getElementById('mobile-left-backdrop');
+                    var sheet = document.getElementById('mobile-left-sheet');
+                    backdrop.style.display = 'block';
+                    requestAnimationFrame(function() {
+                        backdrop.classList.add('visible');
+                        sheet.classList.add('open');
+                    });
+                } else if (type === 'right') {
+                    var el = document.getElementById('right-sidebar-content');
+                    if (!el) return;
+                    document.getElementById('mobile-right-body').appendChild(el);
+                    el.className = RIGHT_MOBILE_CLASSES;
+                    window._rightMobileOpen = true;
+
+                    var backdrop = document.getElementById('mobile-right-backdrop');
+                    var sheet = document.getElementById('mobile-right-sheet');
+                    backdrop.style.display = 'block';
+                    requestAnimationFrame(function() {
+                        backdrop.classList.add('visible');
+                        sheet.classList.add('open');
+                    });
+                }
+            }
+
+            function closeMobileSidebar(type) {
+                if (type === 'left') {
+                    var el = document.getElementById('left-sidebar-form');
+                    if (el && window._leftMobileOpen) {
+                        document.getElementById('left-sidebar-anchor').after(el);
+                        el.className = LEFT_DESKTOP_CLASSES;
+                        window._leftMobileOpen = false;
+                    }
+
+                    var backdrop = document.getElementById('mobile-left-backdrop');
+                    var sheet = document.getElementById('mobile-left-sheet');
+                    sheet.classList.remove('open');
+                    backdrop.classList.remove('visible');
+                    setTimeout(function() { backdrop.style.display = 'none'; }, 350);
+                } else if (type === 'right') {
+                    var el = document.getElementById('right-sidebar-content');
+                    if (el && window._rightMobileOpen) {
+                        document.getElementById('right-sidebar-anchor').after(el);
+                        el.className = RIGHT_DESKTOP_CLASSES;
+                        window._rightMobileOpen = false;
+                    }
+
+                    var backdrop = document.getElementById('mobile-right-backdrop');
+                    var sheet = document.getElementById('mobile-right-sheet');
+                    sheet.classList.remove('open');
+                    backdrop.classList.remove('visible');
+                    setTimeout(function() { backdrop.style.display = 'none'; }, 350);
+                }
+            }
+
+            function handlePickupBtn() {
+                if (window.innerWidth < 768 && window._leftMobileOpen) {
+                    closeMobileSidebar('left');
+                }
+                if (typeof toggleSelection === 'function') toggleSelection('pickup');
+            }
+
+            function handleDestinationBtn() {
+                if (window.innerWidth < 768 && window._leftMobileOpen) {
+                    closeMobileSidebar('left');
+                }
+                if (typeof toggleSelection === 'function') toggleSelection('destination');
+            }
+
+            function onMapLocationSelected() {
+                if (window.innerWidth < 768) {
+                    setTimeout(function() {
+                        openMobileSidebar('left');
+                    }, 300);
+                }
+            }
+        </script>
+
+        <!-- ═══════════════ MAP SCRIPT ═══════════════ -->
         <script type="module">
             const userRole = @json(Auth::user())?.roles[0]?.name ?? 'guest';
             const userId = @json(Auth::user())?.id ?? null;
-
-            import MapLibreGlDirections from 'https://esm.sh/@maplibre/maplibre-gl-directions';
-
             const pusherKey = '{{ env("PUSHER_APP_KEY") }}';
             const pusherCluster = '{{ env("PUSHER_APP_CLUSER") }}';
-
             const DAILY_LIMIT = 3;
 
             window.Pusher = Pusher;
-            window.Echo = new Echo({
-                broadcaster: 'pusher',
-                key: pusherKey,
-                cluster: pusherCluster,
-                forceTLS: true
-            });
+            window.Echo = new Echo({ broadcaster: 'pusher', key: pusherKey, cluster: pusherCluster, forceTLS: true });
 
-
-
-            maplibregl.setRTLTextPlugin(
-                'https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js'
-            );
+            maplibregl.setRTLTextPlugin('https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js');
 
             const bounds = [
                 [123.77516124821591, 10.229235293025951],
                 [123.91768276426876, 10.332535160307074]
             ];
-
-            const viewbox = "123.77516124821591,10.332535160307074,123.91768276426876,10.229235293025951";
 
             const map = new maplibregl.Map({
                 container: 'map',
@@ -819,1202 +753,655 @@
                 maxBounds: bounds
             });
 
-            function toggleSidebar(id) {
-                const elem = document.getElementById(id);
-                const classes = elem.className.split(' ');
-                const collapsed = classes.indexOf('collapsed') !== -1;
+            // ═══════════════ NAV CONTROLS ═══════════════
+            map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
 
-                const padding = {};
+            // ═══════════════ MAP STATE ═══════════════
+            let userLat = null;
+            let userLng = null;
+            let vehicleLat = null;
+            let vehicleLng = null;
+            let selectionMode = null;
+            let pickupMarker = null;
+            let destinationMarker = null;
+            let guestUsage = parseInt(localStorage.getItem('guestUsage') || '0');
 
-                if (collapsed) {
-                    classes.splice(classes.indexOf('collapsed'), 1);
-
-                    padding[id] = 300;
-                    map.easeTo({
-                        padding,
-                        duration: 1000
-                    });
-                } else {
-                    padding[id] = 0;
-                    classes.push('collapsed');
-
-                    map.easeTo({
-                        padding,
-                        duration: 1000
-                    });
-                }
-                elem.className = classes.join(' ');
+            // ═══════════════ DATE DISPLAY ═══════════════
+            const dateEl = document.getElementById('current-date');
+            if (dateEl) {
+                const now = new Date();
+                const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+                dateEl.textContent = now.toLocaleDateString('en-US', options);
             }
 
-            window.toggleSidebar = toggleSidebar; 3
+            // ═══════════════ GUEST USAGE ═══════════════
+            function updateUsageUI() {
+                const bar = document.getElementById('usage-bar');
+                const text = document.getElementById('usage-text');
+                if (!bar || !text) return;
+                text.textContent = guestUsage + ' / ' + DAILY_LIMIT;
+                bar.style.width = Math.min((guestUsage / DAILY_LIMIT) * 100, 100) + '%';
+                if (guestUsage >= DAILY_LIMIT) {
+                    bar.classList.remove('from-amber-500', 'to-orange-400');
+                    bar.classList.add('from-red-500', 'to-red-400');
+                }
+            }
+            updateUsageUI();
 
-            map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+            // ═══════════════ MODAL TOGGLES ═══════════════
+            window.toggleLogoutModal = function () {
+                const modal = document.getElementById('logout-modal');
+                modal.classList.toggle('active');
+                if (!modal.classList.contains('active')) {
+                    modal.querySelector('.modal-content').style.transform = 'scale(0.95)';
+                    modal.querySelector('.modal-content').style.opacity = '0';
+                } else {
+                    modal.querySelector('.modal-content').style.transform = 'scale(1)';
+                    modal.querySelector('.modal-content').style.opacity = '1';
+                }
+            };
 
-            const geolocate = new maplibregl.GeolocateControl({
-                positionOptions: {
-                    enableHighAccuracy: true,
-                    timeout: 6000,
-                    maximumAge: 0
-                },
-                trackUserLocation: true,
-                showUserLocation: true,
-                showAccuracyCircle: true,
-                fitBoundsOptions: {
-                    maxZoom: 15
+            window.toggleLimitModal = function (show) {
+                const modal = document.getElementById('limit-modal');
+                if (show) {
+                    modal.classList.add('active');
+                    modal.querySelector('.modal-content').style.transform = 'scale(1)';
+                    modal.querySelector('.modal-content').style.opacity = '1';
+                } else {
+                    modal.classList.remove('active');
+                    modal.querySelector('.modal-content').style.transform = 'scale(0.95)';
+                    modal.querySelector('.modal-content').style.opacity = '0';
+                }
+            };
+
+            // Tutorial: uses the new centered .tutorial-backdrop
+            window.openTutorialModal = function () {
+                const backdrop = document.getElementById('tutorialModalBackdrop');
+                if (backdrop) backdrop.classList.add('open');
+            };
+
+            window.closeTutorialModal = function () {
+                const backdrop = document.getElementById('tutorialModalBackdrop');
+                if (backdrop) backdrop.classList.remove('open');
+            };
+
+            // ═══════════════ SIDEBAR TOGGLE (DESKTOP) ═══════════════
+            window.toggleSidebar = function (side) {
+                if (window.innerWidth < 768) {
+                    openMobileSidebar(side);
+                    return;
+                }
+                const el = document.getElementById(side);
+                el.classList.toggle('collapsed');
+                const icon = el.querySelector('.sidebar-toggle i');
+                if (side === 'left') {
+                    icon.className = el.classList.contains('collapsed')
+                        ? 'fa-solid fa-chevron-right text-base'
+                        : 'fa-solid fa-chevron-left text-base';
+                } else {
+                    icon.className = el.classList.contains('collapsed')
+                        ? 'fa-solid fa-chevron-left text-base'
+                        : 'fa-solid fa-chevron-right text-base';
+                }
+            };
+
+            // ═══════════════ SELECTION MODE ═══════════════
+            window.toggleSelection = function (mode) {
+                const statusIndicator = document.getElementById('status-indicator');
+                const statusText = document.getElementById('status-text');
+
+                if (selectionMode === mode) {
+                    selectionMode = null;
+                    if (statusIndicator) statusIndicator.classList.add('hidden');
+                    map.getCanvas().style.cursor = '';
+                    return;
+                }
+
+                selectionMode = mode;
+                map.getCanvas().style.cursor = 'crosshair';
+
+                if (statusIndicator) {
+                    statusIndicator.classList.remove('hidden');
+                    if (mode === 'pickup') {
+                        statusText.textContent = 'Tap the map to set pick-up point';
+                        statusText.className = 'text-[9px] uppercase tracking-[0.15em] text-blue-400 font-bold';
+                        statusIndicator.querySelector('.dot-pulse').className = 'w-2 h-2 rounded-full bg-blue-500 dot-pulse';
+                        statusIndicator.className = 'mb-4 p-3 rounded-xl bg-blue-500/8 border border-blue-500/20 flex items-center gap-2.5';
+                    } else {
+                        statusText.textContent = 'Tap the map to set destination';
+                        statusText.className = 'text-[9px] uppercase tracking-[0.15em] text-red-400 font-bold';
+                        statusIndicator.querySelector('.dot-pulse').className = 'w-2 h-2 rounded-full bg-red-500 dot-pulse';
+                        statusIndicator.className = 'mb-4 p-3 rounded-xl bg-red-500/8 border border-red-500/20 flex items-center gap-2.5';
+                    }
+                }
+            };
+
+            // ═══════════════ MAP LAYERS ═══════════════
+            map.on('load', function () {
+                map.addSource('route', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+                map.addLayer({
+                    id: 'route-line', type: 'line', source: 'route',
+                    layout: { 'line-join': 'round', 'line-cap': 'round' },
+                    paint: { 'line-color': '#3b82f6', 'line-width': 4, 'line-opacity': 0.85 }
+                });
+                map.addLayer({
+                    id: 'route-line-glow', type: 'line', source: 'route',
+                    layout: { 'line-join': 'round', 'line-cap': 'round' },
+                    paint: { 'line-color': '#3b82f6', 'line-width': 12, 'line-opacity': 0.15, 'line-blur': 6 }
+                });
+
+                map.addSource('pickup-point', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+                map.addLayer({
+                    id: 'pickup-circle', type: 'circle', source: 'pickup-point',
+                    paint: { 'circle-radius': 7, 'circle-color': '#3b82f6', 'circle-stroke-width': 3, 'circle-stroke-color': '#ffffff' }
+                });
+
+                map.addSource('destination-point', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+                map.addLayer({
+                    id: 'destination-circle', type: 'circle', source: 'destination-point',
+                    paint: { 'circle-radius': 7, 'circle-color': '#ef4444', 'circle-stroke-width': 3, 'circle-stroke-color': '#ffffff' }
+                });
+
+                map.addSource('vehicles', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+                map.addLayer({
+                    id: 'vehicle-circles', type: 'circle', source: 'vehicles',
+                    paint: {
+                        'circle-radius': 6,
+                        'circle-color': '#3b82f6',
+                        'circle-stroke-width': 2,
+                        'circle-stroke-color': '#ffffff'
+                    }
+                });
+            });
+
+            // ═══════════════ MAP CLICK → SET LOCATION ═══════════════
+            map.on('click', function (e) {
+                if (!selectionMode) return;
+
+                const lng = e.lngLat.lng;
+                const lat = e.lngLat.lat;
+
+                if (selectionMode === 'pickup') {
+                    userLat = lat;
+                    userLng = lng;
+
+                    if (map.getSource('pickup-point')) {
+                        map.getSource('pickup-point').setData({
+                            type: 'FeatureCollection',
+                            features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [lng, lat] }, properties: {} }]
+                        });
+                    }
+
+                    reverseGeocode(lng, lat).then(name => {
+                        document.getElementById('pickup').value = name;
+                    });
+
+                    selectionMode = null;
+                    map.getCanvas().style.cursor = '';
+                    const statusIndicator = document.getElementById('status-indicator');
+                    if (statusIndicator) statusIndicator.classList.add('hidden');
+
+                    calculateRoute();
+                    onMapLocationSelected();
+
+                } else if (selectionMode === 'destination') {
+                    vehicleLat = lat;
+                    vehicleLng = lng;
+
+                    if (map.getSource('destination-point')) {
+                        map.getSource('destination-point').setData({
+                            type: 'FeatureCollection',
+                            features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [lng, lat] }, properties: {} }]
+                        });
+                    }
+
+                    reverseGeocode(lng, lat).then(name => {
+                        document.getElementById('destination').value = name;
+                    });
+
+                    selectionMode = null;
+                    map.getCanvas().style.cursor = '';
+                    const statusIndicator = document.getElementById('status-indicator');
+                    if (statusIndicator) statusIndicator.classList.add('hidden');
+
+                    calculateRoute();
+                    onMapLocationSelected();
                 }
             });
 
-            map.addControl(geolocate, 'bottom-right');
+            // ═══════════════ REVERSE GEOCODE ═══════════════
+            async function reverseGeocode(lon, lat) {
+                try {
+                    const res = await fetch('https://photon.komoot.io/reverse?lon=' + lon + '&lat=' + lat + '&lang=en');
+                    const data = await res.json();
+                    if (data.features && data.features.length > 0) {
+                        const f = data.features[0];
+                        const name = f.properties.name || '';
+                        const city = f.properties.city || '';
+                        const state = f.properties.state || '';
+                        const detail = [name, city, state].filter(Boolean).join(', ');
+                        return detail || lat.toFixed(5) + ', ' + lon.toFixed(5);
+                    }
+                } catch (e) {
+                    console.error('Reverse geocode error:', e);
+                }
+                return lat.toFixed(5) + ', ' + lon.toFixed(5);
+            }
 
-            let userLng = null;
-            let userLat = null;
-            let vehicleLng = null;
-            let vehicleLat = null;
-            let vehicleMarker = null;
-            let vehiclePathCoordinates = [];
-            let watchId = null;
-            let currentLocation = null;
-            let currentVehicleId = 'vehicle-{{ Auth::id() ?? "guest" }}';
+            // ═══════════════ ROUTE CALCULATION ═══════════════
+            window.calculateRoute = async function () {
+                if (userLat === null || userLng === null || vehicleLat === null || vehicleLng === null) return;
 
+                if (userRole === 'guest') {
+                    if (guestUsage >= DAILY_LIMIT) {
+                        toggleLimitModal(true);
+                        return;
+                    }
+                    guestUsage++;
+                    localStorage.setItem('guestUsage', guestUsage.toString());
+                    updateUsageUI();
+                }
+
+                const url = 'https://router.project-osrm.org/route/v1/driving/' +
+                    userLng + ',' + userLat + ';' + vehicleLng + ',' + vehicleLat +
+                    '?overview=full&geometries=geojson';
+
+                try {
+                    const res = await fetch(url);
+                    const data = await res.json();
+
+                    if (data.code === 'Ok' && data.routes.length > 0) {
+                        const route = data.routes[0];
+                        const distKm = (route.distance / 1000).toFixed(1);
+                        const baseFare = 13;
+                        const perKm = 2.5;
+                        const regularFare = Math.ceil(baseFare + (parseFloat(distKm) * perKm));
+                        const discountFare = Math.ceil(regularFare * 0.8);
+
+                        document.getElementById('distance').value = distKm;
+                        document.getElementById('price-regular').value = regularFare;
+                        document.getElementById('price-discount').value = discountFare;
+
+                        if (map.getSource('route')) {
+                            map.getSource('route').setData(route.geometry);
+                        }
+
+                        const coords = route.geometry.coordinates;
+                        if (coords.length > 0) {
+                            map.fitBounds(
+                                [[coords[0][0], coords[0][1]], [coords[coords.length - 1][0], coords[coords.length - 1][1]]],
+                                { padding: { top: 100, bottom: 100, left: 400, right: 100 }, duration: 800 }
+                            );
+                        }
+                    }
+                } catch (e) {
+                    console.error('Route error:', e);
+                }
+            };
+
+            // ═══════════════ RESET FORM ═══════════════
+            window.resetForm = function () {
+                userLat = null;
+                userLng = null;
+                vehicleLat = null;
+                vehicleLng = null;
+                selectionMode = null;
+
+                document.getElementById('pickup').value = '';
+                document.getElementById('destination').value = '';
+                document.getElementById('distance').value = '0';
+                document.getElementById('price-regular').value = '0';
+                document.getElementById('price-discount').value = '0';
+
+                if (map.getSource('route')) {
+                    map.getSource('route').setData({ type: 'FeatureCollection', features: [] });
+                }
+                if (map.getSource('pickup-point')) {
+                    map.getSource('pickup-point').setData({ type: 'FeatureCollection', features: [] });
+                }
+                if (map.getSource('destination-point')) {
+                    map.getSource('destination-point').setData({ type: 'FeatureCollection', features: [] });
+                }
+
+                map.getCanvas().style.cursor = '';
+                const statusIndicator = document.getElementById('status-indicator');
+                if (statusIndicator) statusIndicator.classList.add('hidden');
+            };
+
+            // ═══════════════ PLACE SEARCH ═══════════════
+            async function searchPlaces(query) {
+                if (query.length < 2) return [];
+                try {
+                    const res = await fetch(
+                        'https://photon.komoot.io/api/?q=' + encodeURIComponent(query) +
+                        '&bbox=123.775,10.229,123.918,10.333&limit=6&lang=en'
+                    );
+                    const data = await res.json();
+                    return data.features.map(f => ({
+                        name: f.properties.name || '',
+                        city: f.properties.city || '',
+                        state: f.properties.state || '',
+                        country: f.properties.country || '',
+                        lon: f.geometry.coordinates[0],
+                        lat: f.geometry.coordinates[1]
+                    }));
+                } catch (e) {
+                    console.error('Search error:', e);
+                    return [];
+                }
+            }
+
+            function renderResults(results, dropdownId, inputId, field) {
+                const dropdown = document.getElementById(dropdownId);
+                if (!dropdown) return;
+
+                if (results.length === 0) {
+                    dropdown.innerHTML = '<div class="search-no-results">No results found</div>';
+                    dropdown.classList.add('active');
+                    return;
+                }
+
+                dropdown.innerHTML = results.map((r, i) => {
+                    const detail = [r.city, r.state, r.country].filter(Boolean).join(', ');
+                    return '<div class="search-item" data-index="' + i + '" data-field="' + field + '">' +
+                        '<div class="result-name">' + r.name + '</div>' +
+                        (detail ? '<div class="result-detail">' + detail + '</div>' : '') +
+                        '</div>';
+                }).join('');
+
+                dropdown.querySelectorAll('.search-item').forEach(item => {
+                    item.addEventListener('mousedown', function (e) {
+                        e.preventDefault();
+                        const idx = parseInt(this.dataset.index);
+                        const r = results[idx];
+                        const display = r.name + ([r.city, r.state, r.country].filter(Boolean).join(', ') ? ' — ' + [r.city, r.state, r.country].filter(Boolean).join(', ') : '');
+
+                        document.getElementById(inputId).value = display;
+
+                        if (field === 'pickup') {
+                            userLat = r.lat;
+                            userLng = r.lon;
+                            if (map.getSource('pickup-point')) {
+                                map.getSource('pickup-point').setData({
+                                    type: 'FeatureCollection',
+                                    features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [r.lon, r.lat] }, properties: {} }]
+                                });
+                            }
+                        } else {
+                            vehicleLat = r.lat;
+                            vehicleLng = r.lon;
+                            if (map.getSource('destination-point')) {
+                                map.getSource('destination-point').setData({
+                                    type: 'FeatureCollection',
+                                    features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [r.lon, r.lat] }, properties: {} }]
+                                });
+                            }
+                        }
+
+                        dropdown.classList.remove('active');
+                        calculateRoute();
+                    });
+                });
+
+                dropdown.classList.add('active');
+            }
+
+            let pickupTimer = null;
+            let destinationTimer = null;
+
+            document.getElementById('pickup').addEventListener('input', function () {
+                clearTimeout(pickupTimer);
+                const val = this.value.trim();
+                const dropdown = document.getElementById('pickup-dropdown');
+
+                if (val.length < 2) {
+                    dropdown.classList.remove('active');
+                    dropdown.innerHTML = '';
+                    return;
+                }
+
+                dropdown.innerHTML = '<div class="search-loading"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Searching...</div>';
+                dropdown.classList.add('active');
+
+                pickupTimer = setTimeout(async () => {
+                    const results = await searchPlaces(val);
+                    renderResults(results, 'pickup-dropdown', 'pickup', 'pickup');
+                }, 300);
+            });
+
+            document.getElementById('destination').addEventListener('input', function () {
+                clearTimeout(destinationTimer);
+                const val = this.value.trim();
+                const dropdown = document.getElementById('destination-dropdown');
+
+                if (val.length < 2) {
+                    dropdown.classList.remove('active');
+                    dropdown.innerHTML = '';
+                    return;
+                }
+
+                dropdown.innerHTML = '<div class="search-loading"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Searching...</div>';
+                dropdown.classList.add('active');
+
+                destinationTimer = setTimeout(async () => {
+                    const results = await searchPlaces(val);
+                    renderResults(results, 'destination-dropdown', 'destination', 'destination');
+                }, 300);
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('#pickup') && !e.target.closest('#pickup-dropdown')) {
+                    const dd = document.getElementById('pickup-dropdown');
+                    if (dd) dd.classList.remove('active');
+                }
+                if (!e.target.closest('#destination') && !e.target.closest('#destination-dropdown')) {
+                    const dd = document.getElementById('destination-dropdown');
+                    if (dd) dd.classList.remove('active');
+                }
+            });
+
+            function setupKeyboardNav(inputId, dropdownId) {
+                const input = document.getElementById(inputId);
+                const dropdown = document.getElementById(dropdownId);
+                if (!input || !dropdown) return;
+                let highlighted = -1;
+
+                input.addEventListener('keydown', function (e) {
+                    const items = dropdown.querySelectorAll('.search-item');
+                    if (!items.length || !dropdown.classList.contains('active')) return;
+
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        highlighted = Math.min(highlighted + 1, items.length - 1);
+                        items.forEach((it, i) => it.classList.toggle('highlighted', i === highlighted));
+                        items[highlighted].scrollIntoView({ block: 'nearest' });
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        highlighted = Math.max(highlighted - 1, 0);
+                        items.forEach((it, i) => it.classList.toggle('highlighted', i === highlighted));
+                        items[highlighted].scrollIntoView({ block: 'nearest' });
+                    } else if (e.key === 'Enter' && highlighted >= 0) {
+                        e.preventDefault();
+                        items[highlighted].dispatchEvent(new MouseEvent('mousedown'));
+                        highlighted = -1;
+                    } else if (e.key === 'Escape') {
+                        dropdown.classList.remove('active');
+                        highlighted = -1;
+                    }
+                });
+
+                const observer = new MutationObserver(() => {
+                    if (!dropdown.classList.contains('active')) highlighted = -1;
+                });
+                observer.observe(dropdown, { attributes: true, attributeFilter: ['class'] });
+            }
+
+            setupKeyboardNav('pickup', 'pickup-dropdown');
+            setupKeyboardNav('destination', 'destination-dropdown');
+
+            // ═══════════════ VEHICLE MARKERS (HTML) ═══════════════
+            const vehicleMarkers = {};
+
+            function createVehicleElement() {
+                const el = document.createElement('div');
+                el.className = 'custom-vehicle-marker bus-pulse';
+                el.innerHTML = '<i class="fa-solid fa-bus"></i>';
+                return el;
+            }
+
+            function updateVehicleMarkers(vehicles) {
+                Object.keys(vehicleMarkers).forEach(id => {
+                    if (!vehicles.find(v => v.id == id)) {
+                        vehicleMarkers[id].remove();
+                        delete vehicleMarkers[id];
+                    }
+                });
+
+                vehicles.forEach(v => {
+                    if (v.latitude && v.longitude) {
+                        if (vehicleMarkers[v.id]) {
+                            vehicleMarkers[v.id].setLngLat([v.longitude, v.latitude]);
+                        } else {
+                            const el = createVehicleElement();
+                            el.addEventListener('click', () => {
+                                new maplibregl.Popup({ offset: 20, className: 'vehicle-popup' })
+                                    .setLngLat([v.longitude, v.latitude])
+                                    .setHTML(
+                                        '<div style="background:#111;border:1px solid #222;border-radius:12px;padding:12px 16px;font-family:Inter,sans-serif;min-width:160px;">' +
+                                        '<p style="color:#fff;font-size:12px;font-weight:700;margin:0 0 4px;">Bus ' + (v.plate_number || v.id) + '</p>' +
+                                        '<p style="color:#666;font-size:10px;margin:0;">Route: ' + (v.route_name || 'N/A') + '</p>' +
+                                        '<p style="color:#555;font-size:9px;margin:4px 0 0;">Updated just now</p>' +
+                                        '</div>'
+                                    )
+                                    .addTo(map);
+                            });
+                            vehicleMarkers[v.id] = new maplibregl.Marker({ element: el, anchor: 'center' })
+                                .setLngLat([v.longitude, v.latitude])
+                                .addTo(map);
+                        }
+                    }
+                });
+            }
+
+            // ═══════════════ REAL-TIME VEHICLE UPDATES (Echo) ═══════════════
+            if (window.Echo) {
+                window.Echo.channel('vehicles')
+                    .listen('.vehicle.location.updated', (e) => {
+                        if (e.vehicles) {
+                            updateVehicleMarkers(e.vehicles);
+                        } else if (e.vehicle) {
+                            updateVehicleMarkers([e.vehicle]);
+                        }
+                    });
+            }
+
+            async function fetchVehicles() {
+                try {
+                    const res = await fetch('/api/vehicles');
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.vehicles) updateVehicleMarkers(data.vehicles);
+                    }
+                } catch (e) {
+                    console.log('Vehicle fetch skipped:', e.message);
+                }
+            }
+            fetchVehicles();
+
+            // ═══════════════ DRIVER GPS TRACKING ═══════════════
+            let gpsWatchId = null;
             const gpsIndicator = document.getElementById('gps-indicator');
             const gpsStatusText = document.getElementById('gps-status-text');
             const currentCoords = document.getElementById('current-coords');
             const currentAccuracy = document.getElementById('current-accuracy');
             const updateTime = document.getElementById('update-time');
 
-            geolocate.on('geolocate', (event) => {
-                userLng = event.coords.longitude;
-                userLat = event.coords.latitude;
-                // You can now use these variables to filter data,
-                // center the map, or send them to a database.
-            })
-
-            // if(userRole === 'driver') {
-
-            //     let lastKnownLocation = null;
-
-            //     // Function to start broadcasting location
-            //     function startBroadcastingLocation() {
-            //         if (!navigator.geolocation) {
-            //             console.error('Geolocation not supported');
-            //             return;
-            //         }
-
-            //         if(watchId !== null ) return;
-
-            //         watchId = navigator.geolocation.watchPosition(
-            //             async (position) => {
-            //                 const { latitude, longitude, accuracy, speed } = position.coords;
-            //                 currentLocation = { latitude, longitude, accuracy, speed };
-
-            //                 console.log("coords: ", latitude, longitude);
-            //                 // Update local map marker
-            //                 updateVehicleMarker(latitude, longitude);
-
-            //                 setInterval(async() => {
-            //                     if(!lastKnownLocation) return;
-            //                     // BROADCAST TO ALL USERS via Pusher
-            //                     try {
-            //                         await fetch(`/track/vehicle/broadcast`, {
-            //                             method: 'POST',
-            //                             headers: {
-            //                                 'Content-Type': 'application/json',
-            //                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            //                             },
-            //                             body: JSON.stringify({
-            //                                 vehicle_id: '{{ "vehicle-" . Auth::id() ?? "default-vehicle" }}',
-            //                                 latitude: latitude,
-            //                                 longitude: longitude,
-            //                                 accuracy: accuracy,
-            //                                 speed: speed,
-            //                                 timestamp: new Date().toISOString(),
-            //                                 latitude: lastKnownLocation.latitude,
-            //                                 longitude: lastKnownLocation.longitude
-            //                             })
-            //                         });
-            //                     } catch (error) {
-            //                         console.error('Error broadcasting location:', error);
-            //                     }
-            //                 }, 5000)
-
-            //             },
-            //             (error) => {
-            //                 console.error('Geolocation error:', error);
-            //             },
-            //             {
-            //                 enableHighAccuracy: true,
-            //                 timeout: 15000,
-            //                 maximumAge: 0
-            //             }
-            //         );
-            //     }
-
-            //     window.startBroadcastingLocation = startBroadcastingLocation;
-
-            //     // // Broadcast the location every 5 seconds
-            //     // setInterval(startBroadcastingLocation, 5000);
-            // }
-
-            // Function to update vehicle marker on map
-            function updateVehicleMarker(latitude, longitude) {
-                if (!vehicleMarker) {
-                    // Create marker if it doesn't exist
-                    const markerElement = document.createElement('div');
-                    markerElement.className = 'custom-vehicle-marker';
-                    markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
-                    vehicleMarker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
-                        .setLngLat([longitude, latitude])
-                        .addTo(map);
+            window.toggleGPSTracking = function () {
+                if (gpsWatchId !== null) {
+                    navigator.geolocation.clearWatch(gpsWatchId);
+                    gpsWatchId = null;
+                    if (gpsIndicator) { gpsIndicator.className = 'w-2 h-2 bg-[#555] rounded-full dot-pulse'; }
+                    if (gpsStatusText) { gpsStatusText.textContent = 'GPS: Not active'; gpsStatusText.className = 'text-[10px] text-[#555]'; }
+                    if (currentCoords) currentCoords.textContent = '--, --';
+                    if (currentAccuracy) currentAccuracy.textContent = '-- m';
+                    if (updateTime) updateTime.textContent = '--:--:--';
                 } else {
-                    vehicleMarker.setLngLat([longitude, latitude]);
+                    if (!navigator.geolocation) {
+                        alert('Geolocation is not supported by your browser.');
+                        return;
+                    }
+                    if (gpsIndicator) { gpsIndicator.className = 'w-2 h-2 bg-green-500 rounded-full dot-pulse'; }
+                    if (gpsStatusText) { gpsStatusText.textContent = 'GPS: Active'; gpsStatusText.className = 'text-[10px] text-green-400 font-semibold'; }
+
+                    gpsWatchId = navigator.geolocation.watchPosition(
+                        function (pos) {
+                            const lat = pos.coords.latitude.toFixed(6);
+                            const lon = pos.coords.longitude.toFixed(6);
+                            const acc = pos.coords.accuracy.toFixed(0);
+                            const now = new Date();
+                            const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+
+                            if (currentCoords) currentCoords.textContent = lat + ', ' + lon;
+                            if (currentAccuracy) currentAccuracy.textContent = acc + ' m';
+                            if (updateTime) updateTime.textContent = timeStr;
+
+                            if (userId && userRole === 'driver') {
+                                navigator.sendBeacon('/api/driver/location', JSON.stringify({
+                                    latitude: pos.coords.latitude,
+                                    longitude: pos.coords.longitude,
+                                    accuracy: pos.coords.accuracy
+                                }));
+                            }
+                        },
+                        function (err) {
+                            console.error('GPS error:', err);
+                            if (gpsIndicator) { gpsIndicator.className = 'w-2 h-2 bg-red-500 rounded-full'; }
+                            if (gpsStatusText) { gpsStatusText.textContent = 'GPS: Error'; gpsStatusText.className = 'text-[10px] text-red-400'; }
+                        },
+                        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+                    );
                 }
-            }
+            };
 
-            window.updateVehicleMarker = updateVehicleMarker;
+            // ═══════════════ TERRA DRAW ═══════════════
+            let terradraw = null;
+            let drawActive = false;
 
-            function updateLiveDate() {
-                const dateElement = document.getElementById('current-date');
-                const now = new Date();
-                const options = {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                };
-                dateElement.textContent = now.toLocaleDateString('en-US', options);
-            }
-
-            updateLiveDate();
-
-            setInterval(updateLiveDate, 3600000);
-
-            function toggleLogoutModal() {
-                const modal = document.getElementById('logout-modal');
-                const content = document.getElementById('modal-content');
-
-                if (modal.classList.contains('opacity-0')) {
-                    modal.classList.remove('opacity-0', 'pointer-events-none');
-                    content.classList.remove('scale-95');
-                    content.classList.add('scale-100');
+            window.toggleDraw = function () {
+                if (drawActive) {
+                    if (terradraw) { terradraw.stop(); terradraw = null; }
+                    drawActive = false;
                 } else {
-                    modal.classList.add('opacity-0', 'pointer-events-none');
-                    content.classList.remove('scale-100');
-                    content.classList.add('scale-95');
-                }
-            }
-
-            window.toggleLogoutModal = toggleLogoutModal;
-
-            window.onclick = function (event) {
-                const modal = document.getElementById('logout-modal');
-                if (event.target == modal) {
-                    toggleLogoutModal();
-                }
-            }
-
-            map.on('load', () => {
-                // Create custom vehicle marker
-                const markerElement = document.createElement('div');
-                markerElement.className = 'vehicle-marker';
-                // markerElement.innerHTML = '<i class="fa-solid fa-bus" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 14px; color: white;"></i>';
-
-                vehicleMarker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
-                    .setLngLat([123.79, 10.24])
-                    .addTo(map);
-
-                // Add source for vehicle path
-                map.addSource('vehicle-path', {
-                    type: 'geojson',
-                    data: {
-                        type: 'FeatureCollection',
-                        features: []
-                    }
-                });
-
-                // Add layer for vehicle path
-                map.addLayer({
-                    id: 'vehicle-path-line',
-                    type: 'line',
-                    source: 'vehicle-path',
-                    paint: {
-                        'line-color': '#3b82f6',
-                        'line-width': 3,
-                        'line-opacity': 0.7,
-                        'line-dasharray': [2, 2]
-                    }
-                });
-
-                vehicleMarker.remove();
-            });
-
-            if (userRole === 'driver') {
-                let lastBroadcastTime = 0;
-                const broadcastInterval = 5000; // 5 seconds
-                let currentPosition = null; // Store latest position
-
-                // Listen for geolocation updates (just store the position)
-                geolocate.on('geolocate', (position) => {
-                    const { latitude, longitude, accuracy, speed } = position.coords;
-
-                    // Store the latest position
-                    currentPosition = {
-                        latitude,
-                        longitude,
-                        accuracy,
-                        speed,
-                        timestamp: Date.now()
-                    };
-
-                    console.log('📍 GPS fix acquired:', { latitude, longitude, accuracy });
-
-                    // Update UI
-                    gpsIndicator.className = 'w-2 h-2 bg-green-500 rounded-full animate-pulse';
-                    gpsStatusText.textContent = 'GPS: Active';
-                    currentCoords.textContent = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-                    currentAccuracy.textContent = `${accuracy.toFixed(1)} m`;
-                    updateTime.textContent = new Date().toLocaleTimeString();
-
-                    // Update vehicle marker
-                    if (vehicleMarker) {
-                        vehicleMarker.setLngLat([longitude, latitude]);
-                        vehicleMarker.addTo(map);
-                    }
-
-                    // Update path
-                    vehiclePathCoordinates.push([longitude, latitude]);
-                    if (vehiclePathCoordinates.length > 100) {
-                        vehiclePathCoordinates.shift();
-                    }
-
-                    const pathSource = map.getSource('vehicle-path');
-                    if (pathSource && vehiclePathCoordinates.length > 1) {
-                        pathSource.setData({
-                            type: 'FeatureCollection',
-                            features: [{
-                                type: 'Feature',
-                                geometry: {
-                                    type: 'LineString',
-                                    coordinates: vehiclePathCoordinates
-                                },
-                                properties: {}
-                            }]
-                        });
-                    }
-                });
-
-                // Separate interval for broadcasting (runs every 5 seconds)
-                setInterval(async () => {
-                    const currentTime = Date.now();
-
-                    // Only broadcast if we have a valid position
-                    if (currentPosition && (currentTime - lastBroadcastTime > broadcastInterval)) {
-                        lastBroadcastTime = currentTime;
-
-                        console.log("Broadcasting at:", currentTime);
-                        console.log("Time since last broadcast:", currentTime - lastBroadcastTime);
-
-                        // Get CSRF token safely
-                        const csrfToken = document.querySelector('meta[name="csrf-token"]');
-                        if (!csrfToken) {
-                            console.error('CSRF token not found');
-                            return;
-                        }
-
-                        const requestData = {
-                            vehicle_id: currentVehicleId,
-                            latitude: currentPosition.latitude.toFixed(6),
-                            longitude: currentPosition.longitude.toFixed(6),
-                            speed: currentPosition.speed || 0,
-                            accuracy: currentPosition.accuracy || 0,
-                            user_id: userId
-                        };
-
-                        console.log('Sending location data:', requestData);
-
-                        fetch(`/track/vehicle/broadcast`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken.content,
-                                'Accept': 'application/json'
-                            },
-                            body: JSON.stringify(requestData)
-                        })
-                            .then(response => {
-                                if (!response.ok) {
-                                    return response.json().then(errorData => {
-                                        console.error('Server error:', errorData);
-                                        throw new Error(JSON.stringify(errorData));
-                                    });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                console.log('Location sent successfully:', data);
-                            })
-                            .catch(error => console.error('Error broadcasting:', error));
-                    }
-                }, 1000); // Check every second (or use broadcastInterval directly)
-
-                // OR simpler - just use broadcastInterval directly:
-                // setInterval(() => {
-                //     if (currentPosition) {
-                //         // broadcast logic here...
-                //     }
-                // }, broadcastInterval);
-
-                geolocate.on('error', (error) => {
-                    console.error('Geolocation error:', error);
-                    gpsIndicator.className = 'w-2 h-2 bg-red-500 rounded-full';
-                    gpsStatusText.textContent = 'GPS: Error - ' + error.message;
-                });
-
-                geolocate.on('outofmaxbounds', (error) => {
-                    console.log('GPS out of bounds');
-                    console.error("error: ", error);
-                });
-            }
-
-            // Add this helper to calculate straight-line distance (optional, for immediate feedback)
-            function calculateDistance(lat1, lon1, lat2, lon2) {
-                const R = 6371; // Radius of the earth in km
-                const dLat = (lat2 - lat1) * Math.PI / 180;
-                const dLon = (lon2 - lon1) * Math.PI / 180;
-                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                return R * c; // Distance in km
-            }
-
-            const vehicleMarkers = new Map();
-
-            if (userRole !== 'driver') {
-                // Listen for ALL vehicle location updates (this runs for every user)
-                window.Echo.channel('vehicle-locations')
-                    .listen('vehicle-location-updated', (e) => {
-
-                        if (e.vehicleId === currentVehicleId) {
-                            return;
-                        }
-
-                        // Update or create marker for this vehicle
-                        updateVehicleMarkerOnMap(e.vehicleId, e.coordinates[0], e.coordinates[1], e.speed);
-
-                        // Update vehicle info panel if visible
-                        // updateVehicleInfoPanel(e.vehicleId, e.coordinates, e.speed, e.timestamp);
-                    });
-
-
-                // function updateVehicleMarkerOnMap(vehicleId, longitude, latitude, speed) {
-                //     if (vehicleMarkers.has(vehicleId)) {
-                //         // Update existing marker
-                //         vehicleLng = longitude;
-                //         vehicleLat = latitude;
-                //         const marker = vehicleMarkers.get(vehicleId);
-                //         marker.setLngLat([longitude, latitude]);
-                //     } else {
-                //         // Create new marker for this vehicle
-                //         const markerElement = document.createElement('div');
-                //         markerElement.className = 'custom-vehicle-marker';
-                //         markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
-                //         markerElement.style.backgroundColor = getRandomColor(vehicleId);
-                //         vehicleLng = longitude;
-                //         vehicleLat = latitude;
-
-                //         const marker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
-                //             .setLngLat([longitude, latitude])
-                //             .addTo(map);
-
-                //         vehicleMarkers.set(vehicleId, marker);
-
-                //         // Add popup with vehicle info
-                //         const popup = new maplibregl.Popup({ offset: 25 })
-                //             .setHTML(`
-                //         <div>
-                //             <strong>Vehicle: ${vehicleId}</strong><br>
-                //             <strong>Distance: ${vehicleDistance}</strong><br>
-                //             <strong>Speed: ${speed}</strong><br>
-                //             <strong>ETA: ${vehicleETA}</strong><br>
-                //             Last update: ${new Date().toLocaleTimeString()}
-                //         </div>
-                //     `);
-
-                //         marker.setPopup(popup);
-                //     }
-                // }
-
-                let activeTrackedVehicle = null;
-
-                const infoPopup = new maplibregl.Popup({
-                    offset: 25,
-                    closeOnClick: false,
-                    closeButton: true
-                });
-
-                // function updateVehicleMarkerOnMap(vehicleId, longitude, latitude, speed) {
-                //     // 1. Check if marker exists in our SINGLE global map
-                //     if (vehicleMarkers.has(vehicleId)) {
-                //         const marker = vehicleMarkers.get(vehicleId);
-                //         marker.setLngLat([longitude, latitude]);
-
-                //         // Update data for the click event
-                //         marker.vehicleData = { longitude, latitude, speed: speed || 0 };
-
-                //         // If this is the vehicle currently being tracked, update the route line!
-                //         if (activeTrackedVehicle === vehicleId && userLng && userLat) {
-                //             directions.setWaypoints([
-                //                 [userLng, userLat],
-                //                 [longitude, latitude]
-                //             ]);
-                //         }
-                //     } else {
-                //         // 2. Create new marker
-                //         const markerElement = document.createElement('div');
-                //         markerElement.className = 'custom-vehicle-marker';
-                //         markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
-                //         markerElement.style.backgroundColor = getRandomColor(vehicleId);
-
-                //         const marker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
-                //             .setLngLat([longitude, latitude])
-                //             .addTo(map);
-
-                //         marker.vehicleData = { longitude, latitude, speed: speed || 0 };
-
-                //         // Toggle logic
-                //         markerElement.addEventListener('click', (e) => {
-                //             e.stopPropagation();
-
-                //             if (activeTrackedVehicle === vehicleId) {
-                //                 directions.clear();
-                //                 marker.togglePopup();
-                //                 activeTrackedVehicle = null;
-                //                 return;
-                //             }
-
-                //             if (!userLat || !userLng) {
-                //                 alert("Please enable GPS to track vehicle.");
-                //                 geolocate.trigger();
-                //                 return;
-                //             }
-
-                //             activeTrackedVehicle = vehicleId;
-                //             directions.setWaypoints([[userLng, userLat], [longitude, latitude]]);
-
-                //             directions.once("fetchroutesend", (ev) => {
-                //                 if (activeTrackedVehicle !== vehicleId) return;
-                //                 const route = ev.data.directions.routes[0];
-                //                 const popup = new maplibregl.Popup({ offset: 25 })
-                //                     // .setLngLat([longitude, latitude])
-                //                     .setHTML(`
-                //                             <div class="p-2 z-100">
-                //                                 <strong>Vehicle: ${vehicleId}</strong><br>
-                //                                 Dist: ${(route.distance / 1000).toFixed(2)} km<br>
-                //                                 ETA: ${Math.round(route.duration / 60)} mins
-                //                             </div>
-                //                         `);
-                //                 // .addTo(map);
-
-                //                 if (marker.getPopup()) {
-                //                     market.getPopup.remove();
-                //                 }
-                //                 marker.setPopup(popup).togglePopup();
-                //             });
-                //         });
-
-                //         // Store in the global map
-                //         vehicleMarkers.set(vehicleId, marker);
-                //     }
-                // }
-
-                function updateVehicleMarkerOnMap(vehicleId, longitude, latitude, speed) {
-                    if (vehicleMarkers.has(vehicleId)) {
-                        const marker = vehicleMarkers.get(vehicleId);
-                        marker.setLngLat([longitude, latitude]);
-                        marker.vehicleData = { longitude, latitude, speed: speed || 0 };
-
-                        // If this bus is the one being tracked, move the popup and the line
-                        if (activeTrackedVehicle === vehicleId) {
-                            // Update the line
-                            directions.setWaypoints([[userLng, userLat], [longitude, latitude]]);
-
-                            // Move the popup to follow the bus
-                            if (infoPopup.isOpen()) {
-                                infoPopup.setLngLat([longitude, latitude]);
-                            }
-                        }
-                    } else {
-                        const markerElement = document.createElement('div');
-                        markerElement.className = 'custom-vehicle-marker';
-                        markerElement.innerHTML = '<i class="fa-solid fa-bus"></i>';
-                        markerElement.style.backgroundColor = getRandomColor(vehicleId);
-
-                        const marker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
-                            .setLngLat([longitude, latitude])
-                            .addTo(map);
-
-                        marker.vehicleData = { longitude, latitude, speed: speed || 0 };
-
-                        markerElement.addEventListener('click', (e) => {
-                            e.stopPropagation();
-
-                            // TOGGLE OFF
-                            if (activeTrackedVehicle === vehicleId) {
-                                directions.clear();
-                                infoPopup.remove();
-                                activeTrackedVehicle = null;
-                                return;
-                            }
-
-                            activeTrackedVehicle = vehicleId;
-
-                            // Clear old listeners before starting new route
-                            directions.off("fetchroutesend");
-
-                            directions.setWaypoints([[userLng, userLat], [longitude, latitude]]);
-
-                            directions.on("fetchroutesend", (ev) => {
-                                if (activeTrackedVehicle !== vehicleId) return;
-
-                                const route = ev.data.directions.routes[0];
-                                const dist = (route.distance / 1000).toFixed(2);
-                                const eta = Math.round(route.duration / 60);
-
-                                // Simply update the EXISTING popup
-                                infoPopup.setLngLat([longitude, latitude])
-                                    .setHTML(`
-                        <div class="p-2 text-black">
-                            <strong>Vehicle: ${vehicleId}</strong><br>
-                            Dist: ${dist} km | ETA: ~${eta} mins
-                        </div>
-                    `);
-
-                                if (!infoPopup.isOpen()) {
-                                    infoPopup.addTo(map);
+                    try {
+                        if (typeof MapLibreTerradraw !== 'undefined') {
+                            terradraw = new MapLibreTerradraw({
+                                map: map,
+                                mode: 'polygon',
+                                controls: {
+                                    polygon: true,
+                                    linestring: true,
+                                    point: true,
+                                    select: true,
+                                    delete: true
                                 }
                             });
-                        });
-
-                        vehicleMarkers.set(vehicleId, marker);
-                    }
-                }
-
-                window.updateVehicleMarkerOnMap = updateVehicleMarkerOnMap;
-
-                function getRandomColor(vehicleId) {
-                    // Generate consistent color based on vehicle ID
-                    const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
-                    let hash = 0;
-                    for (let i = 0; i < vehicleId.length; i++) {
-                        hash = vehicleId.charCodeAt(i) + ((hash << 5) - hash);
-                    }
-                    return colors[Math.abs(hash) % colors.length];
-                }
-
-                window.getRandomColor = getRandomColor;
-            }
-
-
-            // Fare calculation functions (existing)
-            let marker = new maplibregl.Marker({ draggable: false });
-            const activeVehicleMarkers = {};
-
-            if (userRole !== 'driver') {
-                // Function to fetch and display active vehicles from database
-                function refreshActiveVehicles() {
-                    fetch('/track/vehicles/active')
-                        .then(response => response.json())
-                        .then(data => {
-                            if (Array.isArray(data)) {
-                                const activeIds = new Set(data.map(v => v.vehicle_id));
-
-                                // Remove markers from map that aren't in the active database list
-                                vehicleMarkers.forEach((marker, id) => {
-                                    if (!activeIds.has(id)) {
-                                        marker.remove();
-                                        vehicleMarkers.delete(id);
-                                        if (activeTrackedVehicle === id) {
-                                            directions.clear();
-                                            activeTrackedVehicle = null;
-                                        }
-                                    }
-                                });
-
-                                // Update/Create markers for all active vehicles
-                                data.forEach(v => updateVehicleMarkerOnMap(v.vehicle_id, v.longitude, v.latitude, v.speed));
-                            }
-                        });
-                }
-
-                window.refreshActiveVehicles = refreshActiveVehicles;
-
-                // Refresh active vehicles every 10 seconds
-                setInterval(refreshActiveVehicles, 10000);
-                // Initial refresh after 2 seconds
-                setTimeout(refreshActiveVehicles, 2000);
-            }
-
-
-            const distanceCoordinate = document.getElementById('distance');
-            const pickup = document.getElementById('pickup');
-            const destination = document.getElementById('destination');
-            const priceRegular = document.getElementById('price-regular');
-            const priceDiscount = document.getElementById('price-discount');
-
-            pickup.value = "";
-            destination.value = "";
-            distanceCoordinate.value = "0";
-            priceRegular.value = "0";
-            priceDiscount.value = "0";
-
-            let rates = {!! $rates !!};
-
-            function getFareRate(km) {
-                if (km >= 1 && km < 50) {
-                    for (let i = 0; i < 50; i++) {
-                        if (km == rates[i]['km']) {
-                            return rates[i];
-                        }
-                    }
-                }
-                if (km < 1) {
-                    return rates[0];
-                }
-                if (km >= 50) {
-                    return rates[49];
-                }
-                return rates[0];
-            }
-
-            window.getFareRate = getFareRate;
-
-
-
-            const geocoderApi = {
-                forwardGeocode: async (config) => {
-                    const features = [];
-                    try {
-                        const request =
-                            `https://nominatim.openstreetmap.org/search?q=${config.query}&format=geojson&polygon_geojson=1&addressdetails=1&viewbox=${viewbox}&bounded=1`;
-                        const response = await fetch(request);
-                        const geojson = await response.json();
-                        for (const feature of geojson.features) {
-                            const center = [
-                                feature.bbox[0] + (feature.bbox[2] - feature.bbox[0]) / 2,
-                                feature.bbox[1] + (feature.bbox[3] - feature.bbox[1]) / 2
-                            ];
-                            const point = {
-                                type: 'Feature',
-                                geometry: {
-                                    type: 'Point',
-                                    coordinates: center
-                                },
-                                place_name: feature.properties.display_name,
-                                properties: feature.properties,
-                                text: feature.properties.display_name,
-                                place_type: ['place'],
-                                center
-                            };
-                            features.push(point);
+                            terradraw.start();
+                            drawActive = true;
                         }
                     } catch (e) {
-                        console.error(`Failed to forwardGeocode with error: ${e}`);
+                        console.log('Terradraw not available:', e.message);
                     }
-                    return { features };
                 }
             };
 
-            // map.addControl(
-            //     new MaplibreGeocoder(geocoderApi, {
-            //         maplibregl,
-            //         minLength: 3,        // Only start searching after 3 characters are typed
-            //         debounceSearch: 300, // Wait 300ms after the last keystroke before calling the API
-            //         showResultsWhileTyping: true // Ensures the dropdown updates dynamically
-            //     }), 'bottom-left'
-            // );
-
-            const startPoint = {
-                'type': 'FeatureCollection',
-                'features': [{
-                    'type': 'Feature',
-                    'geometry': {
-                        'type': 'Point',
-                    }
-                }]
-            };
-
-            map.on('load', () => {
-                map.addSource('point', {
-                    'type': 'geojson',
-                    'data': startPoint
-                });
-
-                map.addLayer({
-                    'id': 'point',
-                    'type': 'circle',
-                    'source': 'point',
-                    'paint': {
-                        'circle-radius': 10,
-                        'circle-color': '#3887be'
-                    }
-                });
-
-                map.setLayoutProperty('label_country', 'text-field', [
-                    'format',
-                    ['get', 'name_en'],
-                    { 'font-scale': 1.2 },
-                    '\n',
-                    {},
-                    ['get', 'name'],
-                    {
-                        'font-scale': 0.8,
-                        'text-font': [
-                            'literal',
-                            ['Noto Sans Regular']
-                        ]
-                    }
-                ]);
-
-                marker.setLngLat([0, 0]).addTo(map);
-
-            });
-
-            let destinationLat = null;
-            let destinationLng = null;
-            let pickupLng = null;
-            let pickupLat = null;
-
-            let directions = null;
-
-            map.on('load', () => {
-                directions = new MapLibreGlDirections(map);
-            });
-
-            const modal = document.getElementById('limit-modal');
-            const modalContent = document.getElementById('limit-modal-content');
-
-            // Function to open/close the modal
-            function toggleLimitModal(show) {
-                if (show) {
-                    modal.classList.remove('opacity-0', 'pointer-events-none');
-                    modalContent.classList.remove('scale-95');
-                    modalContent.classList.add('scale-100');
-                } else {
-                    modal.classList.add('opacity-0', 'pointer-events-none');
-                    modalContent.classList.remove('scale-100');
-                    modalContent.classList.add('scale-95');
+            // ═══════════════ MOBILE RESIZE HANDLER ═══════════════
+            window.addEventListener('resize', function () {
+                if (window.innerWidth >= 768) {
+                    if (window._leftMobileOpen) closeMobileSidebar('left');
+                    if (window._rightMobileOpen) closeMobileSidebar('right');
                 }
-                resetForm();
-            }
-
-            window.toggleLimitModal = toggleLimitModal;
-
-
-            function getUsageData() {
-                const today = new Date().toDateString();
-                const stored = localStorage.getItem('guest_usage');
-
-                // If it's null, return a fresh starting object
-                if (!stored) {
-                    return { count: 0, date: today };
-                }
-
-                let data = JSON.parse(stored);
-
-                // If the date in storage isn't today, reset to 0
-                if (data.date !== today) {
-                    return { count: 0, date: today };
-                }
-
-                return data;
-            }
-
-            document.addEventListener('DOMContentLoaded', () => {
-                updateUsageUI();
-            });
-
-            function updateUsageUI() {
-                let usageData = getUsageData();
-
-                const textElem = document.getElementById('usage-text');
-                const barElem = document.getElementById('usage-bar');
-
-                console.log("usage data: ", usageData);
-
-                if (textElem && barElem) {
-                    textElem.innerText = `${usageData.count} / ${DAILY_LIMIT}`;
-                    const percentage = (usageData.count / DAILY_LIMIT) * 100;
-                    barElem.style.width = `${percentage}%`;
-
-                    // Visual indicator if maxed out
-                    if (usageData.count >= DAILY_LIMIT) {
-                        barElem.classList.add('from-red-500', 'to-red-400');
-                    }
-                }
-            }
-
-
-            function drawRoute() {
-                if (!directions) return;
-
-                let usageData = getUsageData();
-
-                if (pickupLng && pickupLat && destinationLng && destinationLat) {
-                    if (userRole === 'guest' && usageData.count >= DAILY_LIMIT) {
-                        toggleLimitModal(true); // Show the modal
-                        return; // Stop the function here
-                    }
-
-                    directions.setWaypoints([
-                        [parseFloat(pickupLng), parseFloat(pickupLat)],
-                        [parseFloat(destinationLng), parseFloat(destinationLat)]
-                    ]);
-
-                    directions.on("fetchroutesend", async (e) => {
-                        console.log(e.data.directions.routes[0].distance);
-                        const distanceMeters = e.data.directions.routes[0].distance;
-                        const distanceKM = distanceMeters / 1000;
-
-                        distanceCoordinate.value = distanceKM.toFixed(2);
-
-                        let rate = getFareRate(Math.round(distanceKM));
-                        priceRegular.value = rate['regular'];
-                        priceDiscount.value = rate['discount'];
-
-                        if (userRole === 'guest') {
-                            usageData.count += 1;
-                            localStorage.setItem('guest_usage', JSON.stringify(usageData));
-                            updateUsageUI();
-                        }
-
-                    });
-                }
-            }
-
-            // Close when clicking outside the glass panel
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) toggleLimitModal(false);
-            });
-
-            window.drawRoute = drawRoute;
-
-            // function getStartingPoint() {
-            //     document.body.style.cursor = 'crosshair';
-            //     map.getCanvas().style.cursor = 'crosshair';
-
-            //     map.once('click', (e) => {
-            //         const coords = e.lngLat;
-
-            //         startPoint.features[0].geometry.coordinates = [coords.lng, coords.lat];
-            //         map.getSource('point').setData(startPoint);
-
-            //         let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
-            //         let coordinatesArray = coordinates.split(" ");
-
-            //         pickupLng = coordinatesArray[0];
-            //         pickupLat = coordinatesArray[1];
-
-            //         pickup.value = coordinates;
-
-            //         document.body.style.cursor = 'default';
-            //         map.getCanvas().style.cursor = 'pointer';
-            //         drawRoute();
-            //     });
-            // }
-
-            // window.getStartingPoint = getStartingPoint;
-
-            // function getDestination() {
-            //     document.body.style.cursor = 'crosshair';
-            //     map.getCanvas().style.cursor = 'crosshair';
-
-            //     map.once('click', (e) => {
-            //         let longLat = e.lngLat;
-
-            //         let coordinates = `${e.lngLat.lng} ${e.lngLat.lat}`;
-            //         let coordinatesArray = coordinates.split(" ");
-
-            //         destinationLng = coordinatesArray[0];
-            //         destinationLat = coordinatesArray[1];
-
-            //         marker.setLngLat([longLat.lng, longLat.lat]);
-
-            //         destination.value = coordinates;
-
-            //         document.body.style.cursor = 'default';
-            //         map.getCanvas().style.cursor = 'pointer';
-            //         drawRoute();
-            //     });
-            // }
-
-            // window.getDestination = getDestination;
-            let activeMode = null; // Can be 'pickup', 'destination', or null
-
-            const indicator = document.getElementById('status-indicator');
-            const statusText = document.getElementById('status-text');
-
-            function toggleSelection(mode) {
-                // 1. If clicking the SAME button again, turn it OFF
-                if (activeMode === mode) {
-                    cancelSelection();
-                    return;
-                }
-
-                // 2. If a different mode was active, cancel it first
-                if (activeMode !== null) {
-                    cancelSelection();
-                }
-
-                // 3. Set the new active mode
-                activeMode = mode;
-
-                if (activeMode === 'pickup') {
-                    statusText.innerText = "Click on the map for Pick-up";
-                    indicator.className = "mb-4 p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center gap-3";
-                } else if (activeMode === 'destination') {
-                    statusText.innerText = "Click on the map for Destination";
-                    indicator.className = "mb-4 p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center gap-3";
-                }
-
-                indicator.classList.remove('hidden');
-                document.body.style.cursor = 'crosshair';
-                map.getCanvas().style.cursor = 'crosshair';
-
-                // 4. Add the click listener
-                // Note: We use a named function so we can remove it if canceled
-                map.once('click', handleMapClick);
-            }
-
-            window.toggleSelection = toggleSelection;
-
-            function handleMapClick(e) {
-                if (!activeMode) return;
-
-                const coords = e.lngLat;
-
-                if (activeMode === 'pickup') {
-
-                    startPoint.features[0].geometry.coordinates = [coords.lng, coords.lat];
-                    map.getSource('point').setData(startPoint);
-                    pickup.value = `${coords.lng} ${coords.lat}`;
-                    pickupLng = coords.lng;
-                    pickupLat = coords.lat;
-                } else if (activeMode === 'destination') {
-
-                    marker.setLngLat([coords.lng, coords.lat]);
-                    destination.value = `${coords.lng} ${coords.lat}`;
-                    destinationLng = coords.lng;
-                    destinationLat = coords.lat;
-                }
-
-                drawRoute();
-                cancelSelection(); // Reset cursor and state after successful click
-            }
-
-            function cancelSelection() {
-                activeMode = null;
-                indicator.classList.add('hidden');
-                document.body.style.cursor = 'default';
-                map.getCanvas().style.cursor = 'grab';
-                // Remove the listener in case they haven't clicked yet
-                map.off('click', handleMapClick);
-            }
-
-            // // Optional: Auto - start GPS tracking when page loads
-            // setTimeout(() => {
-            //     geolocate.trigger();
-            // }, 1000);
-
-            // Initialize the functions
-
-            function resetForm() {
-                // Clear Input Fields
-
-                pickup.value = "";
-                destination.value = "";
-                distanceCoordinate.value = "0";
-                priceRegular.value = "0";
-                priceDiscount.value = "0";
-
-                startPoint.features[0].geometry.coordinates = [];
-                if (map.getSource('point')) {
-                    map.getSource('point').setData(startPoint);
-                }
-
-                // 4. Remove or Hide the Destination Marker
-                // Depending on your Mapbox/Leaflet version, you can remove it or set it to null
-                if (marker) {
-                    marker.setLngLat([0, 0]); // Move to a null island or hide it
-                    // Or if you want to remove it entirely from the map:
-                    // marker.remove();
-                }
-
-                // 5. Clear the Route Line
-                // Assuming 'route' is the source ID for your polyline/path
-                if (map.getSource('route')) {
-                    map.getSource('route').setData({
-                        'type': 'FeatureCollection',
-                        'features': []
-                    });
-                }
-
-                // 6. Reset global coordinate variables
-                pickupLng = null;
-                pickupLat = null;
-                destinationLng = null;
-                destinationLat = null;
-
-                directions.clear();
-
-                // Optional: If you are using Google Maps API, clear markers here
-                // e.g., if (marker) marker.setMap(null);
-
-                console.log("Form reset successfully.");
-            }
-
-            window.resetForm = resetForm;
-
-            const PHOTON_URL = "https://photon.komoot.io/api/?q=";
-            const BBOX = "123.77516124821591, 10.229235293025951,123.91768276426876, 10.332535160307074";
-
-            async function searchAddress(query) {
-                if (query.length < 3) return []; // Don't search for tiny strings
-                try {
-                    const response = await fetch(`${PHOTON_URL}${encodeURIComponent(query)}&bbox=${BBOX}&limit=5`);
-                    const data = await response.json();
-                    return data.features; // Photon returns GeoJSON
-                } catch (error) {
-                    console.error("Geocoding failed", error);
-                    return [];
-                }
-            }
-
-            window.searchAddress = searchAddress;
-
-            const pickupInput = document.getElementById('pickup');
-            const destinationInput = document.getElementById('destination');
-
-            // Listener for Pick-up
-            pickupInput.addEventListener('input', async (e) => {
-                // updateStatus("Selecting Pick-up...", "blue");
-                const results = await searchAddress(e.target.value);
-                // Pass 'pickup' as the type
-                showSuggestions(e.target, results, 'pickup');
-            });
-
-            // Listener for Destination
-            destinationInput.addEventListener('input', async (e) => {
-                // updateStatus("Selecting Destination...", "red");
-                const results = await searchAddress(e.target.value);
-                // Pass 'destination' as the type
-                showSuggestions(e.target, results, 'destination');
-            });
-
-            // // Helper to update your UI status bar
-            // function updateStatus(text, color) {
-            //     const indicator = document.getElementById('status-indicator');
-            //     const statusText = document.getElementById('status-text');
-            //     indicator.classList.remove('hidden');
-            //     statusText.innerText = text;
-            //     // You could dynamically swap classes here for blue/red themes
-            // }
-
-            function showSuggestions(inputElement, features, type) {
-                // 1. Remove existing dropdowns
-                closeAllLists();
-                if (!features.length) return;
-
-                // 2. Create the container
-                const listContainer = document.createElement("div");
-                listContainer.setAttribute("class", "absolute z-50 w-full mt-2 bg-slate-800 border border-white/10 rounded-xl overflow-hidden shadow-2xl");
-
-                // 3. Populate results
-                features.forEach(feature => {
-                    const { name, city, country } = feature.properties;
-                    const displayName = `${name}${city ? ', ' + city : ''}`;
-
-                    const item = document.createElement("div");
-                    item.className = "px-4 py-3 text-xs text-white/80 hover:bg-blue-500/20 cursor-pointer transition-colors border-b border-white/5 last:border-0";
-                    item.innerHTML = `<strong>${name}</strong> <span class="opacity-50 text-[10px] block">${city || ''} ${country || ''}</span>`;
-
-                    item.onclick = () => {
-                        // 1. Set the text value for the user to see
-                        const cityName = feature.properties.city || feature.properties.country || "";
-                        inputElement.value = `${feature.properties.name}${cityName ? ', ' + cityName : ''}`;
-
-                        // 2. Save the coordinates into the HTML element itself
-                        const lat = inputElement.dataset.lat = feature.geometry.coordinates[1]; // Latitude is index 1
-                        const long = inputElement.dataset.lon = feature.geometry.coordinates[0]; // Longitude is index 0
-
-                        if (type === 'pickup') {
-                            startPoint.features[0].geometry.coordinates = [long, lat];
-                            map.getSource('point').setData(startPoint);
-                            pickup.value = `${long} ${lat}`;
-                            pickupLng = long;
-                            pickupLat = lat;
-                        } else if (type === 'destination') {
-                            marker.setLngLat([long, lat]);
-                            destination.value = `${long} ${lat}`;
-                            destinationLng = long;
-                            destinationLat = lat;
-                        }
-
-                        drawRoute();
-                        closeAllLists();
-                    };
-                    listContainer.appendChild(item);
-                });
-
-                inputElement.parentNode.appendChild(listContainer);
-            }
-
-            function closeAllLists() {
-                const items = document.querySelectorAll(".absolute.z-50");
-                items.forEach(item => item.remove());
-            }
-
-            // Close dropdown when clicking outside
-            document.addEventListener("click", (e) => closeAllLists());
-
-            function openTutorialModal() {
-                const backdrop = document.getElementById('tutorialModalBackdrop');
-                const modal = document.getElementById('tutorialModal');
-                backdrop.classList.remove('hidden');
-                modal.classList.remove('hidden');
-                requestAnimationFrame(() => {
-                    modal.classList.remove('opacity-0', 'translate-y-2');
-                    modal.classList.add('opacity-100', 'translate-y-0');
-                });
-            }
-
-            window.openTutorialModal = openTutorialModal;
-
-            function closeTutorialModal() {
-                const backdrop = document.getElementById('tutorialModalBackdrop');
-                const modal = document.getElementById('tutorialModal');
-                modal.classList.remove('opacity-100', 'translate-y-0');
-                modal.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    backdrop.classList.add('hidden');
-                }, 300);
-                sessionStorage.setItem('tutorialDismissed', 'true');
-            }
-
-            window.closeTutorialModal = closeTutorialModal;
-
-            // Auto-open on first visit of the session
-            document.addEventListener('DOMContentLoaded', () => {
-                if (!sessionStorage.getItem('tutorialDismissed')) {
-                    setTimeout(openTutorialModal, 800);
-                }
-            });
-
-            // Close on Escape key
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeTutorialModal();
             });
         </script>
+    </div>
 </body>
-
 </html>

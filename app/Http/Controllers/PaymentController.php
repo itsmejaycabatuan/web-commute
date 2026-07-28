@@ -91,11 +91,17 @@ class PaymentController extends Controller
         $wallet = Wallet::where('user_id', $userId)->first();
         $balance = $wallet->balance;
 
-        // $request->validate([
-        //     'from_date' => 'required',
-        //     'to_date' => 'required'
-        // ]);
+        // Search by transaction ID or destination
+        $query->when($request->search, function ($q) use ($request) {
+            $term = $request->search;
 
+            return $q->where(function ($sub) use ($term) {
+                $sub->where('transaction_id', 'like', "%{$term}%")
+                    ->orWhere('destination', 'like', "%{$term}%");
+            });
+        });
+
+        // Date range filters
         $query->when($request->from_date, function ($q) use ($request) {
             return $q->whereDate('paid_at', '>=', $request->from_date);
         });
@@ -104,8 +110,10 @@ class PaymentController extends Controller
             return $q->whereDate('paid_at', '<=', $request->to_date);
         });
 
-        $totalSpent = Payment::where('paid_by', $userId)->get()->sum('price');
-        $recentReceipts = $query->orderBy('paid_at', 'desc')->paginate(4);
+        // DB-level sum instead of collecting all records
+        $totalSpent = Payment::where('paid_by', $userId)->sum('price');
+
+        $recentReceipts = $query->orderBy('paid_at', 'desc')->paginate(4)->withQueryString();
 
         return view('commuter.paymenthistory', [
             'recentReceipts' => $recentReceipts,
@@ -177,16 +185,34 @@ class PaymentController extends Controller
         return back()->with('error', 'Topup failed.');
     }
 
-    public function topupHistory()
+    public function topupHistory(Request $request)
     {
-        $user = Auth::user();
-        $userId = $user->id;
-        $history = TopupHistory::where('user_id', $userId)->with('user', 'wallet')->latest()->paginate(10);
+        $userId = Auth::user()->id;
+        $query = TopupHistory::where('user_id', $userId)->with('user', 'wallet');
 
-        // dd($history[0]->wallet);
+        // Search by transaction ID
+        $query->when($request->search, function ($q) use ($request) {
+            return $q->where('id', 'like', "%{$request->search}%");
+        });
+
+        // Filter by payment method
+        $query->when($request->method, function ($q) use ($request) {
+            return $q->where('payment_method', $request->method);
+        });
+
+        // Date range filters
+        $query->when($request->from_date, function ($q) use ($request) {
+            return $q->whereDate('created_at', '>=', $request->from_date);
+        });
+
+        $query->when($request->to_date, function ($q) use ($request) {
+            return $q->whereDate('created_at', '<=', $request->to_date);
+        });
+
+        $transactions = $query->latest()->paginate(10)->withQueryString();
 
         return view('commuter.topuphistory', [
-            'transactions' => $history,
+            'transactions' => $transactions,
         ]);
     }
 

@@ -7,186 +7,271 @@
     <title>SmartCommute | User Profile</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+        }
+    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: 'Inter', sans-serif; overflow-x: hidden; background: #050505; }
+        .glass-panel { background: #111111 !important; border: 1px solid #1e1e1e; box-shadow: 0 4px 24px rgba(0,0,0,0.6); }
+        .glass-card { background: #161616; border: 1px solid #222222; box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
+        .header-btn { transition: all 0.3s ease; }
+        .header-btn:hover { background: #1a1a1a !important; border-color: #333 !important; }
 
-        body {
-            background: radial-gradient(circle at top left, #1a1a1a, #050505);
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            color: #fff;
-            min-height: 100vh;
-        }
-
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-        }
-
-        .glass-inset {
-            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
-        }
-
-        .profile-glow {
-            background: radial-gradient(circle at center, rgba(59, 130, 246, 0.15), transparent 70%);
-        }
-
-        .progress-shine {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-shine::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            animation: shine 3s infinite;
-        }
-
-        @keyframes shine {
-            to {
-                left: 100%;
-            }
-        }
-
-        .list-item-hover {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .list-item-hover:hover {
-            background: rgba(255, 255, 255, 0.05);
-            transform: translateX(8px);
-        }
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar { width: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 
-<body class="antialiased">
+<body class="antialiased text-white">
 
-    <div class="pt-10 pb-10 max-w-6xl mx-auto">
-
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-            <div>
-                <div
-                    class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-500 mb-2">
-                    <i class="fa-solid fa-circle-user"></i> Commuter Account
-                </div>
-                <h2 class="text-3xl font-black tracking-tight">{{ explode('@', Auth::user()->email)[0] }}</h2>
-                <p class="text-gray-500 text-xs">{{ Auth::user()->email }}</p>
+    <!-- ══════════ HEADER ══════════ -->
+    <header class="fixed top-4 left-4 right-4 sm:top-5 sm:left-5 sm:right-5 z-50 flex items-center justify-between gap-3 pointer-events-none">
+        <div class="glass-panel p-3 sm:p-3.5 rounded-2xl pointer-events-auto flex items-center gap-3 min-w-0">
+            <a href="{{ route('map') }}" class="header-btn w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border border-[#1e1e1e] bg-[#111] hover:bg-[#1a1a1a] transition cursor-pointer">
+                <i class="fa-solid fa-arrow-left text-[10px] text-[#666]"></i>
+            </a>
+            <div class="w-px h-6 bg-[#222] mx-0.5 hidden sm:block"></div>
+            <div class="w-8 h-8 sm:w-9 sm:h-9 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-bus text-white text-xs sm:text-sm"></i>
             </div>
-            <div class="flex gap-3">
-                <a href="{{ route('payment.topup') }}"
-                    class="glass px-5 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition">
-                    <i class="fa-solid fa-wallet mr-2 text-blue-400"></i> Top Up
-                </a>
-                <a href="{{ route('profile.edit') }}"
-                    class="bg-blue-600 text-white px-5 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition shadow-lg shadow-blue-600/20">
-                    Edit Profile
-                </a>
-                <a href="{{ route('map') }}" class="group flex items-center gap-2">
-                    <div
-                        class="w-8 h-8 glass rounded-lg flex items-center justify-center group-hover:bg-blue-500/10 group-hover:text-blue-400 transition-all">
-                        <i class="fa-solid fa-arrow-left text-[10px]"></i>
+            <span class="text-[13px] sm:text-sm font-bold tracking-tight text-white whitespace-nowrap">Smart<span class="text-blue-400">Commute</span></span>
+            <div class="w-px h-6 bg-[#222] mx-0.5 hidden sm:block"></div>
+            <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] text-[#555] hidden sm:inline">Profile</span>
+        </div>
+        <div class="flex items-center gap-2 pointer-events-auto z-50 shrink-0">
+            <a href="{{ route('payment.topup') }}" class="header-btn glass-panel px-3 sm:px-4 py-2 rounded-xl text-white text-[9px] sm:text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-wallet text-[9px] text-blue-400"></i>
+                <span class="hidden sm:inline">Top Up</span>
+            </a>
+            <a href="{{ route('profile.edit') }}" class="header-btn bg-blue-600 px-3 sm:px-4 py-2 rounded-xl text-white text-[9px] sm:text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition active:scale-[0.98]">
+                <i class="fa-solid fa-pen-to-square text-[8px] sm:text-[9px]"></i>
+                <span class="hidden sm:inline">Edit Profile</span>
+            </a>
+            @if (Auth::user())
+                <button onclick="toggleLogoutModal()" class="header-btn glass-panel w-9 h-9 rounded-xl flex items-center justify-center text-white cursor-pointer hover:!border-red-500/30 hover:!bg-red-500/10">
+                    <i class="fa-solid fa-right-from-bracket text-[9px] text-red-400"></i>
+                </button>
+            @endif
+        </div>
+    </header>
+
+    <!-- ══════════ LOGOUT MODAL ══════════ -->
+    <div id="logout-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-[#111] border border-[#222] p-7 sm:p-8 rounded-[2rem] w-full max-w-[360px] mx-4 text-center transform scale-95 opacity-0 transition-all duration-[350ms] shadow-2xl shadow-black/50" id="logout-modal-content">
+            <div class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-red-500/20">
+                <i class="fa-solid fa-right-from-bracket text-red-400 text-lg"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-1.5">Sign Out?</h3>
+            <p class="text-xs text-[#666] mb-7 leading-relaxed">Are you sure you want to log out of SmartCommute?</p>
+            <div class="grid gap-2.5">
+                <button onclick="toggleLogoutModal()" class="px-5 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] transition">Cancel</button>
+                <form action="{{ route('users.logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" class="w-full px-5 py-3 rounded-xl bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 transition active:scale-[0.98]">Logout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════ MAIN CONTENT ══════════ -->
+    <div class="pt-20 sm:pt-24 pb-8 sm:pb-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-5">
+
+
+
+        <!-- ── User Info Card (mobile) ── -->
+        <div class="lg:hidden mb-6">
+            <div class="glass-card p-5 rounded-[1.5rem]">
+                <div class="flex items-center gap-2">
+                    @if(Auth::user()->email_verified_at)
+                        <span class="flex items-center gap-1.5 text-[9px] font-bold text-emerald-400">
+                            <i class="fa-solid fa-circle-check text-[8px]"></i> Verified
+                        </span>
+                    @else
+                        <span class="flex items-center gap-1.5 text-[9px] font-bold text-amber-500">
+                            <i class="fa-solid fa-clock text-[8px]"></i> Pending
+                        </span>
+                    @endif
+                    <div class="flex-1"></div>
+                    <span class="text-[9px] text-[#444] font-medium">
+                        <i class="fa-regular fa-calendar text-[8px] mr-1"></i>
+                        Since {{ Auth::user()->created_at->format('M d, Y') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Mobile: Balance Card ── -->
+        <div class="lg:hidden mb-6">
+            <div class="glass-card p-5 rounded-[1.5rem]">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 bg-blue-500/15 rounded-lg flex items-center justify-center border border-blue-500/20">
+                            <i class="fa-solid fa-wallet text-blue-400 text-[10px]"></i>
+                        </div>
+                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Available Balance</span>
                     </div>
-                    <span
-                        class="text-[10px] font-black uppercase tracking-widest opacity-50 group-hover:opacity-100 transition">Back
-                        to Home</span>
-                </a>
-            </div>
-        </header>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-            <div class="lg:col-span-4 space-y-6">
-                <div
-                    class="glass p-8 rounded-[2.5rem] relative overflow-hidden bg-gradient-to-br from-blue-600/10 to-transparent">
-                    <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Available Balance</p>
-                    <h3 class="text-4xl font-black">₱{{ number_format($wallet->balance ?? 0, 2) }}</h3>
-                    <i class="fa-solid fa-shield-halved absolute -right-4 -bottom-4 text-7xl opacity-5"></i>
                 </div>
+                <h3 class="text-3xl font-black tracking-tight">₱{{ number_format($wallet->balance ?? 0, 2) }}</h3>
+            </div>
+        </div>
 
-                <div class="glass p-8 rounded-[2.5rem] space-y-6">
-                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Security Details</h4>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-                    <div class="space-y-4">
-                        <div>
-                            <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Account Status</p>
+            <!-- ══════════ LEFT SIDEBAR (desktop only) ══════════ -->
+            <div class="hidden lg:flex lg:col-span-4 flex-col gap-6">
+
+                <!-- User Info -->
+                <div class="glass-card p-6 rounded-[1.5rem]">
+                    <div class="flex items-center gap-2.5 mb-5">
+                        <div class="w-8 h-8 bg-blue-500/15 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-circle-user text-blue-400 text-xs"></i>
+                        </div>
+                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Commuter Account</span>
+                    </div>
+                    <div class="space-y-3 pt-4 border-t border-[#1e1e1e]">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444]">Status</span>
                             @if(Auth::user()->email_verified_at)
-                                <span class="text-[10px] font-black text-emerald-400 flex items-center gap-1">
-                                    <i class="fa-solid fa-circle-check"></i> VERIFIED COMMUTER
+                                <span class="text-[9px] font-bold text-emerald-400 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-circle-check text-[8px]"></i> Verified
                                 </span>
                             @else
-                                <span class="text-[10px] font-black text-amber-500">PENDING VERIFICATION</span>
+                                <span class="text-[9px] font-bold text-amber-500 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-clock text-[8px]"></i> Pending
+                                </span>
                             @endif
                         </div>
-                        <div>
-                            <p class="text-[10px] uppercase font-bold text-gray-500 mb-1">Member Since</p>
-                            <p class="text-sm font-bold text-white/80">{{ Auth::user()->created_at->format('M d, Y') }}
-                            </p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444]">Member Since</span>
+                            <span class="text-[11px] font-bold text-[#888]">{{ Auth::user()->created_at->format('M d, Y') }}</span>
                         </div>
                     </div>
                 </div>
+
+                <!-- Balance -->
+                <div class="glass-card p-6 rounded-[1.5rem]">
+                    <div class="flex items-center gap-2.5 mb-4">
+                        <div class="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center border border-emerald-500/15">
+                            <i class="fa-solid fa-wallet text-emerald-400 text-[10px]"></i>
+                        </div>
+                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Available Balance</span>
+                    </div>
+                    <h3 class="text-3xl font-black tracking-tight">₱{{ number_format($wallet->balance ?? 0, 2) }}</h3>
+                </div>
+
             </div>
 
-            <div class="lg:col-span-8 space-y-6">
+            <!-- ══════════ RIGHT CONTENT ══════════ -->
+            <div class="lg:col-span-8 flex flex-col gap-6">
 
-                <div class="glass p-8 rounded-[2.5rem]">
-                    <div class="flex items-center justify-between mb-8">
-                        <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">Recent Travels</h4>
-                        <i class="fa-solid fa-bus-simple text-gray-600"></i>
+                <!-- ── Security Details (shown directly) ── -->
+                <div class="glass-card p-5 sm:p-6 rounded-[1.5rem]">
+                    <div class="flex items-center gap-2.5 mb-5">
+                        <div class="w-8 h-8 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center">
+                            <i class="fa-solid fa-user-circle text-[10px] text-[#555]"></i>
+                        </div>
+                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Security Details</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#111] border border-[#1e1e1e]">
+                            <div>
+                                <p class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444] mb-0.5">Account Status</p>
+                                @if(Auth::user()->email_verified_at)
+                                    <span class="text-[10px] font-bold text-emerald-400 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-circle-check text-[8px]"></i> Verified Commuter
+                                    </span>
+                                @else
+                                    <span class="text-[10px] font-bold text-amber-500 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-clock text-[8px]"></i> Pending Verification
+                                    </span>
+                                @endif
+                            </div>
+                            <div class="w-8 h-8 rounded-lg @if(Auth::user()->email_verified_at) bg-emerald-500/10 border border-emerald-500/20 @else bg-amber-500/10 border border-amber-500/20 @endif flex items-center justify-center shrink-0">
+                                <i class="fa-solid @if(Auth::user()->email_verified_at) fa-check text-emerald-400 @else fa-clock text-amber-400 @endif text-[9px]"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#111] border border-[#1e1e1e]">
+                            <div>
+                                <p class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444] mb-0.5">Member Since</p>
+                                <p class="text-[11px] font-bold text-[#888]">{{ Auth::user()->created_at->format('M d, Y') }}</p>
+                            </div>
+                            <div class="w-8 h-8 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center shrink-0">
+                                <i class="fa-regular fa-calendar text-[9px] text-[#555]"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Recent Travels ── -->
+                <div class="glass-card p-5 sm:p-6 rounded-[1.5rem]">
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center">
+                                <i class="fa-solid fa-route text-[10px] text-[#555]"></i>
+                            </div>
+                            <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Recent Travels</span>
+                        </div>
+                        <span class="text-[9px] font-bold text-[#333]">{{ count($payments) }} trips</span>
                     </div>
 
-                    <div class="space-y-4">
+                    <div class="space-y-2.5">
                         @forelse($payments as $payment)
-                            <div
-                                class="flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 border border-white/5 transition-all group">
-                                <div class="flex items-center gap-4">
-                                    <div
-                                        class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
-                                        <i class="fa-solid fa-location-arrow text-xs"></i>
+                            <div class="flex items-center justify-between p-3.5 rounded-xl border border-[#1e1e1e] hover:bg-[#1a1a1a] transition-all group cursor-default">
+                                <div class="flex items-center gap-3 min-w-0 flex-1">
+                                    <div class="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0 group-hover:scale-110 transition">
+                                        <i class="fa-solid fa-location-arrow text-[10px]"></i>
                                     </div>
-                                    <div>
-                                        <p class="text-xs font-bold">{{ $payment->starting_point }} →
-                                            {{ $payment->destination }}
-                                        </p>
-                                        <p class="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">
-                                            {{ \Carbon\Carbon::parse($payment->paid_at)->format('M d • h:i A') }}
-                                            • {{ $payment->total_distance }}km
+                                    <div class="min-w-0">
+                                        <p class="text-[11px] font-bold text-[#ccc] truncate">{{ $payment->starting_point }} → {{ $payment->destination }}</p>
+                                        <p class="text-[8px] text-[#444] font-bold uppercase tracking-tighter mt-0.5">
+                                            {{ \Carbon\Carbon::parse($payment->paid_at)->format('M d • h:i A') }} • {{ $payment->total_distance }}km
                                         </p>
                                     </div>
                                 </div>
-                                <div class="text-right">
-                                    <p class="text-sm font-black text-white">-₱{{ number_format($payment->price, 2) }}</p>
+                                <div class="text-right shrink-0 ml-3 flex flex-col items-end gap-1">
+                                    <p class="text-xs font-bold text-white">-₱{{ number_format($payment->price, 2) }}</p>
                                     @if($payment->is_discounted)
-                                        <span
-                                            class="text-[8px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded uppercase font-black">Discounted</span>
+                                        <span class="text-[7px] bg-blue-500/15 text-blue-400 px-1.5 py-0.5 rounded font-bold uppercase">Discounted</span>
                                     @endif
                                 </div>
                             </div>
                         @empty
-                            <p class="text-center py-10 text-gray-500 text-xs italic">No travel history found.</p>
+                            <div class="text-center py-10">
+                                <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#111] border border-[#1e1e1e] flex items-center justify-center">
+                                    <i class="fa-solid fa-route text-lg text-[#333]"></i>
+                                </div>
+                                <p class="text-[#444] text-[11px] font-medium">No travel history found</p>
+                                <a href="{{ route('map') }}" class="inline-flex items-center gap-2 mt-3 text-blue-400 text-[9px] font-bold uppercase tracking-wider hover:text-blue-300 transition">
+                                    <i class="fa-solid fa-arrow-right text-[8px]"></i> Start your first trip
+                                </a>
+                            </div>
                         @endforelse
                     </div>
                 </div>
 
-                <div class="glass p-8 rounded-[2.5rem]">
-                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-8">Wallet Loads</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- ── Wallet Loads (shown directly) ── -->
+                <div class="glass-card p-5 sm:p-6 rounded-[1.5rem]">
+                    <div class="flex items-center gap-2.5 mb-5">
+                        <div class="w-8 h-8 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center">
+                            <i class="fa-solid fa-wallet text-[10px] text-[#555]"></i>
+                        </div>
+                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Wallet Loads</span>
+                        <span class="text-[9px] font-bold text-[#333] ml-auto">{{ count($topups) }} transactions</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         @foreach($topups as $topup)
-                            <div class="bg-white/5 p-4 rounded-2xl flex items-center justify-between">
+                            <div class="flex items-center justify-between p-3.5 rounded-xl bg-[#111] border border-[#1e1e1e] hover:bg-[#1a1a1a] transition">
                                 <div>
-                                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-tighter">Reload
-                                        Successful</p>
-                                    <p class="text-[9px] text-gray-500">{{ $topup->created_at->diffForHumans() }} via
-                                        {{ $topup->payment_method }}
-                                    </p>
+                                    <p class="text-[9px] font-bold text-emerald-400 uppercase tracking-tighter">Reload Successful</p>
+                                    <p class="text-[8px] text-[#444] mt-0.5">{{ $topup->created_at->diffForHumans() }} via {{ $topup->payment_method }}</p>
                                 </div>
-                                <p class="text-sm font-black text-white">+₱{{ number_format($topup->amount_added, 2) }}</p>
+                                <p class="text-sm font-bold text-white shrink-0 ml-3">+₱{{ number_format($topup->amount_added, 2) }}</p>
                             </div>
                         @endforeach
                     </div>
@@ -195,6 +280,27 @@
             </div>
         </div>
     </div>
-</body>
 
+    <!-- ══════════ LOGOUT MODAL LOGIC ══════════ -->
+    <script>
+        function toggleLogoutModal() {
+            const modal = document.getElementById('logout-modal');
+            const content = document.getElementById('logout-modal-content');
+            const isOpen = modal.style.opacity === '1';
+
+            if (isOpen) {
+                modal.style.opacity = '0';
+                modal.style.pointerEvents = 'none';
+                content.style.transform = 'scale(0.95)';
+                content.style.opacity = '0';
+            } else {
+                modal.style.opacity = '1';
+                modal.style.pointerEvents = 'auto';
+                content.style.transform = 'scale(1)';
+                content.style.opacity = '1';
+            }
+        }
+    </script>
+
+</body>
 </html>
