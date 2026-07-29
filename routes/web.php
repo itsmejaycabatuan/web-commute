@@ -194,6 +194,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/fare/update', [FareController::class, 'bulkUpdate'])->middleware('role:admin')->name('fares.bulk-update');
     Route::delete('/fare/{id}/delete', [FareController::class, 'delete'])->middleware('role:admin')->name('fares.destroy');
 
+    Route::get('/timekeeping', [DriverController::class, 'timekeeping'])->name('driver.timekeeping');
+    Route::post('/timekeeping/clock-in', [DriverController::class, 'clockIn'])->name('driver.timekeeping.clock-in');
+    Route::post('/timekeeping/clock-out', [DriverController::class, 'clockOut'])->name('driver.timekeeping.clock-out');
+
     Route::resource('users', UserController::class);
     Route::resource('routes', RouteController::class)->middleware('role:admin');
     Route::resource('rates', RateController::class)->middleware('role:admin');

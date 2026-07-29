@@ -108,14 +108,6 @@
 
 <body class="flex relative justify-center items-center p-4 sm:p-6 min-h-screen register-bg font-sans text-white overflow-x-hidden">
 
-    @if (session('success'))
-        <div class="fixed top-5 left-1/2 z-[90] px-5 py-3.5 max-w-md text-sm text-center text-white -translate-x-1/2 bg-emerald-600/95 backdrop-blur-md rounded-2xl border border-emerald-500/30 shadow-lg shadow-emerald-500/20 flash-animate flex items-center gap-2"
-            id="login-flash-success">
-            <i class="fa-solid fa-circle-check text-emerald-300"></i>
-            {{ session('success') }}
-        </div>
-    @endif
-
     <!-- Decorative orbs -->
     <div class="absolute top-1/4 right-1/4 w-72 h-72 bg-amber-500/8 rounded-full blur-[100px] pointer-events-none"></div>
     <div class="absolute bottom-1/3 left-1/3 w-56 h-56 bg-purple-500/10 rounded-full blur-[80px] pointer-events-none"></div>
@@ -183,7 +175,7 @@
                         </div>
                         <input type="tel" name="contact_info" id="contact-info"
                             placeholder="9XX XXX XXXX"
-                            maxlength="11"
+                            maxlength="12"
                             value="{{ old('contact_info') }}"
                             oninput="formatPhoneNumber(this)"
                             class="input-field py-3 pl-10 pr-4 w-full text-sm rounded-r-xl focus:outline-none placeholder:text-white/20">
@@ -323,7 +315,7 @@
             if (digits.startsWith('0')) digits = digits.substring(1);
             if (digits.length > 10) digits = digits.substring(0, 10);
             if (digits.length > 6) {
-                input.value = digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(6);
+                input.value = digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(6, 10);
             } else if (digits.length > 3) {
                 input.value = digits.slice(0, 3) + ' ' + digits.slice(3);
             } else {

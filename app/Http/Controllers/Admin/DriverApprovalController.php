@@ -165,7 +165,6 @@ class DriverApprovalController extends Controller
             'license_number' => 'required|string|max:255',
             'license_code' => 'required|string|max:255',
             'expiration_date' => 'required|string|max:255',
-            'contact_info' => 'required|string|max:255',
             'driver_code' => 'required|string|max:255',
         ]);
 
@@ -181,7 +180,6 @@ class DriverApprovalController extends Controller
             'license_number' => $request->license_number,
             'license_code' => $request->license_code,
             'expiration_date' => $request->expiration_date,
-            'contact_info' => $request->contact_info,
             'driver_code' => $request->driver_code,
         ]);
 

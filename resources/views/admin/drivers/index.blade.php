@@ -158,6 +158,7 @@
                                                 <button type="button"
                                                     data-did="{{ $driver->id }}"
                                                     data-email="{{ $driver->email }}"
+                                                    data-contact="{{ $driver->contact_info ?? '' }}"
                                                     data-registered="{{ $driver->created_at->format('M j, Y') }}"
                                                     data-license-url="{{ $licenseRoute }}"
                                                     data-has-license="{{ $hasLicense ? '1' : '0' }}"
@@ -248,7 +249,6 @@
                 <form action="{{ route('admin.drivers.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                     @csrf
 
-                    <!-- Account section -->
                     <div class="flex items-center gap-3 !mb-5">
                         <div class="flex-1 h-px bg-white/5"></div>
                         <span class="text-[9px] font-bold uppercase tracking-widest text-gray-600">Account credentials</span>
@@ -288,7 +288,6 @@
                             placeholder="Re-enter password">
                     </div>
 
-                    <!-- Driver details section -->
                     <div class="flex items-center gap-3 !my-5">
                         <div class="flex-1 h-px bg-white/5"></div>
                         <span class="text-[9px] font-bold uppercase tracking-widest text-gray-600">Driver details</span>
@@ -344,18 +343,6 @@
 
                     <div>
                         <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                            Contact Information <span class="text-red-400">*</span>
-                        </label>
-                        <input type="text" name="contact_info" value="{{ old('contact_info') }}" required
-                            class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:ring-2 focus:ring-blue-500/40 focus:outline-none transition"
-                            placeholder="Phone number or mobile">
-                        @error('contact_info')
-                            <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
                             Driver Code <span class="text-red-400">*</span>
                         </label>
                         <input type="text" name="driver_code" value="{{ old('driver_code') }}" required
@@ -366,7 +353,6 @@
                         @enderror
                     </div>
 
-                    <!-- License image -->
                     <div>
                         <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
                             License Image
@@ -405,7 +391,7 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0">
 
-        <div class="glass w-full max-w-lg rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden"
+        <div class="glass w-full max-w-4xl rounded-[2rem] border border-white/10 shadow-2xl overflow-hidden"
             @click.stop
             x-show="reviewModal"
             x-transition:enter="transition ease-out duration-200"
@@ -415,12 +401,19 @@
             x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95">
 
+            <!-- Header -->
             <div class="flex items-center justify-between px-8 pt-7 pb-4">
                 <div class="flex items-center gap-3">
                     <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/25">
                         <i class="fa-solid fa-id-card text-sm"></i>
                     </div>
-                    <h3 class="text-lg font-bold tracking-tight">Driver Review</h3>
+                    <div>
+                        <h3 class="text-lg font-bold tracking-tight">Driver Review</h3>
+                        <p class="text-xs text-gray-500">
+                            <span x-text="reviewEmail"></span>
+                            <span class="text-gray-600" x-text="' · ' + reviewRegistered"></span>
+                        </p>
+                    </div>
                 </div>
                 <button type="button" @click="reviewModal = false"
                     class="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 transition text-gray-400 hover:text-white">
@@ -428,125 +421,134 @@
                 </button>
             </div>
 
-            <div class="px-8 pb-8 modal-scroll overflow-y-auto" style="max-height: 75vh;">
-                <div class="flex items-center gap-3 mb-6 flex-wrap">
-                    <span class="text-sm text-gray-400" x-text="reviewEmail"></span>
-                    <span class="text-xs text-gray-600" x-text="'· ' + reviewRegistered"></span>
-                </div>
-
-                <div class="space-y-2 mb-8">
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Submitted ID</p>
-                    <template x-if="reviewHasLicense">
-                        <div>
-                            <a :href="reviewLicenseUrl" target="_blank" rel="noopener"
-                                class="block rounded-xl border border-white/10 overflow-hidden bg-black/60 hover:border-white/20 transition">
-                                <img :src="reviewLicenseUrl" alt="ID" loading="lazy"
-                                    class="w-full max-h-64 object-contain">
-                            </a>
-                            <a :href="reviewLicenseUrl" target="_blank" rel="noopener"
-                                class="inline-flex items-center gap-2 mt-2 text-blue-400 hover:text-blue-300 text-[10px] font-bold uppercase tracking-wider transition">
-                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Open full size
-                            </a>
-                        </div>
+            <!-- Driver info bar -->
+            <div class="mx-8 mb-6 p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-phone text-[9px] text-gray-600"></i>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-600">Contact</span>
+                    </div>
+                    <template x-if="reviewContact">
+                        <span class="text-sm font-bold text-white" x-text="reviewContact"></span>
                     </template>
-                    <template x-if="!reviewHasLicense">
-                        <div class="flex flex-col items-center justify-center py-10 rounded-xl border border-dashed border-white/10 bg-white/[0.02]">
-                            <i class="fa-regular fa-image text-2xl text-gray-600 mb-2"></i>
-                            <p class="text-xs text-gray-500">No ID image uploaded</p>
-                        </div>
+                    <template x-if="!reviewContact">
+                        <span class="text-sm text-gray-600 italic">Not provided</span>
                     </template>
                 </div>
+            </div>
 
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="flex-1 h-px bg-white/10"></div>
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Required to approve</span>
-                    <div class="flex-1 h-px bg-white/10"></div>
+            <!-- Body: side-by-side layout -->
+            <div class="px-8 pb-8 modal-scroll overflow-y-auto" style="max-height: 70vh;">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+
+                    <!-- Left: License Image (2 cols) -->
+                    <div class="md:col-span-2">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-3">Submitted ID</p>
+                        <template x-if="reviewHasLicense">
+                            <div class="md:sticky md:top-0">
+                                <a :href="reviewLicenseUrl" target="_blank" rel="noopener"
+                                    class="block rounded-xl border border-white/10 overflow-hidden bg-black/60 hover:border-white/20 transition">
+                                    <img :src="reviewLicenseUrl" alt="ID" loading="lazy"
+                                        class="w-full max-h-72 object-contain">
+                                </a>
+                                <a :href="reviewLicenseUrl" target="_blank" rel="noopener"
+                                    class="inline-flex items-center gap-2 mt-2 text-blue-400 hover:text-blue-300 text-[10px] font-bold uppercase tracking-wider transition">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Open full size
+                                </a>
+                            </div>
+                        </template>
+                        <template x-if="!reviewHasLicense">
+                            <div class="flex flex-col items-center justify-center py-16 rounded-xl border border-dashed border-white/10 bg-white/[0.02]">
+                                <i class="fa-regular fa-image text-2xl text-gray-600 mb-2"></i>
+                                <p class="text-xs text-gray-500">No ID image uploaded</p>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Right: Form Fields (3 cols) -->
+                    <div class="md:col-span-3">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="flex-1 h-px bg-white/10"></div>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Required to approve</span>
+                            <div class="flex-1 h-px bg-white/10"></div>
+                        </div>
+
+                        <form :action="reviewApproveUrl" method="POST" class="space-y-3.5">
+                            @csrf
+
+                            <div>
+                                <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                                    Name <span class="text-red-400">*</span>
+                                </label>
+                                <input type="text" name="name" value="{{ old('name') }}" required
+                                    class="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:ring-2 focus:ring-blue-500/40 focus:outline-none transition">
+                                @error('name')
+                                    <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                                    License Number <span class="text-red-400">*</span>
+                                </label>
+                                <input type="text" name="license_number" value="{{ old('license_number') }}" required
+                                    class="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:ring-2 focus:ring-blue-500/40 focus:outline-none transition">
+                                @error('license_number')
+                                    <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                                    License Code <span class="text-red-400">*</span>
+                                </label>
+                                <input type="text" name="license_code" value="{{ old('license_code') }}" required
+                                    class="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:ring-2 focus:ring-blue-500/40 focus:outline-none transition">
+                                @error('license_code')
+                                    <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                                    Expiration Date <span class="text-red-400">*</span>
+                                </label>
+                                <input type="date" name="expiration_date" value="{{ old('expiration_date') }}" required
+                                    class="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:outline-none transition">
+                                @error('expiration_date')
+                                    <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                                    Driver Code <span class="text-red-400">*</span>
+                                </label>
+                                <input type="text" name="driver_code" value="{{ old('driver_code') }}" required
+                                    class="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:ring-2 focus:ring-blue-500/40 focus:outline-none transition">
+                                @error('driver_code')
+                                    <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="flex gap-3 pt-3">
+                                <button type="button" @click="reviewModal = false"
+                                    class="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition font-bold text-[10px] uppercase tracking-widest text-gray-300">
+                                    Cancel
+                                </button>
+                                <button type="button" @click="rejectDriver()"
+                                    class="flex-1 py-2.5 rounded-xl bg-red-600/90 hover:bg-red-500 transition font-bold text-[10px] uppercase tracking-widest text-white">
+                                    <i class="mr-1.5 fa-solid fa-ban"></i> Reject
+                                </button>
+                                <button type="submit"
+                                    class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 transition font-bold text-[10px] uppercase tracking-widest text-white">
+                                    <i class="mr-1.5 fa-solid fa-check"></i> Approve
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
                 </div>
-
-                <form :action="reviewApproveUrl" method="POST" class="space-y-4 mb-8">
-                    @csrf
-
-                    <div>
-                        <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                            Name <span class="text-red-400">*</span>
-                        </label>
-                        <input type="text" name="name" value="{{ old('name') }}" required
-                            class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:ring-2 focus:ring-blue-500/40 focus:outline-none transition">
-                        @error('name')
-                            <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                            License Number <span class="text-red-400">*</span>
-                        </label>
-                        <input type="text" name="license_number" value="{{ old('license_number') }}" required
-                            class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:ring-2 focus:ring-blue-500/40 focus:outline-none transition">
-                        @error('license_number')
-                            <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                            License Code <span class="text-red-400">*</span>
-                        </label>
-                        <input type="text" name="license_code" value="{{ old('license_code') }}" required
-                            class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:ring-2 focus:ring-blue-500/40 focus:outline-none transition">
-                        @error('license_code')
-                            <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                            Expiration Date <span class="text-red-400">*</span>
-                        </label>
-                        <input type="date" name="expiration_date" value="{{ old('expiration_date') }}" required
-                            class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white focus:ring-2 focus:ring-blue-500/40 focus:outline-none transition">
-                        @error('expiration_date')
-                            <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                            Contact Information <span class="text-red-400">*</span>
-                        </label>
-                        <input type="text" name="contact_info" value="{{ old('contact_info') }}" required
-                            class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:ring-2 focus:ring-blue-500/40 focus:outline-none transition">
-                        @error('contact_info')
-                            <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                            Driver Code <span class="text-red-400">*</span>
-                        </label>
-                        <input type="text" name="driver_code" value="{{ old('driver_code') }}" required
-                            class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white placeholder-gray-600 focus:ring-2 focus:ring-blue-500/40 focus:outline-none transition">
-                        @error('driver_code')
-                            <p class="mt-1 text-xs text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="flex gap-3 pt-2">
-                        <button type="button" @click="reviewModal = false"
-                            class="flex-1 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition font-bold text-xs uppercase tracking-widest text-gray-300">
-                            Cancel
-                        </button>
-                        <button type="button" @click="rejectDriver()"
-                            class="flex-1 py-3 rounded-xl bg-red-600/90 hover:bg-red-500 transition font-bold text-xs uppercase tracking-widest text-white">
-                            <i class="mr-1.5 fa-solid fa-ban"></i> Reject
-                        </button>
-                        <button type="submit"
-                            class="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 transition font-bold text-xs uppercase tracking-widest text-white">
-                            <i class="mr-1.5 fa-solid fa-check"></i> Approve
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
@@ -593,7 +595,6 @@
                     @csrf
                     @method('PUT')
 
-                    <!-- Approval Status -->
                     <div>
                         <label class="block mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">
                             Approval Status
@@ -623,7 +624,6 @@
                         </p>
                     </div>
 
-                    <!-- Divider -->
                     <div class="flex items-center gap-3 !my-5">
                         <div class="flex-1 h-px bg-white/5"></div>
                         <span class="text-[9px] font-bold uppercase tracking-widest text-gray-600">Driver details</span>
@@ -730,19 +730,17 @@
             return {
                 open: true,
 
-                // Add modal state
                 addModal: false,
 
-                // Review modal state
                 reviewModal: false,
                 reviewDriverId: null,
                 reviewEmail: '',
+                reviewContact: '',
                 reviewRegistered: '',
                 reviewLicenseUrl: '',
                 reviewHasLicense: false,
                 reviewApproveUrl: '',
 
-                // Edit modal state
                 editModal: false,
                 editDriverId: null,
                 editEmail: '',
@@ -764,6 +762,7 @@
                 openReview(el) {
                     this.reviewDriverId   = el.dataset.did || null;
                     this.reviewEmail      = el.dataset.email || '';
+                    this.reviewContact    = el.dataset.contact || '';
                     this.reviewRegistered = el.dataset.registered || '';
                     this.reviewLicenseUrl = el.dataset.licenseUrl || '';
                     this.reviewHasLicense = el.dataset.hasLicense === '1';
@@ -865,5 +864,4 @@
     </script>
 
 </body>
-
 </html>

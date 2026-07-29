@@ -34,4 +34,9 @@ class Driver extends Model
     {
         return $this->hasMany(TimeKeeping::class);
     }
+
+    public function vehicle()
+    {
+        return $this->hasMany(Vehicle::class);
+    }
 }

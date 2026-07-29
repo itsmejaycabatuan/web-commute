@@ -12,6 +12,7 @@ use App\Models\PreventiveMaintenance;
 use App\Models\TimeKeeping;
 use App\Models\TopupHistory;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Models\VehicleLocationHistory;
 use App\Models\ViolationLog;
 use App\Models\Wallet;
@@ -50,6 +51,11 @@ class UserController extends Controller
 
         if ($role == 'driver') {
             $driver = Driver::where('user_id', $user->id)->first();
+            $todayRecord = null;
+
+            $todayRecord = TimeKeeping::where('driver_id', $driver->id)
+                ->whereDate('date', today())
+                ->first();
 
             if ($driver->is_approved != true && $driver->is_rejected != true) {
                 Auth::logout();
@@ -66,6 +72,7 @@ class UserController extends Controller
             return view('map', [
                 'rates' => $rates,
                 'recentReceipts' => $recentReceipts,
+                'todayRecord' => $todayRecord,
             ]);
         }
 
@@ -101,9 +108,41 @@ class UserController extends Controller
             ->sum('distance_from_last_pos');
 
         $totalDistance = number_format($distance, 1);
+
+        // $total_distance comes from however you're tracking it (payments, trips, etc.)
         if ($role == 'driver') {
+            $driver = Driver::where('user_id', Auth::id())->first();
+
+            $todayRecord = TimeKeeping::where('driver_id', $driver->id)
+                ->whereDate('date', today())
+                ->first();
+
+            $recentTimeKeeping = TimeKeeping::where('driver_id', $driver->id)
+                ->latest('date')
+                ->take(7)
+                ->get();
+
+            $weekStart = now()->startOfWeek();
+            $weekEnd = now()->endOfWeek();
+
+            $weekHours = TimeKeeping::where('driver_id', $driver->id)
+                ->whereBetween('date', [$weekStart, $weekEnd])
+                ->sum('hours_worked');
+
+            $weekOvertime = TimeKeeping::where('driver_id', $driver->id)
+                ->whereBetween('date', [$weekStart, $weekEnd])
+                ->sum('overtime_hours');
+
+            $vehicle = Vehicle::where('driver_id', $driver->id)->first();
+
             return view('driver.dashboard', [
-                'total_distance' => $totalDistance,
+                'driver' => $driver,
+                'todayRecord' => $todayRecord,
+                'recentTimeKeeping' => $recentTimeKeeping,
+                'weekHours' => $weekHours,
+                'weekOvertime' => $weekOvertime,
+                'vehicle' => $vehicle,
+                'total_distance' => $total_distance ?? 0,
             ]);
         }
 

@@ -242,12 +242,17 @@
             transform: scale(1);
             opacity: 1;
         }
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 0.4; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+        .clock-pulse { animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     </style>
 </head>
 
 <body class="antialiased">
 
-    @include('components.flash');
+    @include('components.flash')
 
     <header class="fixed top-4 left-4 right-4 sm:top-5 sm:left-5 sm:right-5 z-50 flex flex-col sm:flex-row justify-between items-center sm:items-center gap-3 pointer-events-none">
         <div class="glass-panel p-3 sm:p-3.5 rounded-2xl pointer-events-auto flex items-center gap-3">
@@ -281,26 +286,26 @@
             @if (Auth::user())
                 @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
                     <a href="{{ route('dashboard') }}">
-                        <div class="header-btn glass-panel px-4 py-2 rounded-xl text-white text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2">
-                            <i class="fa-solid fa-gauge-high text-[9px] text-blue-400"></i> Dashboard
+                        <div class="header-btn glass-panel px-4 h-9 py-2 rounded-xl text-white text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-gauge-high text-[9px] text-blue-400"></i> <span class="hidden sm:inline">Dashboard</span>
                         </div>
                     </a>
                 @endif
                 @if (Auth::check() && Auth::user()->roles[0]->name === 'admin')
                     <a href="{{ route('admin.dashboard') }}">
-                        <div class="header-btn glass-panel px-4 py-2 rounded-xl text-white text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2">
-                            <i class="fa-solid fa-shield-halved text-[9px] text-purple-400"></i> Admin
+                        <div class="header-btn glass-panel px-4 h-9 py-2 rounded-xl text-white text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-shield text-[9px] text-purple-400"></i> <span class="hidden sm:inline">Dashboard</span>
                         </div>
                     </a>
                 @endif
                 <a href="{{ route('profile') }}">
-                    <div class="header-btn glass-panel w-9 h-9 rounded-xl flex items-center justify-center text-white cursor-pointer">
-                        <i class="fa-solid fa-user text-[10px] text-[#666]"></i>
+                    <div class="header-btn glass-panel px-4 h-9 py-2 rounded-xl text-white text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-user text-[9px] text-[#666]"></i><span class="hidden sm:inline">Profile</span>
                     </div>
                 </a>
                 <button onclick="toggleLogoutModal()" class="header-btn glass-panel px-4 h-9 py-2 rounded-xl text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 hover:!border-red-500/30 hover:!bg-red-500/10">
                     <i class="fa-solid fa-right-from-bracket text-[9px] text-red-400"></i>
-                    <span class="sm:inline">Logout</span>
+                    <span class="hidden sm:inline">Logout</span>
                 </button>
             @else
                 <a href="{{ route('register') }}">
@@ -345,10 +350,11 @@
     </div>
 
     <!-- ══════════ MOBILE FAB BUTTONS (stacked on bottom-right) ══════════ -->
-    @if(Auth::check() && Auth::user()->roles[0]->name === 'commuter' || Auth::guest())
+    <!-- NEW -->
+    @if(Auth::check() && Auth::user()->roles[0]->name !== 'admin' || Auth::guest())
         <div class="fixed bottom-[8.5rem] left-5 z-50 md:hidden">
             <button onclick="openMobileSidebar('left')" class="mobile-fab mobile-fab-left">
-                <i class="fa-solid fa-route text-white text-base"></i>
+                <i class="fa-solid fa-{{ Auth::check() && Auth::user()->roles[0]->name === 'driver' ? 'clock' : 'route' }} text-white text-base"></i>
             </button>
         </div>
     @endif
@@ -364,12 +370,13 @@
     <div id="mobile-left-backdrop" class="mobile-sheet-backdrop md:hidden" onclick="closeMobileSidebar('left')"></div>
     <div id="mobile-left-sheet" class="mobile-sheet md:hidden">
         <div class="mobile-sheet-handle"><div></div></div>
+        <!-- NEW -->
         <div class="mobile-sheet-header">
             <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 bg-blue-500/15 rounded-lg flex items-center justify-center">
-                    <i class="fa-solid fa-money-bill-wave text-blue-400 text-xs"></i>
+                <div class="w-8 h-8 @if(Auth::check() && Auth::user()->roles[0]->name === 'driver') bg-amber-500/15 @else bg-blue-500/15 @endif rounded-lg flex items-center justify-center">
+                    <i class="fa-solid @if(Auth::check() && Auth::user()->roles[0]->name === 'driver') fa-clock text-amber-400 @else fa-money-bill-wave text-blue-400 @endif text-xs"></i>
                 </div>
-                <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#666]">Fare Calculator</h3>
+                <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#666]">@if(Auth::check() && Auth::user()->roles[0]->name === 'driver') Timekeeping @else Fare Calculator @endif</h3>
             </div>
             <button onclick="closeMobileSidebar('left')" class="mobile-sheet-close">
                 <i class="fa-solid fa-xmark text-[#555] text-xs"></i>
@@ -395,94 +402,184 @@
 
         <!-- LEFT SIDEBAR -->
         <div id="left" class="sidebar flex-center left collapsed">
-            <div class="sidebar-content flex-center">
-                @if(Auth::check() && Auth::user()->roles[0]->name === 'commuter' || Auth::guest())
-                    <div id="left-sidebar-anchor"></div>
-                    <div id="left-sidebar-form" class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]">
-                        <form action="{{ route('payment.index') }}" method="GET">
-                            <div class="glass-card p-6 rounded-[1.5rem]">
-                                <div class="flex items-center gap-2.5 mb-5">
-                                    <div class="w-8 h-8 bg-blue-500/15 rounded-lg flex items-center justify-center">
-                                        <i class="fa-solid fa-money-bill-wave text-blue-400 text-xs"></i>
-                                    </div>
-                                    <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#666]">Fare Calculator</h3>
-                                </div>
-                                <div id="status-indicator" class="hidden mb-4 p-3 rounded-xl bg-blue-500/8 border border-blue-500/20 flex items-center gap-2.5">
-                                    <div class="w-2 h-2 rounded-full bg-blue-500 dot-pulse"></div>
-                                    <span id="status-text" class="text-[9px] uppercase tracking-[0.15em] text-blue-400 font-bold">Selecting Pick-up...</span>
-                                </div>
-                                <div class="space-y-3">
-                                    <!-- Pickup with search -->
-                                    <div class="flex gap-2 items-center">
-                                        <button type="button" onclick="handlePickupBtn()" class="flex items-center justify-center w-10 h-10 bg-blue-500/10 hover:bg-blue-500/20 p-2.5 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition shrink-0">
-                                            <i class="fa-solid fa-circle-dot text-xs text-blue-400"></i>
-                                        </button>
-                                        <div class="relative flex-1">
-                                            <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                                <i class="fa-solid fa-magnifying-glass text-[10px] text-[#444]"></i>
-                                            </div>
-                                            <input type="text" placeholder="Search pick-up point" name="pickup" id="pickup"
-                                                autocomplete="off"
-                                                class="map-input w-full rounded-xl pl-9 pr-4 py-2.5 text-xs text-white">
-                                            <div id="pickup-dropdown" class="search-dropdown"></div>
-                                        </div>
-                                    </div>
+        <div class="sidebar-content flex-center">
+            <div id="left-sidebar-anchor"></div>
 
-                                    <!-- Destination with search -->
-                                    <div class="flex gap-2 items-center">
-                                        <button type="button" onclick="handleDestinationBtn()" class="flex items-center justify-center w-10 h-10 bg-red-500/10 hover:bg-red-500/20 p-2.5 rounded-xl border border-red-500/20 hover:border-red-500/40 transition shrink-0">
-                                            <i class="fa-solid fa-location-dot text-xs text-red-400"></i>
-                                        </button>
-                                        <div class="relative flex-1">
-                                            <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                                <i class="fa-solid fa-magnifying-glass text-[10px] text-[#444]"></i>
-                                            </div>
-                                            <input type="text" placeholder="Search destination" name="destination" id="destination"
-                                                autocomplete="off"
-                                                class="map-input w-full rounded-xl pl-9 pr-4 py-2.5 text-xs text-white">
-                                            <div id="destination-dropdown" class="search-dropdown"></div>
+            @if(Auth::check() && Auth::user()->roles[0]->name === 'commuter' || Auth::guest())
+                <div id="left-sidebar-form" class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]">
+                    <form action="{{ route('payment.index') }}" method="GET">
+                        <div class="glass-card p-6 rounded-[1.5rem]">
+                            <div class="flex items-center gap-2.5 mb-5">
+                                <div class="w-8 h-8 bg-blue-500/15 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-money-bill-wave text-blue-400 text-xs"></i>
+                                </div>
+                                <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#666]">Fare Calculator</h3>
+                            </div>
+                            <div id="status-indicator" class="hidden mb-4 p-3 rounded-xl bg-blue-500/8 border border-blue-500/20 flex items-center gap-2.5">
+                                <div class="w-2 h-2 rounded-full bg-blue-500 dot-pulse"></div>
+                                <span id="status-text" class="text-[9px] uppercase tracking-[0.15em] text-blue-400 font-bold">Selecting Pick-up...</span>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex gap-2 items-center">
+                                    <button type="button" onclick="handlePickupBtn()" class="flex items-center justify-center w-10 h-10 bg-blue-500/10 hover:bg-blue-500/20 p-2.5 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition shrink-0">
+                                        <i class="fa-solid fa-circle-dot text-xs text-blue-400"></i>
+                                    </button>
+                                    <div class="relative flex-1">
+                                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                            <i class="fa-solid fa-magnifying-glass text-[10px] text-[#444]"></i>
                                         </div>
+                                        <input type="text" placeholder="Search pick-up point" name="pickup" id="pickup" autocomplete="off" class="map-input w-full rounded-xl pl-9 pr-4 py-2.5 text-xs text-white">
+                                        <div id="pickup-dropdown" class="search-dropdown"></div>
                                     </div>
+                                </div>
+                                <div class="flex gap-2 items-center">
+                                    <button type="button" onclick="handleDestinationBtn()" class="flex items-center justify-center w-10 h-10 bg-red-500/10 hover:bg-red-500/20 p-2.5 rounded-xl border border-red-500/20 hover:border-red-500/40 transition shrink-0">
+                                        <i class="fa-solid fa-location-dot text-xs text-red-400"></i>
+                                    </button>
+                                    <div class="relative flex-1">
+                                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                            <i class="fa-solid fa-magnifying-glass text-[10px] text-[#444]"></i>
+                                        </div>
+                                        <input type="text" placeholder="Search destination" name="destination" id="destination" autocomplete="off" class="map-input w-full rounded-xl pl-9 pr-4 py-2.5 text-xs text-white">
+                                        <div id="destination-dropdown" class="search-dropdown"></div>
+                                    </div>
+                                </div>
+                                <div class="line-glow w-full my-1"></div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444]">Distance</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="text" readonly name="distance" id="distance" class="map-input w-20 text-center rounded-lg px-3 py-2 text-xs text-white font-semibold" value="0">
+                                        <span class="text-[10px] font-bold text-[#444] uppercase">km</span>
+                                    </div>
+                                </div>
+                                <div class="bg-[#111] rounded-xl p-3 border border-[#1e1e1e]">
+                                    <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-2">Regular</span>
+                                    <div class="relative flex-1">
+                                        <i class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#555]"></i>
+                                        <input type="text" readonly name="price-regular" id="price-regular" class="map-input w-full rounded-lg pl-7 pr-3 py-2 text-xs text-white text-center font-semibold" value="0">
+                                    </div>
+                                </div>
+                                <div class="bg-[#111] rounded-xl p-3 border border-[#1e1e1e]">
+                                    <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-2">Student / Elderly / PWD</span>
+                                    <div class="relative flex-1">
+                                        <i class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#555]"></i>
+                                        <input type="text" readonly name="price-discount" id="price-discount" class="map-input w-full rounded-lg pl-7 pr-3 py-2 text-xs text-white text-center font-semibold" value="0">
+                                    </div>
+                                </div>
+                                <button type="button" onclick="resetForm()" class="flex items-center justify-center gap-2 w-full bg-[#111] hover:bg-red-500/10 text-[#555] hover:text-red-400 font-bold py-2.5 px-4 rounded-xl text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border border-[#1e1e1e] hover:border-red-500/20">
+                                    <i class="fa-solid fa-rotate-left text-[8px]"></i> <span>Reset Route</span>
+                                </button>
+                                <button class="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-5 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-all duration-300 active:scale-[0.98]" type="submit">
+                                    <span>Buy a Ride</span> <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            @endif
 
-                                    <div class="line-glow w-full my-1"></div>
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444]">Distance</span>
-                                        <div class="flex items-center gap-1.5">
-                                            <input type="text" readonly name="distance" id="distance" class="map-input w-20 text-center rounded-lg px-3 py-2 text-xs text-white font-semibold" value="0">
-                                            <span class="text-[10px] font-bold text-[#444] uppercase">km</span>
-                                        </div>
-                                    </div>
-                                    <div class="bg-[#111] rounded-xl p-3 border border-[#1e1e1e]">
-                                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-2">Regular</span>
-                                        <div class="relative flex-1">
-                                            <i class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#555]"></i>
-                                            <input type="text" readonly name="price-regular" id="price-regular" class="map-input w-full rounded-lg pl-7 pr-3 py-2 text-xs text-white text-center font-semibold" value="0">
-                                        </div>
-                                    </div>
-                                    <div class="bg-[#111] rounded-xl p-3 border border-[#1e1e1e]">
-                                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-2">Student / Elderly / PWD</span>
-                                        <div class="relative flex-1">
-                                            <i class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#555]"></i>
-                                            <input type="text" readonly name="price-discount" id="price-discount" class="map-input w-full rounded-lg pl-7 pr-3 py-2 text-xs text-white text-center font-semibold" value="0">
-                                        </div>
-                                    </div>
-                                    <button type="button" onclick="resetForm()" class="flex items-center justify-center gap-2 w-full bg-[#111] hover:bg-red-500/10 text-[#555] hover:text-red-400 font-bold py-2.5 px-4 rounded-xl text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border border-[#1e1e1e] hover:border-red-500/20">
-                                        <i class="fa-solid fa-rotate-left text-[8px]"></i> <span>Reset Route</span>
-                                    </button>
-                                    <button class="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-5 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-all duration-300 active:scale-[0.98]" type="submit">
-                                        <span>Buy a Ride</span> <i class="fa-solid fa-arrow-right text-[9px]"></i>
-                                    </button>
+            @if(Auth::check() && Auth::user()->roles[0]->name === 'driver')
+                <div id="left-sidebar-form" class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]">
+
+                    <!-- Clock In/Out Card -->
+                    <div class="glass-card p-5 rounded-[1.5rem] @if($todayRecord && $todayRecord->time_in && !$todayRecord->time_out) border-amber-500/20 @elseif($todayRecord && $todayRecord->time_out) border-emerald-500/20 @else border-blue-500/20 @endif">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <p class="text-[8px] uppercase tracking-[0.15em] text-[#444] font-bold mb-0.5">Today's Shift</p>
+                                <h2 class="text-sm font-bold text-white">
+                                    @if(!$todayRecord || !$todayRecord->time_in)
+                                        Not Started
+                                    @elseif(!$todayRecord->time_out)
+                                        <span class="text-amber-400">In Progress</span>
+                                    @else
+                                        <span class="text-emerald-400">Completed</span>
+                                    @endif
+                                </h2>
+                            </div>
+                            <div class="w-8 h-8 rounded-lg @if($todayRecord && $todayRecord->time_in && !$todayRecord->time_out) bg-amber-500/10 border border-amber-500/15 @elseif($todayRecord && $todayRecord->time_out) bg-emerald-500/10 border border-emerald-500/15 @else bg-blue-500/10 border border-blue-500/15 @endif flex items-center justify-center">
+                                <i class="fa-solid @if($todayRecord && $todayRecord->time_in && !$todayRecord->time_out) fa-clock text-amber-400 @elseif($todayRecord && $todayRecord->time_out) fa-check text-emerald-400 @else fa-hourglass-start text-blue-400 @endif text-xs"></i>
+                            </div>
+                        </div>
+
+                        @if($todayRecord && $todayRecord->time_in)
+                            <div class="grid grid-cols-2 gap-2 mb-4">
+                                <div class="p-2.5 rounded-lg bg-[#111] border border-[#1e1e1e]">
+                                    <p class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] mb-0.5">Time In</p>
+                                    <p class="text-[11px] font-bold text-white">{{ \Carbon\Carbon::parse($todayRecord->time_in)->format('h:i A') }}</p>
+                                </div>
+                                <div class="p-2.5 rounded-lg bg-[#111] border border-[#1e1e1e]">
+                                    <p class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] mb-0.5">Time Out</p>
+                                    <p class="text-[11px] font-bold @if($todayRecord->time_out) text-white @else text-[#333] @endif">
+                                        @if($todayRecord->time_out)
+                                            {{ \Carbon\Carbon::parse($todayRecord->time_out)->format('h:i A') }}
+                                        @else
+                                            —
+                                        @endif
+                                    </p>
                                 </div>
                             </div>
-                        </form>
+                        @endif
+
+                        @if(!$todayRecord || !$todayRecord->time_in)
+                            <div class="relative flex justify-center mb-2">
+                                <div class="absolute inset-0 bg-blue-500/20 rounded-2xl clock-pulse"></div>
+                                <form action="{{ route('driver.timekeeping.clock-in') }}" method="POST" class="relative">
+                                    @csrf
+                                    <button type="submit" class="w-full p-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] shadow-lg shadow-blue-600/20">
+                                        <i class="fa-solid fa-right-to-bracket text-sm"></i>
+                                        <span class="text-[10px] font-black uppercase tracking-widest">Clock In</span>
+                                    </button>
+                                </form>
+                            </div>
+                        @elseif(!$todayRecord->time_out)
+                            <div class="relative flex justify-center mb-2">
+                                <div class="absolute inset-0 bg-amber-500/20 rounded-2xl clock-pulse"></div>
+                                <form action="{{ route('driver.timekeeping.clock-out') }}" method="POST" class="relative">
+                                    @csrf
+                                    <button type="submit" class="w-full p-3.5 rounded-2xl bg-amber-600 hover:bg-amber-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] shadow-lg shadow-amber-600/20">
+                                        <i class="fa-solid fa-right-from-bracket text-sm"></i>
+                                        <span class="text-[10px] font-black uppercase tracking-widest">Clock Out</span>
+                                    </button>
+                                </form>
+                            </div>
+                        @else
+                            <div class="w-full py-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center gap-2.5 mb-2">
+                                <i class="fa-solid fa-check text-emerald-400 text-sm"></i>
+                                <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400">Shift Complete</span>
+                            </div>
+                        @endif
+
+                        @if($todayRecord && $todayRecord->time_out)
+                            <div class="flex items-center justify-center gap-1.5">
+                                <span class="text-[8px] text-[#444] uppercase tracking-wider font-bold">Total:</span>
+                                <span class="text-[11px] font-bold text-emerald-400">{{ number_format($todayRecord->hours_worked, 1) }} hrs</span>
+                                @if($todayRecord->overtime_hours && $todayRecord->overtime_hours > 0)
+                                    <span class="text-[8px] text-amber-400 font-bold">+{{ number_format($todayRecord->overtime_hours, 1) }} OT</span>
+                                @endif
+                            </div>
+                        @endif
                     </div>
-                    <!-- Arrow button: hidden on mobile, visible on md+ -->
-                    <div class="sidebar-toggle rounded-rect left hidden md:flex" onclick="toggleSidebar('left')">
-                        <i class="fa-solid fa-chevron-right text-base"></i>
-                    </div>
-                @endif
+
+                    <!-- Link to full timekeeping -->
+                    <a href="{{ route('driver.timekeeping') }}" class="glass-card p-4 rounded-xl flex items-center gap-3 group hover:border-blue-500/20 transition">
+                        <div class="w-9 h-9 bg-blue-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition border border-blue-500/15">
+                            <i class="fa-solid fa-calendar-week text-blue-400 text-xs"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold text-white">Weekly Log</p>
+                            <p class="text-[8px] text-[#444] uppercase tracking-wider font-bold">View full timekeeping</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-[8px] text-[#333] ml-auto group-hover:text-blue-400 transition"></i>
+                    </a>
+
+                </div>
+            @endif
+
+            <div class="sidebar-toggle rounded-rect left hidden md:flex" onclick="toggleSidebar('left')">
+                <i class="fa-solid fa-chevron-right text-base"></i>
             </div>
         </div>
+    </div>
 
         <!-- RIGHT SIDEBAR -->
         <div id="right" class="sidebar flex-center right collapsed">
@@ -583,40 +680,43 @@
                     @endif
 
                     @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
-                        <div class="glass-card p-5 rounded-[1.5rem] border-green-500/15">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <p class="text-[8px] uppercase tracking-[0.15em] text-[#444] font-bold mb-0.5">Active Trip</p>
-                                    <h2 class="text-sm font-bold text-white">Current Route</h2>
-                                </div>
-                                <div class="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center border border-green-500/15"><i class="fa-solid fa-route text-green-400 text-xs"></i></div>
+
+                    <!-- ══════════ ROUTE + GPS CARD ══════════ -->
+                    <div class="glass-card p-5 rounded-[1.5rem] border-green-500/15">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-[8px] uppercase tracking-[0.15em] text-[#444] font-bold mb-0.5">Active Trip</p>
+                                <h2 class="text-sm font-bold text-white">Current Route</h2>
                             </div>
-                            <div id="live-location-info" class="text-[11px] text-[#777] space-y-2 mb-5">
-                                <div class="flex justify-between items-center"><span class="flex items-center gap-1.5"><i class="fa-solid fa-circle-dot text-green-400 text-[8px]"></i> Start</span><span class="font-mono text-[#aaa] text-[10px]">Minglanilla</span></div>
-                                <div class="flex justify-between items-center"><span class="flex items-center gap-1.5"><i class="fa-solid fa-location-dot text-red-400 text-[8px]"></i> End</span><span class="font-mono text-[#aaa] text-[10px]">IT Park</span></div>
-                            </div>
-                            <div class="line-glow w-full mb-4"></div>
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <p class="text-[8px] uppercase tracking-[0.15em] text-[#444] font-bold mb-0.5">Live Status</p>
-                                    <h2 class="text-sm font-bold text-white">GPS Tracking</h2>
-                                </div>
-                                <div class="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center border border-blue-500/15"><i class="fa-solid fa-satellite-dish text-blue-400 text-xs"></i></div>
-                            </div>
-                            <div id="gps-status" class="tracking-controls-panel text-center">
-                                <div class="flex items-center justify-center gap-2 mb-3">
-                                    <div class="w-2 h-2 bg-[#555] rounded-full dot-pulse" id="gps-indicator"></div>
-                                    <span class="text-[10px] text-[#555]" id="gps-status-text">GPS: Not active</span>
-                                </div>
-                                <div id="live-location-info" class="text-[10px] text-[#555] space-y-1.5">
-                                    <div class="flex justify-between"><span><i class="fa-solid fa-location-dot text-green-400 mr-1 text-[8px]"></i> Position</span><span class="font-mono" id="current-coords">--, --</span></div>
-                                    <div class="flex justify-between"><span><i class="fa-solid fa-gauge-high text-blue-400 mr-1 text-[8px]"></i> Accuracy</span><span id="current-accuracy">-- m</span></div>
-                                    <div class="flex justify-between"><span><i class="fa-regular fa-clock text-yellow-400 mr-1 text-[8px]"></i> Updated</span><span id="update-time">--:--:--</span></div>
-                                </div>
-                            </div>
-                            <p class="mt-4 text-[8px] text-[#333] text-center"><i class="fa-solid fa-map-pin mr-0.5"></i> Tap the GPS button on the map to begin tracking</p>
+                            <div class="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center border border-green-500/15"><i class="fa-solid fa-route text-green-400 text-xs"></i></div>
                         </div>
-                    @endif
+                        <div id="live-location-info" class="text-[11px] text-[#777] space-y-2 mb-5">
+                            <div class="flex justify-between items-center"><span class="flex items-center gap-1.5"><i class="fa-solid fa-circle-dot text-green-400 text-[8px]"></i> Start</span><span class="font-mono text-[#aaa] text-[10px]">Minglanilla</span></div>
+                            <div class="flex justify-between items-center"><span class="flex items-center gap-1.5"><i class="fa-solid fa-location-dot text-red-400 text-[8px]"></i> End</span><span class="font-mono text-[#aaa] text-[10px]">IT Park</span></div>
+                        </div>
+                        <div class="line-glow w-full mb-4"></div>
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <p class="text-[8px] uppercase tracking-[0.15em] text-[#444] font-bold mb-0.5">Live Status</p>
+                                <h2 class="text-sm font-bold text-white">GPS Tracking</h2>
+                            </div>
+                            <div class="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center border border-blue-500/15"><i class="fa-solid fa-satellite-dish text-blue-400 text-xs"></i></div>
+                        </div>
+                        <div id="gps-status" class="tracking-controls-panel text-center">
+                            <div class="flex items-center justify-center gap-2 mb-3">
+                                <div class="w-2 h-2 bg-[#555] rounded-full dot-pulse" id="gps-indicator"></div>
+                                <span class="text-[10px] text-[#555]" id="gps-status-text">GPS: Not active</span>
+                            </div>
+                            <div id="live-location-info" class="text-[10px] text-[#555] space-y-1.5">
+                                <div class="flex justify-between"><span><i class="fa-solid fa-location-dot text-green-400 mr-1 text-[8px]"></i> Position</span><span class="font-mono" id="current-coords">--, --</span></div>
+                                <div class="flex justify-between"><span><i class="fa-solid fa-gauge-high text-blue-400 mr-1 text-[8px]"></i> Accuracy</span><span id="current-accuracy">-- m</span></div>
+                                <div class="flex justify-between"><span><i class="fa-regular fa-clock text-yellow-400 mr-1 text-[8px]"></i> Updated</span><span id="update-time">--:--:--</span></div>
+                            </div>
+                        </div>
+                        <p class="mt-4 text-[8px] text-[#333] text-center"><i class="fa-solid fa-map-pin mr-0.5"></i> Tap the GPS button on the map to begin tracking</p>
+                    </div>
+
+                @endif
 
                 </div>
 
@@ -638,7 +738,7 @@
 
             var LEFT_DESKTOP_CLASSES = 'fixed top-24 left-4 sm:left-5 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]';
             var LEFT_MOBILE_CLASSES = 'flex flex-col gap-3 w-full';
-            var RIGHT_DESKTOP_CLASSES = 'fixed top-24 right-4 sm:right-5 w-[340px] z-40 hidden lg:flex flex-col gap-3 max-h-[calc(100vh-120px)]';
+            var RIGHT_DESKTOP_CLASSES = 'fixed top-24 right-4 sm:right-5 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]';
             var RIGHT_MOBILE_CLASSES = 'flex flex-col gap-3 w-full';
 
             function openMobileSidebar(type) {
@@ -755,6 +855,18 @@
 
             // ═══════════════ NAV CONTROLS ═══════════════
             map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
+
+            // ── Share Location (Geolocate) Button ──
+            map.addControl(
+                new maplibregl.GeolocateControl({
+                    positionOptions: {
+                        enableHighAccuracy: true
+                    },
+                    trackUserLocation: true,
+                    showUserHeading: true
+                }),
+                'bottom-right'
+            );
 
             // ═══════════════ MAP STATE ═══════════════
             let userLat = null;
@@ -1401,6 +1513,8 @@
                     if (window._rightMobileOpen) closeMobileSidebar('right');
                 }
             });
+
+
         </script>
     </div>
 </body>

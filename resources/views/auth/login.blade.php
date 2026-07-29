@@ -102,7 +102,7 @@
 
 <body class="flex relative justify-center items-center p-4 sm:p-6 min-h-screen login-bg font-sans text-white overflow-x-hidden">
 
-    @include('components.flash');
+    @include('components.flash')
 
     @if (session('driver_pending'))
         <div id="driver-pending-modal" role="dialog" aria-modal="true"
