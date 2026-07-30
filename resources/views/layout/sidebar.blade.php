@@ -1,148 +1,282 @@
-<link rel="stylesheet" href="{{ asset('css/styles.css') }} ">
+<link rel="stylesheet" href="{{ asset('css/styles.css') }}">
 
-<aside :class="open ? 'w-72' : 'w-20'"
-    class="overflow-y-auto sidebar-transition fixed left-0 top-0 h-screen glass border-r border-white/10 z-50 flex flex-col justify-between p-4">
-    <div class="grid gap-2">
-        <button @click="open = !open" class="w-full flex justify-end p-2 mb-8 hover:text-blue-400 transition">
-            <i class="fa-solid" :class="open ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
-        </button>
+<!-- ══════════ MOBILE BOTTOM BAR ══════════ -->
+<div class="fixed bottom-0 left-0 right-0 z-[55] md:hidden">
+    <div class="bg-[#0a0a0a]/95 backdrop-blur-xl border-t border-[#1a1a1a] px-2 pb-[env(safe-area-inset-bottom)]">
+        <div class="flex items-center justify-around py-1.5">
+            <a href="{{ route('map') }}"
+                class="flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-all active:scale-90 {{ request()->routeIs('map') ? 'text-blue-400' : 'text-[#444]' }}">
+                <i class="fa-solid fa-map-location-dot text-[15px]"></i>
+                <span class="text-[7px] font-bold uppercase tracking-wider">Map</span>
+            </a>
+            <a href="{{ route('admin.dashboard') }}"
+                class="flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-all active:scale-90 {{ request()->routeIs('admin.dashboard') ? 'text-blue-400' : 'text-[#444]' }}">
+                <i class="fa-solid fa-gauge-high text-[15px]"></i>
+                <span class="text-[7px] font-bold uppercase tracking-wider">Home</span>
+            </a>
+            <a href="{{ route('admin.commuters.index') }}"
+                class="flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-all active:scale-90 {{ request()->routeIs('admin.commuters.index') ? 'text-blue-400' : 'text-[#444]' }}">
+                <i class="fa-solid fa-users text-[15px]"></i>
+                <span class="text-[7px] font-bold uppercase tracking-wider">Users</span>
+            </a>
+            <button type="button" onclick="openMobileDrawer()"
+                class="flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl text-[#444] transition-all active:scale-90">
+                <i class="fa-solid fa-bars text-[15px]"></i>
+                <span class="text-[7px] font-bold uppercase tracking-wider">More</span>
+            </button>
+        </div>
+    </div>
+</div>
 
-        <div class="flex items-center gap-3 px-2 mb-10 overflow-hidden whitespace-nowrap">
-            <div
-                class="min-w-[40px] h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
-                <i class="fa-solid fa-bus text-white"></i>
+<!-- ══════════ MOBILE DRAWER BACKDROP ══════════ -->
+<div id="mobile-drawer-backdrop"
+    class="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 md:hidden"
+    onclick="closeMobileDrawer()">
+</div>
+
+<!-- ══════════ MOBILE DRAWER ══════════ -->
+<div id="mobile-drawer"
+    class="fixed top-0 left-0 h-full w-72 z-[65] bg-[#0a0a0a] border-r border-[#1a1a1a] transform -translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col md:hidden">
+
+    <div class="flex items-center justify-between px-4 py-4 border-b border-[#151515]">
+        <div class="flex items-center gap-3 overflow-hidden whitespace-nowrap">
+            <div class="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/15">
+                <i class="fa-solid fa-bus text-white text-[11px]"></i>
             </div>
-            <span x-show="open" x-transition.opacity class="font-bold text-lg tracking-tighter">Smart<span
-                    class="text-blue-500">Commute</span></span>
+            <span class="font-black text-base tracking-tight">Smart<span class="text-blue-400">Commute</span></span>
+        </div>
+        <button type="button" onclick="closeMobileDrawer()"
+            class="w-8 h-8 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center text-[#555] hover:text-white hover:border-[#333] transition active:scale-90">
+            <i class="fa-solid fa-xmark text-[10px]"></i>
+        </button>
+    </div>
+
+    <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+        <p class="text-[8px] font-bold uppercase tracking-[0.2em] text-[#333] px-3 pt-2 pb-1.5">Navigation</p>
+
+        <a href="{{ route('map') }}"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs('map') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888]' }}">
+            <div class="w-7 h-7 rounded-lg {{ request()->routeIs('map') ? 'bg-blue-500/10' : 'bg-[#111]' }} flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-map-location-dot text-[10px]"></i>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">Map</span>
+        </a>
+
+        <a href="{{ route('admin.dashboard') }}"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs('admin.dashboard') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888]' }}">
+            <div class="w-7 h-7 rounded-lg {{ request()->routeIs('admin.dashboard') ? 'bg-blue-500/10' : 'bg-[#111]' }} flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-gauge-high text-[10px]"></i>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">Dashboard</span>
+        </a>
+
+        <div class="my-2 mx-3 border-t border-[#151515]"></div>
+        <p class="text-[8px] font-bold uppercase tracking-[0.2em] text-[#333] px-3 pt-1 pb-1.5">Management</p>
+
+        <a href="{{ route('admin.commuters.index') }}"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs('admin.commuters.index') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888]' }}">
+            <div class="w-7 h-7 rounded-lg {{ request()->routeIs('admin.commuters.index') ? 'bg-blue-500/10' : 'bg-[#111]' }} flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-users text-[10px]"></i>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">PUJ Commuters</span>
+        </a>
+
+        <a href="{{ route('admin.drivers.index') }}"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs('admin.drivers.index') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888]' }}">
+            <div class="w-7 h-7 rounded-lg {{ request()->routeIs('admin.drivers.index') ? 'bg-blue-500/10' : 'bg-[#111]' }} flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-id-card text-[10px]"></i>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">PUJ Drivers</span>
+        </a>
+
+        <a href="{{ route('fares.index') }}"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs('fares.index') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888]' }}">
+            <div class="w-7 h-7 rounded-lg {{ request()->routeIs('fares.index') ? 'bg-blue-500/10' : 'bg-[#111]' }} flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-money-bill text-[10px]"></i>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">Fare Rates</span>
+        </a>
+
+        <a href="{{ route('faretransactions') }}"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs('faretransactions') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888]' }}">
+            <div class="w-7 h-7 rounded-lg {{ request()->routeIs('faretransactions') ? 'bg-blue-500/10' : 'bg-[#111]' }} flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-receipt text-[10px]"></i>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">Fare Transactions</span>
+        </a>
+
+        <a href="{{ route('admin.topups') }}"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs('admin.topups') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888]' }}">
+            <div class="w-7 h-7 rounded-lg {{ request()->routeIs('admin.topups') ? 'bg-blue-500/10' : 'bg-[#111]' }} flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-wallet text-[10px]"></i>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">Top Ups</span>
+        </a>
+
+        <div class="my-2 mx-3 border-t border-[#151515]"></div>
+        <p class="text-[8px] font-bold uppercase tracking-[0.2em] text-[#333] px-3 pt-1 pb-1.5">Account</p>
+
+        <a href="{{ route('profile') }}"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs('profile') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888]' }}">
+            <div class="w-7 h-7 rounded-lg {{ request()->routeIs('profile') ? 'bg-blue-500/10' : 'bg-[#111]' }} flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-circle-user text-[10px]"></i>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">My Profile</span>
+        </a>
+    </nav>
+
+    <div class="p-3 border-t border-[#151515]">
+        <button type="button" onclick="toggleAdminLogoutModal()"
+            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#555] hover:bg-red-500/[0.06] hover:text-red-400 transition-all text-left">
+            <div class="w-7 h-7 rounded-lg bg-[#111] flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-right-from-bracket text-[10px]"></i>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">Logout</span>
+        </button>
+    </div>
+</div>
+
+<!-- ══════════ DESKTOP SIDEBAR ══════════ -->
+<aside :class="open ? 'w-[270px] p-3' : 'w-[76px] p-2'"
+    class="overflow-y-auto overflow-x-hidden sidebar-transition fixed left-0 top-0 h-screen bg-[#0a0a0a] border-r border-[#1a1a1a] z-50 flex-col justify-between hidden md:flex">
+
+    <div>
+        <!-- Logo + Toggle -->
+        <div :class="open ? 'flex-row justify-between px-1 mb-6' : 'flex-col items-center gap-2.5 mb-6 pt-0.5'"
+             class="flex items-center overflow-hidden whitespace-nowrap">
+            <div class="flex items-center overflow-hidden whitespace-nowrap"
+                 :class="open ? 'gap-2.5' : ''">
+                <div class="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/15 shrink-0">
+                    <i class="fa-solid fa-bus text-white text-[11px]"></i>
+                </div>
+                <span x-show="open" x-transition.opacity.duration.200ms
+                      class="font-black text-sm tracking-tight whitespace-nowrap">Smart<span class="text-blue-400">Commute</span></span>
+            </div>
+            <button @click="open = !open"
+                class="w-7 h-7 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center text-[#444] hover:text-[#888] hover:border-[#333] transition active:scale-90 shrink-0">
+                <i class="fa-solid text-[8px] transition-transform duration-300" :class="open ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
+            </button>
         </div>
 
-        <nav class="space-y-2">
-            <nav class="space-y-2">
-                <a href="{{ route('map') }}"
-                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('map') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                    <div class="min-w-[24px] flex justify-center">
-                        {{-- <i class="fa-solid fa-user-circle text-lg"></i> --}}
-                        <i class="fa-solid fa-gauge-high text-lg"></i>
-                    </div>
-                    <span x-show="open" x-transition.opacity
-                        class="text-xs font-bold uppercase tracking-widest">Map</span>
-                </a>
-            </nav>
-        </nav>
+        <!-- Navigation Links -->
+        <nav class="space-y-1">
+            <p x-show="open" x-transition.opacity.duration.150ms class="text-[8px] font-bold uppercase tracking-[0.2em] text-[#2a2a2a] px-3 mb-2">Navigation</p>
 
-        <nav class="space-y-2">
-            <nav class="space-y-2">
-                <a href="{{ route('admin.dashboard') }}"
-                    class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('admin.dashboard') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                    <div class="min-w-[24px] flex justify-center">
-                        <i class="fa-solid fa-user-circle text-lg"></i>
-                    </div>
-                    <span x-show="open" x-transition.opacity
-                        class="text-xs font-bold uppercase tracking-widest">Dashboard</span>
-                </a>
-            </nav>
-        </nav>
-        <nav class="space-y-2">
+            <a href="{{ route('map') }}"
+                :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+                class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs('map') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888] hover:border-[#1a1a1a]' }}">
+                <div class="w-8 h-8 rounded-lg {{ request()->routeIs('map') ? 'bg-blue-500/10' : 'bg-[#111] group-hover:bg-[#161616]' }} flex items-center justify-center shrink-0 transition">
+                    <i class="fa-solid fa-map-location-dot text-[11px]"></i>
+                </div>
+                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">Map</span>
+            </a>
+
+            <a href="{{ route('admin.dashboard') }}"
+                :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+                class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs('admin.dashboard') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888] hover:border-[#1a1a1a]' }}">
+                <div class="w-8 h-8 rounded-lg {{ request()->routeIs('admin.dashboard') ? 'bg-blue-500/10' : 'bg-[#111] group-hover:bg-[#161616]' }} flex items-center justify-center shrink-0 transition">
+                    <i class="fa-solid fa-gauge-high text-[11px]"></i>
+                </div>
+                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">Dashboard</span>
+            </a>
+
+            <!-- Divider -->
+            <div x-show="open" x-transition.opacity.duration.150ms class="my-3 mx-3 border-t border-[#151515]"></div>
+            <p x-show="open" x-transition.opacity.duration.150ms class="text-[8px] font-bold uppercase tracking-[0.2em] text-[#2a2a2a] px-3 mb-2">Management</p>
+
             <a href="{{ route('admin.commuters.index') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('admin.commuters.index') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                <div class="min-w-[24px] flex justify-center">
-                    <i class="fa-solid fa-users text-lg"></i>
+                :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+                class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs('admin.commuters.index') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888] hover:border-[#1a1a1a]' }}">
+                <div class="w-8 h-8 rounded-lg {{ request()->routeIs('admin.commuters.index') ? 'bg-blue-500/10' : 'bg-[#111] group-hover:bg-[#161616]' }} flex items-center justify-center shrink-0 transition">
+                    <i class="fa-solid fa-users text-[11px]"></i>
                 </div>
-                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Manage PUJ
-                    commuter</span>
+                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">PUJ Commuters</span>
             </a>
-        </nav>
-        <nav class="space-y-2">
+
             <a href="{{ route('admin.drivers.index') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('admin.drivers.index') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                <div class="min-w-[24px] flex justify-center">
-                    <i class="fa-solid fa-id-card text-lg"></i>
+                :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+                class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs('admin.drivers.index') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888] hover:border-[#1a1a1a]' }}">
+                <div class="w-8 h-8 rounded-lg {{ request()->routeIs('admin.drivers.index') ? 'bg-blue-500/10' : 'bg-[#111] group-hover:bg-[#161616]' }} flex items-center justify-center shrink-0 transition">
+                    <i class="fa-solid fa-id-card text-[11px]"></i>
                 </div>
-                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">PUJ
-                    drivers</span>
+                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">PUJ Drivers</span>
             </a>
-        </nav>
-        {{-- <nav class="space-y-2">
-            <a href="{{ route('routes.index') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('routes.index') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                <div class="min-w-[24px] flex justify-center">
-                    <i class="fa-solid fa-route text-lg"></i>
-                </div>
-                <span x-show="open" x-transition.opacity
-                    class="text-xs font-bold uppercase tracking-widest">Routes</span>
-            </a>
-        </nav> --}}
-        <nav class="space-y-2">
+
             <a href="{{ route('fares.index') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('fares.index') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                <div class="min-w-[24px] flex justify-center">
-                    <i class="fa-solid fa-money-bill text-lg"></i>
+                :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+                class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs('fares.index') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888] hover:border-[#1a1a1a]' }}">
+                <div class="w-8 h-8 rounded-lg {{ request()->routeIs('fares.index') ? 'bg-blue-500/10' : 'bg-[#111] group-hover:bg-[#161616]' }} flex items-center justify-center shrink-0 transition">
+                    <i class="fa-solid fa-money-bill text-[11px]"></i>
                 </div>
-                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Fare
-                    rates</span>
+                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">Fare Rates</span>
             </a>
-        </nav>
 
-        <nav class="space-y-2">
             <a href="{{ route('faretransactions') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('faretransactions') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                <div class="min-w-[24px] flex justify-center">
-                    <i class="fa-solid fa-receipt text-lg"></i>
+                :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+                class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs('faretransactions') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888] hover:border-[#1a1a1a]' }}">
+                <div class="w-8 h-8 rounded-lg {{ request()->routeIs('faretransactions') ? 'bg-blue-500/10' : 'bg-[#111] group-hover:bg-[#161616]' }} flex items-center justify-center shrink-0 transition">
+                    <i class="fa-solid fa-receipt text-[11px]"></i>
                 </div>
-                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Fare
-                    Transactions</span>
+                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">Fare Transactions</span>
             </a>
-        </nav>
 
-        <nav class="space-y-2">
             <a href="{{ route('admin.topups') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('admin.topups') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                <div class="min-w-[24px] flex justify-center">
-                    <i class="fa-solid fa-wallet text-lg"></i>
+                :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+                class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs('admin.topups') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888] hover:border-[#1a1a1a]' }}">
+                <div class="w-8 h-8 rounded-lg {{ request()->routeIs('admin.topups') ? 'bg-blue-500/10' : 'bg-[#111] group-hover:bg-[#161616]' }} flex items-center justify-center shrink-0 transition">
+                    <i class="fa-solid fa-wallet text-[11px]"></i>
                 </div>
-                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Top
-                    ups</span>
+                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">Top Ups</span>
             </a>
-        </nav>
 
-        <nav class="space-y-2">
+            <!-- Divider -->
+            <div x-show="open" x-transition.opacity.duration.150ms class="my-3 mx-3 border-t border-[#151515]"></div>
+            <p x-show="open" x-transition.opacity.duration.150ms class="text-[8px] font-bold uppercase tracking-[0.2em] text-[#2a2a2a] px-3 mb-2">Account</p>
+
             <a href="{{ route('profile') }}"
-                class="flex items-center gap-4 p-3 rounded-2xl transition-all group border {{ request()->routeIs('profile') ? 'bg-blue-600/10 text-blue-400 border-blue-500/20' : 'text-gray-400 border-transparent hover:bg-white/5' }}">
-                <div class="min-w-[24px] flex justify-center"><i class="fa-solid fa-circle-user text-lg"></i></div>
-                <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">My
-                    Profile</span>
+                :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+                class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs('profile') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888] hover:border-[#1a1a1a]' }}">
+                <div class="w-8 h-8 rounded-lg {{ request()->routeIs('profile') ? 'bg-blue-500/10' : 'bg-[#111] group-hover:bg-[#161616]' }} flex items-center justify-center shrink-0 transition">
+                    <i class="fa-solid fa-circle-user text-[11px]"></i>
+                </div>
+                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">My Profile</span>
             </a>
         </nav>
     </div>
 
-    <button type="button" onclick="toggleAdminLogoutModal()"
-        class="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-all group text-left">
-        <div class="min-w-[24px] flex justify-center">
-            <i class="fa-solid fa-right-from-bracket text-lg"></i>
-        </div>
-        <span x-show="open" x-transition.opacity class="text-xs font-bold uppercase tracking-widest">Logout</span>
-    </button>
+    <!-- Sidebar Footer -->
+    <div class="mt-4">
+        <div x-show="open" x-transition.opacity.duration.150ms class="mx-3 border-t border-[#151515] mb-3"></div>
+        <button type="button" onclick="toggleAdminLogoutModal()"
+            :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+            class="w-full flex items-center py-2.5 rounded-xl text-[#444] hover:bg-red-500/[0.06] hover:text-red-400 transition-all text-left group">
+            <div class="w-8 h-8 rounded-lg bg-[#111] group-hover:bg-red-500/10 flex items-center justify-center shrink-0 transition">
+                <i class="fa-solid fa-right-from-bracket text-[11px]"></i>
+            </div>
+            <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">Logout</span>
+        </button>
+    </div>
 </aside>
 
-{{-- Logout confirmation (shared admin sidebar) --}}
+<!-- ══════════ LOGOUT MODAL ══════════ -->
 <div id="admin-logout-modal"
-    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300 p-4">
+    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 opacity-0 pointer-events-none transition-all duration-300 p-4">
     <div id="admin-logout-modal-content"
-        class="glass w-full max-w-sm rounded-2xl border border-white/10 p-8 text-center shadow-2xl transform scale-95 transition-transform duration-300">
-        <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <i class="fa-solid fa-right-from-bracket text-red-500 text-xl"></i>
+        class="bg-[#111] w-full max-w-sm rounded-[1.5rem] border border-[#1e1e1e] shadow-2xl shadow-black/60 p-8 text-center transform scale-95 transition-transform duration-300">
+        <div class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-red-500/20">
+            <i class="fa-solid fa-power-off text-red-400 text-lg"></i>
         </div>
-        <h3 class="text-xl font-bold text-white mb-2">Sign out?</h3>
-        <p class="text-sm text-gray-400 mb-8">Are you sure you want to log out of SmartCommute?</p>
-        <div class="flex gap-3">
+        <h3 class="text-lg font-bold text-white mb-1.5">End Session?</h3>
+        <p class="text-xs text-[#666] mb-7">Are you sure you want to log out of SmartCommute?</p>
+        <div class="flex gap-2.5">
             <button type="button" onclick="toggleAdminLogoutModal()"
-                class="flex-1 px-6 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/20 transition">
+                class="flex-1 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] transition active:scale-[0.98]">
                 Cancel
             </button>
             <form action="{{ route('users.logout') }}" method="POST" class="flex-1">
                 @csrf
                 <button type="submit"
-                    class="w-full px-6 py-3 rounded-xl bg-red-600 text-white text-xs font-bold uppercase tracking-widest hover:bg-red-500 shadow-lg shadow-red-600/20 transition">
+                    class="w-full py-3 rounded-xl bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 transition active:scale-[0.98] shadow-lg shadow-red-600/10">
                     Logout
                 </button>
             </form>
@@ -151,6 +285,28 @@
 </div>
 
 <script>
+    function openMobileDrawer() {
+        const backdrop = document.getElementById('mobile-drawer-backdrop');
+        const drawer = document.getElementById('mobile-drawer');
+        if (!backdrop || !drawer) return;
+        backdrop.classList.remove('opacity-0', 'pointer-events-none');
+        drawer.classList.remove('-translate-x-full');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileDrawer() {
+        const backdrop = document.getElementById('mobile-drawer-backdrop');
+        const drawer = document.getElementById('mobile-drawer');
+        if (!backdrop || !drawer) return;
+        backdrop.classList.add('opacity-0', 'pointer-events-none');
+        drawer.classList.add('-translate-x-full');
+        document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('#mobile-drawer a').forEach(link => {
+        link.addEventListener('click', () => setTimeout(closeMobileDrawer, 50));
+    });
+
     function toggleAdminLogoutModal() {
         const modal = document.getElementById('admin-logout-modal');
         const content = document.getElementById('admin-logout-modal-content');
@@ -165,6 +321,7 @@
             content.classList.add('scale-95');
         }
     }
+
     document.addEventListener('click', function (e) {
         const modal = document.getElementById('admin-logout-modal');
         if (!modal || modal.classList.contains('opacity-0')) return;

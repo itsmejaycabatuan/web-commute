@@ -102,6 +102,7 @@ class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
         'license_image_data',
         'license_image_mime',
         'driver_approval_status',
+        'email_verified_at',
     ];
 
     /**

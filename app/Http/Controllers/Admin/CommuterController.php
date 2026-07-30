@@ -33,7 +33,6 @@ class CommuterController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'email_verified_at' => $request->boolean('mark_verified') ? now() : null,
-            'driver_approval_status' => null,
         ]);
 
         $user->syncRoles(['commuter']);
