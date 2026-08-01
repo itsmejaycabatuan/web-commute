@@ -401,6 +401,7 @@
     <div id="map">
 
         <!-- LEFT SIDEBAR -->
+        @if(Auth::guest() || (Auth::check() && Auth::user()->roles[0]->name !== 'admin'))
         <div id="left" class="sidebar flex-center left collapsed">
         <div class="sidebar-content flex-center">
             <div id="left-sidebar-anchor"></div>
@@ -575,11 +576,12 @@
                 </div>
             @endif
 
-            <div class="sidebar-toggle rounded-rect left hidden md:flex" onclick="toggleSidebar('left')">
-                <i class="fa-solid fa-chevron-right text-base"></i>
-            </div>
+                    <div class="sidebar-toggle rounded-rect left hidden md:flex" onclick="toggleSidebar('left')">
+                        <i class="fa-solid fa-chevron-right text-base"></i>
+                    </div>
         </div>
     </div>
+    @endif
 
         <!-- RIGHT SIDEBAR -->
         <div id="right" class="sidebar flex-center right collapsed">
@@ -730,7 +732,6 @@
 
             </div>
         </div>
-
         <!-- ═══════════════ MOBILE SIDEBAR MODAL LOGIC ═══════════════ -->
         <script>
             window._leftMobileOpen = false;
@@ -1100,56 +1101,81 @@
                 return lat.toFixed(5) + ', ' + lon.toFixed(5);
             }
 
-            // ═══════════════ ROUTE CALCULATION ═══════════════
+            const fareRates = @json($rates->sortBy('km')->values());
+
             window.calculateRoute = async function () {
-                if (userLat === null || userLng === null || vehicleLat === null || vehicleLng === null) return;
+    if (userLat === null || userLng === null || vehicleLat === null || vehicleLng === null) return;
 
-                if (userRole === 'guest') {
-                    if (guestUsage >= DAILY_LIMIT) {
-                        toggleLimitModal(true);
-                        return;
-                    }
-                    guestUsage++;
-                    localStorage.setItem('guestUsage', guestUsage.toString());
-                    updateUsageUI();
-                }
+    if (userRole === 'guest') {
+        if (guestUsage >= DAILY_LIMIT) {
+            toggleLimitModal(true);
+            return;
+        }
+        guestUsage++;
+        localStorage.setItem('guestUsage', guestUsage.toString());
+        updateUsageUI();
+    }
 
-                const url = 'https://router.project-osrm.org/route/v1/driving/' +
-                    userLng + ',' + userLat + ';' + vehicleLng + ',' + vehicleLat +
-                    '?overview=full&geometries=geojson';
+    const url = 'https://router.project-osrm.org/route/v1/driving/' +
+        userLng + ',' + userLat + ';' + vehicleLng + ',' + vehicleLat +
+        '?overview=full&geometries=geojson';
 
-                try {
-                    const res = await fetch(url);
-                    const data = await res.json();
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
 
-                    if (data.code === 'Ok' && data.routes.length > 0) {
-                        const route = data.routes[0];
-                        const distKm = (route.distance / 1000).toFixed(1);
-                        const baseFare = 13;
-                        const perKm = 2.5;
-                        const regularFare = Math.ceil(baseFare + (parseFloat(distKm) * perKm));
-                        const discountFare = Math.ceil(regularFare * 0.8);
+        if (data.code === 'Ok' && data.routes.length > 0) {
+            const route = data.routes[0];
+            const distKm = parseFloat((route.distance / 1000).toFixed(1));
 
-                        document.getElementById('distance').value = distKm;
-                        document.getElementById('price-regular').value = regularFare;
-                        document.getElementById('price-discount').value = discountFare;
+            document.getElementById('distance').value = distKm;
 
-                        if (map.getSource('route')) {
-                            map.getSource('route').setData(route.geometry);
-                        }
+            // Direct lookup from database
+            const fare = getFareFromDB(distKm);
+            document.getElementById('price-regular').value = fare.regular;
+            document.getElementById('price-discount').value = fare.discount;
 
-                        const coords = route.geometry.coordinates;
-                        if (coords.length > 0) {
-                            map.fitBounds(
-                                [[coords[0][0], coords[0][1]], [coords[coords.length - 1][0], coords[coords.length - 1][1]]],
-                                { padding: { top: 100, bottom: 100, left: 400, right: 100 }, duration: 800 }
-                            );
-                        }
-                    }
-                } catch (e) {
-                    console.error('Route error:', e);
-                }
-            };
+            // Draw route on map
+            if (map.getSource('route')) {
+                map.getSource('route').setData(route.geometry);
+            }
+
+            const coords = route.geometry.coordinates;
+            if (coords.length > 0) {
+                map.fitBounds(
+                    [[coords[0][0], coords[0][1]], [coords[coords.length - 1][0], coords[coords.length - 1][1]]],
+                    { padding: { top: 100, bottom: 100, left: 400, right: 100 }, duration: 800 }
+                );
+            }
+        }
+    } catch (e) {
+        console.error('Route error:', e);
+    }
+};
+
+// Simple lookup function
+function getFareFromDB(distKm) {
+    if (fareRates.length === 0) {
+        return { regular: 0, discount: 0 };
+    }
+
+    // Find the highest km tier that is <= distance
+    const applicable = fareRates.filter(r => r.km <= distKm);
+
+    if (applicable.length > 0) {
+        const rate = applicable[applicable.length - 1];
+        return {
+            regular: Math.ceil(rate.regular),
+            discount: Math.ceil(rate.discount)
+        };
+    }
+
+    // If distance is less than first tier, use first tier
+    return {
+        regular: Math.ceil(fareRates[0].regular),
+        discount: Math.ceil(fareRates[0].discount)
+    };
+}
 
             // ═══════════════ RESET FORM ═══════════════
             window.resetForm = function () {
@@ -1517,5 +1543,6 @@
 
         </script>
     </div>
+
 </body>
 </html>
