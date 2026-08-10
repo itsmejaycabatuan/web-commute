@@ -21,6 +21,7 @@ class Driver extends Model
         'license_status',
         'is_approved',
         'is_rejected',
+        'status',
         'license_image_data',
         'license_image_mime',
     ];

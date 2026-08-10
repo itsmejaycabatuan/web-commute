@@ -16,8 +16,8 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('driver_id')->constrained('drivers')->cascadeOnDelete();
             $table->date('date');
-            $table->time('time_in')->nullable();
-            $table->time('time_out')->nullable();
+            $table->string('time_in')->nullable();
+            $table->string('time_out')->nullable();
             $table->decimal('hours_worked')->nullable();
             $table->decimal('overtime_hours')->nullable();
             $table->integer('sick')->nullable();

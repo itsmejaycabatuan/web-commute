@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\EmailVerification;
+use App\Models\DevMarker;
 use App\Models\Driver;
 use App\Models\Fare;
 use App\Models\FareRate;
@@ -33,6 +34,7 @@ class UserController extends Controller
         $role = $user->roles->first()->name;
         $latestFare = Fare::get()->last();
         $wallet = Wallet::where('user_id', $userId)->first();
+        $driverStatus = $request->user()->driver?->status ?? 'inactive';
 
         $recentReceipts = Payment::where('paid_by', $userId)->latest()->take(3)->get();
 
@@ -52,6 +54,9 @@ class UserController extends Controller
         if ($role == 'driver') {
             $driver = Driver::where('user_id', $user->id)->first();
             $todayRecord = null;
+            $dummyMarkers = app()->environment('local')
+               ? DevMarker::where('user_id', Auth::id())->latest()->get()
+               : collect();
 
             $todayRecord = TimeKeeping::where('driver_id', $driver->id)
                 ->whereDate('date', today())
@@ -73,6 +78,8 @@ class UserController extends Controller
                 'rates' => $rates,
                 'recentReceipts' => $recentReceipts,
                 'todayRecord' => $todayRecord,
+                'driverStatus' => $driverStatus,
+                'dummyMarkers' => $dummyMarkers,
             ]);
         }
 
@@ -83,7 +90,6 @@ class UserController extends Controller
                 'balance' => $wallet->balance ?? 0.00,
             ]);
         }
-
     }
 
     public function dashboard(Request $request)

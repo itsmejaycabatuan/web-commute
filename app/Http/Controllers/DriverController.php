@@ -138,10 +138,12 @@ class DriverController extends Controller
         TimeKeeping::create([
             'driver_id' => $driver->id,
             'date' => today()->toDateString(),
-            'time_in' => now()->toTimeString(),
+            'time_in' => now()->timezone('Asia/Manila')->format('h:i A'),
         ]);
 
-        return back()->with('success', 'Clocked in at ' . now()->format('h:i A') . '.');
+        $driver->update(['status' => 'active']);
+
+        return back()->with('success', 'Clocked in at ' . now()->timezone('Asia/Manila')->format('h:i A') . '.');
     }
 
     public function clockOut(Request $request)
@@ -158,7 +160,7 @@ class DriverController extends Controller
         }
 
         $timeOut = now();
-        $timeIn = Carbon::parse($record->date . ' ' . $record->time_in);
+        $timeIn = Carbon::parse($record->date . ' ' . $record->time_in, 'Asia/Manila');
         $totalMinutes = $timeIn->diffInMinutes($timeOut);
         $hoursWorked = round($totalMinutes / 60, 2);
 
@@ -166,11 +168,26 @@ class DriverController extends Controller
         $overtimeHours = $hoursWorked > 8 ? round($hoursWorked - 8, 2) : 0;
 
         $record->update([
-            'time_out' => $timeOut->toTimeString(),
+            'time_out' => $timeOut->timezone('Asia/Manila')->format('h:i A'),
             'hours_worked' => $hoursWorked,
             'overtime_hours' => $overtimeHours,
         ]);
 
-        return back()->with('success', 'Clocked out at ' . $timeOut->format('h:i A') . '. Total: ' . $hoursWorked . ' hrs.');
+        return back()->with('success', 'Clocked out at ' . $timeOut->timezone('Asia/Manila')->format('h:i A') . '. Total: ' . $hoursWorked . ' hrs.');
+    }
+
+    public function updateStatus(Request $request)
+    {
+        $request->validate(['status' => 'required|in:active,inactive']);
+        $userId = Auth::user()->id;
+        $driver = Driver::where('user_id', $userId)->first();
+
+        if (! $driver) {
+            return back()->with('error', 'Driver not found.');
+        }
+
+        $driver->update(['status' => $request->status]);
+
+        return back()->with('success', 'You have successfully set your driver status');
     }
 }

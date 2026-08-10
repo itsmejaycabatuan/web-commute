@@ -25,6 +25,7 @@ return new class extends Migration {
             $table->string('license_status')->nullable();
             $table->boolean('is_approved')->default(0);
             $table->boolean('is_rejected')->default(0);
+            $table->string('status')->nullable()->default('inactive');
             $table->mediumText('license_image_data')->nullable();
             $table->string('license_image_mime', 100)->nullable();
             $table->timestamps();

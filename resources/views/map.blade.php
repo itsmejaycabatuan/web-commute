@@ -37,21 +37,24 @@
         .map-input::placeholder { color: #555; }
         .map-input:focus { background: #0e0e0e !important; border-color: #2563eb !important; box-shadow: 0 0 0 3px rgba(37,99,235,0.15) !important; outline: none; }
         button { color: white; }
-        .bus-pulse { box-shadow: 0 0 0 0 rgba(59,130,246,0.7); animation: pulse-blue 2s infinite; }
-        @keyframes pulse-blue {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59,130,246,0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(59,130,246,0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59,130,246,0); }
-        }
         .custom-vehicle-marker {
-            width: 34px; height: 34px; background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border: 3px solid white; border-radius: 50%;
-            box-shadow: 0 0 20px rgba(59,130,246,0.6), 0 0 40px rgba(59,130,246,0.2);
-            cursor: pointer; transition: all 0.3s ease; pointer-events: auto;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .custom-vehicle-marker:hover { transform: scale(1.2); box-shadow: 0 0 25px rgba(59,130,246,0.8), 0 0 50px rgba(59,130,246,0.3); }
-        .custom-vehicle-marker i { font-size: 14px; color: white; }
+    width: 34px; height: 34px; background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border: 3px solid white; border-radius: 50%;
+    box-shadow: 0 0 20px rgba(59,130,246,0.6), 0 0 40px rgba(59,130,246,0.2);
+    cursor: pointer; transition: box-shadow 0.3s ease; pointer-events: auto;
+    display: flex; align-items: center; justify-content: center;
+}
+.custom-vehicle-marker:hover {
+    box-shadow: 0 0 25px rgba(59,130,246,0.8), 0 0 50px rgba(59,130,246,0.3);
+}
+.custom-vehicle-marker i { font-size: 14px; color: white; }
+.bus-pulse {
+    animation: pulse-blue-glow 2s ease-in-out infinite;
+}
+@keyframes pulse-blue-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(59,130,246,0.6), 0 0 40px rgba(59,130,246,0.2); }
+    50% { box-shadow: 0 0 30px rgba(59,130,246,0.8), 0 0 60px rgba(59,130,246,0.3), 0 0 0 12px rgba(59,130,246,0); }
+}
         .rounded-rect { background: #111111; border: 1px solid #1e1e1e; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); color: #666; transition: all 0.3s ease; }
         .rounded-rect:hover { color: #60a5fa; border-color: #2563eb; background: #1a1a1a; }
         .flex-center { position: absolute; display: flex; justify-content: center; align-items: center; }
@@ -247,6 +250,11 @@
             100% { transform: scale(1.6); opacity: 0; }
         }
         .clock-pulse { animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+.dev-place-btn.placing {
+    background: rgba(147, 51, 234, 0.15) !important;
+    border-color: rgba(147, 51, 234, 0.4) !important;
+    color: #a78bfa !important;
+}
     </style>
 </head>
 
@@ -482,7 +490,38 @@
             @if(Auth::check() && Auth::user()->roles[0]->name === 'driver')
                 <div id="left-sidebar-form" class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]">
 
-                    <!-- Clock In/Out Card -->
+                    <!-- ══════════ DRIVER STATUS TOGGLE CARD ══════════ -->
+                    <form action="{{ route('driver.status.update') }}" method="POST" class="contents">
+                        @csrf
+                        <input type="hidden" name="status" value="{{ $driverStatus === 'active' ? 'inactive' : 'active' }}">
+                        <div id="driver-status-card" class="glass-card status-card {{ $driverStatus === 'active' ? 'active' : 'inactive' }} p-5 rounded-[1.5rem] cursor-pointer select-none" onclick="this.closest('form').submit()">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center {{ $driverStatus === 'active' ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-[#1a1a1a] border border-[#222]' }}">
+                                        <div class="relative flex items-center justify-center">
+                                            <i class="fa-solid fa-signal {{ $driverStatus === 'active' ? 'text-emerald-400' : 'text-[#444]' }} text-sm"></i>
+                                            <div class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#161616] {{ $driverStatus === 'active' ? 'bg-emerald-400 status-dot-active' : 'bg-[#444]' }}"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="text-[8px] uppercase tracking-[0.15em] text-[#444] font-bold mb-0.5">Availability</p>
+                                        <p class="text-[13px] font-bold {{ $driverStatus === 'active' ? 'text-emerald-400' : 'text-[#555]' }}">{{ $driverStatus === 'active' ? 'Active' : 'Inactive' }}</p>
+                                    </div>
+                                </div>
+                                <div class="status-toggle-track {{ $driverStatus === 'active' ? 'active' : '' }}">
+                                    <div class="status-toggle-thumb"></div>
+                                </div>
+                            </div>
+                            <p class="text-[9px] text-[#444] mt-3 leading-relaxed">
+                                @if($driverStatus === 'active')
+                                    You are visible to commuters and accepting trips.
+                                @else
+                                    Tap to go online and start accepting trips.
+                                @endif
+                            </p>
+                        </div>
+                    </form>
+
                     <div class="glass-card p-5 rounded-[1.5rem] @if($todayRecord && $todayRecord->time_in && !$todayRecord->time_out) border-amber-500/20 @elseif($todayRecord && $todayRecord->time_out) border-emerald-500/20 @else border-blue-500/20 @endif">
                         <div class="flex items-center justify-between mb-4">
                             <div>
@@ -506,13 +545,13 @@
                             <div class="grid grid-cols-2 gap-2 mb-4">
                                 <div class="p-2.5 rounded-lg bg-[#111] border border-[#1e1e1e]">
                                     <p class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] mb-0.5">Time In</p>
-                                    <p class="text-[11px] font-bold text-white">{{ \Carbon\Carbon::parse($todayRecord->time_in)->format('h:i A') }}</p>
+                                    <p class="text-[11px] font-bold text-white">{{ $todayRecord->time_in }}</p>
                                 </div>
                                 <div class="p-2.5 rounded-lg bg-[#111] border border-[#1e1e1e]">
                                     <p class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] mb-0.5">Time Out</p>
                                     <p class="text-[11px] font-bold @if($todayRecord->time_out) text-white @else text-[#333] @endif">
                                         @if($todayRecord->time_out)
-                                            {{ \Carbon\Carbon::parse($todayRecord->time_out)->format('h:i A') }}
+                                            {{ $todayRecord->time_out }}
                                         @else
                                             —
                                         @endif
@@ -522,36 +561,30 @@
                         @endif
 
                         @if(!$todayRecord || !$todayRecord->time_in)
-                            <div class="relative flex justify-center mb-2">
-                                <div class="absolute inset-0 bg-blue-500/20 rounded-2xl clock-pulse"></div>
-                                <form action="{{ route('driver.timekeeping.clock-in') }}" method="POST" class="relative">
-                                    @csrf
-                                    <button type="submit" class="w-full p-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] shadow-lg shadow-blue-600/20">
-                                        <i class="fa-solid fa-right-to-bracket text-sm"></i>
-                                        <span class="text-[10px] font-black uppercase tracking-widest">Clock In</span>
-                                    </button>
-                                </form>
-                            </div>
+                            <form action="{{ route('driver.timekeeping.clock-in') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="w-full p-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-blue">
+                                    <i class="fa-solid fa-right-to-bracket text-sm"></i>
+                                    <span class="text-[10px] font-black uppercase tracking-widest">Clock In</span>
+                                </button>
+                            </form>
                         @elseif(!$todayRecord->time_out)
-                            <div class="relative flex justify-center mb-2">
-                                <div class="absolute inset-0 bg-amber-500/20 rounded-2xl clock-pulse"></div>
-                                <form action="{{ route('driver.timekeeping.clock-out') }}" method="POST" class="relative">
-                                    @csrf
-                                    <button type="submit" class="w-full p-3.5 rounded-2xl bg-amber-600 hover:bg-amber-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] shadow-lg shadow-amber-600/20">
-                                        <i class="fa-solid fa-right-from-bracket text-sm"></i>
-                                        <span class="text-[10px] font-black uppercase tracking-widest">Clock Out</span>
-                                    </button>
-                                </form>
-                            </div>
+                            <form action="{{ route('driver.timekeeping.clock-out') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="w-full p-3.5 rounded-2xl bg-amber-600 hover:bg-amber-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-amber">
+                                    <i class="fa-solid fa-right-from-bracket text-sm"></i>
+                                    <span class="text-[10px] font-black uppercase tracking-widest">Clock Out</span>
+                                </button>
+                            </form>
                         @else
-                            <div class="w-full py-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center gap-2.5 mb-2">
+                            <div class="w-full py-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center gap-2.5">
                                 <i class="fa-solid fa-check text-emerald-400 text-sm"></i>
                                 <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400">Shift Complete</span>
                             </div>
                         @endif
 
                         @if($todayRecord && $todayRecord->time_out)
-                            <div class="flex items-center justify-center gap-1.5">
+                            <div class="flex items-center justify-center gap-1.5 mt-2">
                                 <span class="text-[8px] text-[#444] uppercase tracking-wider font-bold">Total:</span>
                                 <span class="text-[11px] font-bold text-emerald-400">{{ number_format($todayRecord->hours_worked, 1) }} hrs</span>
                                 @if($todayRecord->overtime_hours && $todayRecord->overtime_hours > 0)
@@ -572,6 +605,93 @@
                         </div>
                         <i class="fa-solid fa-chevron-right text-[8px] text-[#333] ml-auto group-hover:text-blue-400 transition"></i>
                     </a>
+
+                    @env('local')
+                    <!-- ══════════ DEV TOOLS: DUMMY DRIVER MARKERS ══════════ -->
+                    <div class="glass-card p-5 rounded-[1.5rem] border-purple-500/15">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center border border-purple-500/20">
+                                    <i class="fa-solid fa-flask text-purple-400 text-xs"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-purple-400">Dev Tools</h3>
+                                    <p class="text-[7px] text-[#333] uppercase tracking-wider font-bold">Local env only</p>
+                                </div>
+                            </div>
+                            <span class="text-[7px] font-bold uppercase tracking-widest text-[#333] bg-[#111] px-2 py-1 rounded-md border border-[#1e1e1e]">{{ isset($dummyMarkers) ? $dummyMarkers->count() : 0 }} markers</span>
+                        </div>
+
+                        <!-- Add marker form -->
+                        <form action="{{ route('driver.dev.add-marker') }}" method="POST" id="dev-marker-form">
+                            @csrf
+                            <input type="hidden" name="lat" id="dev-marker-lat">
+                            <input type="hidden" name="lng" id="dev-marker-lng">
+                            <div class="flex gap-2 mb-3">
+                                <button type="submit" onclick="captureMapCenter()" class="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 flex items-center justify-center gap-2 transition active:scale-[0.98] text-[9px] font-bold uppercase tracking-widest">
+                                    <i class="fa-solid fa-location-crosshairs text-[8px]"></i>
+                                    <span>Add at Center</span>
+                                </button>
+<button type="button" onclick="enableMarkerPlacement()" id="dev-place-btn" class="dev-place-btn py-2.5 px-3 rounded-xl bg-[#111] hover:bg-[#1a1a1a] border border-[#222] hover:border-purple-500/30 flex items-center justify-center gap-2 transition active:scale-[0.98] text-[9px] font-bold uppercase tracking-widest text-[#666] hover:text-purple-400">
+    <i class="fa-solid fa-map-pin text-[8px]"></i>
+    <span>Pin</span>
+</button>
+                            </div>
+                        </form>
+
+                        <!-- Marker list -->
+                        <div class="space-y-1.5 max-h-[220px] overflow-y-auto custom-scroll pr-0.5">
+                            @if(isset($dummyMarkers) && $dummyMarkers->count() > 0)
+                                @foreach($dummyMarkers as $marker)
+                                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#111] border border-[#1e1e1e] group hover:border-[#2a2a2a] transition">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <div class="w-7 h-7 rounded-lg {{ $marker->status === 'active' ? 'bg-emerald-500/10 border border-emerald-500/15' : 'bg-[#1a1a1a] border border-[#222]' }} flex items-center justify-center shrink-0">
+                                                <i class="fa-solid fa-bus text-[9px] {{ $marker->status === 'active' ? 'text-emerald-400' : 'text-[#444]' }}"></i>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-[10px] font-semibold text-[#bbb] truncate">{{ $marker->name }}</p>
+                                                <div class="flex items-center gap-1.5 mt-0.5">
+                                                    <div class="w-1.5 h-1.5 rounded-full {{ $marker->status === 'active' ? 'bg-emerald-400' : 'bg-[#444]' }}"></div>
+                                                    <span class="text-[8px] font-bold uppercase tracking-wider {{ $marker->status === 'active' ? 'text-emerald-400/70' : 'text-[#444]' }}">{{ $marker->status }}</span>
+                                                    <span class="text-[8px] text-[#333] font-mono ml-1">{{ number_format($marker->lat, 4) }}, {{ number_format($marker->lng, 4) }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition">
+                                            <form action="{{ route('driver.dev.toggle-marker', $marker->id) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-{{ $marker->status === 'active' ? 'amber-500/20' : 'emerald-500/20' }} flex items-center justify-center transition" title="Toggle status">
+                                                    <i class="fa-solid fa-{{ $marker->status === 'active' ? 'pause' : 'play' }} text-[7px] text-[#555] hover:text-{{ $marker->status === 'active' ? 'amber-400' : 'emerald-400' }}"></i>
+                                                </button>
+                                            </form>
+                                            <form action="{{ route('driver.dev.remove-marker', $marker->id) }}" method="POST">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-red-500/20 flex items-center justify-center transition" title="Remove">
+                                                    <i class="fa-solid fa-xmark text-[8px] text-[#555] hover:text-red-400"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @else
+                                <div class="flex flex-col items-center justify-center py-5 px-4 border border-dashed border-[#1e1e1e] rounded-xl">
+                                    <i class="fa-solid fa-ghost text-[#222] text-lg mb-2"></i>
+                                    <p class="text-[9px] text-[#333] text-center">No dummy markers yet</p>
+                                    <p class="text-[7px] text-[#222] text-center mt-0.5">Add markers to test commuter view</p>
+                                </div>
+                            @endif
+                        </div>
+
+                        @if(isset($dummyMarkers) && $dummyMarkers->count() > 0)
+                            <form action="{{ route('driver.dev.clear-markers') }}" method="POST" class="mt-3">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="w-full py-2 rounded-lg bg-[#111] hover:bg-red-500/10 border border-[#1e1e1e] hover:border-red-500/20 text-[#444] hover:text-red-400 text-[8px] font-bold uppercase tracking-widest transition">
+                                    <i class="fa-solid fa-trash text-[7px] mr-1"></i> Clear All
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                    @endenv
 
                 </div>
             @endif
@@ -853,6 +973,8 @@
                 rollEnabled: true,
                 maxBounds: bounds
             });
+
+            window.map = map;
 
             // ═══════════════ NAV CONTROLS ═══════════════
             map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
@@ -1541,7 +1663,160 @@ function getFareFromDB(distKm) {
             });
 
 
+
+
+
         </script>
+
+<script>
+var devPlacingMode = false;
+
+function captureMapCenter() {
+    var m = window.map;
+    if (!m || typeof m.getCanvas !== 'function') return;
+    var c = m.getCenter();
+    document.getElementById('dev-marker-lat').value = c.lat;
+    document.getElementById('dev-marker-lng').value = c.lng;
+}
+
+function enableMarkerPlacement() {
+    var m = window.map;
+    if (!m || typeof m.getCanvas !== 'function') return;
+    devPlacingMode = !devPlacingMode;
+    var btn = document.getElementById('dev-place-btn');
+    if (devPlacingMode) {
+        btn.classList.add('placing');
+        m.getCanvas().style.cursor = 'crosshair';
+    } else {
+        btn.classList.remove('placing');
+        m.getCanvas().style.cursor = '';
+    }
+}
+
+function attachDevMarkerClick() {
+    var m = window.map;
+    if (!m || typeof m.on !== 'function') {
+        setTimeout(attachDevMarkerClick, 200);
+        return;
+    }
+    m.on('click', function(e) {
+        if (!devPlacingMode) return;
+        devPlacingMode = false;
+        var btn = document.getElementById('dev-place-btn');
+        if (btn) btn.classList.remove('placing');
+        m.getCanvas().style.cursor = '';
+        document.getElementById('dev-marker-lat').value = e.lngLat.lat;
+        document.getElementById('dev-marker-lng').value = e.lngLat.lng;
+        document.getElementById('dev-marker-form').submit();
+    });
+    console.log('[DEV] Click handler attached');
+}
+
+attachDevMarkerClick();
+
+function renderDummyMarkers(markers) {
+    var m = window.map;
+    if (!m || !markers || !markers.length) return;
+
+    markers.forEach(function(d) {
+        var isMarkerActive = d.marker_status === 'active';
+        var isDriverActive = d.driver_status === 'active';
+
+        // Marker appearance based on marker status (active = blue pulse, inactive = gray)
+        var el = document.createElement('div');
+        el.className = 'custom-vehicle-marker' + (isMarkerActive ? ' bus-pulse' : '');
+        if (!isMarkerActive) {
+            el.style.background = 'linear-gradient(135deg, #444, #333)';
+            el.style.borderColor = '#555';
+            el.style.boxShadow = '0 0 10px rgba(100,100,100,0.2)';
+        }
+        el.innerHTML = '<i class="fa-solid fa-bus"></i>';
+
+        // Driver status badge colors
+        var statusBg = isDriverActive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+        var statusBorder = isDriverActive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
+        var statusDot = isDriverActive ? '#34d399' : '#ef4444';
+        var statusColor = isDriverActive ? '#34d399' : '#ef4444';
+        var statusLabel = isDriverActive ? 'Available' : 'Unavailable';
+        var statusIcon = isDriverActive ? 'fa-circle-check' : 'fa-circle-xmark';
+
+        var popup = new maplibregl.Popup({
+            offset: 20, closeButton: false, maxWidth: '220px'
+        }).setHTML(
+            '<div style="background:#111;border:1px solid #222;border-radius:16px;padding:16px;font-family:Inter,sans-serif;">' +
+
+                // Driver name row
+                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
+                    '<div style="width:36px;height:36px;border-radius:12px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+                        '<i class="fa-solid fa-bus" style="font-size:13px;color:#60a5fa;"></i>' +
+                    '</div>' +
+                    '<div style="min-width:0;">' +
+                        '<p style="font-size:12px;font-weight:700;color:#eee;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + d.name + '</p>' +
+                        '<p style="font-size:9px;color:#555;margin:2px 0 0;">Driver</p>' +
+                    '</div>' +
+                '</div>' +
+
+                // Divider
+                '<div style="height:1px;background:#1e1e1e;margin:0 0 12px;"></div>' +
+
+                // Driver availability status
+                '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:' + statusBg + ';border:1px solid ' + statusBorder + ';margin-bottom:8px;">' +
+                    '<div style="display:flex;align-items:center;gap:6px;">' +
+                        '<i class="fa-solid ' + statusIcon + '" style="font-size:10px;color:' + statusColor + ';"></i>' +
+                        '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:' + statusColor + ';">' + statusLabel + '</span>' +
+                    '</div>' +
+                    '<span style="font-size:7px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">Driver Status</span>' +
+                '</div>' +
+
+                // Vehicle info
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
+                    '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Plate</span>' +
+                    '<span style="font-size:10px;color:#888;font-weight:600;font-family:monospace;">' + d.plate_number + '</span>' +
+                '</div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
+                    '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Type</span>' +
+                    '<span style="font-size:10px;color:#888;font-weight:600;">' + d.vehicle_type + '</span>' +
+                '</div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;">' +
+                    '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Route</span>' +
+                    '<span style="font-size:10px;color:#888;font-weight:600;">' + d.route + '</span>' +
+                '</div>' +
+
+            '</div>'
+        );
+
+        new maplibregl.Marker({ element: el })
+            .setLngLat([d.lng, d.lat])
+            .setPopup(popup)
+            .addTo(m);
+    });
+}
+
+function loadDummyMarkers() {
+    var m = window.map;
+    if (!m || typeof m.on !== 'function') {
+        setTimeout(loadDummyMarkers, 200);
+        return;
+    }
+    console.log('[DEV] Map ready, fetching markers...');
+    fetch('/api/markers?t=' + Date.now())
+        .then(function(r) {
+            console.log('[DEV] Fetch response status:', r.status);
+            return r.json();
+        })
+        .then(function(markers) {
+            console.log('[DEV] Parsed markers:', JSON.stringify(markers, null, 2));
+            renderDummyMarkers(markers);
+        })
+        .catch(function(err) {
+            console.log('[DEV] Fetch error:', err);
+        });
+}
+
+loadDummyMarkers();
+
+loadDummyMarkers();
+</script>
     </div>
 
 </body>

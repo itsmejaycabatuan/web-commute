@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\CommuterController;
 use App\Http\Controllers\Admin\DriverApprovalController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\DevMarkerController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\DriverManagerController;
 use App\Http\Controllers\FareController;
@@ -188,18 +189,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/fleet-inventory/{id}/update', [MaintenanceManagerController::class, 'fleetInventoryUpdate'])->name('maintenance-manager.fleet-inventory.update');
     });
 
+    Route::middleware('role:driver')->group(function () {
+        Route::get('/timekeeping', [DriverController::class, 'timekeeping'])->name('driver.timekeeping');
+        Route::post('/timekeeping/clock-in', [DriverController::class, 'clockIn'])->name('driver.timekeeping.clock-in');
+        Route::post('/timekeeping/clock-out', [DriverController::class, 'clockOut'])->name('driver.timekeeping.clock-out');
+        Route::post('/status', [DriverController::class, 'updateStatus'])->name('driver.status.update');
+    });
+
     Route::get('/fare/{id}', [FareController::class, 'view'])->middleware('role:admin')->name('fares.view');
     Route::get('/fares', [FareController::class, 'index'])->middleware('role:admin')->name('fares.index');
     Route::put('/fare/upload', [FareController::class, 'upload'])->middleware('role:admin')->name('fares.upload');
     Route::put('/fare/update', [FareController::class, 'bulkUpdate'])->middleware('role:admin')->name('fares.bulk-update');
     Route::delete('/fare/{id}/delete', [FareController::class, 'delete'])->middleware('role:admin')->name('fares.destroy');
 
-    Route::get('/timekeeping', [DriverController::class, 'timekeeping'])->name('driver.timekeeping');
-    Route::post('/timekeeping/clock-in', [DriverController::class, 'clockIn'])->name('driver.timekeeping.clock-in');
-    Route::post('/timekeeping/clock-out', [DriverController::class, 'clockOut'])->name('driver.timekeeping.clock-out');
+    Route::post('/driver/dev/markers', [DevMarkerController::class, 'store'])->name('driver.dev.add-marker');
+    Route::post('/driver/dev/markers/{marker}/toggle', [DevMarkerController::class, 'toggle'])->name('driver.dev.toggle-marker');
+    Route::delete('/driver/dev/markers/{marker}', [DevMarkerController::class, 'remove'])->name('driver.dev.remove-marker');
+    Route::delete('/driver/dev/markers', [DevMarkerController::class, 'clear'])->name('driver.dev.clear-markers');
 
     Route::resource('users', UserController::class);
     Route::resource('routes', RouteController::class)->middleware('role:admin');
     Route::resource('rates', RateController::class)->middleware('role:admin');
-
 });
