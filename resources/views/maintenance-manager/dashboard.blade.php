@@ -50,7 +50,7 @@
 <script>
 function summaryApp() {
     return {
-        open: true,
+        open: false,
         activeTab: 'cpk',
         showLogoutModal: false,
     };

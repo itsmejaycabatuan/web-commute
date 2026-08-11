@@ -51,6 +51,18 @@ class UserController extends Controller
             ]);
         }
 
+        if ($role == 'maintenance_manager') {
+            return view('map', [
+                'rates' => $rates,
+            ]);
+        }
+
+        if ($role == 'driver_manager') {
+            return view('map', [
+                'rates' => $rates,
+            ]);
+        }
+
         if ($role == 'driver') {
             $driver = Driver::where('user_id', $user->id)->first();
             $todayRecord = null;
@@ -90,6 +102,7 @@ class UserController extends Controller
                 'balance' => $wallet->balance ?? 0.00,
             ]);
         }
+
     }
 
     public function dashboard(Request $request)
@@ -558,10 +571,6 @@ class UserController extends Controller
             $role = $user->roles->first()->name;
 
             $request->session()->regenerate();
-
-            if ($role == 'maintenance_manager' || $role == 'driver_manager') {
-                return redirect()->route('dashboard')->with('success', 'Logged in Successfully!');
-            }
 
             return redirect()->route('map')->with('success', 'Logged in Successfully!');
         }

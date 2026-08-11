@@ -54,6 +54,14 @@
     <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
         <p class="text-[8px] font-bold uppercase tracking-[0.2em] text-[#333] px-3 pt-2 pb-1.5">Navigation</p>
 
+        <a href="{{ route('map') }}"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs('map') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888]' }}">
+            <div class="w-7 h-7 rounded-lg {{ request()->routeIs('map') ? 'bg-blue-500/10' : 'bg-[#111]' }} flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-map-location-dot text-[10px]"></i>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">Map</span>
+        </a>
+
         <a href="{{ route('dashboard') }}"
             class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs('dashboard') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888]' }}">
             <div class="w-7 h-7 rounded-lg {{ request()->routeIs('dashboard') ? 'bg-blue-500/10' : 'bg-[#111]' }} flex items-center justify-center shrink-0">
@@ -156,6 +164,15 @@
         <!-- Navigation Links -->
         <nav class="space-y-1">
             <p x-show="open" x-transition.opacity.duration.150ms class="text-[8px] font-bold uppercase tracking-[0.2em] text-[#2a2a2a] px-3 mb-2">Navigation</p>
+
+            <a href="{{ route('map') }}"
+                :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+                class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs('map') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888] hover:border-[#1a1a1a]' }}">
+                <div class="w-8 h-8 rounded-lg {{ request()->routeIs('map') ? 'bg-blue-500/10' : 'bg-[#111] group-hover:bg-[#161616]' }} flex items-center justify-center shrink-0 transition">
+                    <i class="fa-solid fa-map-location-dot text-[11px]"></i>
+                </div>
+                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">Map</span>
+            </a>
 
             <a href="{{ route('dashboard') }}"
                 :class="open ? 'gap-3 px-3' : 'justify-center px-0'"

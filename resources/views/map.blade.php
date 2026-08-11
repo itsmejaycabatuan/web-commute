@@ -292,7 +292,7 @@
                 <span id="current-date" class="text-[#888]">Loading...</span>
             </div>
             @if (Auth::user())
-                @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
+                @if (Auth::check() && in_array(Auth::user()->roles[0]->name, ['driver', 'maintenance_manager', 'driver_manager']))
                     <a href="{{ route('dashboard') }}">
                         <div class="header-btn glass-panel px-4 h-9 py-2 rounded-xl text-white text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2">
                             <i class="fa-solid fa-gauge-high text-[9px] text-blue-400"></i> <span class="hidden sm:inline">Dashboard</span>
@@ -408,300 +408,302 @@
 
     <div id="map">
 
-        <!-- LEFT SIDEBAR -->
-        @if(Auth::guest() || (Auth::check() && Auth::user()->roles[0]->name !== 'admin'))
-        <div id="left" class="sidebar flex-center left collapsed">
-        <div class="sidebar-content flex-center">
-            <div id="left-sidebar-anchor"></div>
+<!-- LEFT SIDEBAR -->
+@if(Auth::guest() || (Auth::check() && Auth::user()->roles[0]->name !== 'admin'))
+<div id="left" class="sidebar flex-center left collapsed">
+<div class="sidebar-content flex-center">
+    <div id="left-sidebar-anchor"></div>
 
-            @if(Auth::check() && Auth::user()->roles[0]->name === 'commuter' || Auth::guest())
-                <div id="left-sidebar-form" class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]">
-                    <form action="{{ route('payment.index') }}" method="GET">
-                        <div class="glass-card p-6 rounded-[1.5rem]">
-                            <div class="flex items-center gap-2.5 mb-5">
-                                <div class="w-8 h-8 bg-blue-500/15 rounded-lg flex items-center justify-center">
-                                    <i class="fa-solid fa-money-bill-wave text-blue-400 text-xs"></i>
+    @if(Auth::check() && Auth::user()->roles[0]->name === 'commuter' || Auth::guest())
+        <div id="left-sidebar-form" class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)] overflow-y-auto custom-scroll p-3 pb-6">
+            <form action="{{ route('payment.index') }}" method="GET">
+                <div class="glass-card p-6 rounded-[1.5rem]">
+                    <div class="flex items-center gap-2.5 mb-5">
+                        <div class="w-8 h-8 bg-blue-500/15 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-money-bill-wave text-blue-400 text-xs"></i>
+                        </div>
+                        <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#666]">Fare Calculator</h3>
+                    </div>
+                    <div id="status-indicator" class="hidden mb-4 p-3 rounded-xl bg-blue-500/8 border border-blue-500/20 flex items-center gap-2.5">
+                        <div class="w-2 h-2 rounded-full bg-blue-500 dot-pulse"></div>
+                        <span id="status-text" class="text-[9px] uppercase tracking-[0.15em] text-blue-400 font-bold">Selecting Pick-up...</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex gap-2 items-center">
+                            <button type="button" onclick="handlePickupBtn()" class="flex items-center justify-center w-10 h-10 bg-blue-500/10 hover:bg-blue-500/20 p-2.5 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition shrink-0">
+                                <i class="fa-solid fa-circle-dot text-xs text-blue-400"></i>
+                            </button>
+                            <div class="relative flex-1">
+                                <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                    <i class="fa-solid fa-magnifying-glass text-[10px] text-[#444]"></i>
                                 </div>
-                                <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#666]">Fare Calculator</h3>
-                            </div>
-                            <div id="status-indicator" class="hidden mb-4 p-3 rounded-xl bg-blue-500/8 border border-blue-500/20 flex items-center gap-2.5">
-                                <div class="w-2 h-2 rounded-full bg-blue-500 dot-pulse"></div>
-                                <span id="status-text" class="text-[9px] uppercase tracking-[0.15em] text-blue-400 font-bold">Selecting Pick-up...</span>
-                            </div>
-                            <div class="space-y-3">
-                                <div class="flex gap-2 items-center">
-                                    <button type="button" onclick="handlePickupBtn()" class="flex items-center justify-center w-10 h-10 bg-blue-500/10 hover:bg-blue-500/20 p-2.5 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition shrink-0">
-                                        <i class="fa-solid fa-circle-dot text-xs text-blue-400"></i>
-                                    </button>
-                                    <div class="relative flex-1">
-                                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                            <i class="fa-solid fa-magnifying-glass text-[10px] text-[#444]"></i>
-                                        </div>
-                                        <input type="text" placeholder="Search pick-up point" name="pickup" id="pickup" autocomplete="off" class="map-input w-full rounded-xl pl-9 pr-4 py-2.5 text-xs text-white">
-                                        <div id="pickup-dropdown" class="search-dropdown"></div>
-                                    </div>
-                                </div>
-                                <div class="flex gap-2 items-center">
-                                    <button type="button" onclick="handleDestinationBtn()" class="flex items-center justify-center w-10 h-10 bg-red-500/10 hover:bg-red-500/20 p-2.5 rounded-xl border border-red-500/20 hover:border-red-500/40 transition shrink-0">
-                                        <i class="fa-solid fa-location-dot text-xs text-red-400"></i>
-                                    </button>
-                                    <div class="relative flex-1">
-                                        <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                            <i class="fa-solid fa-magnifying-glass text-[10px] text-[#444]"></i>
-                                        </div>
-                                        <input type="text" placeholder="Search destination" name="destination" id="destination" autocomplete="off" class="map-input w-full rounded-xl pl-9 pr-4 py-2.5 text-xs text-white">
-                                        <div id="destination-dropdown" class="search-dropdown"></div>
-                                    </div>
-                                </div>
-                                <div class="line-glow w-full my-1"></div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444]">Distance</span>
-                                    <div class="flex items-center gap-1.5">
-                                        <input type="text" readonly name="distance" id="distance" class="map-input w-20 text-center rounded-lg px-3 py-2 text-xs text-white font-semibold" value="0">
-                                        <span class="text-[10px] font-bold text-[#444] uppercase">km</span>
-                                    </div>
-                                </div>
-                                <div class="bg-[#111] rounded-xl p-3 border border-[#1e1e1e]">
-                                    <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-2">Regular</span>
-                                    <div class="relative flex-1">
-                                        <i class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#555]"></i>
-                                        <input type="text" readonly name="price-regular" id="price-regular" class="map-input w-full rounded-lg pl-7 pr-3 py-2 text-xs text-white text-center font-semibold" value="0">
-                                    </div>
-                                </div>
-                                <div class="bg-[#111] rounded-xl p-3 border border-[#1e1e1e]">
-                                    <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-2">Student / Elderly / PWD</span>
-                                    <div class="relative flex-1">
-                                        <i class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#555]"></i>
-                                        <input type="text" readonly name="price-discount" id="price-discount" class="map-input w-full rounded-lg pl-7 pr-3 py-2 text-xs text-white text-center font-semibold" value="0">
-                                    </div>
-                                </div>
-                                <button type="button" onclick="resetForm()" class="flex items-center justify-center gap-2 w-full bg-[#111] hover:bg-red-500/10 text-[#555] hover:text-red-400 font-bold py-2.5 px-4 rounded-xl text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border border-[#1e1e1e] hover:border-red-500/20">
-                                    <i class="fa-solid fa-rotate-left text-[8px]"></i> <span>Reset Route</span>
-                                </button>
-                                <button class="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-5 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-all duration-300 active:scale-[0.98]" type="submit">
-                                    <span>Buy a Ride</span> <i class="fa-solid fa-arrow-right text-[9px]"></i>
-                                </button>
+                                <input type="text" placeholder="Search pick-up point" name="pickup" id="pickup" autocomplete="off" class="map-input w-full rounded-xl pl-9 pr-4 py-2.5 text-xs text-white">
+                                <div id="pickup-dropdown" class="search-dropdown"></div>
                             </div>
                         </div>
-                    </form>
-                </div>
-            @endif
-
-            @if(Auth::check() && Auth::user()->roles[0]->name === 'driver')
-                <div id="left-sidebar-form" class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]">
-
-                    <!-- ══════════ DRIVER STATUS TOGGLE CARD ══════════ -->
-                    <form action="{{ route('driver.status.update') }}" method="POST" class="contents">
-                        @csrf
-                        <input type="hidden" name="status" value="{{ $driverStatus === 'active' ? 'inactive' : 'active' }}">
-                        <div id="driver-status-card" class="glass-card status-card {{ $driverStatus === 'active' ? 'active' : 'inactive' }} p-5 rounded-[1.5rem] cursor-pointer select-none" onclick="this.closest('form').submit()">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center {{ $driverStatus === 'active' ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-[#1a1a1a] border border-[#222]' }}">
-                                        <div class="relative flex items-center justify-center">
-                                            <i class="fa-solid fa-signal {{ $driverStatus === 'active' ? 'text-emerald-400' : 'text-[#444]' }} text-sm"></i>
-                                            <div class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#161616] {{ $driverStatus === 'active' ? 'bg-emerald-400 status-dot-active' : 'bg-[#444]' }}"></div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p class="text-[8px] uppercase tracking-[0.15em] text-[#444] font-bold mb-0.5">Availability</p>
-                                        <p class="text-[13px] font-bold {{ $driverStatus === 'active' ? 'text-emerald-400' : 'text-[#555]' }}">{{ $driverStatus === 'active' ? 'Active' : 'Inactive' }}</p>
-                                    </div>
+                        <div class="flex gap-2 items-center">
+                            <button type="button" onclick="handleDestinationBtn()" class="flex items-center justify-center w-10 h-10 bg-red-500/10 hover:bg-red-500/20 p-2.5 rounded-xl border border-red-500/20 hover:border-red-500/40 transition shrink-0">
+                                <i class="fa-solid fa-location-dot text-xs text-red-400"></i>
+                            </button>
+                            <div class="relative flex-1">
+                                <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                    <i class="fa-solid fa-magnifying-glass text-[10px] text-[#444]"></i>
                                 </div>
-                                <div class="status-toggle-track {{ $driverStatus === 'active' ? 'active' : '' }}">
-                                    <div class="status-toggle-thumb"></div>
+                                <input type="text" placeholder="Search destination" name="destination" id="destination" autocomplete="off" class="map-input w-full rounded-xl pl-9 pr-4 py-2.5 text-xs text-white">
+                                <div id="destination-dropdown" class="search-dropdown"></div>
+                            </div>
+                        </div>
+                        <div class="line-glow w-full my-1"></div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444]">Distance</span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="text" readonly name="distance" id="distance" class="map-input w-20 text-center rounded-lg px-3 py-2 text-xs text-white font-semibold" value="0">
+                                <span class="text-[10px] font-bold text-[#444] uppercase">km</span>
+                            </div>
+                        </div>
+                        <div class="bg-[#111] rounded-xl p-3 border border-[#1e1e1e]">
+                            <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-2">Regular</span>
+                            <div class="relative flex-1">
+                                <i class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#555]"></i>
+                                <input type="text" readonly name="price-regular" id="price-regular" class="map-input w-full rounded-lg pl-7 pr-3 py-2 text-xs text-white text-center font-semibold" value="0">
+                            </div>
+                        </div>
+                        <div class="bg-[#111] rounded-xl p-3 border border-[#1e1e1e]">
+                            <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-2">Student / Elderly / PWD</span>
+                            <div class="relative flex-1">
+                                <i class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#555]"></i>
+                                <input type="text" readonly name="price-discount" id="price-discount" class="map-input w-full rounded-lg pl-7 pr-3 py-2 text-xs text-white text-center font-semibold" value="0">
+                            </div>
+                        </div>
+                        <button type="button" onclick="resetForm()" class="flex items-center justify-center gap-2 w-full bg-[#111] hover:bg-red-500/10 text-[#555] hover:text-red-400 font-bold py-2.5 px-4 rounded-xl text-[9px] uppercase tracking-[0.2em] transition-all duration-300 border border-[#1e1e1e] hover:border-red-500/20">
+                            <i class="fa-solid fa-rotate-left text-[8px]"></i> <span>Reset Route</span>
+                        </button>
+                        <button class="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-5 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-all duration-300 active:scale-[0.98]" type="submit">
+                            <span>Buy a Ride</span> <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    @endif
+
+    @if(Auth::check() && Auth::user()->roles[0]->name === 'driver')
+        <div id="left-sidebar-form" class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)] overflow-y-auto custom-scroll p-3 pb-6">
+
+            <!-- ══════════ DRIVER STATUS TOGGLE CARD ══════════ -->
+            <form action="{{ route('driver.status.update') }}" method="POST" class="contents">
+                @csrf
+                <input type="hidden" name="status" value="{{ $driverStatus === 'active' ? 'inactive' : 'active' }}">
+                <div id="driver-status-card" class="glass-card status-card {{ $driverStatus === 'active' ? 'active' : 'inactive' }} p-5 rounded-[1.5rem] cursor-pointer select-none" onclick="this.closest('form').submit()">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center {{ $driverStatus === 'active' ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-[#1a1a1a] border border-[#222]' }}">
+                                <div class="relative flex items-center justify-center">
+                                    <i class="fa-solid fa-signal {{ $driverStatus === 'active' ? 'text-emerald-400' : 'text-[#444]' }} text-sm"></i>
+                                    <div class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#161616] {{ $driverStatus === 'active' ? 'bg-emerald-400 status-dot-active' : 'bg-[#444]' }}"></div>
                                 </div>
                             </div>
-                            <p class="text-[9px] text-[#444] mt-3 leading-relaxed">
-                                @if($driverStatus === 'active')
-                                    You are visible to commuters and accepting trips.
+                            <div>
+                                <p class="text-[8px] uppercase tracking-[0.15em] text-[#444] font-bold mb-0.5">Availability</p>
+                                <p class="text-[13px] font-bold {{ $driverStatus === 'active' ? 'text-emerald-400' : 'text-[#555]' }}">{{ $driverStatus === 'active' ? 'Active' : 'Inactive' }}</p>
+                            </div>
+                        </div>
+                        <div class="status-toggle-track {{ $driverStatus === 'active' ? 'active' : '' }}">
+                            <div class="status-toggle-thumb"></div>
+                        </div>
+                    </div>
+                    <p class="text-[9px] text-[#444] mt-3 leading-relaxed">
+                        @if($driverStatus === 'active')
+                            You are visible to commuters and accepting trips.
+                        @else
+                            Tap to go online and start accepting trips.
+                        @endif
+                    </p>
+                </div>
+            </form>
+
+            <div class="glass-card p-5 rounded-[1.5rem] @if($todayRecord && $todayRecord->time_in && !$todayRecord->time_out) border-amber-500/20 @elseif($todayRecord && $todayRecord->time_out) border-emerald-500/20 @else border-blue-500/20 @endif">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <p class="text-[8px] uppercase tracking-[0.15em] text-[#444] font-bold mb-0.5">Today's Shift</p>
+                        <h2 class="text-sm font-bold text-white">
+                            @if(!$todayRecord || !$todayRecord->time_in)
+                                Not Started
+                            @elseif(!$todayRecord->time_out)
+                                <span class="text-amber-400">In Progress</span>
+                            @else
+                                <span class="text-emerald-400">Completed</span>
+                            @endif
+                        </h2>
+                    </div>
+                    <div class="w-8 h-8 rounded-lg @if($todayRecord && $todayRecord->time_in && !$todayRecord->time_out) bg-amber-500/10 border border-amber-500/15 @elseif($todayRecord && $todayRecord->time_out) bg-emerald-500/10 border border-emerald-500/15 @else bg-blue-500/10 border border-blue-500/15 @endif flex items-center justify-center">
+                        <i class="fa-solid @if($todayRecord && $todayRecord->time_in && !$todayRecord->time_out) fa-clock text-amber-400 @elseif($todayRecord && $todayRecord->time_out) fa-check text-emerald-400 @else fa-hourglass-start text-blue-400 @endif text-xs"></i>
+                    </div>
+                </div>
+
+                @if($todayRecord && $todayRecord->time_in)
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="p-2.5 rounded-lg bg-[#111] border border-[#1e1e1e]">
+                            <p class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] mb-0.5">Time In</p>
+                            <p class="text-[11px] font-bold text-white">{{ $todayRecord->time_in }}</p>
+                        </div>
+                        <div class="p-2.5 rounded-lg bg-[#111] border border-[#1e1e1e]">
+                            <p class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] mb-0.5">Time Out</p>
+                            <p class="text-[11px] font-bold @if($todayRecord->time_out) text-white @else text-[#333] @endif">
+                                @if($todayRecord->time_out)
+                                    {{ $todayRecord->time_out }}
                                 @else
-                                    Tap to go online and start accepting trips.
+                                    —
                                 @endif
                             </p>
                         </div>
+                    </div>
+                @endif
+
+                @if(!$todayRecord || !$todayRecord->time_in)
+                    <form action="{{ route('driver.timekeeping.clock-in') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="w-full p-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-blue">
+                            <i class="fa-solid fa-right-to-bracket text-sm"></i>
+                            <span class="text-[10px] font-black uppercase tracking-widest">Clock In</span>
+                        </button>
                     </form>
+                @elseif(!$todayRecord->time_out)
+                    <form action="{{ route('driver.timekeeping.clock-out') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="w-full p-3.5 rounded-2xl bg-amber-600 hover:bg-amber-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-amber">
+                            <i class="fa-solid fa-right-from-bracket text-sm"></i>
+                            <span class="text-[10px] font-black uppercase tracking-widest">Clock Out</span>
+                        </button>
+                    </form>
+                @else
+                    <div class="w-full py-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center gap-2.5">
+                        <i class="fa-solid fa-check text-emerald-400 text-sm"></i>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400">Shift Complete</span>
+                    </div>
+                @endif
 
-                    <div class="glass-card p-5 rounded-[1.5rem] @if($todayRecord && $todayRecord->time_in && !$todayRecord->time_out) border-amber-500/20 @elseif($todayRecord && $todayRecord->time_out) border-emerald-500/20 @else border-blue-500/20 @endif">
-                        <div class="flex items-center justify-between mb-4">
-                            <div>
-                                <p class="text-[8px] uppercase tracking-[0.15em] text-[#444] font-bold mb-0.5">Today's Shift</p>
-                                <h2 class="text-sm font-bold text-white">
-                                    @if(!$todayRecord || !$todayRecord->time_in)
-                                        Not Started
-                                    @elseif(!$todayRecord->time_out)
-                                        <span class="text-amber-400">In Progress</span>
-                                    @else
-                                        <span class="text-emerald-400">Completed</span>
-                                    @endif
-                                </h2>
-                            </div>
-                            <div class="w-8 h-8 rounded-lg @if($todayRecord && $todayRecord->time_in && !$todayRecord->time_out) bg-amber-500/10 border border-amber-500/15 @elseif($todayRecord && $todayRecord->time_out) bg-emerald-500/10 border border-emerald-500/15 @else bg-blue-500/10 border border-blue-500/15 @endif flex items-center justify-center">
-                                <i class="fa-solid @if($todayRecord && $todayRecord->time_in && !$todayRecord->time_out) fa-clock text-amber-400 @elseif($todayRecord && $todayRecord->time_out) fa-check text-emerald-400 @else fa-hourglass-start text-blue-400 @endif text-xs"></i>
-                            </div>
-                        </div>
-
-                        @if($todayRecord && $todayRecord->time_in)
-                            <div class="grid grid-cols-2 gap-2 mb-4">
-                                <div class="p-2.5 rounded-lg bg-[#111] border border-[#1e1e1e]">
-                                    <p class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] mb-0.5">Time In</p>
-                                    <p class="text-[11px] font-bold text-white">{{ $todayRecord->time_in }}</p>
-                                </div>
-                                <div class="p-2.5 rounded-lg bg-[#111] border border-[#1e1e1e]">
-                                    <p class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] mb-0.5">Time Out</p>
-                                    <p class="text-[11px] font-bold @if($todayRecord->time_out) text-white @else text-[#333] @endif">
-                                        @if($todayRecord->time_out)
-                                            {{ $todayRecord->time_out }}
-                                        @else
-                                            —
-                                        @endif
-                                    </p>
-                                </div>
-                            </div>
-                        @endif
-
-                        @if(!$todayRecord || !$todayRecord->time_in)
-                            <form action="{{ route('driver.timekeeping.clock-in') }}" method="POST">
-                                @csrf
-                                <button type="submit" class="w-full p-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-blue">
-                                    <i class="fa-solid fa-right-to-bracket text-sm"></i>
-                                    <span class="text-[10px] font-black uppercase tracking-widest">Clock In</span>
-                                </button>
-                            </form>
-                        @elseif(!$todayRecord->time_out)
-                            <form action="{{ route('driver.timekeeping.clock-out') }}" method="POST">
-                                @csrf
-                                <button type="submit" class="w-full p-3.5 rounded-2xl bg-amber-600 hover:bg-amber-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-amber">
-                                    <i class="fa-solid fa-right-from-bracket text-sm"></i>
-                                    <span class="text-[10px] font-black uppercase tracking-widest">Clock Out</span>
-                                </button>
-                            </form>
-                        @else
-                            <div class="w-full py-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center gap-2.5">
-                                <i class="fa-solid fa-check text-emerald-400 text-sm"></i>
-                                <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400">Shift Complete</span>
-                            </div>
-                        @endif
-
-                        @if($todayRecord && $todayRecord->time_out)
-                            <div class="flex items-center justify-center gap-1.5 mt-2">
-                                <span class="text-[8px] text-[#444] uppercase tracking-wider font-bold">Total:</span>
-                                <span class="text-[11px] font-bold text-emerald-400">{{ number_format($todayRecord->hours_worked, 1) }} hrs</span>
-                                @if($todayRecord->overtime_hours && $todayRecord->overtime_hours > 0)
-                                    <span class="text-[8px] text-amber-400 font-bold">+{{ number_format($todayRecord->overtime_hours, 1) }} OT</span>
-                                @endif
-                            </div>
+                @if($todayRecord && $todayRecord->time_out)
+                    <div class="flex items-center justify-center gap-1.5 mt-2">
+                        <span class="text-[8px] text-[#444] uppercase tracking-wider font-bold">Total:</span>
+                        <span class="text-[11px] font-bold text-emerald-400">{{ number_format($todayRecord->hours_worked, 1) }} hrs</span>
+                        @if($todayRecord->overtime_hours && $todayRecord->overtime_hours > 0)
+                            <span class="text-[8px] text-amber-400 font-bold">+{{ number_format($todayRecord->overtime_hours, 1) }} OT</span>
                         @endif
                     </div>
+                @endif
+            </div>
 
-                    <!-- Link to full timekeeping -->
-                    <a href="{{ route('driver.timekeeping') }}" class="glass-card p-4 rounded-xl flex items-center gap-3 group hover:border-blue-500/20 transition">
-                        <div class="w-9 h-9 bg-blue-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition border border-blue-500/15">
-                            <i class="fa-solid fa-calendar-week text-blue-400 text-xs"></i>
+            <!-- Link to full timekeeping -->
+            <a href="{{ route('driver.timekeeping') }}" class="glass-card p-4 rounded-xl flex items-center gap-3 group hover:border-blue-500/20 transition">
+                <div class="w-9 h-9 bg-blue-500/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition border border-blue-500/15">
+                    <i class="fa-solid fa-calendar-week text-blue-400 text-xs"></i>
+                </div>
+                <div>
+                    <p class="text-[11px] font-bold text-white">Weekly Log</p>
+                    <p class="text-[8px] text-[#444] uppercase tracking-wider font-bold">View full timekeeping</p>
+                </div>
+                <i class="fa-solid fa-chevron-right text-[8px] text-[#333] ml-auto group-hover:text-blue-400 transition"></i>
+            </a>
+
+            @env('local')
+            <!-- ══════════ DEV TOOLS: DUMMY DRIVER MARKERS ══════════ -->
+            <div class="glass-card p-5 rounded-[1.5rem] border-purple-500/15">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center border border-purple-500/20">
+                            <i class="fa-solid fa-flask text-purple-400 text-xs"></i>
                         </div>
                         <div>
-                            <p class="text-[11px] font-bold text-white">Weekly Log</p>
-                            <p class="text-[8px] text-[#444] uppercase tracking-wider font-bold">View full timekeeping</p>
+                            <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-purple-400">Dev Tools</h3>
+                            <p class="text-[7px] text-[#333] uppercase tracking-wider font-bold">Local env only</p>
                         </div>
-                        <i class="fa-solid fa-chevron-right text-[8px] text-[#333] ml-auto group-hover:text-blue-400 transition"></i>
-                    </a>
+                    </div>
+                    <span class="text-[7px] font-bold uppercase tracking-widest text-[#333] bg-[#111] px-2 py-1 rounded-md border border-[#1e1e1e]">{{ isset($dummyMarkers) ? $dummyMarkers->count() : 0 }} markers</span>
+                </div>
 
-                    @env('local')
-                    <!-- ══════════ DEV TOOLS: DUMMY DRIVER MARKERS ══════════ -->
-                    <div class="glass-card p-5 rounded-[1.5rem] border-purple-500/15">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center gap-2.5">
-                                <div class="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center border border-purple-500/20">
-                                    <i class="fa-solid fa-flask text-purple-400 text-xs"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-purple-400">Dev Tools</h3>
-                                    <p class="text-[7px] text-[#333] uppercase tracking-wider font-bold">Local env only</p>
-                                </div>
-                            </div>
-                            <span class="text-[7px] font-bold uppercase tracking-widest text-[#333] bg-[#111] px-2 py-1 rounded-md border border-[#1e1e1e]">{{ isset($dummyMarkers) ? $dummyMarkers->count() : 0 }} markers</span>
-                        </div>
+                <!-- Add marker form -->
+                <form action="{{ route('driver.dev.add-marker') }}" method="POST" id="dev-marker-form">
+                    @csrf
+                    <input type="hidden" name="lat" id="dev-marker-lat">
+                    <input type="hidden" name="lng" id="dev-marker-lng">
+                    <div class="flex gap-2 mb-3">
+                        <button type="submit" onclick="captureMapCenter()" class="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 flex items-center justify-center gap-2 transition active:scale-[0.98] text-[9px] font-bold uppercase tracking-widest">
+                            <i class="fa-solid fa-location-crosshairs text-[8px]"></i>
+                            <span>Add at Center</span>
+                        </button>
+                        <button type="button" onclick="enableMarkerPlacement()" id="dev-place-btn" class="dev-place-btn py-2.5 px-3 rounded-xl bg-[#111] hover:bg-[#1a1a1a] border border-[#222] hover:border-purple-500/30 flex items-center justify-center gap-2 transition active:scale-[0.98] text-[9px] font-bold uppercase tracking-widest text-[#666] hover:text-purple-400">
+                            <i class="fa-solid fa-map-pin text-[8px]"></i>
+                            <span>Pin</span>
+                        </button>
+                    </div>
+                </form>
 
-                        <!-- Add marker form -->
-                        <form action="{{ route('driver.dev.add-marker') }}" method="POST" id="dev-marker-form">
-                            @csrf
-                            <input type="hidden" name="lat" id="dev-marker-lat">
-                            <input type="hidden" name="lng" id="dev-marker-lng">
-                            <div class="flex gap-2 mb-3">
-                                <button type="submit" onclick="captureMapCenter()" class="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 flex items-center justify-center gap-2 transition active:scale-[0.98] text-[9px] font-bold uppercase tracking-widest">
-                                    <i class="fa-solid fa-location-crosshairs text-[8px]"></i>
-                                    <span>Add at Center</span>
-                                </button>
-<button type="button" onclick="enableMarkerPlacement()" id="dev-place-btn" class="dev-place-btn py-2.5 px-3 rounded-xl bg-[#111] hover:bg-[#1a1a1a] border border-[#222] hover:border-purple-500/30 flex items-center justify-center gap-2 transition active:scale-[0.98] text-[9px] font-bold uppercase tracking-widest text-[#666] hover:text-purple-400">
-    <i class="fa-solid fa-map-pin text-[8px]"></i>
-    <span>Pin</span>
-</button>
-                            </div>
-                        </form>
-
-                        <!-- Marker list -->
-                        <div class="space-y-1.5 max-h-[220px] overflow-y-auto custom-scroll pr-0.5">
-                            @if(isset($dummyMarkers) && $dummyMarkers->count() > 0)
-                                @foreach($dummyMarkers as $marker)
-                                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#111] border border-[#1e1e1e] group hover:border-[#2a2a2a] transition">
-                                        <div class="flex items-center gap-2.5 min-w-0">
-                                            <div class="w-7 h-7 rounded-lg {{ $marker->status === 'active' ? 'bg-emerald-500/10 border border-emerald-500/15' : 'bg-[#1a1a1a] border border-[#222]' }} flex items-center justify-center shrink-0">
-                                                <i class="fa-solid fa-bus text-[9px] {{ $marker->status === 'active' ? 'text-emerald-400' : 'text-[#444]' }}"></i>
-                                            </div>
-                                            <div class="min-w-0">
-                                                <p class="text-[10px] font-semibold text-[#bbb] truncate">{{ $marker->name }}</p>
-                                                <div class="flex items-center gap-1.5 mt-0.5">
-                                                    <div class="w-1.5 h-1.5 rounded-full {{ $marker->status === 'active' ? 'bg-emerald-400' : 'bg-[#444]' }}"></div>
-                                                    <span class="text-[8px] font-bold uppercase tracking-wider {{ $marker->status === 'active' ? 'text-emerald-400/70' : 'text-[#444]' }}">{{ $marker->status }}</span>
-                                                    <span class="text-[8px] text-[#333] font-mono ml-1">{{ number_format($marker->lat, 4) }}, {{ number_format($marker->lng, 4) }}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition">
-                                            <form action="{{ route('driver.dev.toggle-marker', $marker->id) }}" method="POST">
-                                                @csrf
-                                                <button type="submit" class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-{{ $marker->status === 'active' ? 'amber-500/20' : 'emerald-500/20' }} flex items-center justify-center transition" title="Toggle status">
-                                                    <i class="fa-solid fa-{{ $marker->status === 'active' ? 'pause' : 'play' }} text-[7px] text-[#555] hover:text-{{ $marker->status === 'active' ? 'amber-400' : 'emerald-400' }}"></i>
-                                                </button>
-                                            </form>
-                                            <form action="{{ route('driver.dev.remove-marker', $marker->id) }}" method="POST">
-                                                @csrf @method('DELETE')
-                                                <button type="submit" class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-red-500/20 flex items-center justify-center transition" title="Remove">
-                                                    <i class="fa-solid fa-xmark text-[8px] text-[#555] hover:text-red-400"></i>
-                                                </button>
-                                            </form>
+                <!-- Marker list -->
+                <div class="space-y-1.5 max-h-[220px] overflow-y-auto custom-scroll pr-0.5">
+                    @if(isset($dummyMarkers) && $dummyMarkers->count() > 0)
+                        @foreach($dummyMarkers as $marker)
+                            <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#111] border border-[#1e1e1e] group hover:border-[#2a2a2a] transition">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="w-7 h-7 rounded-lg {{ $marker->status === 'active' ? 'bg-emerald-500/10 border border-emerald-500/15' : 'bg-[#1a1a1a] border border-[#222]' }} flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-bus text-[9px] {{ $marker->status === 'active' ? 'text-emerald-400' : 'text-[#444]' }}"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-[10px] font-semibold text-[#bbb] truncate">{{ $marker->name }}</p>
+                                        <div class="flex items-center gap-1.5 mt-0.5">
+                                            <div class="w-1.5 h-1.5 rounded-full {{ $marker->status === 'active' ? 'bg-emerald-400' : 'bg-[#444]' }}"></div>
+                                            <span class="text-[8px] font-bold uppercase tracking-wider {{ $marker->status === 'active' ? 'text-emerald-400/70' : 'text-[#444]' }}">{{ $marker->status }}</span>
+                                            <span class="text-[8px] text-[#333] font-mono ml-1">{{ number_format($marker->lat, 4) }}, {{ number_format($marker->lng, 4) }}</span>
                                         </div>
                                     </div>
-                                @endforeach
-                            @else
-                                <div class="flex flex-col items-center justify-center py-5 px-4 border border-dashed border-[#1e1e1e] rounded-xl">
-                                    <i class="fa-solid fa-ghost text-[#222] text-lg mb-2"></i>
-                                    <p class="text-[9px] text-[#333] text-center">No dummy markers yet</p>
-                                    <p class="text-[7px] text-[#222] text-center mt-0.5">Add markers to test commuter view</p>
                                 </div>
-                            @endif
+                                <div class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition">
+                                    <form action="{{ route('driver.dev.toggle-marker', $marker->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-{{ $marker->status === 'active' ? 'amber-500/20' : 'emerald-500/20' }} flex items-center justify-center transition" title="Toggle status">
+                                            <i class="fa-solid fa-{{ $marker->status === 'active' ? 'pause' : 'play' }} text-[7px] text-[#555] hover:text-{{ $marker->status === 'active' ? 'amber-400' : 'emerald-400' }}"></i>
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('driver.dev.remove-marker', $marker->id) }}" method="POST">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-red-500/20 flex items-center justify-center transition" title="Remove">
+                                            <i class="fa-solid fa-xmark text-[8px] text-[#555] hover:text-red-400"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="flex flex-col items-center justify-center py-5 px-4 border border-dashed border-[#1e1e1e] rounded-xl">
+                            <i class="fa-solid fa-ghost text-[#222] text-lg mb-2"></i>
+                            <p class="text-[9px] text-[#333] text-center">No dummy markers yet</p>
+                            <p class="text-[7px] text-[#222] text-center mt-0.5">Add markers to test commuter view</p>
                         </div>
-
-                        @if(isset($dummyMarkers) && $dummyMarkers->count() > 0)
-                            <form action="{{ route('driver.dev.clear-markers') }}" method="POST" class="mt-3">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="w-full py-2 rounded-lg bg-[#111] hover:bg-red-500/10 border border-[#1e1e1e] hover:border-red-500/20 text-[#444] hover:text-red-400 text-[8px] font-bold uppercase tracking-widest transition">
-                                    <i class="fa-solid fa-trash text-[7px] mr-1"></i> Clear All
-                                </button>
-                            </form>
-                        @endif
-                    </div>
-                    @endenv
-
+                    @endif
                 </div>
-            @endif
 
-                    <div class="sidebar-toggle rounded-rect left hidden md:flex" onclick="toggleSidebar('left')">
-                        <i class="fa-solid fa-chevron-right text-base"></i>
-                    </div>
+                @if(isset($dummyMarkers) && $dummyMarkers->count() > 0)
+                    <form action="{{ route('driver.dev.clear-markers') }}" method="POST" class="mt-3">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="w-full py-2 rounded-lg bg-[#111] hover:bg-red-500/10 border border-[#1e1e1e] hover:border-red-500/20 text-[#444] hover:text-red-400 text-[8px] font-bold uppercase tracking-widest transition">
+                            <i class="fa-solid fa-trash text-[7px] mr-1"></i> Clear All
+                        </button>
+                    </form>
+                @endif
+            </div>
+            @endenv
+
         </div>
-    </div>
     @endif
+
+    @if(!Auth::check() || (Auth::check() && !in_array(Auth::user()->roles[0]->name, ['admin', 'maintenance_manager', 'driver_manager'])))
+        <div class="sidebar-toggle rounded-rect left hidden md:flex" onclick="toggleSidebar('left')">
+            <i class="fa-solid fa-chevron-right text-base"></i>
+        </div>
+    @endif
+    </div>
+</div>
+@endif
 
         <!-- RIGHT SIDEBAR -->
         <div id="right" class="sidebar flex-center right collapsed">
@@ -842,8 +844,7 @@
 
                 </div>
 
-                @if (Auth::check() && Auth::user()->roles[0]->name !== 'admin')
-                    <!-- Arrow button: hidden on mobile, visible on lg+ -->
+                @if (Auth::check() && !in_array(Auth::user()->roles[0]->name, ['admin', 'maintenance_manager', 'driver_manager']))
                     <div class="sidebar-toggle rounded-rect right hidden md:flex" onclick="toggleSidebar('right')"><i class="fa-solid fa-chevron-left text-base"></i></div>
                 @endif
                 @if (!Auth::check())
