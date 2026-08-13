@@ -1,59 +1,89 @@
 {{-- Admin dashboard: full stat cards --}}
-<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-10">
-    <div class="glass rounded-2xl border border-white/10 p-6 flex items-start gap-4">
-        <span class="text-2xl shrink-0" aria-hidden="true">👤</span>
-        <div>
-            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Total users</p>
-            <p class="text-3xl font-black tracking-tight text-white">{{ number_format($stats['total_users']) }}</p>
-            <p class="text-[10px] text-gray-600 mt-1">All accounts in the system</p>
+<div class="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mb-5 sm:mb-6">
+
+    <!-- Total Users -->
+    <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-white/20">
+        <div class="flex items-center gap-2 mb-2 sm:mb-3">
+            <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center">
+                <i class="fa-solid fa-users text-[8px] text-[#888]"></i>
+            </div>
+            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Total Users</span>
         </div>
-    </div>
-    <div class="glass rounded-2xl border border-cyan-500/20 p-6 flex items-start gap-4">
-        <span class="text-2xl shrink-0" aria-hidden="true">🧑‍🤝‍🧑</span>
-        <div>
-            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Total commuters</p>
-            <p class="text-3xl font-black tracking-tight text-cyan-400">{{ number_format($stats['total_commuters']) }}</p>
-            <p class="text-[10px] text-gray-600 mt-1">PUJ passenger accounts</p>
+        <div class="flex items-baseline gap-1 sm:gap-1.5">
+            <span class="text-2xl sm:text-3xl font-black tracking-tight">{{ number_format($stats['total_users']) }}</span>
         </div>
+        <p class="text-[7px] sm:text-[8px] text-[#333] mt-1.5 font-medium">All accounts in the system</p>
     </div>
-    <div class="glass rounded-2xl border border-white/10 p-6 flex items-start gap-4">
-        <span class="text-2xl shrink-0" aria-hidden="true">🚗</span>
-        <div>
-            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Total drivers</p>
-            <p class="text-3xl font-black tracking-tight text-blue-400">{{ number_format($stats['total_drivers']) }}</p>
-            <p class="text-[10px] text-gray-600 mt-1">PUJ operator accounts</p>
+
+    <!-- Total Commuters -->
+    <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-cyan-500">
+        <div class="flex items-center gap-2 mb-2 sm:mb-3">
+            <div class="w-6 h-6 rounded-md bg-cyan-500/10 flex items-center justify-center">
+                <i class="fa-solid fa-user-group text-[8px] text-cyan-400"></i>
+            </div>
+            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Commuters</span>
         </div>
-    </div>
-    <div class="glass rounded-2xl border border-amber-500/30 ring-1 ring-amber-500/20 p-6 flex items-start gap-4 bg-amber-500/[0.03]">
-        <span class="text-2xl shrink-0" aria-hidden="true">⏳</span>
-        <div>
-            <p class="text-[10px] font-bold uppercase tracking-widest text-amber-400/90 mb-1">Pending drivers</p>
-            <p class="text-3xl font-black tracking-tight text-amber-400">{{ number_format($stats['pending_drivers']) }}</p>
-            <p class="text-[10px] text-amber-400/50 mt-1 font-semibold">Needs your review</p>
+        <div class="flex items-baseline gap-1 sm:gap-1.5">
+            <span class="text-2xl sm:text-3xl font-black tracking-tight text-cyan-400">{{ number_format($stats['total_commuters']) }}</span>
         </div>
+        <p class="text-[7px] sm:text-[8px] text-[#333] mt-1.5 font-medium">PUJ passenger accounts</p>
     </div>
-    <div class="glass rounded-2xl border border-emerald-500/20 p-6 flex items-start gap-4">
-        <span class="text-2xl shrink-0" aria-hidden="true">✅</span>
-        <div>
-            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Approved drivers</p>
-            <p class="text-3xl font-black tracking-tight text-emerald-400">{{ number_format($stats['approved_drivers']) }}</p>
-            <p class="text-[10px] text-gray-600 mt-1">Can sign in</p>
+
+    <!-- Total Drivers -->
+    <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-blue-500">
+        <div class="flex items-center gap-2 mb-2 sm:mb-3">
+            <div class="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center">
+                <i class="fa-solid fa-id-badge text-[8px] text-blue-400"></i>
+            </div>
+            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Drivers</span>
         </div>
-    </div>
-    <div class="glass rounded-2xl border border-red-500/20 p-6 flex items-start gap-4">
-        <span class="text-2xl shrink-0" aria-hidden="true">❌</span>
-        <div>
-            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Rejected drivers</p>
-            <p class="text-3xl font-black tracking-tight text-red-400/90">{{ number_format($stats['rejected_drivers']) }}</p>
-            <p class="text-[10px] text-gray-600 mt-1">Denied registrations</p>
+        <div class="flex items-baseline gap-1 sm:gap-1.5">
+            <span class="text-2xl sm:text-3xl font-black tracking-tight text-blue-400">{{ number_format($stats['total_drivers']) }}</span>
         </div>
+        <p class="text-[7px] sm:text-[8px] text-[#333] mt-1.5 font-medium">PUJ operator accounts</p>
     </div>
-    <div class="glass rounded-2xl border border-white/10 p-6 flex items-start gap-4">
-        <span class="text-2xl shrink-0" aria-hidden="true">📄</span>
-        <div>
-            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">Driver applications</p>
-            <p class="text-3xl font-black tracking-tight text-white">{{ number_format($stats['total_applications']) }}</p>
-            <p class="text-[10px] text-gray-600 mt-1">All-time signup records</p>
+
+    <!-- Approved Drivers -->
+    <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-emerald-500">
+        <div class="flex items-center gap-2 mb-2 sm:mb-3">
+            <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
+                <i class="fa-solid fa-circle-check text-[8px] text-emerald-400"></i>
+            </div>
+            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Approved</span>
         </div>
+        <div class="flex items-baseline gap-1 sm:gap-1.5">
+            <span class="text-2xl sm:text-3xl font-black tracking-tight text-emerald-400">{{ number_format($stats['approved_drivers']) }}</span>
+            <span class="text-xs sm:text-sm font-bold text-[#333]">/ {{ number_format($stats['total_drivers']) }}</span>
+        </div>
+        <p class="text-[7px] sm:text-[8px] text-[#333] mt-1.5 font-medium">Can sign in</p>
     </div>
+
+    <!-- Rejected Drivers -->
+    <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-red-500">
+        <div class="flex items-center gap-2 mb-2 sm:mb-3">
+            <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center">
+                <i class="fa-solid fa-circle-xmark text-[8px] text-red-400"></i>
+            </div>
+            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Rejected</span>
+        </div>
+        <div class="flex items-baseline gap-1 sm:gap-1.5">
+            <span class="text-2xl sm:text-3xl font-black tracking-tight text-red-400/80">{{ number_format($stats['rejected_drivers']) }}</span>
+        </div>
+        <p class="text-[7px] sm:text-[8px] text-[#333] mt-1.5 font-medium">Denied registrations</p>
+    </div>
+
+    <!-- Driver Applications -->
+    <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-purple-500">
+        <div class="flex items-center gap-2 mb-2 sm:mb-3">
+            <div class="w-6 h-6 rounded-md bg-purple-500/10 flex items-center justify-center">
+                <i class="fa-solid fa-file-lines text-[8px] text-purple-400"></i>
+            </div>
+            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Applications</span>
+        </div>
+        <div class="flex items-baseline gap-1 sm:gap-1.5">
+            <span class="text-2xl sm:text-3xl font-black tracking-tight text-white">{{ number_format($stats['total_applications']) }}</span>
+        </div>
+        <p class="text-[7px] sm:text-[8px] text-[#333] mt-1.5 font-medium">All-time signup records</p>
+    </div>
+
 </div>

@@ -4,139 +4,307 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartCommute | Dashboard</title>
+    <title>SmartCommute | Fare Rates</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+        }
+    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; overflow-x: hidden; background: #050505; }
+        .glass-panel { background: #111111 !important; border: 1px solid #1e1e1e; box-shadow: 0 4px 24px rgba(0,0,0,0.6); }
+        .glass-card { background: #161616; border: 1px solid #222222; box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
+        .sidebar-transition { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .table-row { transition: all 0.2s ease; }
+        .table-row:hover { background: #1a1a1a; }
+        [x-cloak] { display: none !important; }
 
-        body {
-            background: #050505;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            color: #fff;
-            overflow-x: hidden;
-        }
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
 
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        input[type="file"] { display: none; }
+        input[type="file"] + label {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 16px; border-radius: 12px; cursor: pointer;
+            background: #111; border: 1px solid #1e1e1e;
+            color: #555; font-size: 9px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            transition: all 0.2s;
         }
+        input[type="file"] + label:hover { background: #1a1a1a; color: #888; border-color: #333; }
 
-        .sidebar-transition {
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
     </style>
 </head>
 
-<body x-data="{ open: true }">
+<body class="antialiased text-white" x-data="{ open: false, editing: false }" @keydown.escape.window="editing = false">
 
-    @include('layout.sidebar');
+    @include('layout.sidebar')
 
-    <main :class="open ? 'ml-72' : 'ml-20'" x-data="{ editing: false }"
-        class="sidebar-transition p-8 md:p-12 min-h-screen">
+    <main :class="open ? 'md:ml-72' : 'md:ml-20'" class="sidebar-transition pt-8 pr-4 sm:pr-8 pb-8 pl-4 sm:pl-8 min-h-screen mb-12">
 
-        <div class="max-w-5xl mx-auto">
-            <header class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div>
-                    <h2 class="text-3xl font-black tracking-tight mb-2">Fare <span class="text-blue-500">Rates</span>
-                    </h2>
-                    <p class="text-gray-500 text-sm">Review and manage current transportation fare trends.</p>
+        <!-- ── Mobile: Admin Identity Card ── -->
+        <div class="lg:hidden mb-5">
+            <div class="glass-card p-4 rounded-[1.25rem]">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 bg-red-600 rounded-xl flex items-center justify-center shrink-0">
+                        <span class="text-sm font-black text-white">{{ strtoupper(substr(explode('@', Auth::user()->email)[0], 0, 1)) }}</span>
+                    </div>
+                    <div class="min-w-0">
+                        <h2 class="text-sm font-bold text-white truncate">System Administrator</h2>
+                        <p class="text-[10px] text-[#555] truncate">{{ Auth::user()->email }}</p>
+                    </div>
                 </div>
+                <div class="flex items-center gap-2 pt-3.5 mt-3.5 border-t border-[#1e1e1e]">
+                    <i class="fa-solid fa-shield-halved text-[8px] text-red-400"></i>
+                    <span class="text-[10px] text-[#888] font-bold">Full Access</span>
+                    <span class="text-[#333]">•</span>
+                    <span class="font-mono text-[9px] text-[#444]">Admin</span>
+                </div>
+            </div>
+        </div>
 
-                <div class="flex gap-3">
-                    <button @click="editing = !editing" type="button"
-                        :class="editing ? 'bg-amber-500/20 text-amber-500 border-amber-500/50' : 'bg-white/5 text-gray-400 border-white/10'"
-                        class="flex items-center gap-3 px-4 py-3 border rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all">
-                        <i class="fa-solid" :class="editing ? 'fa-xmark' : 'fa-pen-to-square'"></i>
-                        <span x-text="editing ? 'Cancel' : 'Edit Rates'"></span>
+        <!-- ── Page Header (desktop) ── -->
+        <div class="hidden lg:block mb-8">
+            <div class="flex items-center gap-2 mb-1.5">
+                <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444]">Configure</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-black tracking-tight">Fare <span class="text-blue-400">Rates</span></h1>
+            <p class="text-[11px] text-[#555] mt-1 flex items-center gap-2">
+                <i class="fa-solid fa-road text-[9px] text-blue-400"></i>
+                <span class="text-[#888] font-bold">{{ count($rates) }}</span> distance tiers configured
+            </p>
+        </div>
+
+        @if (session('success'))
+            <div class="mb-5 px-4 py-3 rounded-xl border border-emerald-500/15 bg-emerald-500/5 flex items-center gap-3">
+                <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-check text-[8px] text-emerald-400"></i>
+                </div>
+                <span class="text-[11px] text-emerald-400 font-medium">{{ session('success') }}</span>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="mb-5 px-4 py-3 rounded-xl border border-red-500/15 bg-red-500/5 flex items-center gap-3">
+                <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-xmark text-[8px] text-red-400"></i>
+                </div>
+                <span class="text-[11px] text-red-400 font-medium">{{ session('error') }}</span>
+            </div>
+        @endif
+
+
+        <!-- ══════════ QUICK STATS ══════════ -->
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6">
+
+            <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-blue-500">
+                <div class="flex items-center gap-2 mb-2 sm:mb-3">
+                    <div class="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center">
+                        <i class="fa-solid fa-road text-[8px] text-blue-400"></i>
+                    </div>
+                    <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Tiers</span>
+                </div>
+                <div class="flex items-baseline gap-1 sm:gap-1.5">
+                    <span class="text-2xl sm:text-3xl font-black tracking-tight">{{ count($rates) }}</span>
+                </div>
+            </div>
+
+            @php
+                $minRegular = $rates->min('regular') ?? 0;
+                $maxRegular = $rates->max('regular') ?? 0;
+                $minDiscount = $rates->min('discount') ?? 0;
+            @endphp
+
+            <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-emerald-500">
+                <div class="flex items-center gap-2 mb-2 sm:mb-3">
+                    <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
+                        <i class="fa-solid fa-arrow-down text-[8px] text-emerald-400"></i>
+                    </div>
+                    <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Min Regular</span>
+                </div>
+                <div class="flex items-baseline gap-1 sm:gap-1.5">
+                    <span class="text-2xl sm:text-3xl font-black tracking-tight text-emerald-400">₱{{ number_format($minRegular, 2) }}</span>
+                </div>
+            </div>
+
+            <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-amber-500">
+                <div class="flex items-center gap-2 mb-2 sm:mb-3">
+                    <div class="w-6 h-6 rounded-md bg-amber-500/10 flex items-center justify-center">
+                        <i class="fa-solid fa-arrow-up text-[8px] text-amber-400"></i>
+                    </div>
+                    <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Max Regular</span>
+                </div>
+                <div class="flex items-baseline gap-1 sm:gap-1.5">
+                    <span class="text-2xl sm:text-3xl font-black tracking-tight text-amber-400">₱{{ number_format($maxRegular, 2) }}</span>
+                </div>
+            </div>
+
+            <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-purple-500">
+                <div class="flex items-center gap-2 mb-2 sm:mb-3">
+                    <div class="w-6 h-6 rounded-md bg-purple-500/10 flex items-center justify-center">
+                        <i class="fa-solid fa-percent text-[8px] text-purple-400"></i>
+                    </div>
+                    <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Min Discount</span>
+                </div>
+                <div class="flex items-baseline gap-1 sm:gap-1.5">
+                    <span class="text-2xl sm:text-3xl font-black tracking-tight text-purple-400">₱{{ number_format($minDiscount, 2) }}</span>
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- ══════════ TOOLBAR ══════════ -->
+        <div class="flex flex-col sm:flex-row gap-3 mb-5">
+            <div class="flex-1"></div>
+
+            <div class="flex items-center gap-2">
+                <button @click="editing = !editing" type="button"
+                    :class="editing ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-[#111] text-[#555] border-[#1e1e1e] hover:border-[#333] hover:text-[#888]'"
+                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[9px] font-bold uppercase tracking-widest border transition">
+                    <i class="fa-solid text-[8px]" :class="editing ? 'fa-xmark' : 'fa-pen-to-square'"></i>
+                    <span x-text="editing ? 'Cancel' : 'Edit Rates'"></span>
+                </button>
+
+                <form method="POST" action="{{ route('fares.upload') }}" enctype="multipart/form-data" class="flex items-center gap-2">
+                    @csrf
+                    @method('PUT')
+                    <input type="file" name="fare" id="fare">
+                    <label for="fare" class="!cursor-pointer">
+                        <i class="fa-solid fa-cloud-arrow-up text-[9px] text-[#555]"></i>
+                        <span>Select File</span>
+                    </label>
+                    <button type="submit"
+                        class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-[9px] font-bold uppercase tracking-widest text-white transition active:scale-[0.98]">
+                        <i class="fa-solid fa-upload text-[8px]"></i>
+                        <span>Upload</span>
                     </button>
+                </form>
+            </div>
+        </div>
 
-                    <form method="POST" action="{{ route('fares.upload') }}" enctype="multipart/form-data"
-                        class="flex gap-3">
-                        @csrf
-                        @method('PUT')
-                        <input type="file" name="fare" id="fare" class="hidden">
-                        <label for="fare"
-                            class="flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-white/10 transition-all">
-                            <i class="fa-solid fa-cloud-arrow-up text-blue-400"></i>
-                            <span>Select File</span>
-                        </label>
-                        <button type="submit"
-                            class="bg-blue-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition active:scale-95 shadow-lg shadow-blue-500/20">
-                            Upload Fares
-                        </button>
-                    </form>
-                </div>
-            </header>
 
-            <form action="{{ route('fares.bulk-update') }}" method="POST">
-                @csrf
-                @method('PUT')
+        <!-- ══════════ RATES TABLE ══════════ -->
+        <form action="{{ route('fares.bulk-update') }}" method="POST">
+            @csrf
+            @method('PUT')
 
-                <div class="glass rounded-[2.5rem] overflow-hidden border border-white/5 mb-8">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="border-b border-white/5 bg-white/5">
-                                    <th
-                                        class="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">
-                                        Distance (KMS)</th>
-                                    <th
-                                        class="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">
-                                        Regular</th>
-                                    <th
-                                        class="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">
-                                        Discounted</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-white/5">
-                                @foreach ($rates as $rate)
-                                    <tr class="hover:bg-white/[0.02] transition-colors">
-                                        <td class="px-8 py-4 text-sm font-semibold text-white/90">
-                                            {{ $rate->km }} km
-                                            <input type="hidden" name="rates[{{ $rate->id }}][id]" value="{{ $rate->id }}">
-                                        </td>
+            <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] overflow-hidden">
+                <div class="overflow-x-auto -mx-2 px-2 pb-2">
+                    <table class="w-full text-left min-w-[500px]">
+                        <thead>
+                            <tr class="text-[8px] sm:text-[9px] uppercase tracking-[0.15em] text-[#444] border-b border-[#1e1e1e]">
+                                <th class="px-4 sm:px-6 py-3 font-bold">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-5 h-5 rounded-md bg-blue-500/10 flex items-center justify-center">
+                                            <i class="fa-solid fa-road text-[7px] text-blue-400"></i>
+                                        </div>
+                                        Distance
+                                    </div>
+                                </th>
+                                <th class="px-4 sm:px-6 py-3 font-bold">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-5 h-5 rounded-md bg-emerald-500/10 flex items-center justify-center">
+                                            <i class="fa-solid fa-tag text-[7px] text-emerald-400"></i>
+                                        </div>
+                                        Regular
+                                    </div>
+                                </th>
+                                <th class="px-4 sm:px-6 py-3 font-bold">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-5 h-5 rounded-md bg-amber-500/10 flex items-center justify-center">
+                                            <i class="fa-solid fa-tag text-[7px] text-amber-400"></i>
+                                        </div>
+                                        Discounted
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#1a1a1a]">
+                            @foreach ($rates as $rate)
+                                <tr class="table-row">
+                                    <td class="px-4 sm:px-6 py-3.5">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center shrink-0">
+                                                <span class="text-[9px] font-black text-[#555] font-mono">{{ $rate->km }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-[11px] font-bold text-[#ccc]">{{ $rate->km }} km</span>
+                                                <input type="hidden" name="rates[{{ $rate->id }}][id]" value="{{ $rate->id }}">
+                                            </div>
+                                        </div>
+                                    </td>
 
-                                        <td class="px-8 py-4 text-sm font-mono text-emerald-400">
-                                            <template x-if="!editing">
-                                                <span>₱{{ number_format($rate->regular, 2) }}</span>
-                                            </template>
-                                            <template x-if="editing">
+                                    <td class="px-4 sm:px-6 py-3.5">
+                                        <template x-if="!editing">
+                                            <span class="text-[12px] font-bold text-emerald-400 font-mono">₱{{ number_format($rate->regular, 2) }}</span>
+                                        </template>
+                                        <template x-if="editing">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-[10px] text-[#333] font-bold">₱</span>
                                                 <input type="number" step="0.01" name="rates[{{ $rate->id }}][regular]"
                                                     value="{{ $rate->regular }}"
-                                                    class="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-emerald-400 focus:outline-none focus:border-emerald-500/50 w-24">
-                                            </template>
-                                        </td>
+                                                    class="w-24 px-3 py-1.5 rounded-lg bg-[#111] border border-emerald-500/15 text-[11px] text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500/40 transition">
+                                            </div>
+                                        </template>
+                                    </td>
 
-                                        <td class="px-8 py-4 text-sm font-mono text-amber-400">
-                                            <template x-if="!editing">
-                                                <span>₱{{ number_format($rate->discount, 2) }}</span>
-                                            </template>
-                                            <template x-if="editing">
+                                    <td class="px-4 sm:px-6 py-3.5">
+                                        <template x-if="!editing">
+                                            <span class="text-[12px] font-bold text-amber-400 font-mono">₱{{ number_format($rate->discount, 2) }}</span>
+                                        </template>
+                                        <template x-if="editing">
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-[10px] text-[#333] font-bold">₱</span>
                                                 <input type="number" step="0.01" name="rates[{{ $rate->id }}][discount]"
                                                     value="{{ $rate->discount }}"
-                                                    class="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-amber-400 focus:outline-none focus:border-amber-500/50 w-24">
-                                            </template>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                                    class="w-24 px-3 py-1.5 rounded-lg bg-[#111] border border-amber-500/15 text-[11px] text-amber-400 font-mono font-bold focus:outline-none focus:border-amber-500/40 transition">
+                                            </div>
+                                        </template>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Save Bar -->
+            <div x-show="editing" x-cloak
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave-end="opacity-0 translate-y-2"
+                class="flex items-center justify-between mt-4 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+
+                <div class="flex items-center gap-2.5">
+                    <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
+                        <i class="fa-solid fa-pen text-[7px] text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Editing Mode</p>
+                        <p class="text-[7px] text-[#333]">Modify the values above, then save</p>
                     </div>
                 </div>
 
-                <div x-show="editing" x-transition class="flex justify-end mb-8">
-                    <button type="submit"
-                        class="bg-emerald-600 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 transition active:scale-95 shadow-lg shadow-emerald-500/20">
-                        Save All Changes
-                    </button>
-                </div>
-            </form>
+                <button type="submit"
+                    class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-[9px] font-bold uppercase tracking-widest text-white transition active:scale-[0.98]">
+                    <i class="fa-solid fa-check text-[8px]"></i>
+                    <span>Save Changes</span>
+                </button>
+            </div>
+        </form>
 
-        </div>
     </main>
+
 </body>
 
 </html>

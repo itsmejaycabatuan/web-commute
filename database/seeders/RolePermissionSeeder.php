@@ -2,13 +2,14 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\User;
+use App\Models\ViolationCode;
 use App\Models\Wallet;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -19,7 +20,7 @@ class RolePermissionSeeder extends Seeder
      */
     public function run()
     {
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Create Permissions Here
         // Routes Permission
@@ -32,52 +33,86 @@ class RolePermissionSeeder extends Seeder
 
         // Create Roles Here
         $commuterRole = Role::firstOrCreate(['name' => 'commuter']);
-        $driverRole = Role::firstOrCreate(['name'=> 'driver']);
+        $driverRole = Role::firstOrCreate(['name' => 'driver']);
+        $driverManagerRole = Role::firstOrCreate(['name' => 'driver_manager']);
+        $maintenanceManagerRole = Role::firstOrCreate(['name' => 'maintenance_manager']);
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $superAdmin = Role::firstOrCreate(['name'=> 'superadmin']);
-        $ownerRole = Role::firstOrCreate(['name'=> 'owner']);
+        $superAdmin = Role::firstOrCreate(['name' => 'superadmin']);
+        $ownerRole = Role::firstOrCreate(['name' => 'owner']);
 
-        //AssignPermissions Here
-        //AdminPermissions
+        // AssignPermissions Here
+        // AdminPermissions
         $adminRole->givePermissionTo('view routes', 'create routes', 'edit routes', 'delete routes');
 
         // Create Users Here
         $markj = User::firstOrCreate(
             ['email' => 'markjay.dev@proton.me'],
             ['password' => Hash::make('admin123'),
-            'email_verified_at' => now(),]
+                'email_verified_at' => now(), ]
         );
 
-        $admin = User::firstOrCreate([
-            'email' => 'admin@gmail.com'],
+        $admin = User::firstOrCreate(
+            [
+                'email' => 'admin@gmail.com'],
             ['password' => Hash::make('admin123'),
-            'email_verified_at' => now()]
+                'email_verified_at' => now()]
         );
 
-        $commuter = User::firstOrCreate([
-            'email' => 'commuter@gmail.com'],
+        $commuter = User::firstOrCreate(
+            [
+                'email' => 'commuter@gmail.com'],
             ['password' => Hash::make('admin123'),
-            'email_verified_at' => now()]
+                'email_verified_at' => now()]
         );
 
         Wallet::firstOrCreate([
-            'user_id' => $commuter->id
+            'user_id' => $commuter->id,
         ]);
 
-        $driver = User::firstOrCreate(
+        $driverUser = User::firstOrCreate(
             ['email' => 'driver@gmail.com'],
             ['password' => Hash::make('admin123'),
-            'email_verified_at' => now(),
-            'license_number' => 'DEMO-LIC-001',
-            'license_code' => 'A',
-            'license_image_path' => null,
-            'driver_approval_status' => 'approved'],
+                'email_verified_at' => now(),
+            ],
         );
+
+        $driver = $driverUser->driver()->create([
+            'name' => 'driver',
+            'is_approved' => true,
+        ]);
+
+        $driverManager = User::firstOrCreate(
+            ['email' => 'drivermanager@gmail.com'],
+            [
+                'password' => Hash::make('admin123'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $maintenanceManager = User::firstOrCreate(
+            ['email' => 'maintenancemanager@gmail.com'],
+            [
+                'password' => Hash::make('admin123'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $violationCode = ViolationCode::firstOrCreate([
+            'code' => 'UV01',
+            'violation_name' => 'Disregarding Traffic Sign',
+            'first_offense' => '1000',
+            'second_offense' => '1000',
+            'third_offense' => '1000',
+            'fourth_offense' => '1000',
+            'is_revoked' => false,
+        ]);
 
         // Assign Roles to users here
         $markj->assignRole($adminRole);
         $admin->assignRole($adminRole);
         $commuter->assignRole($commuterRole);
-        $driver->assignRole($driverRole);
+        $driverUser->assignRole($driverRole);
+        $driverManager->assignRole($driverManagerRole);
+        $maintenanceManager->assignRole($maintenanceManagerRole);
     }
 }
