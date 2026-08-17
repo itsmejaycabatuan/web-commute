@@ -949,11 +949,58 @@
         </script>
 
         <!-- ═══════════════ MAP SCRIPT ═══════════════ -->
+    <script>
+            window.userRole = '{{ Auth::check() ? Auth::user()->roles->first()->name : "guest" }}';
+            window.PRIVACY_RADIUS = 200;
+            window.driverPrivacyZones = {};
+            window.echoMarkers = {};
+            window.dummyMapMarkers = {};
+            window.initialDrivers = @json($obfuscatedMarkers ?? []);
+
+            window.updatePrivacyZones = function() {
+                var m = window.map;
+                if (!m) return;
+                var source = m.getSource('driver-privacy-zones');
+                if (!source) return;
+                var features = Object.keys(window.driverPrivacyZones).map(function(id) {
+                    var data = window.driverPrivacyZones[id];
+                    return {
+                        type: 'Feature',
+                        properties: { driverId: id },
+                        geometry: { type: 'Point', coordinates: [data.lng, data.lat] }
+                    };
+                });
+                source.setData({ type: 'FeatureCollection', features: features });
+            };
+
+            window.createPrivacyPopup = function(d) {
+                return '<div style="font-family:Inter,sans-serif;padding:6px 4px;min-width:180px;">' +
+                    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+                        '<div style="width:32px;height:32px;border-radius:10px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;">' +
+                            '<i class="fa-solid fa-bus" style="color:#60a5fa;font-size:12px;"></i>' +
+                        '</div>' +
+                        '<div>' +
+                            '<div style="font-size:12px;font-weight:700;color:#fff;">' + (d.plate_number || d.name || 'Vehicle') + '</div>' +
+                            '<div style="font-size:9px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">' + (d.route || 'Route') + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.1);margin-bottom:8px;">' +
+                        '<i class="fa-solid fa-shield-halved" style="color:rgba(59,130,246,0.5);font-size:9px;"></i>' +
+                        '<span style="font-size:9px;color:rgba(59,130,246,0.7);font-weight:600;">Approximate location · ~' + (d.privacy_radius || window.PRIVACY_RADIUS) + 'm radius</span>' +
+                    '</div>' +
+                    '<div style="display:flex;align-items:center;gap:6px;">' +
+                        '<div style="width:6px;height:6px;border-radius:50%;background:#34d399;"></div>' +
+                        '<span style="font-size:9px;color:#34d399;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">Active</span>' +
+                    '</div>' +
+                '</div>';
+            };
+        </script>
+
         <script type="module">
             const userRole = @json(Auth::user())?.roles[0]?.name ?? 'guest';
             const userId = @json(Auth::user())?.id ?? null;
             const pusherKey = '{{ env("PUSHER_APP_KEY") }}';
-            const pusherCluster = '{{ env("PUSHER_APP_CLUSER") }}';
+            const pusherCluster = '{{ env("PUSHER_APP_CLUSTER") }}'
             const DAILY_LIMIT = 3;
 
             window.Pusher = Pusher;
@@ -1114,6 +1161,35 @@
 
             // ═══════════════ MAP LAYERS ═══════════════
             map.on('load', function () {
+
+                // ── Privacy zone source + layers ──
+                map.addSource('driver-privacy-zones', {
+                    type: 'geojson',
+                    data: { type: 'FeatureCollection', features: [] }
+                });
+                map.addLayer({
+                    id: 'driver-privacy-glow', type: 'circle', source: 'driver-privacy-zones',
+                    paint: {
+                        'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 40, 15, 120, 18, 350],
+                        'circle-color': 'rgba(59,130,246,0.04)', 'circle-blur': 0.8
+                    }
+                });
+                map.addLayer({
+                    id: 'driver-privacy-fill', type: 'circle', source: 'driver-privacy-zones',
+                    paint: {
+                        'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 30, 15, 90, 18, 260],
+                        'circle-color': 'rgba(59,130,246,0.07)',
+                        'circle-stroke-width': 1.5, 'circle-stroke-color': 'rgba(59,130,246,0.15)', 'circle-blur': 0.3
+                    }
+                });
+                map.addLayer({
+                    id: 'driver-privacy-border', type: 'circle', source: 'driver-privacy-zones',
+                    paint: {
+                        'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 35, 15, 105, 18, 300],
+                        'circle-color': 'transparent', 'circle-stroke-width': 1, 'circle-stroke-color': 'rgba(59,130,246,0.10)'
+                    }
+                });
+
                 map.addSource('route', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
                 map.addLayer({
                     id: 'route-line', type: 'line', source: 'route',
@@ -1544,15 +1620,47 @@ function getFareFromDB(distKm) {
                 });
             }
 
-            // ═══════════════ REAL-TIME VEHICLE UPDATES (Echo) ═══════════════
+                        // ═══════════════ REAL-TIME VEHICLE UPDATES (Echo) ═══════════════
             if (window.Echo) {
-                window.Echo.channel('vehicles')
-                    .listen('.vehicle.location.updated', (e) => {
-                        if (e.vehicles) {
-                            updateVehicleMarkers(e.vehicles);
-                        } else if (e.vehicle) {
-                            updateVehicleMarkers([e.vehicle]);
+                window.Echo.channel('vehicle-locations')
+                    .listen('.vehicle-location-updated', (e) => {
+                        if (window.userRole === 'driver') return;
+                        if (!e.lat || !e.lng) return;
+
+                        var id = e.vehicleId;
+
+                        if (window.echoMarkers[id]) {
+                            window.echoMarkers[id].setLngLat([e.lng, e.lat]);
+                        } else {
+                            var el = document.createElement('div');
+                            el.className = 'custom-vehicle-marker bus-pulse';
+                            el.innerHTML = '<i class="fa-solid fa-bus"></i>';
+
+                            var popup = new maplibregl.Popup({ offset: 20, closeButton: false, maxWidth: '220px' })
+                                .setHTML(window.createPrivacyPopup({
+                                    plate_number: 'Vehicle ' + id,
+                                    route: 'Live',
+                                    privacy_radius: e.privacy_radius
+                                }));
+
+                            window.echoMarkers[id] = new maplibregl.Marker({ element: el, anchor: 'center' })
+                                .setLngLat([e.lng, e.lat])
+                                .setPopup(popup)
+                                .addTo(map);
                         }
+
+                        window.driverPrivacyZones[id] = {
+                            lat: e.lat, lng: e.lng, radius: e.privacy_radius || window.PRIVACY_RADIUS
+                        };
+                        window.updatePrivacyZones();
+                    });
+            }
+
+              // ═══════════════ DEV MARKERS REAL-TIME SYNC ═══════════════
+            if (window.Echo) {
+                window.Echo.channel('dev-markers')
+                    .listen('.marker-updated', function () {
+                        loadDummyMarkers();
                     });
             }
 
@@ -1716,14 +1824,26 @@ function attachDevMarkerClick() {
 attachDevMarkerClick();
 
 function renderDummyMarkers(markers) {
-    var m = window.map;
-    if (!m || !markers || !markers.length) return;
+var m = window.map;
+    if (!m) return;
+
+    // Clear old markers so we don't get duplicates
+    Object.keys(window.dummyMapMarkers).forEach(function(id) {
+        window.dummyMapMarkers[id].remove();
+    });
+    window.dummyMapMarkers = {};
+    window.driverPrivacyZones = {}; // reset privacy circles too
+
+    if (!markers || !markers.length) {
+        window.updatePrivacyZones();
+        return;
+    }
+
+    var isDriver = window.userRole === 'driver';
 
     markers.forEach(function(d) {
         var isMarkerActive = d.marker_status === 'active';
-        var isDriverActive = d.driver_status === 'active';
 
-        // Marker appearance based on marker status (active = blue pulse, inactive = gray)
         var el = document.createElement('div');
         el.className = 'custom-vehicle-marker' + (isMarkerActive ? ' bus-pulse' : '');
         if (!isMarkerActive) {
@@ -1733,64 +1853,73 @@ function renderDummyMarkers(markers) {
         }
         el.innerHTML = '<i class="fa-solid fa-bus"></i>';
 
-        // Driver status badge colors
-        var statusBg = isDriverActive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
-        var statusBorder = isDriverActive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
-        var statusDot = isDriverActive ? '#34d399' : '#ef4444';
-        var statusColor = isDriverActive ? '#34d399' : '#ef4444';
-        var statusLabel = isDriverActive ? 'Available' : 'Unavailable';
-        var statusIcon = isDriverActive ? 'fa-circle-check' : 'fa-circle-xmark';
+        var popup;
+        if (isDriver) {
+            // ── Driver: keep original detailed popup ──
+            var isDriverActive = d.driver_status === 'active';
+            var statusBg = isDriverActive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+            var statusBorder = isDriverActive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
+            var statusColor = isDriverActive ? '#34d399' : '#ef4444';
+            var statusLabel = isDriverActive ? 'Available' : 'Unavailable';
+            var statusIcon = isDriverActive ? 'fa-circle-check' : 'fa-circle-xmark';
 
-        var popup = new maplibregl.Popup({
-            offset: 20, closeButton: false, maxWidth: '220px'
-        }).setHTML(
-            '<div style="background:#111;border:1px solid #222;border-radius:16px;padding:16px;font-family:Inter,sans-serif;">' +
-
-                // Driver name row
-                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
-                    '<div style="width:36px;height:36px;border-radius:12px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
-                        '<i class="fa-solid fa-bus" style="font-size:13px;color:#60a5fa;"></i>' +
+            popup = new maplibregl.Popup({ offset: 20, closeButton: false, maxWidth: '220px' }).setHTML(
+                '<div style="background:#111;border:1px solid #222;border-radius:16px;padding:16px;font-family:Inter,sans-serif;">' +
+                    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
+                        '<div style="width:36px;height:36px;border-radius:12px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+                            '<i class="fa-solid fa-bus" style="font-size:13px;color:#60a5fa;"></i>' +
+                        '</div>' +
+                        '<div style="min-width:0;">' +
+                            '<p style="font-size:12px;font-weight:700;color:#eee;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + d.name + '</p>' +
+                            '<p style="font-size:9px;color:#555;margin:2px 0 0;">Driver</p>' +
+                        '</div>' +
                     '</div>' +
-                    '<div style="min-width:0;">' +
-                        '<p style="font-size:12px;font-weight:700;color:#eee;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + d.name + '</p>' +
-                        '<p style="font-size:9px;color:#555;margin:2px 0 0;">Driver</p>' +
+                    '<div style="height:1px;background:#1e1e1e;margin:0 0 12px;"></div>' +
+                    '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:' + statusBg + ';border:1px solid ' + statusBorder + ';margin-bottom:8px;">' +
+                        '<div style="display:flex;align-items:center;gap:6px;">' +
+                            '<i class="fa-solid ' + statusIcon + '" style="font-size:10px;color:' + statusColor + ';"></i>' +
+                            '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:' + statusColor + ';">' + statusLabel + '</span>' +
+                        '</div>' +
+                        '<span style="font-size:7px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">Driver Status</span>' +
                     '</div>' +
-                '</div>' +
-
-                // Divider
-                '<div style="height:1px;background:#1e1e1e;margin:0 0 12px;"></div>' +
-
-                // Driver availability status
-                '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:' + statusBg + ';border:1px solid ' + statusBorder + ';margin-bottom:8px;">' +
-                    '<div style="display:flex;align-items:center;gap:6px;">' +
-                        '<i class="fa-solid ' + statusIcon + '" style="font-size:10px;color:' + statusColor + ';"></i>' +
-                        '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:' + statusColor + ';">' + statusLabel + '</span>' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
+                        '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Plate</span>' +
+                        '<span style="font-size:10px;color:#888;font-weight:600;font-family:monospace;">' + d.plate_number + '</span>' +
                     '</div>' +
-                    '<span style="font-size:7px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">Driver Status</span>' +
-                '</div>' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
+                        '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Type</span>' +
+                        '<span style="font-size:10px;color:#888;font-weight:600;">' + d.vehicle_type + '</span>' +
+                    '</div>' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;">' +
+                        '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Route</span>' +
+                        '<span style="font-size:10px;color:#888;font-weight:600;">' + d.route + '</span>' +
+                    '</div>' +
+                '</div>'
+            );
+        } else {
+            // ── Commuter/Guest: privacy popup ──
+            popup = new maplibregl.Popup({ offset: 20, closeButton: false, maxWidth: '220px' })
+                .setHTML(window.createPrivacyPopup(d));
+        }
 
-                // Vehicle info
-                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
-                    '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Plate</span>' +
-                    '<span style="font-size:10px;color:#888;font-weight:600;font-family:monospace;">' + d.plate_number + '</span>' +
-                '</div>' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
-                    '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Type</span>' +
-                    '<span style="font-size:10px;color:#888;font-weight:600;">' + d.vehicle_type + '</span>' +
-                '</div>' +
-                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;">' +
-                    '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Route</span>' +
-                    '<span style="font-size:10px;color:#888;font-weight:600;">' + d.route + '</span>' +
-                '</div>' +
-
-            '</div>'
-        );
-
-        new maplibregl.Marker({ element: el })
+        var mapMarker = new maplibregl.Marker({ element: el })
             .setLngLat([d.lng, d.lat])
             .setPopup(popup)
             .addTo(m);
+
+        window.dummyMapMarkers[d.id] = mapMarker;
+
+        // Track privacy zone for non-drivers
+        if (!isDriver && d.privacy_radius) {
+            window.driverPrivacyZones[d.id] = {
+                lat: d.lat, lng: d.lng, radius: d.privacy_radius
+            };
+        }
     });
+
+    if (!isDriver) {
+        window.updatePrivacyZones();
+    }
 }
 
 function loadDummyMarkers() {
@@ -1814,9 +1943,8 @@ function loadDummyMarkers() {
         });
 }
 
-loadDummyMarkers();
+    loadDummyMarkers();
 
-loadDummyMarkers();
 </script>
     </div>
 

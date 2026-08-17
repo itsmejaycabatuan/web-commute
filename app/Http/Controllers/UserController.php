@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\LocationPrivacy;
 use App\Mail\EmailVerification;
 use App\Models\DevMarker;
 use App\Models\Driver;
@@ -99,13 +100,32 @@ class UserController extends Controller
         }
 
         if ($role == 'commuter') {
+            $obfuscatedMarkers = collect();
+            if (app()->environment('local')) {
+                $rawMarkers = DevMarker::where('status', 'active')->get();
+                $obfuscatedMarkers = $rawMarkers->map(function ($m) {
+                    $private = LocationPrivacy::obfuscate($m->lat, $m->lng);
+
+                    return [
+                        'id' => $m->id,
+                        'name' => $m->name,
+                        'plate_number' => $m->plate_number ?? null,
+                        'route' => $m->route ?? null,
+                        'status' => $m->status,
+                        'lat' => $private['lat'],
+                        'lng' => $private['lng'],
+                        'privacy_radius' => $private['privacy_radius'],
+                    ];
+                });
+            }
+
             return view('map', [
                 'rates' => $rates,
                 'recentReceipts' => $recentReceipts,
                 'balance' => $wallet->balance ?? 0.00,
+                'obfuscatedMarkers' => $obfuscatedMarkers,
             ]);
         }
-
     }
 
     public function dashboard(Request $request)

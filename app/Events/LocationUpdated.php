@@ -2,46 +2,52 @@
 
 namespace App\Events;
 
+use App\Helpers\LocationPrivacy;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 class LocationUpdated implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
     public $trackingId;
+
     public $coordinates;
+
+    public $obfuscatedLat;
+
+    public $obfuscatedLng;
+
+    public $privacyRadius;
+
     public $speed;
-    public $heading;
+
     public $accuracy;
+
     public $timestamp;
+
     public $userId;
 
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
     public function __construct($trackingId, $latitude, $longitude, $speed, $accuracy, $userId)
     {
+        $private = LocationPrivacy::obfuscate($latitude, $longitude);
+
         $this->trackingId = $trackingId;
-        $this->coordinates = [$longitude, $latitude];
+        $this->coordinates = [$private['lng'], $private['lat']];
+        $this->obfuscatedLat = $private['lat'];
+        $this->obfuscatedLng = $private['lng'];
+        $this->privacyRadius = $private['privacy_radius'];
         $this->speed = $speed;
         $this->accuracy = $accuracy;
         $this->timestamp = now()->toDateTimeString();
         $this->userId = $userId;
     }
 
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return \Illuminate\Broadcasting\Channel|array
-     */
     public function broadcastOn()
     {
         return new Channel('vehicle-locations');
@@ -57,10 +63,13 @@ class LocationUpdated implements ShouldBroadcast
         return [
             'vehicleId' => $this->trackingId,
             'coordinates' => $this->coordinates,
+            'lat' => $this->obfuscatedLat,
+            'lng' => $this->obfuscatedLng,
+            'privacy_radius' => $this->privacyRadius,
             'speed' => $this->speed,
             'accuracy' => $this->accuracy,
             'timestamp' => $this->timestamp,
-            'user_id' => $this->userId
+            'user_id' => $this->userId,
         ];
     }
 }
