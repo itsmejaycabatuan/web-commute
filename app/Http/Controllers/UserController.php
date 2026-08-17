@@ -18,12 +18,15 @@ use App\Models\VehicleLocationHistory;
 use App\Models\ViolationLog;
 use App\Models\Wallet;
 use Carbon\Carbon;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -442,6 +445,8 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        activity()->event('Profile Update')->log('User update profile success.');
+
         return back()->with('success', 'Password successfully updated');
     }
 
@@ -572,17 +577,27 @@ class UserController extends Controller
 
             $request->session()->regenerate();
 
+            activity()->event('Log In')->log('User login success.');
+
             return redirect()->route('map')->with('success', 'Logged in Successfully!');
         }
+
+        activity()->event('Log In')->log('User failed to login.');
 
         return back()->with('error', 'Error logging in');
     }
 
     public function logout(Request $request)
     {
+        $user = Auth::user();
+
+        activity()->event('Log Out')->log('User logout attempt.');
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        activity()->event('Log Out')->log('A user has successfully logged out.');
 
         return redirect()->route('login')->with('success', 'Successfully Logged out!');
     }
@@ -634,11 +649,12 @@ class UserController extends Controller
 
                 $user->save();
 
+                activity()->causedBy($user)->event('Reset Password')->log('User reset password success');
+
                 event(new PasswordReset($user));
             }
         );
 
         return $status === Password::PASSWORD_RESET ? redirect()->route('login')->with('status', __($status)) : back()->withErrors(['email' => [__($status)]]);
-
     }
 }
