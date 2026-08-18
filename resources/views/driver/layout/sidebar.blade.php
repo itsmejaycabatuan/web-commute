@@ -78,6 +78,14 @@
             <span class="text-[10px] font-bold uppercase tracking-[0.12em]">Timekeeping</span>
         </a>
 
+        <a href="{{ route('driver.violations') }}"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs('driver.violations') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888]' }}">
+            <div class="w-7 h-7 rounded-lg {{ request()->routeIs('driver.violations') ? 'bg-blue-500/10' : 'bg-[#111]' }} flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-list text-[10px]"></i>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">Violations</span>
+        </a>
+
         <div class="my-2 mx-3 border-t border-[#151515]"></div>
         <p class="text-[8px] font-bold uppercase tracking-[0.2em] text-[#333] px-3 pt-1 pb-1.5">Account</p>
 
@@ -152,6 +160,15 @@
                     <i class="fa-solid fa-clock text-[11px]"></i>
                 </div>
                 <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">Timekeeping</span>
+            </a>
+
+            <a href="{{ route('driver.violations') }}"
+                :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+                class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs('driver.violations') ? 'bg-blue-500/[0.06] text-blue-400 border-blue-500/15' : 'text-[#555] border-transparent hover:bg-[#111] hover:text-[#888] hover:border-[#1a1a1a]' }}">
+                <div class="w-8 h-8 rounded-lg {{ request()->routeIs('driver.violations') ? 'bg-blue-500/10' : 'bg-[#111] group-hover:bg-[#161616]' }} flex items-center justify-center shrink-0 transition">
+                    <i class="fa-solid fa-list text-[11px]"></i>
+                </div>
+                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">Violations</span>
             </a>
 
             <!-- Divider -->

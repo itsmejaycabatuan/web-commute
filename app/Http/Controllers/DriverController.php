@@ -6,6 +6,7 @@ use App\Models\Driver;
 use App\Models\TimeKeeping;
 use App\Models\User;
 use App\Models\VehicleLocationHistory;
+use App\Models\ViolationLog;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
@@ -189,5 +190,56 @@ class DriverController extends Controller
         $driver->update(['status' => $request->status]);
 
         return back()->with('success', 'You have successfully set your driver status');
+    }
+
+    public function violations()
+    {
+        $userId = Auth::user()->id;
+        $driver = Driver::where('user_id', $userId)->first();
+
+        if (! $driver) {
+            abort(403, 'Driver profile not found.');
+        }
+
+        $violations = ViolationLog::with('violationCode')
+            ->where('user_id', Auth::id())
+            ->latest()
+            ->get()
+            ->map(function ($v) {
+                return [
+                    'id' => $v->id,
+                    'violationType' => $v->violationCode?->violation_name ?? 'Unknown',
+                    'violationCode' => $v->violationCode?->code ?? 'N/A',
+                    'codeColor' => $v->violationCode?->severity ?? 'amber',
+                    'offenseCount' => $v->violation_instance,
+                    'remarks' => $v->remarks,
+                    'location' => $v->place_of_violation,
+                    'date' => Carbon::parse($v->date_of_violation)->format('d F, Y'),
+                    'time' => Carbon::parse($v->time_of_violation)->format('h:i A'),
+                    'fine' => (float) $v->violation_fine,
+                    'penalty' => $v->additional_penalties,
+                    'penaltyColor' => $this->getPenaltyColor($v->additional_penalties),
+                ];
+            });
+
+        $totalFines = $violations->sum('fine');
+
+        return view('driver.violations', compact('violations', 'totalFines'));
+    }
+
+    private function getPenaltyColor($penalty)
+    {
+        if (! $penalty || $penalty === 'N/A') {
+            return 'muted';
+        }
+        $lower = strtolower($penalty);
+        if (str_contains($lower, ['suspension', 'revocation', 'impound'])) {
+            return 'red';
+        }
+        if (str_contains($lower, ['warning', 'community'])) {
+            return 'amber';
+        }
+
+        return 'muted';
     }
 }

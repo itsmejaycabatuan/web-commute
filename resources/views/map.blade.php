@@ -1047,7 +1047,31 @@
             let selectionMode = null;
             let pickupMarker = null;
             let destinationMarker = null;
-            let guestUsage = parseInt(localStorage.getItem('guestUsage') || '0');
+            function getTodayLocal() {
+    const d = new Date();
+    return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+}
+
+function loadGuestUsage() {
+    try {
+        const raw = localStorage.getItem('guestUsage');
+        if (!raw) return 0;
+        const data = JSON.parse(raw);
+        if (data && data.date === getTodayLocal()) return data.count;
+    } catch (e) {}
+    return 0;
+}
+
+function saveGuestUsage(count) {
+    localStorage.setItem('guestUsage', JSON.stringify({
+        date: getTodayLocal(),
+        count: count
+    }));
+}
+
+let guestUsage = loadGuestUsage();
 
             // ═══════════════ DATE DISPLAY ═══════════════
             const dateEl = document.getElementById('current-date');
@@ -1059,16 +1083,19 @@
 
             // ═══════════════ GUEST USAGE ═══════════════
             function updateUsageUI() {
-                const bar = document.getElementById('usage-bar');
-                const text = document.getElementById('usage-text');
-                if (!bar || !text) return;
-                text.textContent = guestUsage + ' / ' + DAILY_LIMIT;
-                bar.style.width = Math.min((guestUsage / DAILY_LIMIT) * 100, 100) + '%';
-                if (guestUsage >= DAILY_LIMIT) {
-                    bar.classList.remove('from-amber-500', 'to-orange-400');
-                    bar.classList.add('from-red-500', 'to-red-400');
-                }
-            }
+    const bar = document.getElementById('usage-bar');
+    const text = document.getElementById('usage-text');
+    if (!bar || !text) return;
+    text.textContent = guestUsage + ' / ' + DAILY_LIMIT;
+    bar.style.width = Math.min((guestUsage / DAILY_LIMIT) * 100, 100) + '%';
+    if (guestUsage >= DAILY_LIMIT) {
+        bar.classList.remove('from-amber-500', 'to-orange-400');
+        bar.classList.add('from-red-500', 'to-red-400');
+    } else {
+        bar.classList.remove('from-red-500', 'to-red-400');
+        bar.classList.add('from-amber-500', 'to-orange-400');
+    }
+}
             updateUsageUI();
 
             // ═══════════════ MODAL TOGGLES ═══════════════
@@ -1306,14 +1333,16 @@
     if (userLat === null || userLng === null || vehicleLat === null || vehicleLng === null) return;
 
     if (userRole === 'guest') {
-        if (guestUsage >= DAILY_LIMIT) {
-            toggleLimitModal(true);
-            return;
-        }
-        guestUsage++;
-        localStorage.setItem('guestUsage', guestUsage.toString());
-        updateUsageUI();
+    // Re-check in case the day rolled over since page load
+    guestUsage = loadGuestUsage();
+    if (guestUsage >= DAILY_LIMIT) {
+        toggleLimitModal(true);
+        return;
     }
+    guestUsage++;
+    saveGuestUsage(guestUsage);
+    updateUsageUI();
+}
 
     const url = 'https://router.project-osrm.org/route/v1/driving/' +
         userLng + ',' + userLat + ';' + vehicleLng + ',' + vehicleLat +

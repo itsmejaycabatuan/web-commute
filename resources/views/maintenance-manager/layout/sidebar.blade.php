@@ -78,7 +78,7 @@
             <div class="w-7 h-7 rounded-lg {{ request()->routeIs('maintenance-manager.preventive-maintenance') ? 'bg-blue-500/10' : 'bg-[#111]' }} flex items-center justify-center shrink-0">
                 <i class="fa-solid fa-calendar text-[10px]"></i>
             </div>
-            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">PM Schedule</span>
+            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">Maintenance Schedule</span>
         </a>
 
         <a href="{{ route('maintenance-manager.maintenance-calendar') }}"
@@ -86,7 +86,7 @@
             <div class="w-7 h-7 rounded-lg {{ request()->routeIs('maintenance-manager.maintenance-calendar') ? 'bg-blue-500/10' : 'bg-[#111]' }} flex items-center justify-center shrink-0">
                 <i class="fa-solid fa-calendar-check text-[10px]"></i>
             </div>
-            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">PM Calendar</span>
+            <span class="text-[10px] font-bold uppercase tracking-[0.12em]">Maintenance Logs</span>
         </a>
 
         <a href="{{ route('maintenance-manager.maintenance-tasks') }}"
@@ -193,7 +193,7 @@
                 <div class="w-8 h-8 rounded-lg {{ request()->routeIs('maintenance-manager.preventive-maintenance') ? 'bg-blue-500/10' : 'bg-[#111] group-hover:bg-[#161616]' }} flex items-center justify-center shrink-0 transition">
                     <i class="fa-solid fa-calendar text-[11px]"></i>
                 </div>
-                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">PM Schedule</span>
+                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">Maintenance Schedule</span>
             </a>
 
             <a href="{{ route('maintenance-manager.maintenance-calendar') }}"
@@ -202,7 +202,7 @@
                 <div class="w-8 h-8 rounded-lg {{ request()->routeIs('maintenance-manager.maintenance-calendar') ? 'bg-blue-500/10' : 'bg-[#111] group-hover:bg-[#161616]' }} flex items-center justify-center shrink-0 transition">
                     <i class="fa-solid fa-calendar-check text-[11px]"></i>
                 </div>
-                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">PM Calendar</span>
+                <span x-show="open" x-transition.opacity.duration.200ms class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">Maintenance Logs</span>
             </a>
 
             <a href="{{ route('maintenance-manager.maintenance-tasks') }}"

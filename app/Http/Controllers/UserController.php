@@ -205,6 +205,31 @@ class UserController extends Controller
 
             $vehicle = Vehicle::where('driver_id', $driver->id)->first();
 
+            // ── Violations data ──
+            $violationLogs = ViolationLog::with('violationCode')
+                ->where('user_id', $userId)
+                ->latest()
+                ->take(5)
+                ->get()
+                ->map(function ($v) {
+                    return [
+                        'id' => $v->id,
+                        'violationType' => $v->violationCode?->violation_name ?? 'Unknown',
+                        'violationCode' => $v->violationCode?->code ?? 'N/A',
+                        'codeColor' => $v->violationCode?->severity ?? 'amber',
+                        'offenseCount' => $v->violation_instance,
+                        'remarks' => $v->remarks,
+                        'location' => $v->place_of_violation,
+                        'date' => Carbon::parse($v->date_of_violation)->format('M d, Y'),
+                        'time' => Carbon::parse($v->time_of_violation)->format('g:i A'),
+                        'fine' => (float) $v->violation_fine,
+                        'penalty' => $v->additional_penalties,
+                    ];
+                });
+
+            $totalViolations = ViolationLog::where('user_id', $userId)->count();
+            $totalViolationFines = ViolationLog::where('user_id', $userId)->sum('violation_fine');
+
             return view('driver.dashboard', [
                 'driver' => $driver,
                 'todayRecord' => $todayRecord,
@@ -213,6 +238,9 @@ class UserController extends Controller
                 'weekOvertime' => $weekOvertime,
                 'vehicle' => $vehicle,
                 'total_distance' => $total_distance ?? 0,
+                'violationLogs' => $violationLogs,
+                'totalViolations' => $totalViolations,
+                'totalViolationFines' => $totalViolationFines,
             ]);
         }
 

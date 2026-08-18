@@ -191,6 +191,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('role:driver')->group(function () {
         Route::get('/timekeeping', [DriverController::class, 'timekeeping'])->name('driver.timekeeping');
+        Route::get('/violations', [DriverController::class, 'violations'])->name('driver.violations');
         Route::post('/timekeeping/clock-in', [DriverController::class, 'clockIn'])->name('driver.timekeeping.clock-in');
         Route::post('/timekeeping/clock-out', [DriverController::class, 'clockOut'])->name('driver.timekeeping.clock-out');
         Route::post('/status', [DriverController::class, 'updateStatus'])->name('driver.status.update');

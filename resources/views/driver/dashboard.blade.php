@@ -70,7 +70,7 @@
         </div>
 
         <!-- ══════════ STAT CARDS ══════════ -->
-        <div class="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6">
+        <div class="grid grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 mb-5 sm:mb-6">
 
             <!-- Distance Today -->
             <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-blue-500">
@@ -126,6 +126,31 @@
                     <span class="text-2xl sm:text-3xl font-black tracking-tight">{{ number_format($weekHours ?? 0, 1) }}</span>
                     <span class="text-xs sm:text-sm font-bold text-purple-400">hrs</span>
                 </div>
+            </div>
+
+            <!-- Total Violations -->
+            <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-red-500">
+                <div class="flex items-center gap-2 mb-2 sm:mb-3">
+                    <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center">
+                        <i class="fa-solid fa-circle-exclamation text-[8px] text-red-400"></i>
+                    </div>
+                    <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Violations</span>
+                </div>
+                <div class="flex items-baseline gap-1 sm:gap-1.5">
+                    <span class="text-2xl sm:text-3xl font-black tracking-tight">{{ $totalViolations }}</span>
+                    <span class="text-xs sm:text-sm font-bold text-red-400">total</span>
+                </div>
+            </div>
+
+            <!-- Total Violation Fines -->
+            <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-rose-500">
+                <div class="flex items-center gap-2 mb-2 sm:mb-3">
+                    <div class="w-6 h-6 rounded-md bg-rose-500/10 flex items-center justify-center">
+                        <i class="fa-solid fa-peso-sign text-[8px] text-rose-400"></i>
+                    </div>
+                    <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Violation Fines</span>
+                </div>
+                <span class="text-xl sm:text-2xl font-black tracking-tight">₱{{ number_format($totalViolationFines, 0) }}</span>
             </div>
 
         </div>
@@ -359,6 +384,61 @@
                     </div>
                 </div>
 
+                <!-- ══════════ RECENT VIOLATIONS ══════════ -->
+                <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] overflow-hidden" x-data="driverViolations()">
+                    <div class="p-4 sm:p-6 pb-0">
+                        <div class="flex items-center justify-between mb-4 sm:mb-5">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center">
+                                    <i class="fa-solid fa-list-check text-[9px] text-amber-400"></i>
+                                </div>
+                                <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Violations</span>
+                            </div>
+                            <a href="{{ route('driver.violations') }}"
+                               class="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest text-amber-400 hover:text-white transition flex items-center gap-1.5">
+                                <span>View All</span>
+                                <i class="fa-solid fa-arrow-right text-[7px]"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6 space-y-2.5" style="max-height: 380px;">
+                        <template x-for="v in violations" :key="v.id">
+                            <div class="p-3.5 rounded-xl bg-[#111] border border-[#1e1e1e] flex gap-3.5 items-start group hover:border-amber-500/20 hover:bg-[#141414] transition-all cursor-pointer">
+                                <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all"
+                                     :class="iconClasses(v)">
+                                    <i class="fa-solid text-[10px]" :class="icon(v)"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-[10px] sm:text-[11px] font-bold text-[#ccc] truncate" x-text="v.violationType"></h4>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-[7px] sm:text-[8px] font-bold uppercase font-mono px-1.5 py-0.5 rounded-md"
+                                              :class="badgeClasses(v.codeColor)"
+                                              x-text="v.violationCode"></span>
+                                        <span class="text-[8px] text-[#444] font-medium" x-text="offenseLabel(v.offenseCount)"></span>
+                                    </div>
+                                    @if(false)
+                                    <p class="text-[8px] text-[#333] mt-1 italic truncate" x-show="v.remarks" x-text="'" + v.remarks + "'""></p>
+                                    @endif
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <p class="text-[10px] sm:text-[11px] font-bold text-red-400" x-text="formatFine(v.fine)"></p>
+                                    <p class="text-[7px] sm:text-[8px] text-[#444] font-medium mt-0.5" x-text="v.date"></p>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div x-show="violations.length === 0"
+                             class="flex flex-col items-center justify-center py-10 sm:py-14">
+                            <div class="w-10 h-10 rounded-xl bg-[#111] border border-[#1e1e1e] flex items-center justify-center mb-2.5">
+                                <i class="fa-solid fa-shield text-sm text-[#222]"></i>
+                            </div>
+                            <span class="text-[10px] sm:text-[11px] text-[#333] font-medium">Clean record</span>
+                            <span class="text-[8px] text-[#222] mt-0.5">No violations on file</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ── Quick Actions ── -->
                 <div class="glass-card p-4 sm:p-6 rounded-[1.25rem] sm:rounded-[1.5rem]">
                     <div class="flex items-center gap-2.5 mb-4 sm:mb-5">
@@ -383,6 +463,15 @@
                                     <i class="fa-solid fa-chart-line text-[9px] text-purple-400"></i>
                                 </div>
                                 <span class="text-[10px] font-bold text-[#888] group-hover:text-white transition">History</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right text-[8px] text-[#333] group-hover:text-[#555] transition"></i>
+                        </a>
+                        <a href="{{ route('driver.violations') }}" class="flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-[#111] border border-[#1e1e1e] hover:bg-[#1a1a1a] hover:border-[#333] transition group cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/15 flex items-center justify-center">
+                                    <i class="fa-solid fa-file text-[9px] text-amber-400"></i>
+                                </div>
+                                <span class="text-[10px] font-bold text-[#888] group-hover:text-white transition">My Violations</span>
                             </div>
                             <i class="fa-solid fa-chevron-right text-[8px] text-[#333] group-hover:text-[#555] transition"></i>
                         </a>
@@ -431,6 +520,50 @@
         setTimeout(() => {
             try { Alpine.$data(document.body).open = false; } catch(e) {}
         }, 500);
+
+        function driverViolations() {
+            return {
+                violations: @json($violationLogs),
+
+                icon(v) {
+                    const t = (v.violationType || '').toLowerCase();
+                    if (t.includes('speed') || t.includes('over'))                          return 'fa-gauge-high';
+                    if (t.includes('phone') || t.includes('mobile') || t.includes('device')) return 'fa-mobile-screen-button';
+                    if (t.includes('traffic') || t.includes('light') || t.includes('signal')) return 'fa-traffic-light';
+                    if (t.includes('parking') || t.includes('park'))                        return 'fa-square-parking';
+                    if (t.includes('lane') || t.includes('swerv') || t.includes('weaving')) return 'fa-road';
+                    return 'fa-triangle-exclamation';
+                },
+
+                iconClasses(v) {
+                    const t = (v.violationType || '').toLowerCase();
+                    if (t.includes('phone') || t.includes('mobile'))
+                        return 'bg-orange-500/10 border border-orange-500/15 text-orange-400 group-hover:bg-orange-500 group-hover:text-white group-hover:border-orange-500';
+                    if (t.includes('traffic') || t.includes('park'))
+                        return 'bg-yellow-500/10 border border-yellow-500/15 text-yellow-400 group-hover:bg-yellow-500 group-hover:text-white group-hover:border-yellow-500';
+                    return 'bg-red-500/10 border border-red-500/15 text-red-400 group-hover:bg-red-500 group-hover:text-white group-hover:border-red-500';
+                },
+
+                badgeClasses(color) {
+                    const map = {
+                        'red':   'bg-red-500/10 text-red-400 border border-red-500/15',
+                        'amber': 'bg-amber-500/10 text-amber-400 border border-amber-500/15',
+                        'green': 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15',
+                        'blue':  'bg-blue-500/10 text-blue-400 border border-blue-500/15',
+                    };
+                    return map[color] || map['amber'];
+                },
+
+                offenseLabel(count) {
+                    const labels = { 1: '1st Offense', 2: '2nd Offense', 3: '3rd Offense' };
+                    return labels[count] || (count + 'th Offense');
+                },
+
+                formatFine(n) {
+                    return '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                },
+            };
+        }
     </script>
 
 </body>
