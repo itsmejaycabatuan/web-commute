@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\VehicleMaintenanceLog
@@ -11,17 +12,18 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $id
  * @property int $fleet_id
  * @property int $maintenance_task_id
- * @property \Illuminate\Support\Carbon|null $service_date
+ * @property Carbon|null $service_date
  * @property int|null $mileage_at_service
  * @property string|null $performed_by
  * @property string|null $cost
  * @property string|null $invoice_number
  * @property string|null $remarks
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\FleetInventory $fleet
- * @property-read \App\Models\MaintenanceTask $maintenanceTask
- * @property-read \App\Models\Vehicle|null $vehicle
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read FleetInventory $fleet
+ * @property-read MaintenanceTask $maintenanceTask
+ * @property-read Vehicle|null $vehicle
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog query()
@@ -36,6 +38,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereRemarks($value)
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereServiceDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class VehicleMaintenanceLog extends Model
@@ -43,7 +46,7 @@ class VehicleMaintenanceLog extends Model
     use HasFactory;
 
     protected $fillable = [
-        'fleet_id',
+        'vehicle_id',
         'maintenance_task_id',
         'service_date',
         'mileage_at_service',
@@ -67,10 +70,5 @@ class VehicleMaintenanceLog extends Model
     public function maintenanceTask()
     {
         return $this->belongsTo(MaintenanceTask::class);
-    }
-
-    public function fleet()
-    {
-        return $this->belongsTo(FleetInventory::class);
     }
 }

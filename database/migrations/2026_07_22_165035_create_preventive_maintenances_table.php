@@ -14,7 +14,7 @@ return new class extends Migration {
     {
         Schema::create('preventive_maintenances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('fleet_id')->constrained('fleet_inventories')->cascadeOnDelete();
+            $table->foreignId('vehicle_id')->constrained('vehicles')->cascadeOnDelete();
             $table->foreignId('task_id')->constrained('maintenance_tasks')->cascadeOnDelete();
             $table->integer('last_service_odo')->nullable();
             $table->date('last_service_date')->nullable();

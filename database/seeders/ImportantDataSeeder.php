@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Fare;
 use App\Models\MaintenanceTask;
+use App\Models\Vehicle;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\PermissionRegistrar;
@@ -92,8 +93,32 @@ class ImportantDataSeeder extends Seeder
             ],
         ];
 
+        $vehicles = [
+            [
+                'vehicle_data' => [
+                    'driver_id' => 1,
+                    'year' => 2020,
+                    'brand' => 'Toyota',
+                    'model' => 'HiAce',
+                    'plate_number' => 'JKL-7890',
+                    'status' => 'maintenance',
+                    'fuel_type' => 'diesel',
+                    'tank_capacity' => 70.0,
+                    'vin' => '5TDBW5G14ES567890',
+                    'location' => 'Cebu Branch',
+                    'acquistion_date' => '2020-11-01',
+                    'exp_disposal_date' => '2025-11-01',
+                ],
+            ],
+        ];
+
         foreach ($tasks as $task) {
             MaintenanceTask::create($task);
+        }
+
+        foreach ($vehicles as $item) {
+            // Create the vehicle
+            $vehicle = Vehicle::create($item['vehicle_data']);
         }
 
         $path = resource_path() . '/files/Fare-Guide_Modernized-Aircon-Provisional-Fare-Increase_08Oct2023.pdf';

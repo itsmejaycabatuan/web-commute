@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\PreventiveMaintenance
@@ -12,13 +13,14 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $fleet_id
  * @property int $task_id
  * @property int|null $last_service_odo
- * @property \Illuminate\Support\Carbon|null $last_service_date
+ * @property Carbon|null $last_service_date
  * @property string|null $last_service_cost
  * @property string|null $comments
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\FleetInventory $fleet
- * @property-read \App\Models\MaintenanceTask $maintenanceTask
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read FleetInventory $fleet
+ * @property-read MaintenanceTask $maintenanceTask
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance query()
@@ -31,6 +33,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereLastServiceOdo($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereTaskId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class PreventiveMaintenance extends Model
@@ -38,7 +41,7 @@ class PreventiveMaintenance extends Model
     use HasFactory;
 
     protected $fillable = [
-        'fleet_id',
+        'vehicle_id',
         'task_id',
         'last_service_odo',
         'last_service_date',
@@ -51,9 +54,9 @@ class PreventiveMaintenance extends Model
         'last_service_cost' => 'decimal:2',
     ];
 
-    public function fleet()
+    public function vehicle()
     {
-        return $this->belongsTo(FleetInventory::class);
+        return $this->belongsTo(Vehicle::class);
     }
 
     public function maintenanceTask()

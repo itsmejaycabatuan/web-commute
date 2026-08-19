@@ -171,7 +171,7 @@
                     </div>
                 </div>
 
-                <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-purple-500 col-span-2 sm:col-span-1">
+                <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-purple-500">
                     <div class="flex items-center gap-2 mb-2 sm:mb-3">
                         <div class="w-6 h-6 rounded-md bg-purple-500/10 flex items-center justify-center">
                             <i class="fa-solid fa-user-check text-[8px] text-purple-400"></i>
@@ -283,7 +283,7 @@
                                             <form method="POST" :action="`{{ route('vehicles.destroy', '__ID__') }}`.replace('__ID__', v.id)" class="inline-flex">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" onclick="return confirm('Remove this vehicle record?')"
+                                                <button type="submit" onclick="return confirm('Remove this vehicle?')"
                                                     class="w-7 h-7 rounded-lg flex items-center justify-center text-[#555] hover:text-rose-400 hover:bg-rose-500/10 transition-all"
                                                     title="Delete">
                                                     <i class="fa-solid fa-trash-can text-[9px]"></i>
@@ -538,7 +538,7 @@
                             </div>
                             <div>
                                 <h3 class="text-sm sm:text-base font-black tracking-tight">Add Vehicle</h3>
-                                <p class="text-[9px] sm:text-[10px] text-[#555] mt-0.5">Register a new vehicle</p>
+                                <p class="text-[9px] sm:text-[10px] text-[#555] mt-0.5">Register a new vehicle to the fleet</p>
                             </div>
                         </div>
                         <button type="button" @click="showModal = false"
@@ -655,19 +655,21 @@
                                 </div>
                             </div>
                         </div>
+
                     </div>
 
                     <!-- Footer -->
-                    <div class="flex items-center justify-end gap-2.5 px-6 sm:px-8 py-4 sm:py-5 border-t border-[#1e1e1e] shrink-0 bg-[#0a0a0a]/60">
-                        <button type="button" @click="showModal = false"
-                            class="px-5 py-2.5 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] hover:text-white transition">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                            class="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition-all active:scale-[0.98] flex items-center gap-2">
-                            <i class="fa-solid fa-check text-[9px]"></i>
-                            <span>Add Vehicle</span>
-                        </button>
+                    <div class="px-6 sm:px-8 py-4 border-t border-[#1e1e1e] bg-[#0d0d0d] shrink-0">
+                        <div class="flex gap-2.5">
+                            <button type="button" @click="showModal = false"
+                                class="flex-1 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] transition">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                class="flex-1 py-3 rounded-xl bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition active:scale-[0.98] shadow-lg shadow-blue-900/30">
+                                Add Vehicle
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -676,255 +678,235 @@
 
     <!-- ══════════ EDIT VEHICLE MODAL ══════════ -->
     <template x-teleport="body">
-        <div x-show="showEditModal" x-cloak @keydown.escape.window="closeEditModal()"
+        <div x-show="showEditModal" x-cloak @keydown.escape.window="showEditModal = false"
             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80"
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
             style="display: none;">
 
-            <form method="POST"
-                  :action="`{{ route('vehicles.update', 0) }}`.replace('/0', '/' + editForm.id)"
-                  x-show="showEditModal"
-                  @click.stop
-                  x-transition:enter="transition ease-out duration-300"
-                  x-transition:enter-start="opacity-0 scale-95 translate-y-2"
-                  x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                  x-transition:leave="transition ease-in duration-200"
-                  x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                  x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-                  class="relative w-full max-w-xl glass-panel rounded-[2rem] flex flex-col max-h-[90vh] overflow-hidden">
+            <div x-show="showEditModal" @click.stop
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+                 class="relative w-full max-w-xl glass-panel rounded-[2rem] flex flex-col max-h-[90vh] overflow-hidden">
 
-                @csrf
-                @method('PATCH')
+                <form method="POST" :action="`{{ route('vehicles.update', '__ID__') }}`.replace('__ID__', editData.id)" @submit="showEditModal = false" class="flex flex-col h-full">
+                    @csrf
+                    @method('PUT')
 
-                <!-- Header -->
-                <div class="flex items-center justify-between px-6 sm:px-8 pt-6 sm:pt-7 pb-5 border-b border-[#1e1e1e] shrink-0">
-                    <div class="flex items-center gap-3.5">
-                        <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                            <i class="fa-solid fa-pen-to-square text-[11px] text-blue-400"></i>
+                    <!-- Header -->
+                    <div class="flex items-center justify-between px-6 sm:px-8 pt-6 sm:pt-7 pb-5 border-b border-[#1e1e1e] shrink-0">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                                <i class="fa-solid fa-pen-to-square text-[11px] text-amber-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-black tracking-tight">Edit Vehicle</h3>
+                                <p class="text-[9px] sm:text-[10px] text-[#555] mt-0.5 truncate max-w-[200px]" x-text="editData.brand + ' ' + editData.model + ' (' + editData.year + ')'"></p>
+                            </div>
                         </div>
+                        <button type="button" @click="showEditModal = false"
+                            class="w-8 h-8 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] hover:bg-[#222] flex items-center justify-center text-[#555] hover:text-white transition-colors">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                        </button>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="flex-1 overflow-y-auto px-6 sm:px-8 py-5 sm:py-6 space-y-4 sm:space-y-5">
+
+                        <!-- Vehicle Information -->
                         <div>
-                            <h3 class="text-sm sm:text-base font-black tracking-tight">Edit Vehicle</h3>
-                            <p class="text-[9px] sm:text-[10px] text-[#555] mt-0.5">Update vehicle details</p>
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="w-[3px] h-3 rounded-sm bg-blue-500"></span>
+                                <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#555]">Vehicle Information</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Year <span class="text-rose-400/60">*</span></label>
+                                    <input type="number" name="year" x-model.number="editData.year" min="1990" max="2030"
+                                        class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-mono font-bold placeholder:text-[#2a2a2a]" required>
+                                </div>
+                                <div>
+                                    <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Brand <span class="text-rose-400/60">*</span></label>
+                                    <input type="text" name="brand" x-model="editData.brand"
+                                        class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-bold placeholder:text-[#2a2a2a]" required>
+                                </div>
+                                <div>
+                                    <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Model <span class="text-rose-400/60">*</span></label>
+                                    <input type="text" name="model" x-model="editData.model"
+                                        class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-bold placeholder:text-[#2a2a2a]" required>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 mt-3">
+                                <div>
+                                    <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Plate Number <span class="text-rose-400/60">*</span></label>
+                                    <input type="text" name="plate_number" x-model="editData.plate_number"
+                                        class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-mono font-bold placeholder:text-[#2a2a2a]" required>
+                                </div>
+                                <div>
+                                    <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">VIN</label>
+                                    <input type="text" name="vin" x-model="editData.vin"
+                                        class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-mono font-bold placeholder:text-[#2a2a2a]">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Specifications & Assignment -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="w-[3px] h-3 rounded-sm bg-emerald-500"></span>
+                                <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#555]">Specifications & Assignment</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Fuel Type</label>
+                                    <select name="fuel_type" x-model="editData.fuel_type" class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-bold pr-10">
+                                        <option value="">Select fuel type</option>
+                                        <option value="Diesel">Diesel</option>
+                                        <option value="Gasoline">Gasoline</option>
+                                        <option value="Electric">Electric</option>
+                                        <option value="Hybrid">Hybrid</option>
+                                        <option value="LPG">LPG</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Tank Capacity (L)</label>
+                                    <input type="text" name="tank_capacity" x-model="editData.tank_capacity"
+                                        class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-mono font-bold placeholder:text-[#2a2a2a]">
+                                </div>
+                                <div>
+                                    <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Driver</label>
+                                    <select name="driver_id" x-model="editData.driver_id" class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-bold pr-10">
+                                        <option value="">Unassigned</option>
+                                        @foreach($drivers as $driver)
+                                            <option value="{{ $driver->id }}">{{ $driver->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Location</label>
+                                    <input type="text" name="location" x-model="editData.location"
+                                        class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-bold placeholder:text-[#2a2a2a]">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dates & Status -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="w-[3px] h-3 rounded-sm bg-purple-500"></span>
+                                <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#555]">Dates & Status</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Acquisition Date <span class="text-rose-400/60">*</span></label>
+                                    <input type="date" name="acquistion_date" x-model="editData.acquistion_date"
+                                        class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-mono font-bold [color-scheme:dark]" required>
+                                </div>
+                                <div>
+                                    <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Status</label>
+                                    <select name="status" x-model="editData.status" class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-bold pr-10">
+                                        <option value="active">Active</option>
+                                        <option value="maintenance">Maintenance</option>
+                                        <option value="inactive">Inactive</option>
+                                        <option value="disposed">Disposed</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Expected Disposal</label>
+                                    <input type="date" name="exp_disposal_date" x-model="editData.exp_disposal_date"
+                                        class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-mono font-bold [color-scheme:dark]">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="px-6 sm:px-8 py-4 border-t border-[#1e1e1e] bg-[#0d0d0d] shrink-0">
+                        <div class="flex gap-2.5">
+                            <button type="button" @click="showEditModal = false"
+                                class="flex-1 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] transition">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                class="flex-1 py-3 rounded-xl bg-amber-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-amber-500 transition active:scale-[0.98] shadow-lg shadow-amber-900/30">
+                                Update Vehicle
+                            </button>
                         </div>
                     </div>
-                    <button type="button" @click="closeEditModal()"
-                        class="w-8 h-8 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] hover:bg-[#222] flex items-center justify-center text-[#555] hover:text-white transition-colors">
-                        <i class="fa-solid fa-xmark text-xs"></i>
-                    </button>
-                </div>
-
-                <!-- Body -->
-                <div class="flex-1 overflow-y-auto px-6 sm:px-8 py-5 sm:py-6 space-y-4 sm:space-y-5">
-
-                    <!-- Vehicle Information -->
-                    <div>
-                        <div class="flex items-center gap-2 mb-3">
-                            <span class="w-[3px] h-3 rounded-sm bg-blue-500"></span>
-                            <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#555]">Vehicle Information</span>
-                        </div>
-                        <div class="grid grid-cols-3 gap-3">
-                            <div>
-                                <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Year <span class="text-rose-400/60">*</span></label>
-                                <input type="number" name="year" x-model="editForm.year" min="1990" max="2030"
-                                    class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-mono font-bold placeholder:text-[#2a2a2a]" required>
-                            </div>
-                            <div>
-                                <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Brand <span class="text-rose-400/60">*</span></label>
-                                <input type="text" name="brand" x-model="editForm.brand"
-                                    class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-bold placeholder:text-[#2a2a2a]" required>
-                            </div>
-                            <div>
-                                <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Model <span class="text-rose-400/60">*</span></label>
-                                <input type="text" name="model" x-model="editForm.model"
-                                    class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-bold placeholder:text-[#2a2a2a]" required>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3 mt-3">
-                            <div>
-                                <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Plate Number <span class="text-rose-400/60">*</span></label>
-                                <input type="text" name="plate_number" x-model="editForm.plate_number"
-                                    class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-mono font-bold placeholder:text-[#2a2a2a]" required>
-                            </div>
-                            <div>
-                                <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">VIN</label>
-                                <input type="text" name="vin" x-model="editForm.vin"
-                                    class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-mono font-bold placeholder:text-[#2a2a2a]">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Specifications & Assignment -->
-                    <div>
-                        <div class="flex items-center gap-2 mb-3">
-                            <span class="w-[3px] h-3 rounded-sm bg-emerald-500"></span>
-                            <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#555]">Specifications & Assignment</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Fuel Type</label>
-                                <select name="fuel_type" x-model="editForm.fuel_type" class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-bold pr-10">
-                                    <option value="">Select fuel type</option>
-                                    <option value="Diesel">Diesel</option>
-                                    <option value="Gasoline">Gasoline</option>
-                                    <option value="Electric">Electric</option>
-                                    <option value="Hybrid">Hybrid</option>
-                                    <option value="LPG">LPG</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Tank Capacity (L)</label>
-                                <input type="text" name="tank_capacity" x-model="editForm.tank_capacity"
-                                    class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-mono font-bold placeholder:text-[#2a2a2a]">
-                            </div>
-                            <div>
-                                <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Driver</label>
-                                <select name="driver_id" x-model="editForm.driver_id" class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-bold pr-10">
-                                    <option value="">Unassigned</option>
-                                    @foreach($drivers as $driver)
-                                        <option value="{{ $driver->id }}">{{ $driver->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Location</label>
-                                <input type="text" name="location" x-model="editForm.location"
-                                    class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-bold placeholder:text-[#2a2a2a]">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Dates & Status -->
-                    <div>
-                        <div class="flex items-center gap-2 mb-3">
-                            <span class="w-[3px] h-3 rounded-sm bg-purple-500"></span>
-                            <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#555]">Dates & Status</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Acquisition Date <span class="text-rose-400/60">*</span></label>
-                                <input type="date" name="acquistion_date" x-model="editForm.acquistion_date"
-                                    class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-mono font-bold [color-scheme:dark]" required>
-                            </div>
-                            <div>
-                                <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Status</label>
-                                <select name="status" x-model="editForm.status" class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-bold pr-10">
-                                    <option value="active">Active</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="inactive">Inactive</option>
-                                    <option value="disposed">Disposed</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-1.5">Expected Disposal</label>
-                                <input type="date" name="exp_disposal_date" x-model="editForm.exp_disposal_date"
-                                    class="form-input w-full rounded-xl px-3.5 py-2.5 text-[10px] font-mono font-bold [color-scheme:dark]">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="flex items-center justify-end gap-2.5 px-6 sm:px-8 py-4 sm:py-5 border-t border-[#1e1e1e] shrink-0 bg-[#0a0a0a]/60">
-                    <button type="button" @click="closeEditModal()"
-                        class="px-5 py-2.5 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] hover:text-white transition">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                        class="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition-all active:scale-[0.98] flex items-center gap-2">
-                        <i class="fa-solid fa-check text-[9px]"></i>
-                        <span>Update Vehicle</span>
-                    </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </template>
 
+    <!-- ══════════ ALPINE.JS APP ══════════ -->
     <script>
-    function vehicleManagementApp() {
-        return {
-            open: true,
-            showLogoutModal: false,
-            showModal: false,
-            showEditModal: false,
-            showViewModal: false,
-            search: '',
-            vehicles: [],
-            viewData: {},
-            editForm: {},
+        function vehicleManagementApp() {
+            return {
+                open: localStorage.getItem('sidebarOpen') !== 'false',
+                search: '',
+                showModal: false,
+                showViewModal: false,
+                showEditModal: false,
+                showLogoutModal: false,
+                vehicles: {{ Js::from($vehicles) }},
+                viewData: {},
+                editData: {},
 
-            init() {
-                this.vehicles = {{ Js::from($vehicles) }};
-            },
+                init() {
+                    this.$watch('open', (val) => localStorage.setItem('sidebarOpen', val));
+                },
 
-            openAddModal() {
-                this.showModal = true;
-            },
-
-            openViewModal(v) {
-                this.viewData = { ...v };
-                this.showViewModal = true;
-            },
-
-            resetEditForm() {
-                this.editForm = {
-                    id: null, driver_id: '', year: '', brand: '', model: '',
-                    plate_number: '', status: '', fuel_type: '',
-                    tank_capacity: '', vin: '', location: '',
-                    acquistion_date: '', exp_disposal_date: '',
-                };
-            },
-            openEditModal(v) {
-                this.editForm = { ...v };
-                this.showEditModal = true;
-            },
-            closeEditModal() {
-                this.showEditModal = false;
-                this.resetEditForm();
-            },
-
-            get filtered() {
-                if (!this.search) return this.vehicles;
-                const q = this.search.toLowerCase();
-                return this.vehicles.filter(v => {
-                    return (v.plate_number || '').toLowerCase().includes(q) ||
+                get filtered() {
+                    if (!this.search.trim()) return this.vehicles;
+                    const q = this.search.toLowerCase();
+                    return this.vehicles.filter(v =>
                         (v.brand || '').toLowerCase().includes(q) ||
                         (v.model || '').toLowerCase().includes(q) ||
-                        (v.vin || '').toLowerCase().includes(q) ||
-                        (v.year || '').toString().includes(q) ||
-                        (v.location || '').toLowerCase().includes(q) ||
-                        (v.driver_name || '').toLowerCase().includes(q);
-                });
-            },
+                        (v.plate_number || '').toLowerCase().includes(q) ||
+                        (v.driver_name || '').toLowerCase().includes(q) ||
+                        (v.location || '').toLowerCase().includes(q)
+                    );
+                },
 
-            isOverdue(dateStr) {
-                if (!dateStr) return false;
-                return new Date(dateStr + 'T00:00:00') < new Date(new Date().toDateString());
-            },
+                openAddModal() {
+                    this.showModal = true;
+                },
 
-            dateStr(d) {
-                if (!d) return '—';
-                return new Date(d + 'T00:00:00').toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                });
-            },
+                openViewModal(v) {
+                    this.viewData = { ...v };
+                    this.showViewModal = true;
+                },
 
-            dateTimeStr(d) {
-                if (!d) return '—';
-                return new Date(d).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                }) + ' ' + new Date(d).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            }
+                openEditModal(v) {
+                    this.editData = { ...v };
+                    this.showEditModal = true;
+                },
+
+                dateStr(val) {
+                    if (!val) return '—';
+                    const d = new Date(val);
+                    return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+                },
+
+                dateTimeStr(val) {
+                    if (!val) return '—';
+                    const d = new Date(val);
+                    return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                },
+
+                isOverdue(val) {
+                    if (!val) return false;
+                    return new Date(val) < new Date();
+                }
+            };
         }
-    }
     </script>
+
 </body>
 </html>

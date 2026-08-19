@@ -76,7 +76,7 @@ class RolePermissionSeeder extends Seeder
             ],
         );
 
-        $driver = $driverUser->driver()->create([
+        $driver = $driverUser->driver()->firstOrCreate([
             'name' => 'driver',
             'is_approved' => true,
         ]);

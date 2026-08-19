@@ -59,7 +59,7 @@
 <script>
     document.getElementById('fleet-selector')?.addEventListener('change', function () {
         const url = new URL(window.location.href);
-        url.searchParams.set('fleet_id', this.value);
+        url.searchParams.set('vm_id', this.value);
         window.location.href = url.toString();
     });
 </script>

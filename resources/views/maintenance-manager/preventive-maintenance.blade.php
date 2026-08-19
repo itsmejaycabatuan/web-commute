@@ -59,9 +59,9 @@
 </head>
 
 <script>
-    document.getElementById('fleet-selector')?.addEventListener('change', function () {
+    document.getElementById('vehicle-selector')?.addEventListener('change', function () {
         const url = new URL(window.location.href);
-        url.searchParams.set('fleet_id', this.value);
+        url.searchParams.set('vehicle_id', this.value);
         window.location.href = url.toString();
     });
 </script>
@@ -72,7 +72,7 @@
     showModal: false,
     taskName: '',
     form: {
-        fleet_id: '{{ $fleet?->id ?? "" }}',
+        vehicle_id: '{{ $vehicle?->id ?? "" }}',
         task_id: '',
         last_service_odo: '',
         last_service_date: '',
@@ -81,7 +81,7 @@
     },
     openLogModal(taskId, name) {
         this.form = {
-            fleet_id: '{{ $fleet?->id ?? "" }}',
+            vehicle_id: '{{ $vehicle?->id ?? "" }}',
             task_id: String(taskId),
             last_service_odo: '',
             last_service_date: '',
@@ -131,13 +131,13 @@
             </p>
         </div>
 
-        @if(!$fleet)
+        @if(!$vehicle)
             <div class="flex flex-col items-center justify-center py-32">
                 <div class="w-14 h-14 rounded-2xl bg-[#111] border border-[#1e1e1e] flex items-center justify-center mb-4">
                     <i class="fa-solid fa-car text-[#333] text-xl"></i>
                 </div>
-                <p class="text-[#444] text-[11px] font-bold mb-1">No fleet entries found.</p>
-                <p class="text-[#333] text-[10px]">Add a fleet entry first to track preventive maintenance.</p>
+                <p class="text-[#444] text-[11px] font-bold mb-1">No vehicles found.</p>
+                <p class="text-[#333] text-[10px]">Add a vehicle first to track preventive maintenance.</p>
             </div>
         @else
 
@@ -147,11 +147,11 @@
                 <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1">
                     <div class="flex-1 sm:max-w-[320px]">
                         <label class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#333] block mb-1.5">Select Vehicle</label>
-                        <select id="fleet-selector"
+                        <select id="vehicle-selector"
                             class="w-full bg-[#111] border border-[#1e1e1e] rounded-xl px-4 py-2.5 text-[10px] font-bold text-[#888] focus:ring-1 focus:ring-blue-500/50 outline-none appearance-none cursor-pointer pr-10">
-                            @foreach($fleets as $f)
-                                <option value="{{ $f->id }}" {{ $fleet->id === $f->id ? 'selected' : '' }}>
-                                    {{ $f->vehicle?->plate_number }} — {{ $f->vehicle?->brand }} {{ $f->vehicle?->model }}
+                            @foreach($vehicles as $v)
+                                <option value="{{ $v->id }}" {{ $vehicle->id === $v->id ? 'selected' : '' }}>
+                                    {{ $v->plate_number }} — {{ $v->brand }} {{ $v->model }}
                                 </option>
                             @endforeach
                         </select>
@@ -384,7 +384,6 @@
                 </table>
             </div>
 
-            <!-- Table Footer -->
             @if($allTasks->isNotEmpty())
             <div class="px-4 sm:px-6 py-3 border-t border-[#1e1e1e] bg-[#111] flex flex-col sm:flex-row justify-between gap-2">
                 <div class="flex items-center gap-4">
@@ -464,6 +463,9 @@
                   x-transition:enter="transition ease-out duration-300"
                   x-transition:enter-start="opacity-0 scale-95 translate-y-2"
                   x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                  x-transition:leave="transition ease-in duration-200"
+                  x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                  x-transition:leave-end="opacity-0 scale-95 translate-y-2"
                   method="POST"
                   action="{{ route('maintenance-manager.preventive-maintenance.store') }}"
                   @click.stop
@@ -471,8 +473,7 @@
 
                 @csrf
 
-                <!-- Hidden Fields -->
-                <input type="hidden" name="fleet_id" x-model="form.fleet_id">
+                <input type="hidden" name="vehicle_id" x-model="form.vehicle_id">
                 <input type="hidden" name="task_id" x-model="form.task_id">
 
                 <!-- Header -->

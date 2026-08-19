@@ -23,12 +23,9 @@ class VehicleController extends Controller
                 'tank_capacity' => $vehicle->tank_capacity,
                 'vin' => $vehicle->vin,
                 'location' => $vehicle->location,
-                // Y-m-d format: fixes both the JS dateStr() and the <input type="date">
                 'acquistion_date' => $vehicle->acquistion_date?->format('Y-m-d'),
                 'exp_disposal_date' => $vehicle->exp_disposal_date?->format('Y-m-d'),
-                // Explicitly pull the driver name so it's always a plain string in JSON
                 'driver_name' => $vehicle->driver?->name,
-                // ISO string for timestamps (used by dateTimeStr which doesn't append T00:00:00)
                 'created_at' => $vehicle->created_at?->toISOString(),
                 'updated_at' => $vehicle->updated_at?->toISOString(),
             ];

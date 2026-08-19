@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Driver;
-use App\Models\FleetInventory;
 use App\Models\MaintenanceTask;
 use App\Models\PreventiveMaintenance;
 use App\Models\User;
@@ -16,35 +15,31 @@ class MaintenanceManagerController extends Controller
 {
     public function preventiveMaintenance(Request $request)
     {
-        $fleets = FleetInventory::with('vehicle')
-            ->join('vehicles', 'fleet_inventories.vehicle_id', '=', 'vehicles.id')
-            ->orderBy('vehicles.plate_number')
-            ->select('fleet_inventories.*')
+        $vehicles = Vehicle::with('driver')
+            ->orderBy('plate_number')
             ->get();
 
-        if ($fleets->isEmpty()) {
+        if ($vehicles->isEmpty()) {
             return view('maintenance-manager.preventive-maintenance', [
-                'fleets' => collect(),
-                'fleet' => null,
+                'vehicles' => collect(),
+                'vehicle' => null,
                 'allTasks' => collect(),
                 'loggedTasks' => collect(),
             ]);
         }
 
-        $selectedId = $request->query('fleet_id', $fleets->first()->id);
-        $fleet = FleetInventory::with('vehicle')->find($selectedId) ?? $fleets->first();
+        $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
+        $vehicle = Vehicle::with('driver')->find($selectedId) ?? $vehicles->first();
 
-        // Get all defined maintenance tasks
         $allTasks = MaintenanceTask::orderBy('tasks_performed')->get();
 
-        // Get logged tasks for this specific fleet, keyed by task_id for easy lookup
-        $loggedTasks = PreventiveMaintenance::where('fleet_id', $fleet->id)
+        $loggedTasks = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
             ->get()
             ->keyBy('task_id');
 
         return view('maintenance-manager.preventive-maintenance', compact(
-            'fleets',
-            'fleet',
+            'vehicles',
+            'vehicle',
             'allTasks',
             'loggedTasks'
         ));
@@ -53,7 +48,7 @@ class MaintenanceManagerController extends Controller
     public function preventiveMaintenanceStore(Request $request)
     {
         $validated = $request->validate([
-            'fleet_id' => 'required|exists:fleet_inventories,id',
+            'vehicle_id' => 'required|exists:vehicles,id',
             'task_id' => 'required|exists:maintenance_tasks,id',
             'last_service_odo' => 'required|integer|min:0',
             'last_service_date' => 'required|date',
@@ -61,10 +56,9 @@ class MaintenanceManagerController extends Controller
             'comments' => 'nullable|string|max:500',
         ]);
 
-        // updateOrCreate ensures that if a task is logged again for the same fleet, it updates the record
         PreventiveMaintenance::updateOrCreate(
             [
-                'fleet_id' => $validated['fleet_id'],
+                'vehicle_id' => $validated['vehicle_id'],
                 'task_id' => $validated['task_id'],
             ],
             $validated
@@ -73,23 +67,22 @@ class MaintenanceManagerController extends Controller
         return back()->with('success', 'Preventive maintenance logged successfully!');
     }
 
-    public function maintenanceCalendar()
+    public function maintenanceLogs()
     {
-        $fleetOptions = FleetInventory::with('vehicle')
+        $vehicleOptions = Vehicle::orderBy('plate_number')
             ->get()
-            ->filter(fn($f) => $f->vehicle)
-            ->mapWithKeys(fn($f) => [
-                $f->id => $f->vehicle->plate_number . ' — ' . $f->vehicle->brand . ' ' . $f->vehicle->model,
+            ->mapWithKeys(fn($v) => [
+                $v->id => $v->plate_number . ' — ' . $v->brand . ' ' . $v->model,
             ])
             ->toArray();
 
-        $logs = PreventiveMaintenance::with(['fleet.vehicle', 'maintenanceTask'])
-            ->when(request('fleet'), fn($q, $fleet) => $q->where('fleet_id', $fleet))
+        $logs = PreventiveMaintenance::with(['vehicle', 'maintenanceTask'])
+            ->when(request('vehicle'), fn($q, $vehicle) => $q->where('vehicle_id', $vehicle))
             ->orderBy('last_service_date', 'desc')
             ->paginate(10)
             ->withQueryString();
 
-        return view('maintenance-manager.maintenance-calendar', compact('logs', 'fleetOptions'));
+        return view('maintenance-manager.maintenance-logs', compact('logs', 'vehicleOptions'));
     }
 
     public function maintenanceTasks()
@@ -146,16 +139,14 @@ class MaintenanceManagerController extends Controller
 
     public function vehicleLog(Request $request)
     {
-        $fleets = FleetInventory::with('vehicle.driver')
-            ->join('vehicles', 'fleet_inventories.vehicle_id', '=', 'vehicles.id')
-            ->orderBy('vehicles.plate_number')
-            ->select('fleet_inventories.*')
+        $vehicles = Vehicle::with('driver')
+            ->orderBy('plate_number')
             ->get();
 
-        if ($fleets->isEmpty()) {
+        if ($vehicles->isEmpty()) {
             return view('maintenance-manager.vehicle-maintenance-log', [
-                'fleets' => collect(),
-                'fleet' => null,
+                'vehicles' => collect(),
+                'vehicle' => null,
                 'maintenanceTasks' => collect(),
                 'logs' => collect(),
                 'totalCost' => 0,
@@ -165,11 +156,11 @@ class MaintenanceManagerController extends Controller
             ]);
         }
 
-        $selectedId = $request->query('fleet_id', $fleets->first()->id);
-        $fleet = $fleets->firstWhere('id', $selectedId) ?? $fleets->first();
-        $fleet->load('vehicle.driver');
+        $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
+        $vehicle = $vehicles->firstWhere('id', $selectedId) ?? $vehicles->first();
+        $vehicle->load('driver');
 
-        $logs = VehicleMaintenanceLog::where('fleet_id', $fleet->id)
+        $logs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
             ->with('maintenanceTask')
             ->orderByDesc('service_date')
             ->get();
@@ -188,8 +179,8 @@ class MaintenanceManagerController extends Controller
         $maintenanceTasks = MaintenanceTask::orderBy('tasks_performed')->get();
 
         return view('maintenance-manager.vehicle-maintenance-log', compact(
-            'fleets',
-            'fleet',
+            'vehicles',
+            'vehicle',
             'maintenanceTasks',
             'logs',
             'totalCost',
@@ -202,7 +193,7 @@ class MaintenanceManagerController extends Controller
     public function vehicleLogStore(Request $request)
     {
         $validated = $request->validate([
-            'fleet_id' => 'required|exists:fleet_inventories,id',
+            'vehicle_id' => 'required|exists:vehicles,id',
             'maintenance_task_id' => 'required|exists:maintenance_tasks,id',
             'service_date' => 'required|date',
             'mileage_at_service' => 'required|integer|min:0',
@@ -220,7 +211,7 @@ class MaintenanceManagerController extends Controller
     public function vehicleLogUpdate(Request $request, VehicleMaintenanceLog $log)
     {
         $validated = $request->validate([
-            'fleet_id' => 'required|exists:fleet_inventories,id',
+            'vehicle_id' => 'required|exists:vehicles,id',
             'maintenance_task_id' => 'required|exists:maintenance_tasks,id',
             'service_date' => 'required|date',
             'mileage_at_service' => 'required|integer|min:0',
@@ -244,24 +235,22 @@ class MaintenanceManagerController extends Controller
 
     public function fleetLog(Request $request)
     {
-        $fleets = FleetInventory::with('vehicle.driver')
-            ->join('vehicles', 'fleet_inventories.vehicle_id', '=', 'vehicles.id')
-            ->orderBy('vehicles.plate_number')
-            ->select('fleet_inventories.*')
+        $vehicles = Vehicle::with('driver')
+            ->orderBy('plate_number')
             ->get();
 
         $drivers = Driver::orderBy('name')->get();
 
-        if ($fleets->isEmpty()) {
+        if ($vehicles->isEmpty()) {
             return view('maintenance-manager.fleet-maintenance-log', [
-                'fleets' => collect(),
+                'vehicles' => collect(),
                 'drivers' => $drivers,
                 'monthlyKm' => array_fill(1, 12, 0),
                 'monthlyStartOdo' => array_fill(1, 12, null),
                 'monthlyEndOdo' => array_fill(1, 12, null),
                 'yearStartOdo' => null,
                 'yearEndOdo' => 0,
-                'fleet' => null,
+                'vehicle' => null,
                 'costSummary' => collect(),
                 'monthlyTotals' => array_fill(1, 12, 0),
                 'ytdTotal' => 0,
@@ -274,20 +263,18 @@ class MaintenanceManagerController extends Controller
             ]);
         }
 
-        $selectedId = $request->query('fleet_id', $fleets->first()->id);
-        $fleet = FleetInventory::with('vehicle.driver')->find($selectedId) ?? $fleets->first();
+        $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
+        $vehicle = Vehicle::with('driver')->find($selectedId) ?? $vehicles->first();
 
         $year = now()->year;
 
-        // Logs for current year — used for cost summary table
-        $yearLogs = VehicleMaintenanceLog::where('fleet_id', $fleet->id)
+        $yearLogs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
             ->with('maintenanceTask')
             ->whereYear('service_date', $year)
             ->whereNotNull('service_date')
             ->orderBy('service_date')
             ->get();
 
-        // Build cost summary: task_name => [month => cost]
         $costSummary = [];
         $monthlyTotals = array_fill(1, 12, 0);
         $ytdTotal = 0;
@@ -309,8 +296,7 @@ class MaintenanceManagerController extends Controller
         ksort($costSummary);
         $costSummary = collect($costSummary);
 
-        // All logs for the log tab (all time, newest first)
-        $allLogs = VehicleMaintenanceLog::where('fleet_id', $fleet->id)
+        $allLogs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
             ->with('maintenanceTask')
             ->orderByDesc('service_date')
             ->get()
@@ -327,11 +313,9 @@ class MaintenanceManagerController extends Controller
                 ];
             });
 
-        // Stats
         $totalServiceCost = $ytdTotal;
 
-        // Monthly kilometer calculation (matches Excel fallback to annual baseline)
-        $allOrderedLogs = VehicleMaintenanceLog::where('fleet_id', $fleet->id)
+        $allOrderedLogs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
             ->whereNotNull('mileage_at_service')
             ->whereNotNull('service_date')
             ->orderBy('service_date')
@@ -343,7 +327,6 @@ class MaintenanceManagerController extends Controller
         $monthlyCpk = array_fill(1, 12, null);
         $runningOdo = null;
 
-        // Find annual starting baseline: the odometer reading before the first log of this year
         $firstLogOfYear = $allOrderedLogs->first(fn($l) => $l->service_date && $l->service_date->year === $year);
         $annualStartingOdo = 0;
         if ($firstLogOfYear) {
@@ -356,7 +339,6 @@ class MaintenanceManagerController extends Controller
             $monthlyStartOdo[$m] ??= $runningOdo;
             $monthlyEndOdo[$m] = $log->mileage_at_service;
 
-            // Use previous month's ending, or annual starting baseline as fallback
             $baseline = $monthlyStartOdo[$m] ?? $annualStartingOdo;
 
             if ($baseline !== null) {
@@ -372,7 +354,6 @@ class MaintenanceManagerController extends Controller
         $yearEndOdo = $runningOdo;
         $annualKm = array_sum($monthlyKm);
 
-        // Pre-calculate cost per km per month
         for ($m = 1; $m <= 12; $m++) {
             if ($monthlyKm[$m] > 0) {
                 $monthlyCpk[$m] = round($monthlyTotals[$m] / $monthlyKm[$m], 2);
@@ -382,9 +363,9 @@ class MaintenanceManagerController extends Controller
         $costPerKm = $annualKm > 0 ? round($totalServiceCost / $annualKm, 2) : 0;
 
         return view('maintenance-manager.fleet-maintenance-log', compact(
-            'fleets',
+            'vehicles',
             'drivers',
-            'fleet',
+            'vehicle',
             'costSummary',
             'monthlyTotals',
             'ytdTotal',
@@ -400,66 +381,6 @@ class MaintenanceManagerController extends Controller
             'yearEndOdo',
             'monthlyCpk',
         ));
-    }
-
-    public function fleetInventory()
-    {
-        $inventories = FleetInventory::with('vehicle.driver')->latest()->get()->map(function ($inv) {
-            $v = $inv->vehicle;
-
-            return [
-                'id' => $inv->id,
-                'vehicle_id' => $inv->vehicle_id,
-                'maintenance_cost' => $inv->maintenance_cost,
-                'notes' => $inv->notes,
-                // From the linked vehicle
-                'vehicle_name' => $v ? "{$v->brand} {$v->model}" : 'Deleted Vehicle',
-                'vehicle_year' => $v?->year,
-                'plate_number' => $v?->plate_number,
-                'driver_name' => $v?->driver?->name,
-                'vehicle_status' => $v?->status,
-                // ISO strings for timestamps
-                'created_at' => $inv->created_at?->toISOString(),
-                'updated_at' => $inv->updated_at?->toISOString(),
-            ];
-        });
-
-        $vehicles = Vehicle::orderBy('brand')->get();
-
-        return view('maintenance-manager.fleet-inventory', compact('inventories', 'vehicles'));
-    }
-
-    public function fleetInventoryStore(Request $request)
-    {
-        $validated = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'maintenance_cost' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string|max:500',
-        ]);
-
-        FleetInventory::create($validated);
-
-        return back()->with('success', 'Inventory record successfully added.');
-    }
-
-    public function fleetInventoryUpdate(Request $request, FleetInventory $fleetInventory)
-    {
-        $validated = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'maintenance_cost' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string|max:500',
-        ]);
-
-        $fleetInventory->update($validated);
-
-        return back()->with('success', 'Inventory record successfully updated.');
-    }
-
-    public function fleetInventoryDelete(FleetInventory $fleetInventory)
-    {
-        $fleetInventory->delete();
-
-        return back()->with('success', 'Inventory record successfully deleted.');
     }
 
     public function profile()

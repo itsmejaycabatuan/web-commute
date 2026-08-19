@@ -8,7 +8,6 @@ use App\Models\DevMarker;
 use App\Models\Driver;
 use App\Models\Fare;
 use App\Models\FareRate;
-use App\Models\FleetInventory;
 use App\Models\Payment;
 use App\Models\PreventiveMaintenance;
 use App\Models\TimeKeeping;
@@ -283,24 +282,22 @@ class UserController extends Controller
         }
 
         if ($role == 'maintenance_manager') {
-            $fleets = FleetInventory::with('vehicle.driver')
-                ->join('vehicles', 'fleet_inventories.vehicle_id', '=', 'vehicles.id')
-                ->orderBy('vehicles.plate_number')
-                ->select('fleet_inventories.*')
+            $vehicles = Vehicle::with('driver')
+                ->orderBy('plate_number')
                 ->get();
 
             $drivers = Driver::orderBy('name')->get();
 
-            if ($fleets->isEmpty()) {
+            if ($vehicles->isEmpty()) {
                 return view('maintenance-manager.dashboard', [
-                    'fleets' => collect(),
+                    'vehicles' => collect(),
                     'drivers' => $drivers,
                     'monthlyKm' => array_fill(1, 12, 0),
                     'monthlyStartOdo' => array_fill(1, 12, null),
                     'monthlyEndOdo' => array_fill(1, 12, null),
                     'yearStartOdo' => null,
                     'yearEndOdo' => 0,
-                    'fleet' => null,
+                    'vehicle' => null,
                     'costSummary' => collect(),
                     'monthlyTotals' => array_fill(1, 12, 0),
                     'ytdTotal' => 0,
@@ -313,13 +310,12 @@ class UserController extends Controller
                 ]);
             }
 
-            $selectedId = $request->query('fleet_id', $fleets->first()->id);
-            $fleet = FleetInventory::with('vehicle.driver')->find($selectedId) ?? $fleets->first();
+            $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
+            $vehicle = Vehicle::with('driver')->find($selectedId) ?? $vehicles->first();
 
             $year = now()->year;
 
-            // ── Logs for current year — cost summary table ──
-            $yearLogs = PreventiveMaintenance::where('fleet_id', $fleet->id)
+            $yearLogs = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
                 ->with('maintenanceTask')
                 ->whereYear('last_service_date', $year)
                 ->whereNotNull('last_service_date')
@@ -347,8 +343,7 @@ class UserController extends Controller
             ksort($costSummary);
             $costSummary = collect($costSummary);
 
-            // ── All logs for the log tab (all time, newest first) ──
-            $allLogs = PreventiveMaintenance::where('fleet_id', $fleet->id)
+            $allLogs = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
                 ->with('maintenanceTask')
                 ->orderByDesc('last_service_date')
                 ->get()
@@ -363,11 +358,9 @@ class UserController extends Controller
                     ];
                 });
 
-            // ── Stats ──
             $totalServiceCost = $ytdTotal;
 
-            // ── Monthly kilometer calculation ──
-            $allOrderedLogs = PreventiveMaintenance::where('fleet_id', $fleet->id)
+            $allOrderedLogs = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
                 ->whereNotNull('last_service_odo')
                 ->whereNotNull('last_service_date')
                 ->orderBy('last_service_date')
@@ -379,7 +372,6 @@ class UserController extends Controller
             $monthlyCpk = array_fill(1, 12, null);
             $runningOdo = null;
 
-            // Find annual starting baseline
             $firstLogOfYear = $allOrderedLogs->first(fn($l) => $l->last_service_date && $l->last_service_date->year === $year);
             $annualStartingOdo = 0;
             if ($firstLogOfYear) {
@@ -407,7 +399,6 @@ class UserController extends Controller
             $yearEndOdo = $runningOdo;
             $annualKm = array_sum($monthlyKm);
 
-            // Cost per km per month
             for ($m = 1; $m <= 12; $m++) {
                 if ($monthlyKm[$m] > 0) {
                     $monthlyCpk[$m] = round($monthlyTotals[$m] / $monthlyKm[$m], 2);
@@ -417,9 +408,9 @@ class UserController extends Controller
             $costPerKm = $annualKm > 0 ? round($totalServiceCost / $annualKm, 2) : 0;
 
             return view('maintenance-manager.dashboard', compact(
-                'fleets',
+                'vehicles',
                 'drivers',
-                'fleet',
+                'vehicle',
                 'costSummary',
                 'monthlyTotals',
                 'ytdTotal',

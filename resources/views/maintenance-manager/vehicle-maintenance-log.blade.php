@@ -103,7 +103,7 @@
 <script>
     document.getElementById('fleet-selector')?.addEventListener('change', function () {
         const url = new URL(window.location.href);
-        url.searchParams.set('fleet_id', this.value);
+        url.searchParams.set('vm_id', this.value);
         window.location.href = url.toString();
     });
 </script>
@@ -121,7 +121,7 @@
         cost: '',
         invoice_number: '',
         remarks: '',
-        fleet_id: ''
+        vm_id: ''
     },
     openEdit(log) {
         this.editLog = {
@@ -133,7 +133,7 @@
             cost: log.cost,
             invoice_number: log.invoice_number || '',
             remarks: log.remarks || '',
-            fleet_id: log.fleet_id
+            vm_id: log.vm_id
         };
         this.showEditModal = true;
     }
@@ -282,7 +282,7 @@
                                     </td>
                                     <td class="px-5 py-4 text-center">
                                         <div class="flex items-center justify-center gap-1">
-                                            <button @click="openEdit(@js($log->only('id', 'fleet_id', 'service_date_formatted', 'mileage_at_service', 'maintenance_task_id', 'performed_by', 'cost', 'invoice_number', 'remarks')))" class="w-8 h-8 rounded-lg hover:bg-white/[0.06] flex items-center justify-center text-white/30 hover:text-blue-400 transition-colors" title="Edit">
+                                            <button @click="openEdit(@js($log->only('id', 'vm_id', 'service_date_formatted', 'mileage_at_service', 'maintenance_task_id', 'performed_by', 'cost', 'invoice_number', 'remarks')))" class="w-8 h-8 rounded-lg hover:bg-white/[0.06] flex items-center justify-center text-white/30 hover:text-blue-400 transition-colors" title="Edit">
                                                 <i class="fa-solid fa-pen text-xs"></i>
                                             </button>
                                             <form method="POST" :action="`{{ route('maintenance-manager.vehicle-maintenance-log.destroy', '__ID__') }}`.replace('__ID__', {{ $log->id }})" class="inline-flex">
@@ -347,7 +347,7 @@
 
                 @csrf
 
-                <input type="hidden" name="fleet_id" value="{{ $fleet->id }}">
+                <input type="hidden" name="vm_id" value="{{ $fleet->id }}">
 
                 <!-- Header -->
                 <div class="flex items-center justify-between px-8 pt-7 pb-5 border-b border-white/5 shrink-0">
@@ -536,7 +536,7 @@
                 @csrf
                 @method('PATCH')
 
-                <input type="hidden" name="fleet_id" x-model="editLog.fleet_id">
+                <input type="hidden" name="vm_id" x-model="editLog.vm_id">
 
                 <!-- Header -->
                 <div class="flex items-center justify-between px-8 pt-7 pb-5 border-b border-white/5 shrink-0">

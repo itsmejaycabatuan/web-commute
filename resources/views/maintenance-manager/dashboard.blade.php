@@ -58,9 +58,9 @@ function summaryApp() {
 </script>
 
 <script>
-    document.getElementById('fleet-selector')?.addEventListener('change', function () {
+    document.getElementById('vehicle-selector')?.addEventListener('change', function () {
         const url = new URL(window.location.href);
-        url.searchParams.set('fleet_id', this.value);
+        url.searchParams.set('vehicle_id', this.value);
         window.location.href = url.toString();
     });
 </script>
@@ -73,14 +73,12 @@ function summaryApp() {
     <main :class="open ? 'md:ml-72' : 'md:ml-20'" class="sidebar-transition pt-8 pr-4 sm:pr-8 pb-8 pl-4 sm:pl-8 min-h-screen mb-12">
 
         @php
-            // Chart data: monthly totals for bar chart
             $chartMonthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             $chartMonthlyData = [];
             foreach (range(1, 12) as $m) {
                 $chartMonthlyData[] = round($monthlyTotals[$m] ?? 0, 2);
             }
 
-            // Donut data: cost by category
             $donutLabels = [];
             $donutData = [];
             foreach ($costSummary as $taskName => $months) {
@@ -93,15 +91,15 @@ function summaryApp() {
             $donutTotal = array_sum($donutData);
         @endphp
 
-        @if(!$fleet)
+        @if(!$vehicle)
 
         <!-- ── Empty State ── -->
         <div class="flex flex-col items-center justify-center py-32">
             <div class="w-14 h-14 rounded-2xl bg-[#111] border border-[#1e1e1e] flex items-center justify-center mb-4">
                 <i class="fa-solid fa-car text-[#333] text-xl"></i>
             </div>
-            <p class="text-[#444] text-[11px] font-bold mb-1">No fleet entries yet.</p>
-            <p class="text-[#333] text-[10px]">Add a fleet entry first to view maintenance summaries.</p>
+            <p class="text-[#444] text-[11px] font-bold mb-1">No vehicles yet.</p>
+            <p class="text-[#333] text-[10px]">Add a vehicle first to view maintenance summaries.</p>
         </div>
 
         @else
@@ -141,23 +139,23 @@ function summaryApp() {
                     <span class="font-mono text-[10px] text-[#444]">{{ Auth::user()->email }}</span>
                 </p>
             </div>
-            <select id="fleet-selector"
+            <select id="vehicle-selector"
                 class="bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl px-4 py-2.5 text-[10px] font-bold text-[#888] focus:ring-1 focus:ring-blue-500/50 outline-none appearance-none cursor-pointer pr-10">
-                @foreach($fleets as $f)
-                    <option value="{{ $f->id }}" {{ $fleet->id === $f->id ? 'selected' : '' }}>
-                        {{ $f->vehicle?->plate_number }} — {{ $f->vehicle?->brand }} {{ $f->vehicle?->model }}
+                @foreach($vehicles as $v)
+                    <option value="{{ $v->id }}" {{ $vehicle->id === $v->id ? 'selected' : '' }}>
+                        {{ $v->plate_number }} — {{ $v->brand }} {{ $v->model }}
                     </option>
                 @endforeach
             </select>
         </div>
 
-        <!-- ── Mobile Fleet Selector ── -->
+        <!-- ── Mobile Vehicle Selector ── -->
         <div class="lg:hidden mb-5">
-            <select id="fleet-selector"
+            <select id="vehicle-selector"
                 class="w-full bg-[#161616] border border-[#222] rounded-xl px-4 py-2.5 text-[10px] font-bold text-[#888] focus:ring-1 focus:ring-blue-500/50 outline-none appearance-none cursor-pointer pr-10">
-                @foreach($fleets as $f)
-                    <option value="{{ $f->id }}" {{ $fleet->id === $f->id ? 'selected' : '' }}>
-                        {{ $f->vehicle?->plate_number }} — {{ $f->vehicle?->brand }} {{ $f->vehicle?->model }}
+                @foreach($vehicles as $v)
+                    <option value="{{ $v->id }}" {{ $vehicle->id === $v->id ? 'selected' : '' }}>
+                        {{ $v->plate_number }} — {{ $v->brand }} {{ $v->model }}
                     </option>
                 @endforeach
             </select>
@@ -171,24 +169,24 @@ function summaryApp() {
                         <i class="fa-solid fa-car text-[#555] text-sm"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm sm:text-base font-black tracking-tight">{{ $fleet->vehicle?->year }} {{ $fleet->vehicle?->brand }} {{ $fleet->vehicle?->model }}</h3>
+                        <h3 class="text-sm sm:text-base font-black tracking-tight">{{ $vehicle->year }} {{ $vehicle->brand }} {{ $vehicle->model }}</h3>
                         <div class="flex items-center gap-2 mt-1">
-                            <span class="font-mono text-[9px] text-[#555] bg-[#111] border border-[#1e1e1e] px-1.5 py-0.5 rounded-md">{{ $fleet->vehicle?->plate_number }}</span>
-                            @if($fleet->vehicle?->status === 'active')
+                            <span class="font-mono text-[9px] text-[#555] bg-[#111] border border-[#1e1e1e] px-1.5 py-0.5 rounded-md">{{ $vehicle->plate_number }}</span>
+                            @if($vehicle->status === 'active')
                                 <span class="inline-flex items-center gap-1 text-[8px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>Active
                                 </span>
-                            @elseif($fleet->vehicle?->status === 'maintenance')
+                            @elseif($vehicle->status === 'maintenance')
                                 <span class="inline-flex items-center gap-1 text-[8px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
                                     <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>Maintenance
                                 </span>
-                            @elseif($fleet->vehicle?->status === 'inactive')
+                            @elseif($vehicle->status === 'inactive')
                                 <span class="inline-flex items-center gap-1 text-[8px] font-bold text-rose-400/70 bg-rose-500/[0.06] px-2 py-0.5 rounded-full border border-rose-500/10">
                                     <span class="w-1.5 h-1.5 rounded-full bg-rose-400/70"></span>Inactive
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-1 text-[8px] font-bold text-[#333] bg-[#111] px-2 py-0.5 rounded-full border border-[#1e1e1e]">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-[#333]"></span>{{ ucfirst($fleet->vehicle?->status ?? '') }}
+                                    <span class="w-1.5 h-1.5 rounded-full bg-[#333]"></span>{{ ucfirst($vehicle->status ?? '') }}
                                 </span>
                             @endif
                         </div>
@@ -196,40 +194,40 @@ function summaryApp() {
                 </div>
                 <div class="sm:text-right">
                     <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#333] block">Last updated</span>
-                    <span class="text-[10px] font-bold text-[#555]">{{ $fleet->vehicle?->updated_at?->format('M d, Y') }}</span>
+                    <span class="text-[10px] font-bold text-[#555]">{{ $vehicle->updated_at?->format('M d, Y') }}</span>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-3 pt-4 border-t border-[#1e1e1e]">
                 <div>
                     <span class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#333] block mb-1">Fuel Type</span>
-                    <span class="text-[10px] font-bold text-[#888]">{{ $fleet->vehicle?->fuel_type ?? '—' }}</span>
+                    <span class="text-[10px] font-bold text-[#888]">{{ $vehicle->fuel_type ?? '—' }}</span>
                 </div>
                 <div>
                     <span class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#333] block mb-1">Tank Capacity</span>
-                    <span class="text-[10px] font-bold text-[#888]">{{ $fleet->vehicle?->tank_capacity ? $fleet->vehicle->tank_capacity . ' L' : '—' }}</span>
+                    <span class="text-[10px] font-bold text-[#888]">{{ $vehicle->tank_capacity ? $vehicle->tank_capacity . ' L' : '—' }}</span>
                 </div>
                 <div>
                     <span class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#333] block mb-1">Driver</span>
-                    <span class="text-[10px] font-bold text-[#888]">{{ $fleet->vehicle?->driver?->name ?? 'Unassigned' }}</span>
+                    <span class="text-[10px] font-bold text-[#888]">{{ $vehicle->driver?->name ?? 'Unassigned' }}</span>
                 </div>
                 <div>
                     <span class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#333] block mb-1">Location</span>
-                    <span class="text-[10px] font-bold text-[#888]">{{ $fleet->vehicle?->location ?? '—' }}</span>
+                    <span class="text-[10px] font-bold text-[#888]">{{ $vehicle->location ?? '—' }}</span>
                 </div>
                 <div>
                     <span class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#333] block mb-1">Acquired</span>
-                    <span class="text-[10px] font-bold text-[#555]">{{ $fleet->vehicle?->acquistion_date ? $fleet->vehicle->acquistion_date->format('M d, Y') : '—' }}</span>
+                    <span class="text-[10px] font-bold text-[#555]">{{ $vehicle->acquistion_date ? $vehicle->acquistion_date->format('M d, Y') : '—' }}</span>
                 </div>
                 <div>
                     <span class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#333] block mb-1">Disposal</span>
-                    <span class="text-[10px] font-bold text-[#555]">{{ $fleet->vehicle?->exp_disposal_date ? $fleet->vehicle->exp_disposal_date->format('M d, Y') : '—' }}</span>
+                    <span class="text-[10px] font-bold text-[#555]">{{ $vehicle->exp_disposal_date ? $vehicle->exp_disposal_date->format('M d, Y') : '—' }}</span>
                 </div>
             </div>
 
             <div class="flex items-center gap-2 mt-3 pt-3 border-t border-[#1e1e1e]">
                 <span class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">VIN</span>
-                <span class="font-mono text-[9px] text-[#444]">{{ $fleet->vehicle?->vin ?? '—' }}</span>
+                <span class="font-mono text-[9px] text-[#444]">{{ $vehicle->vin ?? '—' }}</span>
             </div>
         </div>
 
@@ -469,7 +467,6 @@ function summaryApp() {
                             </div>
                             <div class="p-4 sm:p-6 space-y-4">
 
-                                <!-- 10,000 Km -->
                                 <div class="p-4 rounded-xl bg-[#111] border border-[#1e1e1e]">
                                     <div class="flex items-center gap-2.5 mb-3">
                                         <div class="w-5 h-5 rounded-md bg-blue-500/15 border border-blue-500/25 flex items-center justify-center">
@@ -486,7 +483,6 @@ function summaryApp() {
                                     </div>
                                 </div>
 
-                                <!-- 20,000 Km -->
                                 <div class="p-4 rounded-xl bg-[#111] border border-[#1e1e1e]">
                                     <div class="flex items-center gap-2.5 mb-3">
                                         <div class="w-5 h-5 rounded-md bg-amber-500/15 border border-amber-500/25 flex items-center justify-center">
@@ -503,7 +499,6 @@ function summaryApp() {
                                     </div>
                                 </div>
 
-                                <!-- 30,000 Km -->
                                 <div class="p-4 rounded-xl bg-[#111] border border-[#1e1e1e]">
                                     <div class="flex items-center gap-2.5 mb-3">
                                         <div class="w-5 h-5 rounded-md bg-blue-500/15 border border-blue-500/25 flex items-center justify-center">
@@ -520,7 +515,6 @@ function summaryApp() {
                                     </div>
                                 </div>
 
-                                <!-- 50,000 Km -->
                                 <div class="p-4 rounded-xl bg-[#111] border border-rose-500/10">
                                     <div class="flex items-center gap-2.5 mb-3">
                                         <div class="w-5 h-5 rounded-md bg-rose-500/15 border border-rose-500/25 flex items-center justify-center">
@@ -602,6 +596,7 @@ function summaryApp() {
                                                             <i class="fa-solid fa-clipboard-list text-sm text-[#333]"></i>
                                                         </div>
                                                         <p class="text-[10px] sm:text-[11px] text-[#444] font-medium">No maintenance logs recorded yet</p>
+                                                        <p class="text-[8px] text-[#333] mt-0.5">Logs will appear here once preventive maintenance is logged</p>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -618,7 +613,8 @@ function summaryApp() {
             <!-- ══════════ RIGHT COLUMN ══════════ -->
             <div class="xl:col-span-4 flex flex-col gap-5 sm:gap-6">
 
-                <!-- ── Cost Breakdown Donut ── -->
+                <!-- ── Donut Chart ── -->
+                @if($donutTotal > 0)
                 <div class="glass-card p-4 sm:p-6 rounded-[1.25rem] sm:rounded-[1.5rem]">
                     <div class="flex items-center gap-2.5 mb-5">
                         <div class="w-7 h-7 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center">
@@ -626,107 +622,70 @@ function summaryApp() {
                         </div>
                         <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Cost Breakdown</span>
                     </div>
-                    @if($donutTotal > 0)
-                    <div class="flex items-center justify-center mb-5">
-                        <div class="relative" style="width: 160px; height: 160px;">
-                            <canvas id="donutChart"></canvas>
-                            <div class="donut-center text-center">
-                                <p class="text-[10px] font-black text-white">₱{{ number_format($donutTotal, 0) }}</p>
-                                <p class="text-[7px] font-bold uppercase tracking-[0.15em] text-[#444]">Total</p>
-                            </div>
+                    <div class="relative mx-auto" style="width: 200px; height: 200px;">
+                        <canvas id="donutChart"></canvas>
+                        <div class="donut-center text-center">
+                            <span class="text-[9px] text-[#333] uppercase font-bold block">Total</span>
+                            <span class="text-sm font-black text-white">₱{{ number_format($donutTotal, 2) }}</span>
                         </div>
                     </div>
-                    <div class="space-y-1.5 max-h-[200px] overflow-y-auto">
-                        @php
-                            $catColors = ['#3b82f6', '#10b981', '#a855f7', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1'];
-                        @endphp
+                    <div class="mt-4 space-y-1.5 max-h-48 overflow-y-auto">
                         @foreach($donutLabels as $idx => $label)
-                            <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#111] border border-[#1e1e1e]">
-                                <div class="flex items-center gap-2.5 min-w-0">
-                                    <div class="w-2.5 h-2.5 rounded-sm shrink-0" style="background: {{ $catColors[$idx % count($catColors)] }}"></div>
-                                    <span class="text-[8px] sm:text-[9px] font-bold text-[#666] uppercase truncate">{{ $label }}</span>
-                                </div>
-                                <div class="flex items-center gap-2 shrink-0 ml-2">
-                                    <span class="text-[9px] sm:text-[10px] font-bold text-[#ccc]">₱{{ number_format($donutData[$idx], 0) }}</span>
-                                    <span class="text-[7px] font-bold text-[#333] w-10 text-right">{{ $donutTotal > 0 ? round(($donutData[$idx] / $donutTotal) * 100, 0) : 0 }}%</span>
-                                </div>
+                            @php
+                                $colors = [
+                                    'text-blue-400 bg-blue-500/10 border-blue-500/15',
+                                    'text-emerald-400 bg-emerald-500/10 border-emerald-500/15',
+                                    'text-amber-400 bg-amber-500/10 border-amber-500/15',
+                                    'text-purple-400 bg-purple-500/10 border-purple-500/15',
+                                    'text-rose-400 bg-rose-500/10 border-rose-500/15',
+                                    'text-cyan-400 bg-cyan-500/10 border-cyan-500/15',
+                                ];
+                                $colorClass = $colors[$idx % count($colors)];
+                            @endphp
+                            <div class="flex items-center justify-between px-3 py-2 rounded-lg {{ $colorClass }}">
+                                <span class="text-[9px] font-bold truncate max-w-[120px]">{{ $label }}</span>
+                                <span class="text-[9px] font-mono font-bold ml-2 shrink-0">₱{{ number_format($donutData[$idx], 2) }}</span>
                             </div>
                         @endforeach
                     </div>
-                    @else
+                </div>
+                @else
+                <div class="glass-card p-4 sm:p-6 rounded-[1.25rem] sm:rounded-[1.5rem]">
+                    <div class="flex items-center gap-2.5 mb-5">
+                        <div class="w-7 h-7 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center">
+                            <i class="fa-solid fa-chart-pie text-[9px] text-[#555]"></i>
+                        </div>
+                        <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Cost Breakdown</span>
+                    </div>
                     <div class="flex flex-col items-center justify-center py-8">
                         <div class="w-10 h-10 rounded-xl bg-[#111] border border-[#1e1e1e] flex items-center justify-center mb-2.5">
                             <i class="fa-solid fa-chart-pie text-sm text-[#333]"></i>
                         </div>
                         <p class="text-[10px] text-[#444] font-medium">No cost data for {{ $year }}</p>
                     </div>
-                    @endif
-                </div>
-
-                <!-- ── Cost Category Horizontal Bar ── -->
-                @if($donutTotal > 0)
-                <div class="glass-card p-4 sm:p-6 rounded-[1.25rem] sm:rounded-[1.5rem]">
-                    <div class="flex items-center gap-2.5 mb-5">
-                        <div class="w-7 h-7 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center">
-                            <i class="fa-solid fa-bars-staggered text-[9px] text-[#555]"></i>
-                        </div>
-                        <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Category Ranking</span>
-                    </div>
-                    <div class="relative" style="height: {{ max(120, count($donutLabels) * 36) }}px;">
-                        <canvas id="categoryChart"></canvas>
-                    </div>
-                </div>
                 @endif
 
-                <!-- ── Quick Actions ── -->
+                <!-- ── Odometer Info ── -->
                 <div class="glass-card p-4 sm:p-6 rounded-[1.25rem] sm:rounded-[1.5rem]">
-                    <div class="flex items-center gap-2.5 mb-4 sm:mb-5">
+                    <div class="flex items-center gap-2.5 mb-4">
                         <div class="w-7 h-7 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center">
-                            <i class="fa-solid fa-gears text-[9px] text-[#555]"></i>
+                            <i class="fa-solid fa-gauge text-[9px] text-[#555]"></i>
                         </div>
-                        <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Quick Actions</span>
+                        <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Odometer Reading</span>
                     </div>
-                    <div class="space-y-2">
-                        <a href="{{ route('maintenance-manager.fleet-inventory') }}" class="flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-[#111] border border-[#1e1e1e] hover:bg-[#1a1a1a] hover:border-[#333] transition group cursor-pointer">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/15 flex items-center justify-center">
-                                    <i class="fa-solid fa-car text-[9px] text-blue-400"></i>
-                                </div>
-                                <div>
-                                    <span class="text-[10px] font-bold text-[#888] group-hover:text-white transition block">Fleet Inventory</span>
-                                    <span class="text-[7px] text-[#333] font-bold uppercase">View all vehicles</span>
-                                </div>
-                            </div>
-                            <i class="fa-solid fa-chevron-right text-[8px] text-[#333] group-hover:text-[#555] transition"></i>
-                        </a>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-3.5 rounded-xl bg-[#111] border border-[#1e1e1e]">
+                            <span class="text-[7px] text-[#333] uppercase font-bold block mb-1">Year Start</span>
+                            <span class="text-[11px] text-white font-bold font-mono">{{ $yearStartOdo !== null ? number_format($yearStartOdo) : '—' }}</span>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-[#111] border border-[#1e1e1e]">
+                            <span class="text-[7px] text-[#333] uppercase font-bold block mb-1">Current</span>
+                            <span class="text-[11px] text-emerald-400 font-bold font-mono">{{ $yearEndOdo ? number_format($yearEndOdo) : '—' }}</span>
+                        </div>
                     </div>
-                </div>
-
-                <!-- ── Vehicle Specs Summary ── -->
-                <div class="glass-card p-4 sm:p-6 rounded-[1.25rem] sm:rounded-[1.5rem]">
-                    <div class="flex items-center gap-2.5 mb-4 sm:mb-5">
-                        <div class="w-7 h-7 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center">
-                            <i class="fa-solid fa-info-circle text-[9px] text-[#555]"></i>
-                        </div>
-                        <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Vehicle Specs</span>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-[#111] border border-[#1e1e1e]">
-                            <span class="text-[9px] font-bold text-[#555] uppercase">Plate Number</span>
-                            <span class="font-mono text-[10px] font-bold text-[#888]">{{ $fleet->vehicle?->plate_number ?? '—' }}</span>
-                        </div>
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-[#111] border border-[#1e1e1e]">
-                            <span class="text-[9px] font-bold text-[#555] uppercase">VIN</span>
-                            <span class="font-mono text-[10px] font-bold text-[#888] truncate max-w-[160px]">{{ $fleet->vehicle?->vin ?? '—' }}</span>
-                        </div>
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-[#111] border border-[#1e1e1e]">
-                            <span class="text-[9px] font-bold text-[#555] uppercase">Driver</span>
-                            <span class="text-[10px] font-bold text-[#888] truncate max-w-[160px]">{{ $fleet->vehicle?->driver?->name ?? 'Unassigned' }}</span>
-                        </div>
-                        <div class="flex items-center justify-between p-3 rounded-xl bg-[#111] border border-[#1e1e1e]">
-                            <span class="text-[9px] font-bold text-[#555] uppercase">Location</span>
-                            <span class="text-[10px] font-bold text-[#888] truncate max-w-[160px]">{{ $fleet->vehicle?->location ?? '—' }}</span>
-                        </div>
+                    <div class="mt-3 pt-3 border-t border-[#1e1e1e] flex justify-between">
+                        <span class="text-[8px] text-[#333] uppercase font-bold">Annual Distance</span>
+                        <span class="text-[10px] text-white font-black font-mono">{{ number_format($annualKm) }} km</span>
                     </div>
                 </div>
 
@@ -734,7 +693,7 @@ function summaryApp() {
         </div>
 
         @endif
-
+        </div>
     </main>
 
     <!-- ══════════ LOGOUT MODAL ══════════ -->
@@ -752,7 +711,6 @@ function summaryApp() {
                 </div>
                 <h3 class="text-lg font-bold text-white mb-1.5">End Session?</h3>
                 <p class="text-xs text-[#666] mb-7">Are you sure you want to exit the Maintenance Console?</p>
-
                 <div class="flex gap-2.5">
                     <button @click="showLogoutModal = false"
                         class="flex-1 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] transition">
@@ -770,184 +728,90 @@ function summaryApp() {
         </div>
     </div>
 
-    <!-- ══════════ CHART INITIALIZATION ══════════ -->
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-
-            Chart.defaults.font.family = "'Inter', sans-serif";
-            Chart.defaults.color = '#444';
-
-            const tooltipStyle = {
-                backgroundColor: '#111',
-                borderColor: '#1e1e1e',
-                borderWidth: 1,
-                titleColor: '#ccc',
-                titleFont: { size: 10, weight: '700' },
-                bodyColor: '#888',
-                bodyFont: { size: 10, weight: '600' },
-                padding: 10,
-                cornerRadius: 10,
-                displayColors: true,
-                boxPadding: 4
-            };
-
-            // ══════════ MONTHLY COST BAR CHART ══════════
-            const monthlyCtx = document.getElementById('monthlyCostChart');
-            if (monthlyCtx) {
-                new Chart(monthlyCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: @json($chartMonthLabels),
-                        datasets: [
-                            {
-                                label: 'Maintenance Cost',
-                                data: @json($chartMonthlyData),
-                                backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                                hoverBackgroundColor: 'rgba(59, 130, 246, 0.9)',
-                                borderRadius: 5,
-                                borderSkipped: false,
-                                barPercentage: 0.6,
-                                categoryPercentage: 0.7
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        interaction: { mode: 'index', intersect: false },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                ...tooltipStyle,
-                                callbacks: {
-                                    label: function (ctx) {
-                                        return ' Cost:  ₱' + ctx.parsed.y.toLocaleString('en-PH', { minimumFractionDigits: 2 });
-                                    }
-                                }
-                            }
+    document.addEventListener('DOMContentLoaded', function () {
+        // Monthly cost bar chart
+        const ctx = document.getElementById('monthlyCostChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: {{ Js::from($chartMonthLabels) }},
+                    datasets: [{
+                        label: 'Cost (₱)',
+                        data: {{ Js::from($chartMonthlyData) }},
+                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                        borderColor: 'rgba(59, 130, 246, 0.8)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#333', font: { size: 8, weight: '700' } },
+                            border: { display: false },
                         },
-                        scales: {
-                            x: {
-                                grid: { color: '#1a1a1a', drawBorder: false },
-                                ticks: { font: { size: 9, weight: '600' }, color: '#444' },
-                                border: { display: false }
+                        y: {
+                            grid: { color: '#1a1a1a' },
+                            ticks: {
+                                color: '#555',
+                                font: { size: 8, weight: '700' },
+                                callback: function(v) { return '₱' + Number(v).toLocaleString(); }
                             },
-                            y: {
-                                beginAtZero: true,
-                                grid: { color: '#1a1a1a', drawBorder: false },
-                                ticks: {
-                                    font: { size: 9, weight: '600' },
-                                    color: '#333',
-                                    callback: function (val) { return '₱' + val; },
-                                    maxTicksLimit: 5
-                                },
-                                border: { display: false }
-                            }
+                            border: { display: false },
                         }
                     }
-                });
-            }
+                }
+            });
+        }
 
-            // ══════════ COST BREAKDOWN DONUT ══════════
-            const donutCtx = document.getElementById('donutChart');
-            if (donutCtx && @json($donutTotal) > 0) {
-                const catColors = ['#3b82f6', '#10b981', '#a855f7', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1'];
-
-                new Chart(donutCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: @json($donutLabels),
-                        datasets: [{
-                            data: @json($donutData),
-                            backgroundColor: catColors.slice(0, @json(count($donutLabels))),
-                            hoverBackgroundColor: catColors.slice(0, @json(count($donutLabels))).map(c => c + 'dd'),
-                            borderColor: '#161616',
-                            borderWidth: 3,
-                            borderRadius: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '72%',
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                ...tooltipStyle,
-                                callbacks: {
-                                    label: function (ctx) {
-                                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                                        const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
-                                        return ' ' + ctx.label + ':  ₱' + ctx.parsed.toLocaleString('en-PH', { minimumFractionDigits: 2 }) + ' (' + pct + '%)';
-                                    }
+        // Donut chart
+        const donutCtx = document.getElementById('donutChart');
+        if (donutCtx && {{ Js::from($donutTotal) }} > 0) {
+            new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: {{ Js::from($donutLabels) }},
+                    datasets: [{
+                        data: {{ Js::from($donutData) }},
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(251, 146, 60, 0.7)',
+                            'rgba(168, 85, 247, 0.7)',
+                            'rgba(244, 63, 94, 0.7)',
+                            'rgba(45, 212, 191, 0.7)',
+                        ],
+                        borderColor: '#161616',
+                        borderWidth: 2,
+                        hoverOffset: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ctx.label + ': ₱' + Number(ctx.parsed).toLocaleString(undefined, { minimumFractionDigits: 2 });
                                 }
                             }
                         }
                     }
-                });
-            }
-
-            // ══════════ CATEGORY RANKING HORIZONTAL BAR ══════════
-            const catCtx = document.getElementById('categoryChart');
-            if (catCtx && @json($donutTotal) > 0) {
-                const catColors = ['#3b82f6', '#10b981', '#a855f7', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1'];
-                const labels = @json($donutLabels);
-                const data = @json($donutData);
-
-                // Sort by value descending for ranking
-                const paired = labels.map((l, i) => ({ label: l, value: data[i], color: catColors[i % catColors.length] }));
-                paired.sort((a, b) => b.value - a.value);
-
-                new Chart(catCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: paired.map(p => p.label.length > 18 ? p.label.substring(0, 18) + '…' : p.label),
-                        datasets: [{
-                            data: paired.map(p => p.value),
-                            backgroundColor: paired.map(p => p.color + 'b3'),
-                            hoverBackgroundColor: paired.map(p => p.color),
-                            borderRadius: 4,
-                            borderSkipped: false,
-                            barPercentage: 0.55
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                ...tooltipStyle,
-                                callbacks: {
-                                    title: function (items) {
-                                        return paired[items[0].dataIndex].label;
-                                    },
-                                    label: function (ctx) {
-                                        return ' ₱' + ctx.parsed.x.toLocaleString('en-PH', { minimumFractionDigits: 2 });
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                beginAtZero: true,
-                                grid: { color: '#1a1a1a', drawBorder: false },
-                                ticks: { font: { size: 9, weight: '600' }, color: '#333', callback: function(v) { return '₱' + v; } },
-                                border: { display: false }
-                            },
-                            y: {
-                                grid: { display: false },
-                                ticks: { font: { size: 8, weight: '700' }, color: '#555' },
-                                border: { display: false }
-                            }
-                        }
-                    }
-                });
-            }
-        });
+                }
+            });
+        }
+    });
     </script>
 
 </body>
-
 </html>
