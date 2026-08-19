@@ -56,13 +56,17 @@ class MaintenanceManagerController extends Controller
             'comments' => 'nullable|string|max:500',
         ]);
 
-        PreventiveMaintenance::updateOrCreate(
+        $maintenance = PreventiveMaintenance::updateOrCreate(
             [
                 'vehicle_id' => $validated['vehicle_id'],
                 'task_id' => $validated['task_id'],
             ],
             $validated
         );
+
+        VehicleMaintenanceLog::create([
+            'maintenance_id' => $maintenance->id,
+        ]);
 
         return back()->with('success', 'Preventive maintenance logged successfully!');
     }
@@ -76,9 +80,11 @@ class MaintenanceManagerController extends Controller
             ])
             ->toArray();
 
-        $logs = PreventiveMaintenance::with(['vehicle', 'maintenanceTask'])
-            ->when(request('vehicle'), fn($q, $vehicle) => $q->where('vehicle_id', $vehicle))
-            ->orderBy('last_service_date', 'desc')
+        $logs = VehicleMaintenanceLog::with(['preventiveMaintenance.vehicle', 'preventiveMaintenance.maintenanceTask'])
+            ->when(request('vehicle'), function ($q, $vehicle) {
+                $q->whereHas('preventiveMaintenance', fn($pq) => $pq->where('vehicle_id', $vehicle));
+            })
+            ->orderByDesc('created_at')
             ->paginate(10)
             ->withQueryString();
 

@@ -88,8 +88,8 @@
     <main :class="open ? 'md:ml-72' : 'md:ml-20'" class="sidebar-transition pt-8 pr-4 sm:pr-8 pb-8 pl-4 sm:pl-8 min-h-screen mb-12">
 
         @php
-            $totalCost = $logs->sum('last_service_cost');
-            $uniqueVehicles = $logs->pluck('vehicle_id')->unique()->count();
+            $totalCost = $logs->sum(fn($log) => (float) ($log->preventiveMaintenance?->last_service_cost ?? 0));
+            $uniqueVehicles = $logs->pluck('preventiveMaintenance.vehicle_id')->filter()->unique()->count();
         @endphp
 
         <!-- ── Mobile: Identity Card ── -->
@@ -224,7 +224,8 @@
                     <tbody class="divide-y divide-[#1a1a1a]">
                         @forelse($logs as $log)
                             @php
-                                $plate = $log->vehicle?->plate_number ?? 'N/A';
+                                $pm = $log->preventiveMaintenance;
+                                $plate = $pm?->vehicle?->plate_number ?? 'N/A';
 
                                 $badgeColors = [
                                     ['bg' => 'rgba(59,130,246,0.08)',  'text' => '#60a5fa', 'border' => 'rgba(59,130,246,0.2)'],
@@ -240,8 +241,8 @@
 
                             <tr class="table-row">
                                 <td class="px-4 sm:px-6 py-3.5">
-                                    <span class="text-[10px] sm:text-[11px] font-bold text-[#888] block">{{ $log->last_service_date?->format('M d, Y') ?? '—' }}</span>
-                                    <span class="text-[7px] sm:text-[8px] text-[#333] font-bold uppercase">{{ $log->last_service_date?->format('l') ?? '' }}</span>
+                                    <span class="text-[10px] sm:text-[11px] font-bold text-[#888] block">{{ $pm?->last_service_date?->format('M d, Y') ?? '—' }}</span>
+                                    <span class="text-[7px] sm:text-[8px] text-[#333] font-bold uppercase">{{ $pm?->last_service_date?->format('l') ?? '' }}</span>
                                 </td>
 
                                 <td class="px-4 sm:px-6 py-3.5">
@@ -257,20 +258,20 @@
                                         <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center shrink-0">
                                             <i class="fa-solid fa-check text-[8px] text-emerald-400"></i>
                                         </div>
-                                        <p class="text-[10px] sm:text-[11px] font-bold text-[#ccc] truncate max-w-[220px]">{{ $log->maintenanceTask?->tasks_performed ?? '—' }}</p>
+                                        <p class="text-[10px] sm:text-[11px] font-bold text-[#ccc] truncate max-w-[220px]">{{ $pm?->maintenanceTask?->tasks_performed ?? '—' }}</p>
                                     </div>
                                 </td>
 
                                 <td class="px-4 sm:px-6 py-3.5">
-                                    <span class="text-[10px] sm:text-[11px] font-bold text-[#666] font-mono">{{ $log->last_service_odo ? number_format($log->last_service_odo) . ' km' : '—' }}</span>
+                                    <span class="text-[10px] sm:text-[11px] font-bold text-[#666] font-mono">{{ $pm?->last_service_odo ? number_format($pm->last_service_odo) . ' km' : '—' }}</span>
                                 </td>
 
                                 <td class="px-4 sm:px-6 py-3.5 text-right">
-                                    <span class="text-[10px] sm:text-[11px] font-bold text-white font-mono">₱{{ $log->last_service_cost ? number_format($log->last_service_cost, 2) : '0.00' }}</span>
+                                    <span class="text-[10px] sm:text-[11px] font-bold text-white font-mono">₱{{ $pm?->last_service_cost ? number_format($pm->last_service_cost, 2) : '0.00' }}</span>
                                 </td>
 
                                 <td class="px-4 sm:px-6 py-3.5">
-                                    <span class="text-[9px] sm:text-[10px] text-[#444] truncate block max-w-[180px]" title="{{ $log->comments ?? '' }}">{{ $log->comments ?? '—' }}</span>
+                                    <span class="text-[9px] sm:text-[10px] text-[#444] truncate block max-w-[180px]" title="{{ $pm?->comments ?? '' }}">{{ $pm?->comments ?? '—' }}</span>
                                 </td>
                             </tr>
                         @empty

@@ -63,4 +63,9 @@ class PreventiveMaintenance extends Model
     {
         return $this->belongsTo(MaintenanceTask::class, 'task_id');
     }
+
+    public function vehicleMaintenanceLog()
+    {
+        return $this->hasMany(VehicleMaintenanceLog::class);
+    }
 }

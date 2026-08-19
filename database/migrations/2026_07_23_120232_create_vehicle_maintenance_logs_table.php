@@ -14,14 +14,7 @@ return new class extends Migration {
     {
         Schema::create('vehicle_maintenance_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('vehicle_id')->constrained('vehicles')->cascadeOnDelete();
-            $table->foreignId('maintenance_task_id')->constrained('maintenance_tasks')->cascadeOnDelete();
-            $table->date('service_date')->nullable();
-            $table->integer('mileage_at_service')->nullable();
-            $table->string('performed_by')->nullable();
-            $table->decimal('cost', 15, 2)->nullable();
-            $table->string('invoice_number')->nullable();
-            $table->string('remarks')->nullable();
+            $table->foreignId('maintenance_id')->constrained('preventive_maintenances')->cascadeOnDelete();
             $table->timestamps();
         });
     }

@@ -46,29 +46,42 @@ class VehicleMaintenanceLog extends Model
     use HasFactory;
 
     protected $fillable = [
-        'vehicle_id',
-        'maintenance_task_id',
-        'service_date',
-        'mileage_at_service',
-        'performed_by',
-        'cost',
-        'invoice_number',
-        'remarks',
+        'maintenance_id',
     ];
 
-    protected $casts = [
-        'service_date' => 'date',
-        'cost' => 'decimal:2',
-        'mileage_at_service' => 'integer',
-    ];
-
-    public function vehicle()
+    public function preventiveMaintenance()
     {
-        return $this->belongsTo(Vehicle::class);
+        return $this->belongsTo(PreventiveMaintenance::class, 'maintenance_id');
     }
 
-    public function maintenanceTask()
+    // ── Proxy accessors ──
+    public function getVehicleAttribute()
     {
-        return $this->belongsTo(MaintenanceTask::class);
+        return $this->preventiveMaintenance?->vehicle;
+    }
+
+    public function getMaintenanceTaskAttribute()
+    {
+        return $this->preventiveMaintenance?->maintenanceTask;
+    }
+
+    public function getLastServiceDateAttribute()
+    {
+        return $this->preventiveMaintenance?->last_service_date;
+    }
+
+    public function getLastServiceOdoAttribute()
+    {
+        return $this->preventiveMaintenance?->last_service_odo;
+    }
+
+    public function getLastServiceCostAttribute()
+    {
+        return $this->preventiveMaintenance?->last_service_cost;
+    }
+
+    public function getCommentsAttribute()
+    {
+        return $this->preventiveMaintenance?->comments;
     }
 }

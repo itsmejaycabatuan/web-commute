@@ -315,6 +315,8 @@ class UserController extends Controller
 
             $year = now()->year;
 
+            // ── Cost Summary ──
+
             $yearLogs = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
                 ->with('maintenanceTask')
                 ->whereYear('last_service_date', $year)
@@ -343,6 +345,8 @@ class UserController extends Controller
             ksort($costSummary);
             $costSummary = collect($costSummary);
 
+            // ── All Logs (for recent activity table) ──
+
             $allLogs = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
                 ->with('maintenanceTask')
                 ->orderByDesc('last_service_date')
@@ -360,44 +364,55 @@ class UserController extends Controller
 
             $totalServiceCost = $ytdTotal;
 
-            $allOrderedLogs = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
+            // ── Odometer & KM Calculation (year-scoped) ──
+
+            $yearLogsOrdered = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
+                ->whereYear('last_service_date', $year)
                 ->whereNotNull('last_service_odo')
                 ->whereNotNull('last_service_date')
                 ->orderBy('last_service_date')
                 ->get();
 
+            $prevYearLog = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
+                ->whereNotNull('last_service_odo')
+                ->where('last_service_date', '<', "{$year}-01-01")
+                ->orderByDesc('last_service_date')
+                ->first();
+
+            $annualStartingOdo = $prevYearLog?->last_service_odo;
+
             $monthlyKm = array_fill(1, 12, 0);
             $monthlyStartOdo = array_fill(1, 12, null);
             $monthlyEndOdo = array_fill(1, 12, null);
             $monthlyCpk = array_fill(1, 12, null);
-            $runningOdo = null;
 
-            $firstLogOfYear = $allOrderedLogs->first(fn($l) => $l->last_service_date && $l->last_service_date->year === $year);
-            $annualStartingOdo = 0;
-            if ($firstLogOfYear) {
-                $prevLog = $allOrderedLogs->where('id', '<', $firstLogOfYear->id)->last();
-                $annualStartingOdo = $prevLog ? $prevLog->last_service_odo : 0;
+            $boundaryOdo = $annualStartingOdo;
+
+            foreach ($yearLogsOrdered as $log) {
+                $m = $log->last_service_date->month;
+
+                if ($monthlyStartOdo[$m] === null) {
+                    $monthlyStartOdo[$m] = $boundaryOdo;
+                }
+
+                $monthlyEndOdo[$m] = $log->last_service_odo;
+                $boundaryOdo = $log->last_service_odo;
             }
 
-            foreach ($allOrderedLogs as $log) {
-                $m = $log->last_service_date->month;
-                $monthlyStartOdo[$m] ??= $runningOdo;
-                $monthlyEndOdo[$m] = $log->last_service_odo;
-
-                $baseline = $monthlyStartOdo[$m] ?? $annualStartingOdo;
-
-                if ($baseline !== null) {
-                    $delta = $log->last_service_odo - $baseline;
-                    if ($delta > 0) {
-                        $monthlyKm[$m] += $delta;
+            for ($m = 1; $m <= 12; $m++) {
+                if ($monthlyStartOdo[$m] !== null && $monthlyEndOdo[$m] !== null) {
+                    $km = $monthlyEndOdo[$m] - $monthlyStartOdo[$m];
+                    if ($km > 0) {
+                        $monthlyKm[$m] = $km;
                     }
                 }
-                $runningOdo = $log->last_service_odo;
             }
 
-            $yearStartOdo = $monthlyStartOdo[1];
-            $yearEndOdo = $runningOdo;
-            $annualKm = array_sum($monthlyKm);
+            $yearStartOdo = $annualStartingOdo;
+            $yearEndOdo = $boundaryOdo;
+            $annualKm = ($annualStartingOdo !== null && $boundaryOdo !== null)
+                                ? $boundaryOdo - $annualStartingOdo
+                                : 0;
 
             for ($m = 1; $m <= 12; $m++) {
                 if ($monthlyKm[$m] > 0) {
