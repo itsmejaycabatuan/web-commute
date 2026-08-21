@@ -77,7 +77,7 @@
 <body class="antialiased" x-data="{ open: false, showLogoutModal: false }" @resize.window="if(window.innerWidth >= 768) open = true">
 
     @include('components.flash')
-    @include('driver-manager.layout.sidebar')
+    <x-layout.sidebar :menu-items="$sidebarMenu" />
 
     <main :class="open ? 'md:ml-72' : 'md:ml-20'" class="sidebar-transition pt-4 sm:pt-8 pr-3 sm:pr-8 pb-8 pl-3 sm:pl-8 min-h-screen mb-20 md:mb-12">
         <div class="max-w-3xl mx-auto">

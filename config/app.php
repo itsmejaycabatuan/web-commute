@@ -188,7 +188,6 @@ return [
         TranslationServiceProvider::class,
         ValidationServiceProvider::class,
         ViewServiceProvider::class,
-
         /*
          * Package Service Providers...
          */

@@ -30,7 +30,7 @@
 
 <body class="antialiased text-white" x-data="{ open: false, showLogoutModal: false }">
 
-    @include('driver.layout.sidebar')
+    <x-layout.sidebar />
 
     <main :class="open ? 'md:ml-72' : 'md:ml-20'" class="sidebar-transition pt-8 pr-4 sm:pr-8 pb-8 pl-4 sm:pl-8 min-h-screen mb-12">
 

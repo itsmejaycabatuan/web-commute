@@ -12,6 +12,7 @@ class CommuterController extends Controller
 {
     public function index()
     {
+
         $commuters = User::role('commuter')->orderByDesc('created_at')->get();
 
         return view('admin.commuters.index', compact('commuters'));

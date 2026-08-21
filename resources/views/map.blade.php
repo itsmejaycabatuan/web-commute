@@ -300,7 +300,7 @@
                     </a>
                 @endif
                 @if (Auth::check() && Auth::user()->roles[0]->name === 'admin')
-                    <a href="{{ route('admin.dashboard') }}">
+                    <a href="{{ route('dashboard') }}">
                         <div class="header-btn glass-panel px-4 h-9 py-2 rounded-xl text-white text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2">
                             <i class="fa-solid fa-shield text-[9px] text-purple-400"></i> <span class="hidden sm:inline">Dashboard</span>
                         </div>

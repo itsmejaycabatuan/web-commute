@@ -236,7 +236,7 @@ class PaymentController extends Controller
             $query->whereDate('created_at', '<=', $request->to_date);
         }
 
-        return view('admin.transactions', [
+        return view('admin.fares.transactions', [
             'allTransactions' => $query->latest()->paginate(5),
             'totalRevenue' => Payment::sum('price'),
             'activeUsersCount' => Payment::distinct('paid_by')->count(),

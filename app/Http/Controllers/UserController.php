@@ -156,7 +156,7 @@ class UserController extends Controller
             $activeUsersCount = Payment::distinct('paid_by')->count();
             $recentFares = Payment::with('user')->latest()->take(5)->get();
             $recentTopups = TopupHistory::with('user')->latest()->take(5)->get();
-            $revenueByDay = FareTransaction::where('created_at', '>=', now()->subDays(7))
+            $revenueByDay = Payment::where('created_at', '>=', now()->subDays(7))
                 ->selectRaw('DATE(created_at) as date, SUM(price) as total')
                 ->groupBy('date')->orderBy('date')->pluck('total', 'date')->toArray();
 
@@ -164,17 +164,14 @@ class UserController extends Controller
                 ->selectRaw('DATE(created_at) as date, SUM(amount_added) as total')
                 ->groupBy('date')->orderBy('date')->pluck('total', 'date')->toArray();
 
-            $inactiveUsersCount = User::where('is_active', false)->count();
-
             return view('admin.dashboard', [
                 'totalRevenue' => $totalRevenue,
                 'totalFundsAdded' => $totalFundsAdded,
-                'activeUsersCount' => $activeUsersCount, // Or your preferred logic
+                'activeUsersCount' => $activeUsersCount,
                 'recentFares' => $recentFares,
                 'recentTopups' => $recentTopups,
                 'revenueByDay' => $revenueByDay,
                 'topupsByDay' => $topupsByDay,
-                'inactiveUsersCount' => $inactiveUsersCount,
             ]);
         }
 

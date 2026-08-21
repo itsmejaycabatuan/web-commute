@@ -5,15 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartCommute | Manage PUJ Commuters</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
-        }
-    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    @include('partials.head-scripts');
+
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; overflow-x: hidden; background: #050505; }
         .glass-panel { background: #111111 !important; border: 1px solid #1e1e1e; box-shadow: 0 4px 24px rgba(0,0,0,0.6); }
@@ -42,61 +40,60 @@
     @json($mappedCommuters)
 </script>
 
-<body class="antialiased text-white" x-data="{
-    open: false,
-    search: '',
-    filter: 'all',
-    showAddModal: false,
-    showEditModal: false,
-    showDeleteModal: false,
-    selectedUser: null,
-    commuters: [],
+<body class="antialiased text-white" x-data>
+    <div x-data="{
+        search: '',
+        filter: 'all',
+        showAddModal: false,
+        showEditModal: false,
+        showDeleteModal: false,
+        selectedUser: null,
+        commuters: [],
 
-    init() {
-        try {
-            this.commuters = JSON.parse(document.getElementById('commuters-data').textContent);
-        } catch(e) {
-            this.commuters = [];
-        }
+        init() {
+            try {
+                this.commuters = JSON.parse(document.getElementById('commuters-data').textContent);
+            } catch(e) {
+                this.commuters = [];
+            }
 
-        @if($errors->any() && old('_form_type') === 'create')
-            this.showAddModal = true;
-        @endif
-        @if($errors->any() && old('_form_type') === 'edit')
-            this.selectedUser = {
-                id: {{ old('_edit_id', 0) }},
-                email: '{{ old('email', '') }}',
-                email_verified_at: {{ old('mark_verified') ? '"yes"' : 'null' }},
-                created_at: ''
-            };
+            @if($errors->any() && old('_form_type') === 'create')
+                this.showAddModal = true;
+            @endif
+            @if($errors->any() && old('_form_type') === 'edit')
+                this.selectedUser = {
+                    id: {{ old('_edit_id', 0) }},
+                    email: '{{ old('email', '') }}',
+                    email_verified_at: {{ old('mark_verified') ? '"yes"' : 'null' }},
+                    created_at: ''
+                };
+                this.showEditModal = true;
+            @endif
+        },
+
+        get filteredCommuters() {
+            return this.commuters.filter(c => {
+                const matchSearch = c.email.toLowerCase().includes(this.search.toLowerCase());
+                if (this.filter === 'all') return matchSearch;
+                if (this.filter === 'verified') return matchSearch && c.email_verified_at;
+                if (this.filter === 'pending') return matchSearch && !c.email_verified_at;
+                return matchSearch;
+            });
+        },
+
+        openEdit(user) {
+            this.selectedUser = { ...user };
             this.showEditModal = true;
-        @endif
-    },
+        },
 
-    get filteredCommuters() {
-        return this.commuters.filter(c => {
-            const matchSearch = c.email.toLowerCase().includes(this.search.toLowerCase());
-            if (this.filter === 'all') return matchSearch;
-            if (this.filter === 'verified') return matchSearch && c.email_verified_at;
-            if (this.filter === 'pending') return matchSearch && !c.email_verified_at;
-            return matchSearch;
-        });
-    },
+        openDelete(user) {
+            this.selectedUser = { ...user };
+            this.showDeleteModal = true;
+        }
+    }">
+    <x-layout.sidebar/>
 
-    openEdit(user) {
-        this.selectedUser = { ...user };
-        this.showEditModal = true;
-    },
-
-    openDelete(user) {
-        this.selectedUser = { ...user };
-        this.showDeleteModal = true;
-    }
-}">
-
-    @include('layout.sidebar')
-
-    <main :class="open ? 'md:ml-72' : 'md:ml-20'" class="sidebar-transition pt-8 pr-4 sm:pr-8 pb-8 pl-4 sm:pl-8 min-h-screen mb-12">
+    <main :class="$store.sidebar.open ? 'md:ml-72' : 'md:ml-20'" class="sidebar-transition pt-8 pr-4 sm:pr-8 pb-8 pl-4 sm:pl-8 min-h-screen mb-12">
 
         <!-- ── Mobile: Admin Identity Card ── -->
         <div class="lg:hidden mb-5">
@@ -491,6 +488,7 @@
                     </form>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 

@@ -30,7 +30,7 @@
 
 <body class="antialiased text-white" x-data="dashboardData()">
 
-    @include('driver-manager.layout.sidebar')
+    <x-layout.sidebar :menu-items="$sidebarMenu" />
 
     <main :class="open ? 'md:ml-[270px]' : 'md:ml-[76px]'" class="sidebar-transition pt-8 pr-4 sm:pr-8 pb-8 pl-4 sm:pl-8 min-h-screen mb-12">
         <div class="max-w-7xl mx-auto">

@@ -138,7 +138,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/trasanctions/receipt/{id}', [PaymentController::class, 'showReceiptAdmin'])->name('admin.receipt.show');
 
     Route::middleware('role:admin')->group(function () {
-        Route::get('/dashboard/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+        //        Route::get('/dashboard/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 
         Route::get('/admin/commuters/create', [CommuterController::class, 'create'])->name('admin.commuters.create');
         Route::post('/admin/commuters', [CommuterController::class, 'store'])->name('admin.commuters.store');

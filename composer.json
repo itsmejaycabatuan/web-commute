@@ -39,7 +39,8 @@
             "Database\\Seeders\\": "database/seeders/"
         },
         "files": [
-            "app/Helpers/LocationPrivacy.php"
+            "app/Helpers/LocationPrivacy.php",
+            "app/Helpers/menu.php"
         ]
     },
     "autoload-dev": {
