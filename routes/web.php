@@ -143,6 +143,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password');
     Route::post('/settings/logout-others', [SettingsController::class, 'logoutOtherDevices'])->name('settings.logout-others');
 
+    Route::get('/drivers', [DriverApprovalController::class, 'index'])->name('drivers.index');
+
     Route::middleware('role:admin')->group(function () {
         //        Route::get('/dashboard/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 
@@ -153,7 +155,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/admin/commuters/{user}', [CommuterController::class, 'destroy'])->name('admin.commuters.destroy');
         Route::get('/admin/commuters', [CommuterController::class, 'index'])->name('admin.commuters.index');
 
-        Route::get('/admin/drivers', [DriverApprovalController::class, 'index'])->name('admin.drivers.index');
         Route::post('/admin/drivers', [DriverApprovalController::class, 'store'])->name('admin.drivers.store');
         Route::get('/admin/drivers/create', [DriverApprovalController::class, 'create'])->name('admin.drivers.create');
         Route::get('/admin/drivers/{user}/edit', [DriverApprovalController::class, 'edit'])->name('admin.drivers.edit');

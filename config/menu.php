@@ -16,7 +16,7 @@ return [
             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'fa-gauge-high', 'section' => null, 'mobile_label' => 'Home'],
             ['label' => 'Management', 'section' => 'Management'],
             ['label' => 'PUJ Commuters', 'route' => 'admin.commuters.index', 'icon' => 'fa-users', 'section' => null],
-            ['label' => 'PUJ Drivers', 'route' => 'admin.drivers.index', 'icon' => 'fa-id-card', 'section' => null],
+            ['label' => 'PUJ Drivers', 'route' => 'drivers.index', 'icon' => 'fa-id-card', 'section' => null],
             ['label' => 'Fare Rates', 'route' => 'fares.index', 'icon' => 'fa-money-bill', 'section' => null],
             ['label' => 'Fare Transactions', 'route' => 'faretransactions', 'icon' => 'fa-receipt', 'section' => null],
             ['label' => 'Top Ups', 'route' => 'admin.topups', 'icon' => 'fa-wallet', 'section' => null],
@@ -39,10 +39,14 @@ return [
         // ── DRIVER MANAGER MENU ──
         'driver_manager' => [
             ['label' => 'Navigation', 'section' => 'Navigation', 'icon' => 'fa-map-location-dot', 'route' => 'map', 'mobile_label' => 'Map'],
+            ['label' => 'Map', 'icon' => 'fa-map-location-dot', 'route' => 'map', 'mobile_label' => 'Map'],
             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'fa-gauge-high', 'section' => null, 'mobile_label' => 'Home'],
-            ['label' => 'Drivers', 'route' => 'admin.drivers.index', 'icon' => 'fa-id-card', 'section' => null],
+            ['label' => 'Drivers', 'route' => 'drivers.index', 'icon' => 'fa-id-card', 'section' => null],
+            ['label' => 'Time Keeping', 'route' => 'driver-manager.time-keeping', 'icon' => 'fa-clock', 'section' => null],
+            ['label' => 'Violation Codes', 'route' => 'driver-manager.violation-codes', 'icon' => 'fa-shield', 'section' => null],
+            ['label' => 'Violation Log', 'route' => 'driver-manager.violations-log', 'icon' => 'fa-list', 'section' => null],
             ['label' => 'Account', 'section' => 'Account'],
-            ['label' => 'My Profile', 'route' => 'profile', 'icon' => 'fa-circle-user', 'section' => null],
+            ['label' => 'Settings', 'route' => 'settings.edit', 'icon' => 'fa-gear', 'section' => null],
         ],
 
         // ── MAINTENANCE MANAGER MENU ──
