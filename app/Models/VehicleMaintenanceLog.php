@@ -23,7 +23,6 @@ use Illuminate\Support\Carbon;
  * @property-read FleetInventory $fleet
  * @property-read MaintenanceTask $maintenanceTask
  * @property-read Vehicle|null $vehicle
- *
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog query()
@@ -38,7 +37,14 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereRemarks($value)
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereServiceDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereUpdatedAt($value)
- *
+ * @property int $maintenance_id
+ * @property-read mixed $comments
+ * @property-read mixed $last_service_cost
+ * @property-read mixed $last_service_date
+ * @property-read mixed $last_service_odo
+ * @property-read mixed $maintenance_task
+ * @property-read \App\Models\PreventiveMaintenance $preventiveMaintenance
+ * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereMaintenanceId($value)
  * @mixin \Eloquent
  */
 class VehicleMaintenanceLog extends Model

@@ -20,7 +20,6 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read FleetInventory $fleet
  * @property-read MaintenanceTask $maintenanceTask
- *
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance query()
@@ -33,7 +32,11 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereLastServiceOdo($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereTaskId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereUpdatedAt($value)
- *
+ * @property int $vehicle_id
+ * @property-read \App\Models\Vehicle $vehicle
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleMaintenanceLog> $vehicleMaintenanceLog
+ * @property-read int|null $vehicle_maintenance_log_count
+ * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereVehicleId($value)
  * @mixin \Eloquent
  */
 class PreventiveMaintenance extends Model

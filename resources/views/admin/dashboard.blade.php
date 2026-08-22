@@ -12,12 +12,13 @@
         rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
 
-    @include('partials.head-scripts');
+    @include('partials.head-scripts')
 
 </head>
 
-<body class="antialiased text-gray-900 dark:text-white bg-slate-50 dark:bg-[#050505]" x-data>
+<body class="antialiased text-gray-900 dark:text-white" x-data>
     <x-layout.sidebar />
+
     <main :class="$store.sidebar.open ? 'md:ml-72' : 'md:ml-20'"
         class="sidebar-transition pt-8 pr-4 sm:pr-8 pb-8 pl-4 sm:pl-8 min-h-screen mb-12">
 

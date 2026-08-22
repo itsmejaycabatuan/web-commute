@@ -50,22 +50,39 @@
 
 <style>
     /* ═══ BASE STYLES ═══ */
-    body,
-    html {
+    html,
+    body {
         margin: 0;
         padding: 0;
         height: 100%;
         font-family: 'Inter', sans-serif;
         overflow-x: hidden;
-        background: #f8fafc;
-        /* Light mode background */
+        background-color: #f8fafc;
+        /* ← Use longhand */
     }
 
-    .dark body,
-    .dark html {
-        background: #050505;
-        /* Dark mode background */
+    .dark html,
+    .dark body {
+        background-color: #050505;
+        /* ← Use longhand */
     }
+
+    /* Option: Use a pseudo-element overlay instead */
+    body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-color: #050505;
+        opacity: 0;
+        pointer-events: none;
+        z-index: -1;
+        transition: opacity 0.3s ease;
+    }
+
+    .dark body::after {
+        opacity: 1;
+    }
+
 
     /* ═══ SMOOTH THEME TRANSITIONS ═══ */
     *,
@@ -75,6 +92,7 @@
         transition-duration: 0.3s;
         transition-timing-function: ease;
     }
+
 
     /* Preserve element-specific transitions — these MUST use !important to win over * */
     .sidebar-transition {

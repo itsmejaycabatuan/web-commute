@@ -11,7 +11,8 @@ return [
     'menus' => [
         // ── ADMIN MENU ──
         'admin' => [
-            ['label' => 'Navigation', 'section' => 'Navigation', 'icon' => 'fa-map-location-dot', 'route' => 'map', 'mobile_label' => 'Map'],
+            ['label' => 'Navigation', 'section' => 'Navigation'],
+            ['label' => 'Map', 'icon' => 'fa-map-location-dot', 'route' => 'map', 'mobile_label' => 'Map'],
             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'fa-gauge-high', 'section' => null, 'mobile_label' => 'Home'],
             ['label' => 'Management', 'section' => 'Management'],
             ['label' => 'PUJ Commuters', 'route' => 'admin.commuters.index', 'icon' => 'fa-users', 'section' => null],
@@ -20,12 +21,13 @@ return [
             ['label' => 'Fare Transactions', 'route' => 'faretransactions', 'icon' => 'fa-receipt', 'section' => null],
             ['label' => 'Top Ups', 'route' => 'admin.topups', 'icon' => 'fa-wallet', 'section' => null],
             ['label' => 'Account', 'section' => 'Account'],
-            ['label' => 'My Profile', 'route' => 'profile', 'icon' => 'fa-circle-user', 'section' => null],
+            ['label' => 'Settings', 'route' => 'settings.edit', 'icon' => 'fa-gear', 'section' => null],
         ],
 
         // ── DRIVER MENU ──
         'driver' => [
-            ['label' => 'Navigation', 'section' => 'Navigation', 'icon' => 'fa-map-location-dot', 'route' => 'map', 'mobile_label' => 'Map'],
+            ['label' => 'Navigation', 'section' => 'Navigation'],
+            ['label' => 'Map', 'icon' => 'fa-map-location-dot', 'route' => 'map', 'mobile_label' => 'Map'],
             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'fa-gauge-high', 'section' => null, 'mobile_label' => 'Home'],
             ['label' => 'Timekeeping', 'route' => 'driver.timekeeping', 'icon' => 'fa-clock', 'section' => null, 'mobile_label' => 'Time'],
             ['label' => 'Violations', 'route' => 'driver.violations', 'icon' => 'fa-list', 'section' => null],

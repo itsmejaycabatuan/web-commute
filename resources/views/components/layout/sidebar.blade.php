@@ -7,38 +7,8 @@
 
 <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
 
-@once
-    {{-- Alpine initialization - runs only once per page --}}
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('sidebarData', () => ({
-                open: false,
-                showLogoutModal: false,
-                isDark: localStorage.getItem('color-theme') === 'dark' ||
-                    (!localStorage.getItem('color-theme') && window.matchMedia(
-                        '(prefers-color-scheme: dark)').matches),
-
-                toggleTheme(theme) {
-                    this.isDark = theme === 'dark';
-                    if (this.isDark) {
-                        document.documentElement.classList.add('dark');
-                        localStorage.setItem('color-theme', 'dark');
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                        localStorage.setItem('color-theme', 'light');
-                    }
-                },
-
-                toggleLogoutModal() {
-                    this.showLogoutModal = !this.showLogoutModal;
-                }
-            }))
-        })
-    </script>
-@endonce
-
-{{-- Wrapper with its own Alpine scope --}}
-<div x-data="sidebarData()" x-cloak>
+{{-- Wrapper with Alpine scope (no local data, uses store) --}}
+<div x-data x-cloak>
 
     <!-- ══════════ MOBILE BOTTOM BAR ══════════ -->
     <div class="fixed bottom-0 left-0 right-0 z-[55] md:hidden">
@@ -122,21 +92,21 @@
         <!-- Mobile Drawer Footer -->
         <div class="p-3 border-t border-gray-100 dark:border-gray-800 space-y-1">
             @if ($themeToggle)
-                <button type="button" @click="toggleTheme(isDark ? 'light' : 'dark')"
+                <button type="button" @click="$store.sidebar.toggleTheme($store.sidebar.isDark ? 'light' : 'dark')"
                     class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all text-left">
                     <div
                         class="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
-                        <i x-show="!isDark" class="fa-solid fa-moon text-[10px] text-gray-600"></i>
-                        <i x-show="isDark" class="fa-solid fa-sun text-[10px] text-amber-400"></i>
+                        <i x-show="!$store.sidebar.isDark" class="fa-solid fa-moon text-[10px] text-gray-600"></i>
+                        <i x-show="$store.sidebar.isDark" class="fa-solid fa-sun text-[10px] text-amber-400"></i>
                     </div>
                     <span class="text-[10px] font-bold uppercase tracking-[0.12em]">
-                        <span x-show="!isDark">Dark Mode</span>
-                        <span x-show="isDark">Light Mode</span>
+                        <span x-show="!$store.sidebar.isDark">Dark Mode</span>
+                        <span x-show="$store.sidebar.isDark">Light Mode</span>
                     </span>
                 </button>
             @endif
 
-            <button type="button" @click="toggleLogoutModal()"
+            <button type="button" @click="$store.sidebar.toggleLogoutModal()"
                 class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-all text-left">
                 <div class="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-right-from-bracket text-[10px]"></i>
@@ -147,26 +117,27 @@
     </div>
 
     <!-- ══════════ DESKTOP SIDEBAR ══════════ -->
-    <aside :class="open ? 'w-[270px] p-3' : 'w-[76px] p-2'"
+    <aside :class="$store.sidebar.open ? 'w-[270px] p-3' : 'w-[76px] p-2'"
         class="overflow-y-auto overflow-x-hidden sidebar-transition fixed left-0 top-0 h-screen bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 z-50 flex-col justify-between hidden md:flex">
 
         <div>
             <!-- Logo + Toggle -->
-            <div :class="open ? 'flex-row justify-between px-1 mb-6' : 'flex-col items-center gap-2.5 mb-6 pt-0.5'"
+            <div :class="$store.sidebar.open ? 'flex-row justify-between px-1 mb-6' : 'flex-col items-center gap-2.5 mb-6 pt-0.5'"
                 class="flex items-center overflow-hidden whitespace-nowrap">
-                <div class="flex items-center overflow-hidden whitespace-nowrap" :class="open ? 'gap-2.5' : ''">
+                <div class="flex items-center overflow-hidden whitespace-nowrap"
+                    :class="$store.sidebar.open ? 'gap-2.5' : ''">
                     <div
                         class="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/15 shrink-0">
                         <i class="fa-solid fa-bus text-white text-[11px]"></i>
                     </div>
-                    <span x-show="open" x-transition.opacity.duration.200ms
+                    <span x-show="$store.sidebar.open" x-transition.opacity.duration.200ms
                         class="font-black text-sm tracking-tight whitespace-nowrap text-gray-900 dark:text-white">Smart<span
                             class="text-blue-500 dark:text-blue-400">Commute</span></span>
                 </div>
-                <button @click="open = !open"
+                <button @click="$store.sidebar.open = !$store.sidebar.open"
                     class="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 transition active:scale-90 shrink-0">
                     <i class="fa-solid text-[8px] transition-transform duration-300"
-                        :class="open ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
+                        :class="$store.sidebar.open ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
                 </button>
             </div>
 
@@ -175,9 +146,9 @@
                 @foreach ($menuItems as $item)
                     @if (!isset($item['route']))
                         @if (($item['section'] ?? null) !== null && $item['section'] !== 'hidden')
-                            <div x-show="open" x-transition.opacity.duration.150ms
+                            <div x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
                                 class="my-3 mx-3 border-t border-gray-100 dark:border-gray-800"></div>
-                            <p x-show="open" x-transition.opacity.duration.150ms
+                            <p x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
                                 class="text-[8px] font-bold uppercase tracking-[0.2em] text-gray-300 dark:text-gray-600 px-3 mb-2">
                                 {{ $item['section'] }}</p>
                         @endif
@@ -185,21 +156,22 @@
                     @endif
 
                     @if (isset($item['section']) && $item['section'] !== null)
-                        <div x-show="open" x-transition.opacity.duration.150ms
+                        <div x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
                             class="my-3 mx-3 border-t border-gray-100 dark:border-gray-800"></div>
-                        <p x-show="open" x-transition.opacity.duration.150ms
+                        <p x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
                             class="text-[8px] font-bold uppercase tracking-[0.2em] text-gray-300 dark:text-gray-600 px-3 mb-2">
                             {{ $item['section'] }}</p>
                         @continue
                     @endif
 
-                    <a href="{{ route($item['route']) }}" :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+                    <a href="{{ route($item['route']) }}"
+                        :class="$store.sidebar.open ? 'gap-3 px-3' : 'justify-center px-0'"
                         class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs($item['route']) ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' : 'text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-200 dark:hover:border-gray-700' }}">
                         <div
                             class="w-8 h-8 rounded-lg {{ request()->routeIs($item['route']) ? 'bg-blue-100 dark:bg-blue-500/20' : 'bg-gray-100 dark:bg-gray-800 group-hover:bg-gray-200 dark:group-hover:bg-gray-700' }} flex items-center justify-center shrink-0 transition">
                             <i class="fa-solid {{ $item['icon'] }} text-[11px]"></i>
                         </div>
-                        <span x-show="open" x-transition.opacity.duration.200ms
+                        <span x-show="$store.sidebar.open" x-transition.opacity.duration.200ms
                             class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">{{ $item['label'] }}</span>
                     </a>
                 @endforeach
@@ -208,47 +180,48 @@
 
         <!-- Desktop Sidebar Footer -->
         <div class="mt-4 space-y-1">
-            <div x-show="open" x-transition.opacity.duration.150ms
+            <div x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
                 class="mx-3 border-t border-gray-100 dark:border-gray-800 mb-3"></div>
 
             @if ($themeToggle)
-                <button type="button" @click="toggleTheme(isDark ? 'light' : 'dark')"
-                    :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+                <button type="button" @click="$store.sidebar.toggleTheme($store.sidebar.isDark ? 'light' : 'dark')"
+                    :class="$store.sidebar.open ? 'gap-3 px-3' : 'justify-center px-0'"
                     class="w-full flex items-center py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all text-left group">
                     <div
                         class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 flex items-center justify-center shrink-0 transition relative">
-                        <i x-show="!isDark" class="fa-solid fa-moon text-[11px] text-gray-600"></i>
-                        <i x-show="isDark" class="fa-solid fa-sun text-[11px] text-amber-400"></i>
+                        <i x-show="!$store.sidebar.isDark" class="fa-solid fa-moon text-[11px] text-gray-600"></i>
+                        <i x-show="$store.sidebar.isDark" class="fa-solid fa-sun text-[11px] text-amber-400"></i>
                     </div>
-                    <span x-show="open" x-transition.opacity.duration.200ms
+                    <span x-show="$store.sidebar.open" x-transition.opacity.duration.200ms
                         class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">
-                        <span x-show="!isDark">Dark Mode</span>
-                        <span x-show="isDark">Light Mode</span>
+                        <span x-show="!$store.sidebar.isDark">Dark Mode</span>
+                        <span x-show="$store.sidebar.isDark">Light Mode</span>
                     </span>
                 </button>
             @endif
 
-            <button type="button" @click="toggleLogoutModal()" :class="open ? 'gap-3 px-3' : 'justify-center px-0'"
+            <button type="button" @click="$store.sidebar.toggleLogoutModal()"
+                :class="$store.sidebar.open ? 'gap-3 px-3' : 'justify-center px-0'"
                 class="w-full flex items-center py-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-all text-left group">
                 <div
                     class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-red-100 dark:group-hover:bg-red-500/20 flex items-center justify-center shrink-0 transition">
                     <i class="fa-solid fa-right-from-bracket text-[11px]"></i>
                 </div>
-                <span x-show="open" x-transition.opacity.duration.200ms
+                <span x-show="$store.sidebar.open" x-transition.opacity.duration.200ms
                     class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">Logout</span>
             </button>
         </div>
     </aside>
 
-    <!-- ══════════ LOGOUT MODAL (Alpine-powered) ══════════ -->
-    <div x-show="showLogoutModal" x-transition:enter="transition ease-out duration-300"
+    <!-- ══════════ LOGOUT MODAL ══════════ -->
+    <div x-show="$store.sidebar.showLogoutModal" x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0" @click.outside="showLogoutModal = false"
+        x-transition:leave-end="opacity-0" @click.outside="$store.sidebar.showLogoutModal = false"
         class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 dark:bg-black/80 p-4"
         style="display: none;">
 
-        <div x-show="showLogoutModal" x-transition:enter="transition ease-out duration-300"
+        <div x-show="$store.sidebar.showLogoutModal" x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
             x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95"
@@ -262,7 +235,7 @@
             <p class="text-xs text-gray-500 dark:text-gray-400 mb-7">Are you sure you want to log out of
                 {{ $consoleName }}?</p>
             <div class="flex gap-2.5">
-                <button type="button" @click="showLogoutModal = false"
+                <button type="button" @click="$store.sidebar.showLogoutModal = false"
                     class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-700 transition active:scale-[0.98]">
                     Cancel
                 </button>
@@ -277,7 +250,7 @@
         </div>
     </div>
 
-</div><!-- End sidebarData x-data wrapper -->
+</div>
 
 @once
     <script>

@@ -12,6 +12,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PusherController;
 use App\Http\Controllers\RateController;
 use App\Http\Controllers\RouteController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleTrackingController;
@@ -136,6 +137,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/topups', [PaymentController::class, 'showTopupsAdmin'])->name('admin.topups');
     Route::get('/transactions', [PaymentController::class, 'showTransactions'])->name('faretransactions');
     Route::get('/trasanctions/receipt/{id}', [PaymentController::class, 'showReceiptAdmin'])->name('admin.receipt.show');
+
+    Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
+    Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+    Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password');
+    Route::post('/settings/logout-others', [SettingsController::class, 'logoutOtherDevices'])->name('settings.logout-others');
 
     Route::middleware('role:admin')->group(function () {
         //        Route::get('/dashboard/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
