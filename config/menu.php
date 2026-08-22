@@ -32,7 +32,8 @@ return [
             ['label' => 'Timekeeping', 'route' => 'driver.timekeeping', 'icon' => 'fa-clock', 'section' => null, 'mobile_label' => 'Time'],
             ['label' => 'Violations', 'route' => 'driver.violations', 'icon' => 'fa-list', 'section' => null],
             ['label' => 'Account', 'section' => 'Account'],
-            ['label' => 'My Profile', 'route' => 'profile', 'icon' => 'fa-circle-user', 'section' => null],
+            ['label' => 'Settings', 'route' => 'settings.edit', 'icon' => 'fa-gear', 'section' => null],
+
         ],
 
         // ── DRIVER MANAGER MENU ──

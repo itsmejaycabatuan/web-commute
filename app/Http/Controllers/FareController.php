@@ -68,25 +68,43 @@ class FareController extends Controller
     public function upload(Request $request)
     {
         $validated = $request->validate([
-            'fare' => 'required|file',
+            'fare' => 'required|file|mimes:pdf',
         ]);
 
-        if (! $validated) {
-            return back()->with('error', 'File upload failed.');
-        }
-
-        $path = $request->file('fare')->store('storage');
+        $path = $request->file('fare')->store('fares');
 
         DB::transaction(function () use ($path) {
             $fare = Fare::create([
                 'location' => $path,
             ]);
 
-            $pythonPath = resource_path() . '/scripts/extractPdf.py ';
-            $fullPath = storage_path('app/' . $path);
+            $isWindows = PHP_OS_FAMILY === 'Windows';
 
-            $result = shell_exec(base_path('/venv/bin/python3 ') . $pythonPath . $fullPath);
+            $pythonPath = resource_path('scripts/extractPdf.py');
+            $fullPath = storage_path('app/' . $path);
+            $python = $isWindows
+                ? base_path('venv\Scripts\python.exe')
+                : base_path('venv/bin/python3');
+
+            // Quote all paths — handles spaces in directory names
+            $command = sprintf(
+                '"%s" "%s" "%s" 2>&1',
+                $python,
+                $pythonPath,
+                $fullPath
+            );
+
+            $result = shell_exec($command);
+
+            if ($result === null) {
+                throw new \RuntimeException('Python script failed to execute.');
+            }
+
             $output = json_decode($result, true);
+
+            if (! is_array($output)) {
+                throw new \RuntimeException('Python script returned invalid JSON: ' . $result);
+            }
 
             $rates = [];
 

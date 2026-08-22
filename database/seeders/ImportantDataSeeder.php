@@ -121,17 +121,38 @@ class ImportantDataSeeder extends Seeder
             $vehicle = Vehicle::create($item['vehicle_data']);
         }
 
-        $path = resource_path() . '/files/Fare-Guide_Modernized-Aircon-Provisional-Fare-Increase_08Oct2023.pdf';
+        $path = resource_path('files/Fare-Guide_Modernized-Aircon-Provisional-Fare-Increase_08Oct2023.pdf');
 
         DB::transaction(function () use ($path) {
             $fare = Fare::create([
                 'location' => $path,
             ]);
 
-            $pythonPath = resource_path() . '/scripts/extractPdf.py ';
+            $isWindows = PHP_OS_FAMILY === 'Windows';
 
-            $result = shell_exec(base_path('/venv/bin/python3 ') . $pythonPath . $path);
+            $pythonPath = resource_path('scripts/extractPdf.py');
+            $python = $isWindows
+                ? base_path('venv\Scripts\python.exe')
+                : base_path('venv/bin/python3');
+
+            $command = sprintf(
+                '"%s" "%s" "%s" 2>&1',
+                $python,
+                $pythonPath,
+                $path
+            );
+
+            $result = shell_exec($command);
+
+            if ($result === null) {
+                throw new \RuntimeException('Python script failed to execute.');
+            }
+
             $output = json_decode($result, true);
+
+            if (! is_array($output)) {
+                throw new \RuntimeException('Python script returned invalid JSON: ' . $result);
+            }
 
             $rates = [];
 

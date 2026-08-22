@@ -149,8 +149,7 @@
                                     <span
                                         class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Role</span>
                                     <span class="text-[10px] font-bold text-gray-700 dark:text-[#ccc]">
-                                        {{ ucfirst(Auth::user()->role ?? 'admin') }}
-                                    </span>
+                                        {{ ucfirst(Auth::user()->getRoleNames()->first() ?? 'User') }} </span>
                                 </div>
                                 <div
                                     class="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]">
