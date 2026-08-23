@@ -39,12 +39,11 @@ class PaymentController extends Controller
 
     public function process(Request $request)
     {
-        // dd($request);
-        // dd(Auth::user()->id);
         $userId = Auth::user()->id;
         $wallet = Wallet::where('user_id', $userId)->first();
         $balance = $wallet->balance;
         $currentBalance = (float) $balance;
+        $newBalance = $currentBalance;
 
         if ($request->{'payment-method'} === 'Wallet') {
             $price = (float) $request->amount;
@@ -63,10 +62,10 @@ class PaymentController extends Controller
             'payment_method' => $request->{'payment-method'},
             'transaction_id' => $request->{'transaction-id'},
             'price' => $request->amount,
+            'paid_at' => now(), // Add this if your table has this column
         ]);
 
         if ($payment) {
-
             $wallet->update([
                 'balance' => $newBalance,
             ]);
@@ -78,6 +77,7 @@ class PaymentController extends Controller
                 'paymentMethod' => $request->{'payment-method'},
                 'transactionId' => $request->{'transaction-id'},
                 'price' => $request->amount,
+                'paidAt' => $payment->paid_at->format('M d, Y h:i A'), // ✅ Added this
             ])->with('success', 'Payment successful');
         }
 
@@ -126,7 +126,6 @@ class PaymentController extends Controller
     {
         $payment = Payment::where('id', $id)->first();
 
-        // dd($payment);
         return view('commuter.viewreceipt', [
             'pickup' => $payment->starting_point,
             'destination' => $payment->destination,

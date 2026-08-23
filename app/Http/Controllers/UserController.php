@@ -503,13 +503,7 @@ class UserController extends Controller
 
     public function editProfile()
     {
-        $user = Auth::user();
-        $userId = Auth::user()->id;
-        $role = $user->roles->first()->name;
-
-        if ($role == 'commuter') {
-            return view('commuter.editprofile');
-        }
+        //
     }
 
     /**

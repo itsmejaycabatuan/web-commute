@@ -10,6 +10,14 @@ class SettingsController extends Controller
 {
     public function edit()
     {
+        $user = Auth::user();
+        $userId = Auth::user()->id;
+        $role = $user->roles->first()->name;
+
+        if ($role == 'commuter') {
+            return view('commuter.settings');
+        }
+
         return view('settings');
     }
 
