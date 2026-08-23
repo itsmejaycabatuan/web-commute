@@ -343,7 +343,7 @@
 
     <div x-data="{ showLogoutModal: false }" @keydown.escape.window="showLogoutModal = false">
 
-        <x-layout.sidebar :menu-items="$sidebarMenu" />
+        <x-layout.sidebar />
 
         <main :class="$store.sidebar.open ? 'md:ml-72' : 'md:ml-20'"
             class="sidebar-transition pt-4 sm:pt-8 pr-3 sm:pr-8 pb-8 pl-3 sm:pl-8 min-h-screen mb-16 md:mb-12">
@@ -382,7 +382,8 @@
                             <i class="fa-solid fa-id-badge text-[8px] text-blue-400"></i>
                             <span class="text-[10px] text-[#888] font-bold">Driver Oversight</span>
                             <span class="text-[#333]">•</span>
-                            <span class="font-mono text-[9px] text-[#444]">{{ Auth::user()->getRoleNames()->first() ?? 'Manager' }}</span>
+                            <span
+                                class="font-mono text-[9px] text-[#444]">{{ Auth::user()->getRoleNames()->first() ?? 'Manager' }}</span>
                         </div>
                     </div>
                 </div>
@@ -392,10 +393,12 @@
                     <div class="flex items-center gap-2 mb-1.5">
                         <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444]">Welcome back,</span>
                     </div>
-                    <h1 class="text-2xl sm:text-3xl font-black tracking-tight">Driver <span class="text-blue-400">Manager</span></h1>
+                    <h1 class="text-2xl sm:text-3xl font-black tracking-tight">Driver <span
+                            class="text-blue-400">Manager</span></h1>
                     <p class="text-[11px] text-[#555] mt-1 flex items-center gap-2">
                         <i class="fa-solid fa-id-badge text-[9px] text-blue-400"></i>
-                        Role: <span class="text-[#888] font-bold">{{ Auth::user()->getRoleNames()->first() ?? 'Manager' }}</span>
+                        Role: <span
+                            class="text-[#888] font-bold">{{ Auth::user()->getRoleNames()->first() ?? 'Manager' }}</span>
                         <span class="text-[#333]">•</span>
                         <span class="font-mono text-[10px] text-[#444]">{{ Auth::user()->email }}</span>
                     </p>
@@ -409,13 +412,13 @@
                                 class="w-7 h-7 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center">
                                 <i class="fa-solid fa-magnifying-glass text-[9px] text-[#555]"></i>
                             </div>
-                            <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Driver
+                            <span
+                                class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Driver
                                 Data Summary</span>
                         </div>
 
                         <div @click.away="closeDropdown()" class="relative w-full sm:w-auto">
-                            <div
-                                class="flex items-center gap-2 bg-[#111] border border-[#222] rounded-xl px-4 py-2.5 min-w-[280px] cursor-text transition-all"
+                            <div class="flex items-center gap-2 bg-[#111] border border-[#222] rounded-xl px-4 py-2.5 min-w-[280px] cursor-text transition-all"
                                 :class="dropdownOpen ? 'border-blue-500/50 ring-1 ring-blue-500/20' : 'hover:border-[#333]'"
                                 @click="openDropdown()">
                                 <i class="fa-solid fa-magnifying-glass text-[#555] text-[10px] flex-shrink-0"></i>
@@ -430,8 +433,7 @@
                             </div>
 
                             <!-- Dropdown -->
-                            <div x-show="dropdownOpen" x-cloak
-                                x-transition:enter="transition ease-out duration-150"
+                            <div x-show="dropdownOpen" x-cloak x-transition:enter="transition ease-out duration-150"
                                 x-transition:enter-start="opacity-0 -translate-y-1"
                                 x-transition:enter-end="opacity-100 translate-y-0"
                                 x-transition:leave="transition ease-in duration-100"
@@ -458,10 +460,10 @@
                                 <div class="max-h-[280px] overflow-y-auto">
                                     <template x-for="driver in filteredDrivers" :key="driver.id">
                                         <button @click="selectDriver(driver)"
-                                            :class="selectedDriver && selectedDriver.id === driver.id ? 'bg-blue-500/10 text-blue-400' : 'text-[#888] hover:bg-[#1a1a1a]'"
+                                            :class="selectedDriver && selectedDriver.id === driver.id ?
+                                                'bg-blue-500/10 text-blue-400' : 'text-[#888] hover:bg-[#1a1a1a]'"
                                             class="w-full px-4 py-2.5 text-left text-[11px] font-medium flex items-center gap-3 transition-colors">
-                                            <div
-                                                class="w-7 h-7 rounded-lg bg-[#1a1a1a] border border-[#222] flex items-center justify-center text-[9px] font-bold flex-shrink-0"
+                                            <div class="w-7 h-7 rounded-lg bg-[#1a1a1a] border border-[#222] flex items-center justify-center text-[9px] font-bold flex-shrink-0"
                                                 x-text="getInitials(driver.name)"></div>
                                             <span x-text="driver.name"></span>
                                         </button>
@@ -484,8 +486,7 @@
                 </div>
 
                 <!-- ── Driver Info Cards (only when a specific driver is selected) ── -->
-                <div x-data="dashboardData()"
-                    x-show="selectedDriver"
+                <div x-data="dashboardData()" x-show="selectedDriver"
                     x-transition:enter="transition ease-out duration-200"
                     x-transition:enter-start="opacity-0 -translate-y-2"
                     x-transition:enter-end="opacity-100 translate-y-0"
@@ -499,7 +500,8 @@
                             <div class="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center">
                                 <i class="fa-solid fa-id-badge text-[8px] text-blue-400"></i>
                             </div>
-                            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Driver
+                            <span
+                                class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Driver
                                 Code</span>
                         </div>
                         <span class="text-xl sm:text-2xl font-black tracking-tight"
@@ -511,7 +513,8 @@
                             <div class="w-6 h-6 rounded-md bg-purple-500/10 flex items-center justify-center">
                                 <i class="fa-solid fa-id-card text-[8px] text-purple-400"></i>
                             </div>
-                            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">License
+                            <span
+                                class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">License
                                 No.</span>
                         </div>
                         <span class="text-xl sm:text-2xl font-black tracking-tight"
@@ -524,7 +527,8 @@
                             <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
                                 <i class="fa-solid fa-calendar-check text-[8px] text-emerald-400"></i>
                             </div>
-                            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">License
+                            <span
+                                class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">License
                                 Validity</span>
                         </div>
                         <span class="text-xl sm:text-2xl font-black tracking-tight"
@@ -540,7 +544,9 @@
                             <div class="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center">
                                 <i class="fa-solid fa-calendar-check text-[8px] text-blue-400"></i>
                             </div>
-                            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Total Days
+                            <span
+                                class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Total
+                                Days
                                 Driving</span>
                         </div>
                         <span class="text-xl sm:text-2xl font-black tracking-tight"
@@ -552,19 +558,22 @@
                             <div class="w-6 h-6 rounded-md bg-orange-500/10 flex items-center justify-center">
                                 <i class="fa-solid fa-notes-medical text-[8px] text-orange-400"></i>
                             </div>
-                            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Sick
+                            <span
+                                class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Sick
                                 Days</span>
                         </div>
                         <span class="text-xl sm:text-2xl font-black tracking-tight"
                             x-text="formatNum(stats.sickDays)"></span>
                     </div>
 
-                    <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-teal-500 col-span-2 xl:col-span-1">
+                    <div
+                        class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-teal-500 col-span-2 xl:col-span-1">
                         <div class="flex items-center gap-2 mb-2 sm:mb-3">
                             <div class="w-6 h-6 rounded-md bg-teal-500/10 flex items-center justify-center">
                                 <i class="fa-solid fa-umbrella-beach text-[8px] text-teal-400"></i>
                             </div>
-                            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Vacation
+                            <span
+                                class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Vacation
                                 Days</span>
                         </div>
                         <span class="text-xl sm:text-2xl font-black tracking-tight"
@@ -576,7 +585,8 @@
                             <div class="w-6 h-6 rounded-md bg-purple-500/10 flex items-center justify-center">
                                 <i class="fa-solid fa-clock text-[8px] text-purple-400"></i>
                             </div>
-                            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Total
+                            <span
+                                class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Total
                                 Hours</span>
                         </div>
                         <div class="flex items-baseline gap-1.5">
@@ -591,19 +601,22 @@
                             <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center">
                                 <i class="fa-solid fa-circle-exclamation text-[8px] text-red-400"></i>
                             </div>
-                            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Total
+                            <span
+                                class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Total
                                 Violations</span>
                         </div>
                         <span class="text-xl sm:text-2xl font-black tracking-tight"
                             x-text="formatNum(stats.totalViolations)"></span>
                     </div>
 
-                    <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-emerald-500 col-span-2 xl:col-span-1">
+                    <div
+                        class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-emerald-500 col-span-2 xl:col-span-1">
                         <div class="flex items-center gap-2 mb-2 sm:mb-3">
                             <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
                                 <i class="fa-solid fa-money-bill text-[8px] text-emerald-400"></i>
                             </div>
-                            <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Total
+                            <span
+                                class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Total
                                 Violation Fines</span>
                         </div>
                         <span class="text-xl sm:text-2xl font-black tracking-tight"
@@ -639,8 +652,7 @@
                         <!-- ═══ Mobile Card View ═══ -->
                         <div class="xl:hidden p-3 space-y-2">
                             <template x-for="tk in recentTimeKeepings" :key="tk.driver_id + '-' + tk.date + '-mob'">
-                                <div
-                                    class="rounded-xl bg-[#111] border border-[#1e1e1e] overflow-hidden">
+                                <div class="rounded-xl bg-[#111] border border-[#1e1e1e] overflow-hidden">
                                     <div class="flex items-center justify-between px-3.5 py-2.5">
                                         <div class="flex items-center gap-2.5 min-w-0">
                                             <div
@@ -655,9 +667,9 @@
                                                     x-text="formatDate(tk.date)"></p>
                                             </div>
                                         </div>
-                                        <span class="text-[7px] sm:text-[8px] font-bold uppercase px-2 py-0.5 rounded-md shrink-0"
-                                            :class="timeSheetType(tk).classes"
-                                            x-text="timeSheetType(tk).label"></span>
+                                        <span
+                                            class="text-[7px] sm:text-[8px] font-bold uppercase px-2 py-0.5 rounded-md shrink-0"
+                                            :class="timeSheetType(tk).classes" x-text="timeSheetType(tk).label"></span>
                                     </div>
                                     <div x-show="!tk.is_leave"
                                         class="flex items-center border-t border-[#161616] px-3.5 py-2.5 gap-4">
@@ -685,7 +697,8 @@
                                     class="w-10 h-10 rounded-xl bg-[#111] border border-[#1e1e1e] flex items-center justify-center mb-2.5">
                                     <i class="fa-regular fa-calendar text-sm text-[#333]"></i>
                                 </div>
-                                <p class="text-[10px] sm:text-[11px] text-[#444] font-medium">No time sheet entries found</p>
+                                <p class="text-[10px] sm:text-[11px] text-[#444] font-medium">No time sheet entries
+                                    found</p>
                             </div>
                         </div>
 
@@ -711,7 +724,8 @@
                                                         <span class="text-[9px] font-bold text-[#555]"
                                                             x-text="getInitials(tk.driver_name)"></span>
                                                     </div>
-                                                    <span class="text-[10px] sm:text-[11px] font-bold text-[#ccc] truncate max-w-[160px]"
+                                                    <span
+                                                        class="text-[10px] sm:text-[11px] font-bold text-[#ccc] truncate max-w-[160px]"
                                                         x-text="tk.driver_name"></span>
                                                 </div>
                                             </td>
@@ -723,11 +737,13 @@
                                                 <span x-show="!tk.is_leave"
                                                     class="text-[10px] sm:text-[11px] font-bold text-[#888]"
                                                     x-text="formatTime(tk.time_in) + ' - ' + formatTime(tk.time_out)"></span>
-                                                <span x-show="tk.is_leave" class="text-[10px] sm:text-[11px] text-[#333]">--
+                                                <span x-show="tk.is_leave"
+                                                    class="text-[10px] sm:text-[11px] text-[#333]">--
                                                 </span>
                                             </td>
                                             <td class="px-4 sm:px-6 py-3 text-right">
-                                                <span class="text-[8px] sm:text-[9px] font-bold uppercase px-2 py-0.5 rounded-md"
+                                                <span
+                                                    class="text-[8px] sm:text-[9px] font-bold uppercase px-2 py-0.5 rounded-md"
                                                     :class="timeSheetType(tk).classes"
                                                     x-text="timeSheetType(tk).label"></span>
                                             </td>
@@ -740,7 +756,8 @@
                                                     class="w-10 h-10 rounded-xl bg-[#111] border border-[#1e1e1e] flex items-center justify-center mb-2.5">
                                                     <i class="fa-regular fa-calendar text-sm text-[#333]"></i>
                                                 </div>
-                                                <p class="text-[10px] sm:text-[11px] text-[#444] font-medium">No time sheet
+                                                <p class="text-[10px] sm:text-[11px] text-[#444] font-medium">No time
+                                                    sheet
                                                     entries found</p>
                                             </div>
                                         </td>
@@ -776,8 +793,7 @@
                                 <template x-for="v in recentViolations" :key="v.id">
                                     <div
                                         class="p-3.5 rounded-xl bg-[#111] border border-[#1e1e1e] flex gap-3.5 items-center group hover:border-red-500/20 hover:bg-[#141414] transition-all cursor-pointer">
-                                        <div
-                                            class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all"
+                                        <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all"
                                             :class="violationIconClasses(v.violation_instance)">
                                             <i class="fa-solid text-[10px]"
                                                 :class="violationIcon(v.violation_instance)"></i>
@@ -814,7 +830,8 @@
                                     class="w-7 h-7 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center">
                                     <i class="fa-solid fa-bolt text-[9px] text-[#555]"></i>
                                 </div>
-                                <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Quick
+                                <span
+                                    class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Quick
                                     Actions</span>
                             </div>
                             <div class="space-y-2">
@@ -829,7 +846,8 @@
                                             class="text-[10px] font-bold text-[#888] group-hover:text-white transition">Manage
                                             Time Keeping</span>
                                     </div>
-                                    <i class="fa-solid fa-chevron-right text-[8px] text-[#333] group-hover:text-[#555] transition"></i>
+                                    <i
+                                        class="fa-solid fa-chevron-right text-[8px] text-[#333] group-hover:text-[#555] transition"></i>
                                 </a>
                                 <a href="{{ route('driver-manager.violation-codes') }}"
                                     class="flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-[#111] border border-[#1e1e1e] hover:bg-[#1a1a1a] hover:border-[#333] transition group cursor-pointer">
@@ -842,7 +860,8 @@
                                             class="text-[10px] font-bold text-[#888] group-hover:text-white transition">Violation
                                             Codes</span>
                                     </div>
-                                    <i class="fa-solid fa-chevron-right text-[8px] text-[#333] group-hover:text-[#555] transition"></i>
+                                    <i
+                                        class="fa-solid fa-chevron-right text-[8px] text-[#333] group-hover:text-[#555] transition"></i>
                                 </a>
                             </div>
                         </div>
@@ -922,35 +941,35 @@
                 },
 
                 get recentTimeKeepings() {
-                    let data = this.selectedDriver
-                        ? this.timeKeepings.filter(t => t.driver_id === this.selectedDriver.id)
-                        : this.timeKeepings;
+                    let data = this.selectedDriver ?
+                        this.timeKeepings.filter(t => t.driver_id === this.selectedDriver.id) :
+                        this.timeKeepings;
                     return data.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
                 },
 
                 get recentViolations() {
-                    let data = this.selectedUserId
-                        ? this.violationLogs.filter(v => v.user_id === this.selectedUserId)
-                        : this.violationLogs;
+                    let data = this.selectedUserId ?
+                        this.violationLogs.filter(v => v.user_id === this.selectedUserId) :
+                        this.violationLogs;
                     return data.sort((a, b) => b.id - a.id).slice(0, 5);
                 },
 
                 get stats() {
-                    let tk = this.selectedDriver
-                        ? this.timeKeepings.filter(t => t.driver_id === this.selectedDriver.id)
-                        : this.timeKeepings;
+                    let tk = this.selectedDriver ?
+                        this.timeKeepings.filter(t => t.driver_id === this.selectedDriver.id) :
+                        this.timeKeepings;
 
-                    let viol = this.selectedUserId
-                        ? this.violationLogs.filter(v => v.user_id === this.selectedUserId)
-                        : this.violationLogs;
+                    let viol = this.selectedUserId ?
+                        this.violationLogs.filter(v => v.user_id === this.selectedUserId) :
+                        this.violationLogs;
 
                     return {
-                        drivingDays:     tk.filter(t => !t.is_leave).length,
-                        sickDays:        tk.reduce((s, t) => s + t.sick, 0),
-                        vacationDays:    tk.reduce((s, t) => s + t.vacation, 0),
-                        totalHours:      tk.reduce((s, t) => s + t.hours_worked, 0),
+                        drivingDays: tk.filter(t => !t.is_leave).length,
+                        sickDays: tk.reduce((s, t) => s + t.sick, 0),
+                        vacationDays: tk.reduce((s, t) => s + t.vacation, 0),
+                        totalHours: tk.reduce((s, t) => s + t.hours_worked, 0),
                         totalViolations: viol.length,
-                        totalFines:      viol.reduce((s, v) => s + v.violation_fine, 0),
+                        totalFines: viol.reduce((s, v) => s + v.violation_fine, 0),
                     };
                 },
 
@@ -959,7 +978,9 @@
                 openDropdown() {
                     this.dropdownOpen = true;
                     if (this.selectedDriver) {
-                        this.$nextTick(() => { this.searchQuery = ''; });
+                        this.$nextTick(() => {
+                            this.searchQuery = '';
+                        });
                     }
                 },
 
@@ -999,7 +1020,11 @@
                 formatDate(dateStr) {
                     if (!dateStr) return '';
                     const d = new Date(dateStr + 'T00:00:00');
-                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    return d.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                    });
                 },
 
                 formatNum(n) {
@@ -1007,7 +1032,10 @@
                 },
 
                 formatCurrency(n) {
-                    return '₱' + n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return '₱' + n.toLocaleString('en-PH', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
                 },
 
                 getInitials(name) {
@@ -1017,28 +1045,43 @@
                 // ─── TIME SHEET TYPE ───
 
                 timeSheetType(tk) {
-                    if (tk.sick)               return { label: 'Sick',     classes: 'bg-red-500/15 text-red-400 border border-red-500/20' };
-                    if (tk.vacation)           return { label: 'Vacation', classes: 'bg-teal-500/15 text-teal-400 border border-teal-500/20' };
-                    if (tk.overtime_hours > 0)  return { label: 'Overtime', classes: 'bg-orange-500/15 text-orange-400 border border-orange-500/20' };
-                    return                              { label: 'Regular',  classes: 'bg-blue-500/15 text-blue-400 border border-blue-500/20' };
+                    if (tk.sick) return {
+                        label: 'Sick',
+                        classes: 'bg-red-500/15 text-red-400 border border-red-500/20'
+                    };
+                    if (tk.vacation) return {
+                        label: 'Vacation',
+                        classes: 'bg-teal-500/15 text-teal-400 border border-teal-500/20'
+                    };
+                    if (tk.overtime_hours > 0) return {
+                        label: 'Overtime',
+                        classes: 'bg-orange-500/15 text-orange-400 border border-orange-500/20'
+                    };
+                    return {
+                        label: 'Regular',
+                        classes: 'bg-blue-500/15 text-blue-400 border border-blue-500/20'
+                    };
                 },
 
                 // ─── VIOLATION ICONS ───
 
                 violationIcon(instance) {
                     const t = (instance || '').toLowerCase();
-                    if (t.includes('speed') || t.includes('over'))                          return 'fa-gauge-high';
-                    if (t.includes('phone') || t.includes('mobile') || t.includes('device')) return 'fa-mobile-screen-button';
+                    if (t.includes('speed') || t.includes('over')) return 'fa-gauge-high';
+                    if (t.includes('phone') || t.includes('mobile') || t.includes('device'))
+                    return 'fa-mobile-screen-button';
                     if (t.includes('traffic') || t.includes('light') || t.includes('signal')) return 'fa-traffic-light';
-                    if (t.includes('parking') || t.includes('park'))                        return 'fa-square-parking';
+                    if (t.includes('parking') || t.includes('park')) return 'fa-square-parking';
                     if (t.includes('lane') || t.includes('swerv') || t.includes('weaving')) return 'fa-road';
                     return 'fa-triangle-exclamation';
                 },
 
                 violationIconClasses(instance) {
                     const t = (instance || '').toLowerCase();
-                    if (t.includes('phone') || t.includes('mobile'))  return 'bg-orange-500/10 border border-orange-500/15 text-orange-400 group-hover:bg-orange-500 group-hover:text-white group-hover:border-orange-500';
-                    if (t.includes('traffic') || t.includes('park'))   return 'bg-yellow-500/10 border border-yellow-500/15 text-yellow-400 group-hover:bg-yellow-500 group-hover:text-white group-hover:border-yellow-500';
+                    if (t.includes('phone') || t.includes('mobile'))
+                    return 'bg-orange-500/10 border border-orange-500/15 text-orange-400 group-hover:bg-orange-500 group-hover:text-white group-hover:border-orange-500';
+                    if (t.includes('traffic') || t.includes('park'))
+                    return 'bg-yellow-500/10 border border-yellow-500/15 text-yellow-400 group-hover:bg-yellow-500 group-hover:text-white group-hover:border-yellow-500';
                     return 'bg-red-500/10 border border-red-500/15 text-red-400 group-hover:bg-red-500 group-hover:text-white group-hover:border-red-500';
                 },
             };

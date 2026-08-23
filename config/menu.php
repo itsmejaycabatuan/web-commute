@@ -52,9 +52,14 @@ return [
         // ── MAINTENANCE MANAGER MENU ──
         'maintenance_manager' => [
             ['label' => 'Navigation', 'section' => 'Navigation', 'icon' => 'fa-map-location-dot', 'route' => 'map', 'mobile_label' => 'Map'],
+            ['label' => 'Map', 'icon' => 'fa-map-location-dot', 'route' => 'map', 'mobile_label' => 'Map'],
             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'fa-gauge-high', 'section' => null, 'mobile_label' => 'Home'],
+            ['label' => 'Preventive Maintenance', 'route' => 'maintenance-manager.preventive-maintenance', 'icon' => 'fa-calendar-days', 'section' => null, 'mobile_label' => 'Home'],
+            ['label' => 'Maintenance Tasks', 'route' => 'maintenance-manager.maintenance-tasks', 'icon' => 'fa-list-check', 'section' => null, 'mobile_label' => 'Home'],
+            ['label' => 'Maintenance Logs', 'route' => 'maintenance-manager.maintenance-logs', 'icon' => 'fa-list', 'section' => null, 'mobile_label' => 'Home'],
+            ['label' => 'Vehicles', 'route' => 'vehicles.index', 'icon' => 'fa-bus', 'section' => null, 'mobile_label' => 'Home'],
             ['label' => 'Account', 'section' => 'Account'],
-            ['label' => 'My Profile', 'route' => 'profile', 'icon' => 'fa-circle-user', 'section' => null],
+            ['label' => 'Settings', 'route' => 'settings.edit', 'icon' => 'fa-gear', 'section' => null],
         ],
 
         // ── DEFAULT/FALLBACK MENU (Commuter) ──
@@ -62,7 +67,7 @@ return [
             ['label' => 'Navigation', 'section' => 'Navigation', 'icon' => 'fa-map-location-dot', 'route' => 'map', 'mobile_label' => 'Map'],
             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'fa-gauge-high', 'section' => null, 'mobile_label' => 'Home'],
             ['label' => 'Account', 'section' => 'Account'],
-            ['label' => 'My Profile', 'route' => 'profile', 'icon' => 'fa-circle-user', 'section' => null],
+            ['label' => 'Settings', 'route' => 'settings.edit', 'icon' => 'fa-gear', 'section' => null],
         ],
     ],
 
