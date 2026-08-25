@@ -21,4 +21,22 @@ class UserPreferenceController extends Controller
 
         return response()->noContent();
     }
+
+    public function updateFontSize(Request $request)
+    {
+        $request->validate([
+            'font_size' => 'required|integer|in:10,11,12,13',
+        ]);
+
+        $pref = UserPreference::firstOrCreate(
+            ['user_id' => auth()->id()],
+            ['theme' => 'light', 'font_size' => 11]
+        );
+
+        $pref->update([
+            'font_size' => $request->font_size,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
 }

@@ -216,6 +216,24 @@
             background: #333;
             border-radius: 10px;
         }
+
+        .font-size-btn {
+            position: relative;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .font-size-btn.active {
+            background: #ffffff;
+            color: #3b82f6;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark .font-size-btn.active {
+            background: #1a1a1a;
+            color: #60a5fa;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        }
     </style>
 </head>
 
@@ -570,6 +588,7 @@
                         </div>
 
                         <div class="space-y-1">
+                            <!-- Dark Mode Toggle -->
                             <div class="setting-row flex items-center justify-between p-4 rounded-xl">
                                 <div class="flex items-center gap-3">
                                     <div class="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center"
@@ -587,19 +606,40 @@
                                 </div>
                             </div>
 
+                            <!-- Font Size Selector -->
                             <div class="setting-row flex items-center justify-between p-4 rounded-xl">
                                 <div class="flex items-center gap-3">
                                     <div class="w-9 h-9 rounded-lg inner-card flex items-center justify-center">
-                                        <i class="fa-solid fa-mobile text-[11px] text-gray-400 dark:text-[#555]"></i>
+                                        <i
+                                            class="fa-solid fa-text-height text-[11px] text-gray-400 dark:text-[#555]"></i>
                                     </div>
                                     <div>
-                                        <p class="text-[11px] font-bold text-gray-900 dark:text-white">Compact Mode</p>
-                                        <p class="text-[8px] text-gray-400 dark:text-[#444]">Reduce spacing and padding
-                                        </p>
+                                        <p class="text-[11px] font-bold text-gray-900 dark:text-white">Font Size</p>
+                                        <p class="text-[8px] text-gray-400 dark:text-[#444]">Adjust text for
+                                            readability</p>
                                     </div>
                                 </div>
-                                <div class="toggle-track" onclick="this.classList.toggle('active')">
-                                    <div class="toggle-thumb"></div>
+                                <div class="flex items-center gap-0.5 p-0.5 rounded-lg bg-gray-100 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]"
+                                    id="font-size-selector">
+                                    <button onclick="changeFontSize('small', this)" data-size="small"
+                                        class="font-size-btn px-2.5 py-1.5 rounded-md transition-all text-gray-400 dark:text-[#555] hover:text-gray-600 dark:hover:text-[#888]">
+                                        <span class="text-[9px] leading-none">A<small
+                                                class="text-[6px]">-</small></span>
+                                    </button>
+                                    <button onclick="changeFontSize('medium', this)" data-size="medium"
+                                        class="font-size-btn active px-2.5 py-1.5 rounded-md transition-all text-gray-400 dark:text-[#555] hover:text-gray-600 dark:hover:text-[#888]">
+                                        <span class="text-[11px] leading-none">A</span>
+                                    </button>
+                                    <button onclick="changeFontSize('large', this)" data-size="large"
+                                        class="font-size-btn px-2.5 py-1.5 rounded-md transition-all text-gray-400 dark:text-[#555] hover:text-gray-600 dark:hover:text-[#888]">
+                                        <span class="text-[13px] leading-none">A<small
+                                                class="text-[8px]">+</small></span>
+                                    </button>
+                                    <button onclick="changeFontSize('xlarge', this)" data-size="xlarge"
+                                        class="font-size-btn px-2.5 py-1.5 rounded-md transition-all text-gray-400 dark:text-[#555] hover:text-gray-600 dark:hover:text-[#888]">
+                                        <span class="text-[15px] leading-none">A<small
+                                                class="text-[9px]">++</small></span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -935,6 +975,69 @@
                 updateThemeUI(isDark);
             }
         });
+
+        // ═══ FONT SIZE ═══
+        const fontZoomLevels = {
+            small: 0.875, // ~14/16
+            medium: 1, // default
+            large: 1.125, // ~18/16
+            xlarge: 1.25 // ~20/16
+        };
+
+        const intToLabel = {
+            10: 'small',
+            11: 'medium',
+            12: 'large',
+            13: 'xlarge'
+        };
+
+        function applyFontSize(size) {
+            const zoom = fontZoomLevels[size] || 1;
+            document.documentElement.style.zoom = zoom;
+            return {
+                size: size,
+                db: Object.keys(intToLabel).find(k => intToLabel[k] === size) || 11
+            };
+        }
+
+        function changeFontSize(size, btn) {
+            // Update button states
+            document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Apply font size
+            const result = applyFontSize(size);
+            localStorage.setItem('font-size', size);
+
+            // Save to server
+            fetch('{{ route('settings.update.fontsize') }}', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                },
+                body: JSON.stringify({
+                    font_size: result.db
+                })
+            }).catch(() => {
+                // Revert on failure
+                const reverted = localStorage.getItem('font-size') || 'medium';
+                applyFontSize(reverted);
+                document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector(`.font-size-btn[data-size="${reverted}"]`)?.classList.add('active');
+            });
+        }
+
+        // Initialize on page load
+        (function() {
+            const dbInt = parseInt('{{ $userFontSize ?? 11 }}') || 11;
+            const currentSize = intToLabel[dbInt] || localStorage.getItem('font-size') || 'medium';
+            applyFontSize(currentSize);
+
+            // Set active button
+            document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.font-size-btn[data-size="${currentSize}"]`)?.classList.add('active');
+        })();
     </script>
 
 </body>

@@ -17,6 +17,62 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
 
+        .font-size-btn {
+            position: relative;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .font-size-btn.active {
+            background: #ffffff;
+            color: #3b82f6;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark .font-size-btn.active {
+            background: #1a1a1a;
+            color: #60a5fa;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        }
+
+        .toggle-track {
+            width: 44px;
+            height: 24px;
+            border-radius: 12px;
+            background: #cbd5e1;
+            position: relative;
+            transition: background 0.3s ease;
+            cursor: pointer;
+        }
+
+        .toggle-track.active {
+            background: #3b82f6;
+        }
+
+        .dark .toggle-track {
+            background: #333;
+        }
+
+        .dark .toggle-track.active {
+            background: #2563eb;
+        }
+
+        .toggle-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-track.active .toggle-thumb {
+            transform: translateX(20px);
+        }
+
         [x-cloak] {
             display: none !important;
         }
@@ -92,6 +148,15 @@
                     <i class="fa-solid fa-shield-halved text-[8px]"></i>
                     <span>Security</span>
                 </button>
+                <button @click="activeTab = 'preferences'"
+                    :class="activeTab === 'preferences'
+                        ?
+                        'bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white shadow-sm' :
+                        'text-gray-500 dark:text-[#555] hover:text-gray-700 dark:hover:text-[#888]'"
+                    class="flex items-center gap-2 px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition">
+                    <i class="fa-solid fa-sliders text-[8px]"></i>
+                    <span>Prefs</span>
+                </button>
             </div>
 
             <!-- ══════════ ACCOUNT TAB ══════════ -->
@@ -149,7 +214,8 @@
                                     <span
                                         class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Role</span>
                                     <span class="text-[10px] font-bold text-gray-700 dark:text-[#ccc]">
-                                        {{ ucfirst(Auth::user()->getRoleNames()->first() ?? 'User') }} </span>
+                                        {{ ucfirst(Auth::user()->getRoleNames()->first() ?? 'User') }}
+                                    </span>
                                 </div>
                                 <div
                                     class="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]">
@@ -303,17 +369,216 @@
                 </div>
             </div>
 
+            <!-- ══════════ PREFERENCES TAB ══════════ -->
+            <div x-show="activeTab === 'preferences'" x-cloak>
+                <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] overflow-hidden">
+
+                    <!-- Section header -->
+                    <div class="px-6 sm:px-8 py-5 border-b border-gray-200 dark:border-[#1e1e1e]">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/15 flex items-center justify-center">
+                                <i class="fa-solid fa-palette text-xs text-purple-500 dark:text-purple-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-900 dark:text-white">Appearance</h3>
+                                <p class="text-[9px] text-gray-500 dark:text-[#555]">Customize how the console looks
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-6 sm:px-8 py-6 sm:py-8 space-y-6">
+
+                        <!-- Dark Mode -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                                    <i class="fa-solid fa-moon text-[11px] text-amber-500 dark:text-amber-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[11px] font-bold text-gray-900 dark:text-white">Dark Mode</p>
+                                    <p class="text-[8px] text-gray-400 dark:text-[#444]">Switch between light and dark
+                                        theme</p>
+                                </div>
+                            </div>
+                            <div class="toggle-track" id="theme-toggle" onclick="toggleTheme()">
+                                <div class="toggle-thumb"></div>
+                            </div>
+                        </div>
+
+                        <!-- Font Size -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-9 h-9 rounded-xl bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center">
+                                    <i class="fa-solid fa-text-height text-[11px] text-gray-400 dark:text-[#555]"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[11px] font-bold text-gray-900 dark:text-white">Font Size</p>
+                                    <p class="text-[8px] text-gray-400 dark:text-[#444]">Adjust text for readability
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-0.5 p-0.5 rounded-lg bg-gray-100 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]"
+                                id="font-size-selector">
+                                <button onclick="changeFontSize('small', this)" data-size="small"
+                                    class="font-size-btn px-2.5 py-1.5 rounded-md transition-all text-gray-400 dark:text-[#555] hover:text-gray-600 dark:hover:text-[#888]">
+                                    <span class="text-[9px] leading-none">A<small class="text-[6px]">-</small></span>
+                                </button>
+                                <button onclick="changeFontSize('medium', this)" data-size="medium"
+                                    class="font-size-btn active px-2.5 py-1.5 rounded-md transition-all text-gray-400 dark:text-[#555] hover:text-gray-600 dark:hover:text-[#888]">
+                                    <span class="text-[11px] leading-none">A</span>
+                                </button>
+                                <button onclick="changeFontSize('large', this)" data-size="large"
+                                    class="font-size-btn px-2.5 py-1.5 rounded-md transition-all text-gray-400 dark:text-[#555] hover:text-gray-600 dark:hover:text-[#888]">
+                                    <span class="text-[13px] leading-none">A<small class="text-[8px]">+</small></span>
+                                </button>
+                                <button onclick="changeFontSize('xlarge', this)" data-size="xlarge"
+                                    class="font-size-btn px-2.5 py-1.5 rounded-md transition-all text-gray-400 dark:text-[#555] hover:text-gray-600 dark:hover:text-[#888]">
+                                    <span class="text-[15px] leading-none">A<small
+                                            class="text-[9px]">++</small></span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('settingsPage', () => ({
-                activeTab: 'account',
-                showCurrent: false,
-                showNew: false,
-                showConfirm: false,
-            }));
+        // ═══ THEME TOGGLE ═══
+        function toggleTheme() {
+            var isDark = document.documentElement.classList.toggle('dark');
+            var theme = isDark ? 'dark' : 'light';
+            var toggle = document.getElementById('theme-toggle');
+
+            if (isDark) {
+                toggle.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+            }
+
+            localStorage.setItem('color-theme', theme);
+
+            // Update Alpine store if available
+            if (window.Alpine && Alpine.store('sidebar')) {
+                Alpine.store('sidebar').isDark = isDark;
+            }
+
+            fetch('{{ route('settings.update.theme') }}', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                },
+                body: JSON.stringify({
+                    theme: theme
+                })
+            }).catch(function() {
+                document.documentElement.classList.toggle('dark');
+                var reverted = isDark ? 'light' : 'dark';
+                localStorage.setItem('color-theme', reverted);
+                if (window.Alpine && Alpine.store('sidebar')) {
+                    Alpine.store('sidebar').isDark = !isDark;
+                }
+                if (isDark) {
+                    toggle.classList.remove('active');
+                } else {
+                    toggle.classList.add('active');
+                }
+            });
+        }
+
+        // Initialize theme toggle state on page load
+        (function() {
+            var toggle = document.getElementById('theme-toggle');
+            if (toggle && document.documentElement.classList.contains('dark')) {
+                toggle.classList.add('active');
+            }
+        })();
+
+        // ═══ FONT SIZE ═══
+        var fontZoomLevels = {
+            small: 0.875,
+            medium: 1,
+            large: 1.125,
+            xlarge: 1.25
+        };
+        var intToLabel = {
+            10: 'small',
+            11: 'medium',
+            12: 'large',
+            13: 'xlarge'
+        };
+        var sizeToDb = {
+            small: 10,
+            medium: 11,
+            large: 12,
+            xlarge: 13
+        };
+
+        function changeFontSize(size, btn) {
+            // Update button states
+            document.querySelectorAll('.font-size-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            btn.classList.add('active');
+
+            // Apply zoom
+            document.documentElement.style.zoom = fontZoomLevels[size] || 1;
+            localStorage.setItem('font-size', size);
+
+            // Update Alpine store if available
+            if (window.Alpine && Alpine.store('sidebar')) {
+                Alpine.store('sidebar').fontSize = size;
+            }
+
+            // Save to server
+            fetch('{{ route('settings.update.fontsize') }}', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                },
+                body: JSON.stringify({
+                    font_size: sizeToDb[size] || 11
+                })
+            }).catch(function() {
+                var reverted = localStorage.getItem('font-size') || 'medium';
+                document.documentElement.style.zoom = fontZoomLevels[reverted] || 1;
+                document.querySelectorAll('.font-size-btn').forEach(function(b) {
+                    b.classList.remove('active');
+                });
+                document.querySelector('.font-size-btn[data-size="' + reverted + '"]')?.classList.add('active');
+                if (window.Alpine && Alpine.store('sidebar')) {
+                    Alpine.store('sidebar').fontSize = reverted;
+                }
+            });
+        }
+
+        // Initialize font size buttons on page load
+        (function() {
+            var dbInt = parseInt('{{ $userFontSize ?? 11 }}') || 11;
+            var currentSize = intToLabel[dbInt] || localStorage.getItem('font-size') || 'medium';
+            document.querySelectorAll('.font-size-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            document.querySelector('.font-size-btn[data-size="' + currentSize + '"]')?.classList.add('active');
+        })();
+
+        // ═══ ALPINE DATA ═══
+        document.addEventListener('alpine:init', function() {
+            Alpine.data('settingsPage', function() {
+                return {
+                    activeTab: 'account',
+                    showCurrent: false,
+                    showNew: false,
+                    showConfirm: false
+                };
+            });
         });
     </script>
 </body>

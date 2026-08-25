@@ -143,7 +143,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
     Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password');
     Route::post('/settings/logout-others', [SettingsController::class, 'logoutOtherDevices'])->name('settings.logout-others');
-    Route::patch('/settings', [UserPreferenceController::class, 'updateTheme'])->name('settings.update.theme');
+    Route::patch('/settings/theme', [UserPreferenceController::class, 'updateTheme'])->name('settings.update.theme');
+    Route::patch('/settings/font-size', [UserPreferenceController::class, 'updateFontSize'])->name('settings.update.fontsize');
 
     Route::get('/drivers', [DriverApprovalController::class, 'index'])->name('drivers.index');
 

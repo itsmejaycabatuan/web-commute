@@ -1,10 +1,100 @@
-{{-- Theme detection MUST run immediately to prevent flash --}}
+{{-- Theme & Font Size detection MUST run immediately to prevent flash --}}
 <script>
     (function() {
+        // Theme
         const dbTheme = '{{ $userTheme }}';
         localStorage.setItem('color-theme', dbTheme);
         document.documentElement.classList.toggle('dark', dbTheme === 'dark');
+
+        // Font Size (using zoom for proportional scaling)
+        const fontZoomLevels = {
+            small: 0.875,
+            medium: 1,
+            large: 1.125,
+            xlarge: 1.25
+        };
+        const intToLabel = {
+            10: 'small',
+            11: 'medium',
+            12: 'large',
+            13: 'xlarge'
+        };
+
+        const dbInt = parseInt('{{ $userFontSize ?? 11 }}') || 11;
+        const currentSize = intToLabel[dbInt] || localStorage.getItem('font-size') || 'medium';
+        localStorage.setItem('font-size', currentSize);
+
+        document.documentElement.style.zoom = fontZoomLevels[currentSize] || 1;
     })();
+
+    function applyFontSize(size, skipSave) {
+        const sizes = {
+            small: {
+                base: 14,
+                label: 12,
+                small: 10,
+                tiny: 8,
+                mini: 7,
+                db: 10
+            },
+            medium: {
+                base: 16,
+                label: 13,
+                small: 11,
+                tiny: 9,
+                mini: 8,
+                db: 11
+            },
+            large: {
+                base: 18,
+                label: 15,
+                small: 12,
+                tiny: 10,
+                mini: 9,
+                db: 12
+            },
+            xlarge: {
+                base: 20,
+                label: 17,
+                small: 14,
+                tiny: 11,
+                mini: 10,
+                db: 13
+            }
+        };
+
+        const s = sizes[size] || sizes.medium;
+        const root = document.documentElement;
+        root.style.setProperty('--fs-base', s.base + 'px');
+        root.style.setProperty('--fs-label', s.label + 'px');
+        root.style.setProperty('--fs-small', s.small + 'px');
+        root.style.setProperty('--fs-tiny', s.tiny + 'px');
+        root.style.setProperty('--fs-mini', s.mini + 'px');
+
+        if (!skipSave) {
+            localStorage.setItem('font-size', size);
+        }
+
+        return s.db; // Return the integer value for API calls
+    }
+
+    function setFontSize(size) {
+        const dbValue = applyFontSize(size, false);
+
+        fetch('{{ route('settings.update.fontsize') }}', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+            },
+            body: JSON.stringify({
+                font_size: dbValue
+            })
+        }).catch(() => {
+            const reverted = localStorage.getItem('font-size') || 'medium';
+            applyFontSize(reverted, false);
+        });
+    }
 </script>
 
 <script>
@@ -14,6 +104,13 @@
             extend: {
                 fontFamily: {
                     sans: ['Inter', 'sans-serif']
+                },
+                fontSize: {
+                    'base': 'var(--fs-base, 16px)',
+                    'label': 'var(--fs-label, 13px)',
+                    'small': 'var(--fs-small, 11px)',
+                    'tiny': 'var(--fs-tiny, 9px)',
+                    'mini': 'var(--fs-mini, 8px)',
                 }
             }
         }
@@ -25,6 +122,16 @@
         Alpine.store('sidebar', {
             open: false,
             isDark: false,
+            fontSize: (function() {
+                const intToLabel = {
+                    10: 'small',
+                    11: 'medium',
+                    12: 'large',
+                    13: 'xlarge'
+                };
+                const dbInt = parseInt('{{ $userFontSize ?? 11 }}') || 11;
+                return intToLabel[dbInt] || localStorage.getItem('font-size') || 'medium';
+            })(),
             showLogoutModal: false,
             syncing: false,
 
@@ -71,6 +178,33 @@
                     });
             },
 
+            setFontSize(size) {
+                this.fontSize = size;
+                const dbValue = applyFontSize(size, false);
+                localStorage.setItem('font-size-db', dbValue);
+
+                this.syncing = true;
+                fetch('{{ route('settings.update.fontsize') }}', {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                ?.content
+                        },
+                        body: JSON.stringify({
+                            font_size: dbValue
+                        })
+                    })
+                    .catch(() => {
+                        const reverted = this.fontSize === size ? 'medium' : this.fontSize;
+                        this.fontSize = reverted;
+                        applyFontSize(reverted, false);
+                    })
+                    .finally(() => {
+                        this.syncing = false;
+                    });
+            },
+
             toggleLogoutModal() {
                 this.showLogoutModal = !this.showLogoutModal;
             }
@@ -86,6 +220,7 @@
         padding: 0;
         height: 100%;
         font-family: 'Inter', sans-serif;
+        font-size: var(--fs-base, 16px);
         overflow-x: hidden;
         background-color: #f8fafc;
     }
@@ -115,7 +250,7 @@
     .theme-switching *,
     .theme-switching *::before,
     .theme-switching *::after {
-        transition-property: background-color, border-color, color, box-shadow, opacity, fill, stroke !important;
+        transition-property: background-color, border-color, color, box-shadow, opacity, fill, stroke, font-size !important;
         transition-duration: 0.3s !important;
         transition-timing-function: ease !important;
     }
@@ -193,7 +328,7 @@
        THEME-AWARE UTILITY CLASSES
     ═══════════════════════════════════════════════════════════════ */
 
-    /* ── Inner card backgrounds (replaces bg-[#111] border-[#1e1e1e]) ── */
+    /* ── Inner card backgrounds ── */
     .inner-card {
         background: #f1f5f9;
         border: 1px solid #e2e8f0;
@@ -214,7 +349,7 @@
         border-color: #333;
     }
 
-    /* ── Icon boxes (replaces bg-[#111] border-[#1e1e1e] on icons) ── */
+    /* ── Icon boxes ── */
     .icon-box {
         background: #f1f5f9;
         border: 1px solid #e2e8f0;
@@ -225,7 +360,7 @@
         border: 1px solid #1e1e1e;
     }
 
-    /* ── Inactive badge (replaces bg-[#111] text-[#444] border-[#1e1e1e]) ── */
+    /* ── Inactive badge ── */
     .badge-inactive {
         background: #f1f5f9;
         color: #94a3b8;
@@ -328,6 +463,25 @@
 
     .dark .group:hover .group-hover\:text-faint {
         color: #555;
+    }
+
+    /* ═══ FONT SIZE BUTTON ═══ */
+    .font-size-btn {
+        position: relative;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .font-size-btn.active {
+        background: #ffffff;
+        color: #3b82f6;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .dark .font-size-btn.active {
+        background: #1a1a1a;
+        color: #60a5fa;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
     }
 
     /* ═══ ACCENT PRESERVATION ═══ */

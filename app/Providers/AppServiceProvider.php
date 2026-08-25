@@ -34,16 +34,20 @@ class AppServiceProvider extends ServiceProvider
             ]);
         });
 
-        // ── Universal Menu + Theme Composer ──
+        // ── Universal Menu + Theme + Font Size Composer ──
         View::composer('*', function ($view) {
             $menuService = app(MenuService::class);
 
-            // Theme from database
+            // Preferences from database
             $theme = 'light';
+            $fontSize = 11; // Default integer
+
             if (auth()->check()) {
-                $pref = UserPreference::where('user_id', auth()->id())->value('theme');
-                if ($pref) {
-                    $theme = $pref;
+                $prefs = UserPreference::where('user_id', auth()->id())->first();
+
+                if ($prefs) {
+                    $theme = $prefs->theme ?? 'light';
+                    $fontSize = $prefs->font_size ?? 11;
                 }
             }
 
@@ -54,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
                 'consoleName' => $menuService->getConsoleName(),
                 'forcedTheme' => $menuService->getForcedTheme(),
                 'userTheme' => $theme,
+                'userFontSize' => $fontSize, // Now an integer (10, 11, 12, or 13)
             ]);
         });
     }

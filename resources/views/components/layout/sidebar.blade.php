@@ -39,7 +39,7 @@
     <!-- ══════════ MOBILE DRAWER ══════════ -->
     <div id="mobile-drawer"
         class="fixed top-0 left-0 h-full w-72 z-[65] bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 transform -translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col md:hidden">
-        <div class="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-gray-800">
+        <div class="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
             <div class="flex items-center gap-3 overflow-hidden whitespace-nowrap">
                 <div
                     class="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/15">
@@ -53,7 +53,7 @@
                 <i class="fa-solid fa-xmark text-[10px]"></i>
             </button>
         </div>
-        <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+        <nav class="flex-1 overflow-y-auto p-3 space-y-1">
             @foreach ($menuItems as $item)
                 @if (!isset($item['route']))
                     @if (($item['section'] ?? null) !== null && $item['section'] !== 'hidden')
@@ -81,7 +81,7 @@
                 </a>
             @endforeach
         </nav>
-        <div class="p-3 border-t border-gray-100 dark:border-gray-800 space-y-1">
+        <div class="p-3 border-t border-gray-100 dark:border-gray-800 space-y-1 shrink-0">
             @if ($themeToggle)
                 <button type="button" @click="$store.sidebar.toggleTheme($store.sidebar.isDark ? 'light' : 'dark')"
                     :disabled="$store.sidebar.syncing"
@@ -109,8 +109,9 @@
 
     <!-- ══════════ DESKTOP SIDEBAR ══════════ -->
     <aside :class="$store.sidebar.open ? 'w-[270px] p-3' : 'w-[76px] p-2'"
-        class="overflow-y-auto overflow-x-hidden sidebar-transition fixed left-0 top-0 h-screen bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 z-50 flex-col justify-between hidden md:flex">
-        <div>
+        class="sidebar-transition fixed left-0 top-0 h-full bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 z-50 flex flex-col hidden md:flex">
+
+        <div class="shrink-0 px-0.5">
             <div :class="$store.sidebar.open ? 'flex-row justify-between px-1 mb-6' : 'flex-col items-center gap-2.5 mb-6 pt-0.5'"
                 class="flex items-center overflow-hidden whitespace-nowrap">
                 <div class="flex items-center overflow-hidden whitespace-nowrap"
@@ -129,40 +130,42 @@
                         :class="$store.sidebar.open ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
                 </button>
             </div>
-            <nav class="space-y-1">
-                @foreach ($menuItems as $item)
-                    @if (!isset($item['route']))
-                        @if (($item['section'] ?? null) !== null && $item['section'] !== 'hidden')
-                            <div x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
-                                class="my-3 mx-3 border-t border-gray-100 dark:border-gray-800"></div>
-                            <p x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
-                                class="text-[8px] font-bold uppercase tracking-[0.2em] text-gray-300 dark:text-gray-600 px-3 mb-2">
-                                {{ $item['section'] }}</p>
-                        @endif
-                        @continue
-                    @endif
-                    @if (isset($item['section']) && $item['section'] !== null)
+        </div>
+
+        <nav class="flex-1 overflow-y-auto min-h-0 px-0.5 space-y-1">
+            @foreach ($menuItems as $item)
+                @if (!isset($item['route']))
+                    @if (($item['section'] ?? null) !== null && $item['section'] !== 'hidden')
                         <div x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
                             class="my-3 mx-3 border-t border-gray-100 dark:border-gray-800"></div>
                         <p x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
                             class="text-[8px] font-bold uppercase tracking-[0.2em] text-gray-300 dark:text-gray-600 px-3 mb-2">
                             {{ $item['section'] }}</p>
-                        @continue
                     @endif
-                    <a href="{{ route($item['route']) }}"
-                        :class="$store.sidebar.open ? 'gap-3 px-3' : 'justify-center px-0'"
-                        class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs($item['route']) ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' : 'text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-200 dark:hover:border-gray-700' }}">
-                        <div
-                            class="w-8 h-8 rounded-lg {{ request()->routeIs($item['route']) ? 'bg-blue-100 dark:bg-blue-500/20' : 'bg-gray-100 dark:bg-gray-800 group-hover:bg-gray-200 dark:group-hover:bg-gray-700' }} flex items-center justify-center shrink-0 transition">
-                            <i class="fa-solid {{ $item['icon'] }} text-[11px]"></i>
-                        </div>
-                        <span x-show="$store.sidebar.open" x-transition.opacity.duration.200ms
-                            class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">{{ $item['label'] }}</span>
-                    </a>
-                @endforeach
-            </nav>
-        </div>
-        <div class="mt-4 space-y-1">
+                    @continue
+                @endif
+                @if (isset($item['section']) && $item['section'] !== null)
+                    <div x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
+                        class="my-3 mx-3 border-t border-gray-100 dark:border-gray-800"></div>
+                    <p x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
+                        class="text-[8px] font-bold uppercase tracking-[0.2em] text-gray-300 dark:text-gray-600 px-3 mb-2">
+                        {{ $item['section'] }}</p>
+                    @continue
+                @endif
+                <a href="{{ route($item['route']) }}"
+                    :class="$store.sidebar.open ? 'gap-3 px-3' : 'justify-center px-0'"
+                    class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs($item['route']) ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' : 'text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-200 dark:hover:border-gray-700' }}">
+                    <div
+                        class="w-8 h-8 rounded-lg {{ request()->routeIs($item['route']) ? 'bg-blue-100 dark:bg-blue-500/20' : 'bg-gray-100 dark:bg-gray-800 group-hover:bg-gray-200 dark:group-hover:bg-gray-700' }} flex items-center justify-center shrink-0 transition">
+                        <i class="fa-solid {{ $item['icon'] }} text-[11px]"></i>
+                    </div>
+                    <span x-show="$store.sidebar.open" x-transition.opacity.duration.200ms
+                        class="text-[10px] font-bold uppercase tracking-[0.12em] whitespace-nowrap">{{ $item['label'] }}</span>
+                </a>
+            @endforeach
+        </nav>
+
+        <div class="shrink-0 mt-2 px-0.5 space-y-1">
             <div x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
                 class="mx-3 border-t border-gray-100 dark:border-gray-800 mb-3"></div>
             @if ($themeToggle)
