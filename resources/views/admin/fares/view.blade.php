@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>SmartCommute | Dashboard</title>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -68,10 +69,11 @@
                                     </td>
                                     <td
                                         class="text-center px-6 py-4 whitespace-nowrap text-sm text-white border-r border-gray-200 align-top">
-                                        {{$rate->regular}}
+                                        {{ $rate->regular }}
                                     </td>
-                                    <td class="text-center px-6 py-4 text-sm text-white border-r border-gray-200 font-mono">
-                                        {{$rate->discount}}
+                                    <td
+                                        class="text-center px-6 py-4 text-sm text-white border-r border-gray-200 font-mono">
+                                        {{ $rate->discount }}
                                     </td>
                                 </tr>
                             @endforeach

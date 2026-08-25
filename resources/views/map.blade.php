@@ -18,628 +18,1331 @@
     </script>
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.css" />
-    <script>
-        if (localStorage.getItem('color-theme') === 'dark' ||
-            (!localStorage.getItem('color-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
+
+    @include('partials.commuter-head-scripts');
+
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background: #f1f5f9;
         }
-    </script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif']
-                    }
-                }
+
+        .dark body,
+        .dark html {
+            background: #050505;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            z-index: 0;
+        }
+
+        /* ═══ GLASS ═══ */
+        .glass {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        .dark .glass {
+            background: #111111;
+            border: 1px solid #1e1e1e;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+        }
+
+        .glass-panel {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .dark .glass-panel {
+            background: #111111;
+            border: 1px solid #1e1e1e;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+        }
+
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .glass-card {
+            background: #161616;
+            border: 1px solid #222222;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        /* ═══ SCROLLBAR ═══ */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background: #333;
+        }
+
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .dark .custom-scroll::-webkit-scrollbar-thumb {
+            background: #333;
+        }
+
+        /* ═══ INPUT ═══ */
+        .map-input {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #0f172a;
+            transition: all 0.3s ease;
+        }
+
+        .map-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .map-input:focus {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+            outline: none;
+        }
+
+        .dark .map-input {
+            background: #0e0e0e !important;
+            border: 1px solid #222222 !important;
+            color: #ffffff;
+        }
+
+        .dark .map-input::placeholder {
+            color: #555;
+        }
+
+        /* ═══ VEHICLE MARKER ═══ */
+        .custom-vehicle-marker {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(59, 130, 246, 0.2);
+            cursor: pointer;
+            transition: box-shadow 0.3s ease;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .custom-vehicle-marker:hover {
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.8), 0 0 50px rgba(59, 130, 246, 0.3);
+        }
+
+        .custom-vehicle-marker i {
+            font-size: 14px;
+            color: white;
+        }
+
+        .bus-pulse {
+            animation: pulse-blue-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-blue-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(59, 130, 246, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(59, 130, 246, 0.8), 0 0 60px rgba(59, 130, 246, 0.3), 0 0 0 12px rgba(59, 130, 246, 0);
             }
         }
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-body, html {
-    margin: 0; padding: 0; height: 100%; width: 100%;
-    font-family: 'Inter', sans-serif; overflow: hidden;
-    background: #f1f5f9;
-}
-.dark body, .dark html { background: #050505; }
 
-#map { position: absolute; top: 0; bottom: 0; width: 100%; z-index: 0; }
+        /* ═══ SIDEBAR TOGGLE ═══ */
+        .rounded-rect {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
 
-/* ═══ GLASS ═══ */
-.glass {
-    background: #ffffff; border: 1px solid #e2e8f0;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
-}
-.dark .glass {
-    background: #111111; border: 1px solid #1e1e1e;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.8);
-}
+        .rounded-rect:hover {
+            color: #2563eb;
+            border-color: #2563eb;
+            background: #f1f5f9;
+        }
 
-.glass-panel {
-    background: #ffffff; border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-}
-.dark .glass-panel {
-    background: #111111; border: 1px solid #1e1e1e;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
-}
+        .dark .rounded-rect {
+            background: #111111;
+            border: 1px solid #1e1e1e;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            color: #666;
+        }
 
-.glass-card {
-    background: #ffffff; border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-.dark .glass-card {
-    background: #161616; border: 1px solid #222222;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-}
+        .dark .rounded-rect:hover {
+            color: #60a5fa;
+            border-color: #2563eb;
+            background: #1a1a1a;
+        }
 
-/* ═══ SCROLLBAR ═══ */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-.dark ::-webkit-scrollbar-thumb { background: #333; }
-.dark ::-webkit-scrollbar-thumb:hover { background: #444; }
-.custom-scroll::-webkit-scrollbar { width: 3px; }
-.custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-.dark .custom-scroll::-webkit-scrollbar-thumb { background: #333; }
+        .flex-center {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-/* ═══ INPUT ═══ */
-.map-input {
-    background: #f8fafc !important; border: 1px solid #e2e8f0 !important;
-    color: #0f172a; transition: all 0.3s ease;
-}
-.map-input::placeholder { color: #94a3b8; }
-.map-input:focus {
-    border-color: #2563eb !important;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.15) !important;
-    outline: none;
-}
-.dark .map-input {
-    background: #0e0e0e !important; border: 1px solid #222222 !important;
-    color: #ffffff;
-}
-.dark .map-input::placeholder { color: #555; }
+        .flex-center.left {
+            left: 0;
+        }
 
-/* ═══ VEHICLE MARKER ═══ */
-.custom-vehicle-marker {
-    width: 34px; height: 34px;
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    border: 3px solid white; border-radius: 50%;
-    box-shadow: 0 0 20px rgba(59,130,246,0.6), 0 0 40px rgba(59,130,246,0.2);
-    cursor: pointer; transition: box-shadow 0.3s ease;
-    pointer-events: auto; display: flex; align-items: center; justify-content: center;
-}
-.custom-vehicle-marker:hover {
-    box-shadow: 0 0 25px rgba(59,130,246,0.8), 0 0 50px rgba(59,130,246,0.3);
-}
-.custom-vehicle-marker i { font-size: 14px; color: white; }
-.bus-pulse { animation: pulse-blue-glow 2s ease-in-out infinite; }
-@keyframes pulse-blue-glow {
-    0%, 100% { box-shadow: 0 0 20px rgba(59,130,246,0.6), 0 0 40px rgba(59,130,246,0.2); }
-    50% { box-shadow: 0 0 30px rgba(59,130,246,0.8), 0 0 60px rgba(59,130,246,0.3), 0 0 0 12px rgba(59,130,246,0); }
-}
+        .flex-center.right {
+            right: 0;
+        }
 
-/* ═══ SIDEBAR TOGGLE ═══ */
-.rounded-rect {
-    background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08); color: #64748b; transition: all 0.3s ease;
-}
-.rounded-rect:hover { color: #2563eb; border-color: #2563eb; background: #f1f5f9; }
-.dark .rounded-rect {
-    background: #111111; border: 1px solid #1e1e1e;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5); color: #666;
-}
-.dark .rounded-rect:hover { color: #60a5fa; border-color: #2563eb; background: #1a1a1a; }
+        .sidebar-content {
+            position: absolute;
+            width: 95%;
+            height: 95%;
+        }
 
-.flex-center { position: absolute; display: flex; justify-content: center; align-items: center; }
-.flex-center.left { left: 0; }
-.flex-center.right { right: 0; }
-.sidebar-content { position: absolute; width: 95%; height: 95%; }
-.sidebar-toggle {
-    position: absolute; width: 2em; height: 2em; overflow: visible;
-    display: flex; justify-content: center; align-items: center;
-    cursor: pointer; transition: all 0.3s ease; font-size: 16px; font-weight: 300;
-}
-.sidebar-toggle.left { right: -2.4em; }
-.sidebar-toggle.right { left: -2.4em; }
-.sidebar { transition: transform 0.6s cubic-bezier(0.16,1,0.3,1); z-index: 1; width: 360px; height: 100%; }
-.left.collapsed { transform: translateX(-300px); }
-.right.collapsed { transform: translateX(300px); }
+        .sidebar-toggle {
+            position: absolute;
+            width: 2em;
+            height: 2em;
+            overflow: visible;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 300;
+        }
 
-/* ═══ MODALS ═══ */
-.modal-backdrop { transition: opacity 0.3s ease; }
-.modal-content { transition: all 0.35s cubic-bezier(0.16,1,0.3,1); }
-.modal-backdrop.active { opacity: 1; pointer-events: auto; }
-.modal-backdrop.active .modal-content { transform: scale(1); opacity: 1; }
+        .sidebar-toggle.left {
+            right: -2.4em;
+        }
 
-.header-btn { transition: all 0.3s ease; }
-.header-btn:hover { background: #f1f5f9 !important; border-color: #cbd5e1 !important; }
-.dark .header-btn:hover { background: #1a1a1a !important; border-color: #333 !important; }
+        .sidebar-toggle.right {
+            left: -2.4em;
+        }
 
-/* ═══ MAPLIBRE CONTROLS ═══ */
-.maplibregl-ctrl-group {
-    background: #ffffff !important; border: 1px solid #e2e8f0 !important;
-    border-radius: 14px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.08) !important; overflow: hidden;
-}
-.maplibregl-ctrl-group button {
-    width: 40px !important; height: 40px !important;
-    border-bottom: 1px solid #e2e8f0 !important; transition: background 0.2s ease;
-}
-.maplibregl-ctrl-group button:hover { background: #f1f5f9 !important; }
-.maplibregl-ctrl-group button span { opacity: 0.4; }
-.maplibregl-ctrl-group button:hover span { opacity: 0.9; }
-.dark .maplibregl-ctrl-group {
-    background: #111111 !important; border: 1px solid #1e1e1e !important;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
-}
-.dark .maplibregl-ctrl-group button { border-bottom: 1px solid #1a1a1a !important; }
-.dark .maplibregl-ctrl-group button:hover { background: #1a1a1a !important; }
-.dark .maplibregl-ctrl-group button span { filter: invert(1) opacity(0.5); }
-.dark .maplibregl-ctrl-group button:hover span { filter: invert(1) opacity(0.9); }
+        .sidebar {
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1;
+            width: 360px;
+            height: 100%;
+        }
 
-.line-glow { background: #e2e8f0; height: 1px; }
-.dark .line-glow { background: #222; }
+        .left.collapsed {
+            transform: translateX(-300px);
+        }
 
-@keyframes nav-slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-.mobile-nav-animate { animation: nav-slide-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.3s both; }
-@keyframes dot-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-.dot-pulse { animation: dot-pulse 2s ease-in-out infinite; }
+        .right.collapsed {
+            transform: translateX(300px);
+        }
 
-/* ═══ SEARCH DROPDOWN ═══ */
-.search-dropdown {
-    position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px;
-    background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
-    max-height: 200px; overflow-y: auto; z-index: 9999;
-    display: none; box-shadow: 0 12px 40px rgba(0,0,0,0.1);
-}
-.dark .search-dropdown {
-    background: #111; border: 1px solid #222;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-}
-.search-dropdown.active { display: block; }
-.search-item { padding: 10px 14px; cursor: pointer; transition: background 0.15s ease; border-bottom: 1px solid #f1f5f9; }
-.dark .search-item { border-bottom: 1px solid #1a1a1a; }
-.search-item:last-child { border-bottom: none; }
-.search-item:hover, .search-item.highlighted { background: #f1f5f9; }
-.dark .search-item:hover, .dark .search-item.highlighted { background: #1a1a1a; }
-.search-item .result-name { color: #0f172a; font-size: 12px; font-weight: 600; }
-.dark .search-item .result-name { color: #ddd; }
-.search-item .result-detail { color: #94a3b8; font-size: 10px; margin-top: 2px; }
-.dark .search-item .result-detail { color: #555; }
-.search-loading { padding: 14px; text-align: center; color: #94a3b8; font-size: 11px; }
-.dark .search-loading { color: #555; }
-.search-no-results { padding: 14px; text-align: center; color: #cbd5e1; font-size: 11px; }
-.dark .search-no-results { color: #444; }
+        /* ═══ MODALS ═══ */
+        .modal-backdrop {
+            transition: opacity 0.3s ease;
+        }
 
-/* ═══ MOBILE SHEET ═══ */
-.mobile-sheet-backdrop {
-    position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,0.4);
-    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-}
-.dark .mobile-sheet-backdrop { background: rgba(0,0,0,0.6); }
-.mobile-sheet-backdrop.visible { opacity: 1; pointer-events: auto; }
-.mobile-sheet {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 91;
-    background: #ffffff; border-top: 1px solid #e2e8f0;
-    border-radius: 1.5rem 1.5rem 0 0; max-height: 88vh; overflow: hidden;
-    transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    display: flex; flex-direction: column;
-}
-.dark .mobile-sheet { background: #0a0a0a; border-top: 1px solid #1e1e1e; }
-.mobile-sheet.open { transform: translateY(0); }
-.mobile-sheet-handle { display: flex; justify-content: center; padding: 12px 0 4px; flex-shrink: 0; }
-.mobile-sheet-handle div { width: 40px; height: 4px; background: #cbd5e1; border-radius: 9999px; }
-.dark .mobile-sheet-handle div { background: #333; }
-.mobile-sheet-header { display: flex; align-items: center; justify-content: space-between; padding: 4px 20px 12px; flex-shrink: 0; }
-.mobile-sheet-close {
-    width: 32px; height: 32px; border-radius: 12px; background: #f1f5f9;
-    display: flex; align-items: center; justify-content: center;
-    border: none; cursor: pointer; transition: background 0.2s;
-}
-.mobile-sheet-close:hover { background: #e2e8f0; }
-.dark .mobile-sheet-close { background: #1a1a1a; }
-.dark .mobile-sheet-close:hover { background: #222; }
-.mobile-sheet-body { padding: 0 20px 32px; overflow-y: auto; flex: 1; }
+        .modal-content {
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
 
-/* ═══ MOBILE FAB ═══ */
-.mobile-fab {
-    width: 56px; height: 56px; border-radius: 18px;
-    display: flex; align-items: center; justify-content: center;
-    border: none; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.mobile-fab:active { transform: scale(0.92); }
-.mobile-fab-left { background: #2563eb; box-shadow: 0 4px 20px rgba(37,99,235,0.35); }
-.mobile-fab-right { background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.08); color: #334155; }
-.dark .mobile-fab-right { background: #111; border: 1px solid #1e1e1e; box-shadow: 0 4px 20px rgba(0,0,0,0.4); color: white; }
+        .modal-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
 
-/* ═══ TUTORIAL MODAL ═══ */
-.tutorial-backdrop { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; }
-.tutorial-backdrop.open { display: flex; }
-.tutorial-backdrop-bg { position: absolute; inset: 0; background: rgba(0,0,0,0.4); }
-.dark .tutorial-backdrop-bg { background: rgba(0,0,0,0.7); }
-.tutorial-modal-box {
-    position: relative; z-index: 1; width: 340px; max-width: calc(100vw - 2rem);
-    max-height: calc(100vh - 4rem); overflow-y: auto;
-    background: #ffffff; border: 1px solid #e2e8f0; border-radius: 1.5rem;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.1);
-    transform: scale(0.95); opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.dark .tutorial-modal-box {
-    background: #111; border: 1px solid #222;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
-}
-.tutorial-backdrop.open .tutorial-modal-box { transform: scale(1); opacity: 1; }
+        .modal-backdrop.active .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
 
-@keyframes pulse-ring { 0% { transform: scale(1); opacity: 0.4; } 100% { transform: scale(1.6); opacity: 0; } }
-.clock-pulse { animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .header-btn {
+            transition: all 0.3s ease;
+        }
 
-.dev-place-btn.placing {
-    background: rgba(147, 51, 234, 0.15) !important;
-    border-color: rgba(147, 51, 234, 0.4) !important;
-    color: #a78bfa !important;
-}
+        .header-btn:hover {
+            background: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+        }
 
-/* ═══ THEME TOGGLE BUTTON ═══ */
-.theme-toggle-btn {
-    position: relative; width: 36px; height: 36px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: all 0.3s ease; background: transparent; border: none;
-}
-.theme-toggle-btn:hover { background: #f1f5f9 !important; }
-.dark .theme-toggle-btn:hover { background: #1a1a1a !important; }
-.theme-toggle-btn .icon-sun,
-.theme-toggle-btn .icon-moon { position: absolute; transition: all 0.3s ease; }
-.dark .theme-toggle-btn .icon-sun { opacity: 0; transform: rotate(90deg) scale(0.5); }
-.dark .theme-toggle-btn .icon-moon { opacity: 1; transform: rotate(0deg) scale(1); }
-.theme-toggle-btn .icon-sun { opacity: 1; transform: rotate(0deg) scale(1); }
-.theme-toggle-btn .icon-moon { opacity: 0; transform: rotate(-90deg) scale(0.5); }
+        .dark .header-btn:hover {
+            background: #1a1a1a !important;
+            border-color: #333 !important;
+        }
 
-/* ═══ STATUS TOGGLE ═══ */
-.status-toggle-track {
-    width: 44px; height: 24px; border-radius: 12px;
-    background: #cbd5e1; position: relative;
-    transition: background 0.3s ease; cursor: pointer;
-}
-.status-toggle-track.active { background: #10b981; }
-.dark .status-toggle-track { background: #222; }
-.status-toggle-thumb {
-    width: 18px; height: 18px; border-radius: 50%;
-    background: white; position: absolute; top: 3px; left: 3px;
-    transition: transform 0.3s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-.status-toggle-track.active .status-toggle-thumb { transform: translateX(20px); }
-.status-dot-active { animation: dot-pulse-active 2s ease-in-out infinite; }
-@keyframes dot-pulse-active {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
-    50% { box-shadow: 0 0 0 4px rgba(16,185,129,0); }
-}
+        /* ═══ MAPLIBRE CONTROLS ═══ */
+        .maplibregl-ctrl-group {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 14px !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important;
+            overflow: hidden;
+        }
 
-/* ═══════════════════════════════════════════════════════════
+        .maplibregl-ctrl-group button {
+            width: 40px !important;
+            height: 40px !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            transition: background 0.2s ease;
+        }
+
+        .maplibregl-ctrl-group button:hover {
+            background: #f1f5f9 !important;
+        }
+
+        .maplibregl-ctrl-group button span {
+            opacity: 0.4;
+        }
+
+        .maplibregl-ctrl-group button:hover span {
+            opacity: 0.9;
+        }
+
+        .dark .maplibregl-ctrl-group {
+            background: #111111 !important;
+            border: 1px solid #1e1e1e !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .dark .maplibregl-ctrl-group button {
+            border-bottom: 1px solid #1a1a1a !important;
+        }
+
+        .dark .maplibregl-ctrl-group button:hover {
+            background: #1a1a1a !important;
+        }
+
+        .dark .maplibregl-ctrl-group button span {
+            filter: invert(1) opacity(0.5);
+        }
+
+        .dark .maplibregl-ctrl-group button:hover span {
+            filter: invert(1) opacity(0.9);
+        }
+
+        .line-glow {
+            background: #e2e8f0;
+            height: 1px;
+        }
+
+        .dark .line-glow {
+            background: #222;
+        }
+
+        @keyframes nav-slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mobile-nav-animate {
+            animation: nav-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+        }
+
+        @keyframes dot-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        .dot-pulse {
+            animation: dot-pulse 2s ease-in-out infinite;
+        }
+
+        /* ═══ SEARCH DROPDOWN ═══ */
+        .search-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 9999;
+            display: none;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark .search-dropdown {
+            background: #111;
+            border: 1px solid #222;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .search-dropdown.active {
+            display: block;
+        }
+
+        .search-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .dark .search-item {
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .search-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-item:hover,
+        .search-item.highlighted {
+            background: #f1f5f9;
+        }
+
+        .dark .search-item:hover,
+        .dark .search-item.highlighted {
+            background: #1a1a1a;
+        }
+
+        .search-item .result-name {
+            color: #0f172a;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .dark .search-item .result-name {
+            color: #ddd;
+        }
+
+        .search-item .result-detail {
+            color: #94a3b8;
+            font-size: 10px;
+            margin-top: 2px;
+        }
+
+        .dark .search-item .result-detail {
+            color: #555;
+        }
+
+        .search-loading {
+            padding: 14px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 11px;
+        }
+
+        .dark .search-loading {
+            color: #555;
+        }
+
+        .search-no-results {
+            padding: 14px;
+            text-align: center;
+            color: #cbd5e1;
+            font-size: 11px;
+        }
+
+        .dark .search-no-results {
+            color: #444;
+        }
+
+        /* ═══ MOBILE SHEET ═══ */
+        .mobile-sheet-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+            background: rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .dark .mobile-sheet-backdrop {
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .mobile-sheet-backdrop.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .mobile-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 91;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            border-radius: 1.5rem 1.5rem 0 0;
+            max-height: 88vh;
+            overflow: hidden;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dark .mobile-sheet {
+            background: #0a0a0a;
+            border-top: 1px solid #1e1e1e;
+        }
+
+        .mobile-sheet.open {
+            transform: translateY(0);
+        }
+
+        .mobile-sheet-handle {
+            display: flex;
+            justify-content: center;
+            padding: 12px 0 4px;
+            flex-shrink: 0;
+        }
+
+        .mobile-sheet-handle div {
+            width: 40px;
+            height: 4px;
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+
+        .dark .mobile-sheet-handle div {
+            background: #333;
+        }
+
+        .mobile-sheet-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 20px 12px;
+            flex-shrink: 0;
+        }
+
+        .mobile-sheet-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 12px;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .mobile-sheet-close:hover {
+            background: #e2e8f0;
+        }
+
+        .dark .mobile-sheet-close {
+            background: #1a1a1a;
+        }
+
+        .dark .mobile-sheet-close:hover {
+            background: #222;
+        }
+
+        .mobile-sheet-body {
+            padding: 0 20px 32px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* ═══ MOBILE FAB ═══ */
+        .mobile-fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .mobile-fab:active {
+            transform: scale(0.92);
+        }
+
+        .mobile-fab-left {
+            background: #2563eb;
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.35);
+        }
+
+        .mobile-fab-right {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            color: #334155;
+        }
+
+        .dark .mobile-fab-right {
+            background: #111;
+            border: 1px solid #1e1e1e;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            color: white;
+        }
+
+        /* ═══ TUTORIAL MODAL ═══ */
+        .tutorial-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 60;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tutorial-backdrop.open {
+            display: flex;
+        }
+
+        .tutorial-backdrop-bg {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .dark .tutorial-backdrop-bg {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .tutorial-modal-box {
+            position: relative;
+            z-index: 1;
+            width: 340px;
+            max-width: calc(100vw - 2rem);
+            max-height: calc(100vh - 4rem);
+            overflow-y: auto;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.5rem;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.1);
+            transform: scale(0.95);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .dark .tutorial-modal-box {
+            background: #111;
+            border: 1px solid #222;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+        }
+
+        .tutorial-backdrop.open .tutorial-modal-box {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(1);
+                opacity: 0.4;
+            }
+
+            100% {
+                transform: scale(1.6);
+                opacity: 0;
+            }
+        }
+
+        .clock-pulse {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .dev-place-btn.placing {
+            background: rgba(147, 51, 234, 0.15) !important;
+            border-color: rgba(147, 51, 234, 0.4) !important;
+            color: #a78bfa !important;
+        }
+
+        /* ═══ THEME TOGGLE BUTTON ═══ */
+        .theme-toggle-btn {
+            position: relative;
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+            border: none;
+        }
+
+        .theme-toggle-btn:hover {
+            background: #f1f5f9 !important;
+        }
+
+        .dark .theme-toggle-btn:hover {
+            background: #1a1a1a !important;
+        }
+
+        .theme-toggle-btn .icon-sun,
+        .theme-toggle-btn .icon-moon {
+            position: absolute;
+            transition: all 0.3s ease;
+        }
+
+        .dark .theme-toggle-btn .icon-sun {
+            opacity: 0;
+            transform: rotate(90deg) scale(0.5);
+        }
+
+        .dark .theme-toggle-btn .icon-moon {
+            opacity: 1;
+            transform: rotate(0deg) scale(1);
+        }
+
+        .theme-toggle-btn .icon-sun {
+            opacity: 1;
+            transform: rotate(0deg) scale(1);
+        }
+
+        .theme-toggle-btn .icon-moon {
+            opacity: 0;
+            transform: rotate(-90deg) scale(0.5);
+        }
+
+        /* ═══ STATUS TOGGLE ═══ */
+        .status-toggle-track {
+            width: 44px;
+            height: 24px;
+            border-radius: 12px;
+            background: #cbd5e1;
+            position: relative;
+            transition: background 0.3s ease;
+            cursor: pointer;
+        }
+
+        .status-toggle-track.active {
+            background: #10b981;
+        }
+
+        .dark .status-toggle-track {
+            background: #222;
+        }
+
+        .status-toggle-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-toggle-track.active .status-toggle-thumb {
+            transform: translateX(20px);
+        }
+
+        .status-dot-active {
+            animation: dot-pulse-active 2s ease-in-out infinite;
+        }
+
+        @keyframes dot-pulse-active {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════
    CATCH HARDCODED TAILWIND — TWO-PASS APPROACH
    Pass 1: Override text-white → dark (body text)
    Pass 2: Restore text-white → white (on colored backgrounds)
    ═══════════════════════════════════════════════════════════ */
 
-/* — PASS 1: text-white → dark in light mode — */
-.glass-panel .text-white,
-.glass-card .text-white,
-.glass .text-white,
-.modal-content .text-white,
-.tutorial-modal-box .text-white,
-.mobile-sheet .text-white { color: #0f172a !important; }
-.dark .glass-panel .text-white,
-.dark .glass-card .text-white,
-.dark .glass .text-white,
-.dark .modal-content .text-white,
-.dark .tutorial-modal-box .text-white,
-.dark .mobile-sheet .text-white { color: #ffffff !important; }
+        /* — PASS 1: text-white → dark in light mode — */
+        .glass-panel .text-white,
+        .glass-card .text-white,
+        .glass .text-white,
+        .modal-content .text-white,
+        .tutorial-modal-box .text-white,
+        .mobile-sheet .text-white {
+            color: #0f172a !important;
+        }
 
-/* — PASS 2: restore white on colored backgrounds — */
-.glass-panel [class*="bg-blue-"] .text-white,
-.glass-card [class*="bg-blue-"] .text-white,
-.glass [class*="bg-blue-"] .text-white,
-.modal-content [class*="bg-blue-"] .text-white,
-.tutorial-modal-box [class*="bg-blue-"] .text-white,
-.mobile-sheet [class*="bg-blue-"] .text-white,
-.glass-panel [class*="bg-red-"] .text-white,
-.glass-card [class*="bg-red-"] .text-white,
-.glass [class*="bg-red-"] .text-white,
-.modal-content [class*="bg-red-"] .text-white,
-.tutorial-modal-box [class*="bg-red-"] .text-white,
-.mobile-sheet [class*="bg-red-"] .text-white,
-.glass-panel [class*="bg-amber-"] .text-white,
-.glass-card [class*="bg-amber-"] .text-white,
-.glass [class*="bg-amber-"] .text-white,
-.modal-content [class*="bg-amber-"] .text-white,
-.tutorial-modal-box [class*="bg-amber-"] .text-white,
-.mobile-sheet [class*="bg-amber-"] .text-white,
-.glass-panel [class*="bg-emerald-"] .text-white,
-.glass-card [class*="bg-emerald-"] .text-white,
-.glass [class*="bg-emerald-"] .text-white,
-.modal-content [class*="bg-emerald-"] .text-white,
-.tutorial-modal-box [class*="bg-emerald-"] .text-white,
-.mobile-sheet [class*="bg-emerald-"] .text-white,
-.glass-panel [class*="bg-purple-"] .text-white,
-.glass-card [class*="bg-purple-"] .text-white,
-.glass [class*="bg-purple-"] .text-white,
-.modal-content [class*="bg-purple-"] .text-white,
-.tutorial-modal-box [class*="bg-purple-"] .text-white,
-.mobile-sheet [class*="bg-purple-"] .text-white,
-.glass-panel [class*="bg-green-"] .text-white,
-.glass-card [class*="bg-green-"] .text-white,
-.glass [class*="bg-green-"] .text-white,
-.modal-content [class*="bg-green-"] .text-white,
-.tutorial-modal-box [class*="bg-green-"] .text-white,
-.mobile-sheet [class*="bg-green-"] .text-white,
-.glass-panel [class*="bg-yellow-"] .text-white,
-.glass-card [class*="bg-yellow-"] .text-white,
-.glass [class*="bg-yellow-"] .text-white,
-.modal-content [class*="bg-yellow-"] .text-white,
-.tutorial-modal-box [class*="bg-yellow-"] .text-white,
-.mobile-sheet [class*="bg-yellow-"] .text-white,
-.glass-panel [class*="bg-pink-"] .text-white,
-.glass-card [class*="bg-pink-"] .text-white,
-.glass [class*="bg-pink-"] .text-white,
-.modal-content [class*="bg-pink-"] .text-white,
-.tutorial-modal-box [class*="bg-pink-"] .text-white,
-.mobile-sheet [class*="bg-pink-"] .text-white,
-.glass-panel [class*="bg-orange-"] .text-white,
-.glass-card [class*="bg-orange-"] .text-white,
-.glass [class*="bg-orange-"] .text-white,
-.modal-content [class*="bg-orange-"] .text-white,
-.tutorial-modal-box [class*="bg-orange-"] .text-white,
-.mobile-sheet [class*="bg-orange-"] .text-white,
-.glass-panel [class*="bg-indigo-"] .text-white,
-.glass-card [class*="bg-indigo-"] .text-white,
-.glass [class*="bg-indigo-"] .text-white,
-.modal-content [class*="bg-indigo-"] .text-white,
-.tutorial-modal-box [class*="bg-indigo-"] .text-white,
-.mobile-sheet [class*="bg-indigo-"] .text-white,
-/* Element itself has colored bg */
-.glass-panel .text-white[class*="bg-blue-"],
-.glass-card .text-white[class*="bg-blue-"],
-.glass .text-white[class*="bg-blue-"],
-.modal-content .text-white[class*="bg-blue-"],
-.tutorial-modal-box .text-white[class*="bg-blue-"],
-.mobile-sheet .text-white[class*="bg-blue-"],
-.glass-panel .text-white[class*="bg-red-"],
-.glass-card .text-white[class*="bg-red-"],
-.glass .text-white[class*="bg-red-"],
-.modal-content .text-white[class*="bg-red-"],
-.tutorial-modal-box .text-white[class*="bg-red-"],
-.mobile-sheet .text-white[class*="bg-red-"],
-.glass-panel .text-white[class*="bg-amber-"],
-.glass-card .text-white[class*="bg-amber-"],
-.glass .text-white[class*="bg-amber-"],
-.modal-content .text-white[class*="bg-amber-"],
-.tutorial-modal-box .text-white[class*="bg-amber-"],
-.mobile-sheet .text-white[class*="bg-amber-"],
-.glass-panel .text-white[class*="bg-emerald-"],
-.glass-card .text-white[class*="bg-emerald-"],
-.glass .text-white[class*="bg-emerald-"],
-.modal-content .text-white[class*="bg-emerald-"],
-.tutorial-modal-box .text-white[class*="bg-emerald-"],
-.mobile-sheet .text-white[class*="bg-emerald-"],
-.glass-panel .text-white[class*="bg-purple-"],
-.glass-card .text-white[class*="bg-purple-"],
-.glass .text-white[class*="bg-purple-"],
-.modal-content .text-white[class*="bg-purple-"],
-.tutorial-modal-box .text-white[class*="bg-purple-"],
-.mobile-sheet .text-white[class*="bg-purple-"],
-.glass-panel .text-white[class*="bg-green-"],
-.glass-card .text-white[class*="bg-green-"],
-.glass .text-white[class*="bg-green-"],
-.modal-content .text-white[class*="bg-green-"],
-.tutorial-modal-box .text-white[class*="bg-green-"],
-.mobile-sheet .text-white[class*="bg-green-"],
-.glass-panel .text-white[class*="bg-yellow-"],
-.glass-card .text-white[class*="bg-yellow-"],
-.glass .text-white[class*="bg-yellow-"],
-.modal-content .text-white[class*="bg-yellow-"],
-.tutorial-modal-box .text-white[class*="bg-yellow-"],
-.mobile-sheet .text-white[class*="bg-yellow-"] { color: #ffffff !important; }
+        .dark .glass-panel .text-white,
+        .dark .glass-card .text-white,
+        .dark .glass .text-white,
+        .dark .modal-content .text-white,
+        .dark .tutorial-modal-box .text-white,
+        .dark .mobile-sheet .text-white {
+            color: #ffffff !important;
+        }
 
-/* ═══ TEXT-[#XXX] CATCHES ═══ */
-.dark .glass-panel .text-\[\#888\],
-.dark .glass-card .text-\[\#888\],
-.dark .mobile-sheet .text-\[\#888\] { color: #888 !important; }
-.glass-panel .text-\[\#888\],
-.glass-card .text-\[\#888\],
-.mobile-sheet .text-\[\#888\] { color: #64748b !important; }
+        /* — PASS 2: restore white on colored backgrounds — */
+        .glass-panel [class*="bg-blue-"] .text-white,
+        .glass-card [class*="bg-blue-"] .text-white,
+        .glass [class*="bg-blue-"] .text-white,
+        .modal-content [class*="bg-blue-"] .text-white,
+        .tutorial-modal-box [class*="bg-blue-"] .text-white,
+        .mobile-sheet [class*="bg-blue-"] .text-white,
+        .glass-panel [class*="bg-red-"] .text-white,
+        .glass-card [class*="bg-red-"] .text-white,
+        .glass [class*="bg-red-"] .text-white,
+        .modal-content [class*="bg-red-"] .text-white,
+        .tutorial-modal-box [class*="bg-red-"] .text-white,
+        .mobile-sheet [class*="bg-red-"] .text-white,
+        .glass-panel [class*="bg-amber-"] .text-white,
+        .glass-card [class*="bg-amber-"] .text-white,
+        .glass [class*="bg-amber-"] .text-white,
+        .modal-content [class*="bg-amber-"] .text-white,
+        .tutorial-modal-box [class*="bg-amber-"] .text-white,
+        .mobile-sheet [class*="bg-amber-"] .text-white,
+        .glass-panel [class*="bg-emerald-"] .text-white,
+        .glass-card [class*="bg-emerald-"] .text-white,
+        .glass [class*="bg-emerald-"] .text-white,
+        .modal-content [class*="bg-emerald-"] .text-white,
+        .tutorial-modal-box [class*="bg-emerald-"] .text-white,
+        .mobile-sheet [class*="bg-emerald-"] .text-white,
+        .glass-panel [class*="bg-purple-"] .text-white,
+        .glass-card [class*="bg-purple-"] .text-white,
+        .glass [class*="bg-purple-"] .text-white,
+        .modal-content [class*="bg-purple-"] .text-white,
+        .tutorial-modal-box [class*="bg-purple-"] .text-white,
+        .mobile-sheet [class*="bg-purple-"] .text-white,
+        .glass-panel [class*="bg-green-"] .text-white,
+        .glass-card [class*="bg-green-"] .text-white,
+        .glass [class*="bg-green-"] .text-white,
+        .modal-content [class*="bg-green-"] .text-white,
+        .tutorial-modal-box [class*="bg-green-"] .text-white,
+        .mobile-sheet [class*="bg-green-"] .text-white,
+        .glass-panel [class*="bg-yellow-"] .text-white,
+        .glass-card [class*="bg-yellow-"] .text-white,
+        .glass [class*="bg-yellow-"] .text-white,
+        .modal-content [class*="bg-yellow-"] .text-white,
+        .tutorial-modal-box [class*="bg-yellow-"] .text-white,
+        .mobile-sheet [class*="bg-yellow-"] .text-white,
+        .glass-panel [class*="bg-pink-"] .text-white,
+        .glass-card [class*="bg-pink-"] .text-white,
+        .glass [class*="bg-pink-"] .text-white,
+        .modal-content [class*="bg-pink-"] .text-white,
+        .tutorial-modal-box [class*="bg-pink-"] .text-white,
+        .mobile-sheet [class*="bg-pink-"] .text-white,
+        .glass-panel [class*="bg-orange-"] .text-white,
+        .glass-card [class*="bg-orange-"] .text-white,
+        .glass [class*="bg-orange-"] .text-white,
+        .modal-content [class*="bg-orange-"] .text-white,
+        .tutorial-modal-box [class*="bg-orange-"] .text-white,
+        .mobile-sheet [class*="bg-orange-"] .text-white,
+        .glass-panel [class*="bg-indigo-"] .text-white,
+        .glass-card [class*="bg-indigo-"] .text-white,
+        .glass [class*="bg-indigo-"] .text-white,
+        .modal-content [class*="bg-indigo-"] .text-white,
+        .tutorial-modal-box [class*="bg-indigo-"] .text-white,
+        .mobile-sheet [class*="bg-indigo-"] .text-white,
+        /* Element itself has colored bg */
+        .glass-panel .text-white[class*="bg-blue-"],
+        .glass-card .text-white[class*="bg-blue-"],
+        .glass .text-white[class*="bg-blue-"],
+        .modal-content .text-white[class*="bg-blue-"],
+        .tutorial-modal-box .text-white[class*="bg-blue-"],
+        .mobile-sheet .text-white[class*="bg-blue-"],
+        .glass-panel .text-white[class*="bg-red-"],
+        .glass-card .text-white[class*="bg-red-"],
+        .glass .text-white[class*="bg-red-"],
+        .modal-content .text-white[class*="bg-red-"],
+        .tutorial-modal-box .text-white[class*="bg-red-"],
+        .mobile-sheet .text-white[class*="bg-red-"],
+        .glass-panel .text-white[class*="bg-amber-"],
+        .glass-card .text-white[class*="bg-amber-"],
+        .glass .text-white[class*="bg-amber-"],
+        .modal-content .text-white[class*="bg-amber-"],
+        .tutorial-modal-box .text-white[class*="bg-amber-"],
+        .mobile-sheet .text-white[class*="bg-amber-"],
+        .glass-panel .text-white[class*="bg-emerald-"],
+        .glass-card .text-white[class*="bg-emerald-"],
+        .glass .text-white[class*="bg-emerald-"],
+        .modal-content .text-white[class*="bg-emerald-"],
+        .tutorial-modal-box .text-white[class*="bg-emerald-"],
+        .mobile-sheet .text-white[class*="bg-emerald-"],
+        .glass-panel .text-white[class*="bg-purple-"],
+        .glass-card .text-white[class*="bg-purple-"],
+        .glass .text-white[class*="bg-purple-"],
+        .modal-content .text-white[class*="bg-purple-"],
+        .tutorial-modal-box .text-white[class*="bg-purple-"],
+        .mobile-sheet .text-white[class*="bg-purple-"],
+        .glass-panel .text-white[class*="bg-green-"],
+        .glass-card .text-white[class*="bg-green-"],
+        .glass .text-white[class*="bg-green-"],
+        .modal-content .text-white[class*="bg-green-"],
+        .tutorial-modal-box .text-white[class*="bg-green-"],
+        .mobile-sheet .text-white[class*="bg-green-"],
+        .glass-panel .text-white[class*="bg-yellow-"],
+        .glass-card .text-white[class*="bg-yellow-"],
+        .glass .text-white[class*="bg-yellow-"],
+        .modal-content .text-white[class*="bg-yellow-"],
+        .tutorial-modal-box .text-white[class*="bg-yellow-"],
+        .mobile-sheet .text-white[class*="bg-yellow-"] {
+            color: #ffffff !important;
+        }
 
-.dark .glass-panel .text-\[\#666\],
-.dark .glass-card .text-\[\#666\],
-.dark .modal-content .text-\[\#666\],
-.dark .tutorial-modal-box .text-\[\#666\] { color: #666 !important; }
-.glass-panel .text-\[\#666\],
-.glass-card .text-\[\#666\],
-.modal-content .text-\[\#666\],
-.tutorial-modal-box .text-\[\#666\] { color: #64748b !important; }
+        /* ═══ TEXT-[#XXX] CATCHES ═══ */
+        .dark .glass-panel .text-\[\#888\],
+        .dark .glass-card .text-\[\#888\],
+        .dark .mobile-sheet .text-\[\#888\] {
+            color: #888 !important;
+        }
 
-.dark .glass-panel .text-\[\#555\],
-.dark .glass-card .text-\[\#555\],
-.dark .modal-content .text-\[\#555\],
-.dark .tutorial-modal-box .text-\[\#555\],
-.dark .mobile-sheet .text-\[\#555\] { color: #555 !important; }
-.glass-panel .text-\[\#555\],
-.glass-card .text-\[\#555\],
-.modal-content .text-\[\#555\],
-.tutorial-modal-box .text-\[\#555\],
-.mobile-sheet .text-\[\#555\] { color: #94a3b8 !important; }
+        .glass-panel .text-\[\#888\],
+        .glass-card .text-\[\#888\],
+        .mobile-sheet .text-\[\#888\] {
+            color: #64748b !important;
+        }
 
-.dark .glass-panel .text-\[\#444\],
-.dark .glass-card .text-\[\#444\],
-.dark .modal-content .text-\[\#444\],
-.dark .tutorial-modal-box .text-\[\#444\],
-.dark .mobile-sheet .text-\[\#444\] { color: #444 !important; }
-.glass-panel .text-\[\#444\],
-.glass-card .text-\[\#444\],
-.modal-content .text-\[\#444\],
-.tutorial-modal-box .text-\[\#444\],
-.mobile-sheet .text-\[\#444\] { color: #94a3b8 !important; }
+        .dark .glass-panel .text-\[\#666\],
+        .dark .glass-card .text-\[\#666\],
+        .dark .modal-content .text-\[\#666\],
+        .dark .tutorial-modal-box .text-\[\#666\] {
+            color: #666 !important;
+        }
 
-.dark .glass-panel .text-\[\#333\],
-.dark .glass-card .text-\[\#333\],
-.dark .modal-content .text-\[\#333\],
-.dark .tutorial-modal-box .text-\[\#333\] { color: #333 !important; }
-.glass-panel .text-\[\#333\],
-.glass-card .text-\[\#333\],
-.modal-content .text-\[\#333\],
-.tutorial-modal-box .text-\[\#333\] { color: #cbd5e1 !important; }
+        .glass-panel .text-\[\#666\],
+        .glass-card .text-\[\#666\],
+        .modal-content .text-\[\#666\],
+        .tutorial-modal-box .text-\[\#666\] {
+            color: #64748b !important;
+        }
 
-.dark .glass-panel .text-\[\#222\],
-.dark .glass-card .text-\[\#222\],
-.dark .mobile-sheet .text-\[\#222\] { color: #222 !important; }
-.glass-panel .text-\[\#222\],
-.glass-card .text-\[\#222\],
-.mobile-sheet .text-\[\#222\] { color: #e2e8f0 !important; }
+        .dark .glass-panel .text-\[\#555\],
+        .dark .glass-card .text-\[\#555\],
+        .dark .modal-content .text-\[\#555\],
+        .dark .tutorial-modal-box .text-\[\#555\],
+        .dark .mobile-sheet .text-\[\#555\] {
+            color: #555 !important;
+        }
 
-.dark .glass-panel .text-\[\#bbb\],
-.dark .glass-card .text-\[\#bbb\] { color: #bbb !important; }
-.glass-panel .text-\[\#bbb\],
-.glass-card .text-\[\#bbb\] { color: #334155 !important; }
+        .glass-panel .text-\[\#555\],
+        .glass-card .text-\[\#555\],
+        .modal-content .text-\[\#555\],
+        .tutorial-modal-box .text-\[\#555\],
+        .mobile-sheet .text-\[\#555\] {
+            color: #94a3b8 !important;
+        }
 
-.dark .glass-panel .text-\[\#ccc\],
-.dark .glass-card .text-\[\#ccc\] { color: #ccc !important; }
-.glass-panel .text-\[\#ccc\],
-.glass-card .text-\[\#ccc\] { color: #334155 !important; }
+        .dark .glass-panel .text-\[\#444\],
+        .dark .glass-card .text-\[\#444\],
+        .dark .modal-content .text-\[\#444\],
+        .dark .tutorial-modal-box .text-\[\#444\],
+        .dark .mobile-sheet .text-\[\#444\] {
+            color: #444 !important;
+        }
 
-.dark .glass-panel .text-\[\#ddd\],
-.dark .glass-card .text-\[\#ddd\] { color: #ddd !important; }
-.glass-panel .text-\[\#ddd\],
-.glass-card .text-\[\#ddd\] { color: #0f172a !important; }
+        .glass-panel .text-\[\#444\],
+        .glass-card .text-\[\#444\],
+        .modal-content .text-\[\#444\],
+        .tutorial-modal-box .text-\[\#444\],
+        .mobile-sheet .text-\[\#444\] {
+            color: #94a3b8 !important;
+        }
 
-/* ═══ BG-[#XXX] CATCHES ═══ */
-.dark .glass-panel .bg-\[\#111\],
-.dark .glass-card .bg-\[\#111\],
-.dark .modal-content .bg-\[\#111\],
-.dark .tutorial-modal-box .bg-\[\#111\],
-.dark .mobile-sheet .bg-\[\#111\] { background: #111 !important; }
-.glass-panel .bg-\[\#111\],
-.glass-card .bg-\[\#111\],
-.modal-content .bg-\[\#111\],
-.tutorial-modal-box .bg-\[\#111\],
-.mobile-sheet .bg-\[\#111\] { background: #f8fafc !important; }
+        .dark .glass-panel .text-\[\#333\],
+        .dark .glass-card .text-\[\#333\],
+        .dark .modal-content .text-\[\#333\],
+        .dark .tutorial-modal-box .text-\[\#333\] {
+            color: #333 !important;
+        }
 
-.dark .glass-panel .bg-\[\#1a1a1a\],
-.dark .glass-card .bg-\[\#1a1a1a\],
-.dark .modal-content .bg-\[\#1a1a1a\],
-.dark .tutorial-modal-box .bg-\[\#1a1a1a\] { background: #1a1a1a !important; }
-.glass-panel .bg-\[\#1a1a1a\],
-.glass-card .bg-\[\#1a1a1a\],
-.modal-content .bg-\[\#1a1a1a\],
-.tutorial-modal-box .bg-\[\#1a1a1a\] { background: #f1f5f9 !important; }
+        .glass-panel .text-\[\#333\],
+        .glass-card .text-\[\#333\],
+        .modal-content .text-\[\#333\],
+        .tutorial-modal-box .text-\[\#333\] {
+            color: #cbd5e1 !important;
+        }
 
-.dark .glass-card .bg-\[\#0a0a0a\] { background: #0a0a0a !important; }
-.glass-card .bg-\[\#0a0a0a\] { background: #f8fafc !important; }
+        .dark .glass-panel .text-\[\#222\],
+        .dark .glass-card .text-\[\#222\],
+        .dark .mobile-sheet .text-\[\#222\] {
+            color: #222 !important;
+        }
 
-/* ═══ BORDER-[#XXX] CATCHES ═══ */
-.dark .glass-panel .border-\[\#1e1e1e\],
-.dark .glass-card .border-\[\#1e1e1e\],
-.dark .modal-content .border-\[\#1e1e1e\],
-.dark .tutorial-modal-box .border-\[\#1e1e1e\],
-.dark .mobile-sheet .border-\[\#1e1e1e\] { border-color: #1e1e1e !important; }
-.glass-panel .border-\[\#1e1e1e\],
-.glass-card .border-\[\#1e1e1e\],
-.modal-content .border-\[\#1e1e1e\],
-.tutorial-modal-box .border-\[\#1e1e1e\],
-.mobile-sheet .border-\[\#1e1e1e\] { border-color: #e2e8f0 !important; }
+        .glass-panel .text-\[\#222\],
+        .glass-card .text-\[\#222\],
+        .mobile-sheet .text-\[\#222\] {
+            color: #e2e8f0 !important;
+        }
 
-.dark .glass-panel .border-\[\#222\],
-.dark .glass-card .border-\[\#222\],
-.dark .modal-content .border-\[\#222\],
-.dark .tutorial-modal-box .border-\[\#222\] { border-color: #222 !important; }
-.glass-panel .border-\[\#222\],
-.glass-card .border-\[\#222\],
-.modal-content .border-\[\#222\],
-.tutorial-modal-box .border-\[\#222\] { border-color: #e2e8f0 !important; }
+        .dark .glass-panel .text-\[\#bbb\],
+        .dark .glass-card .text-\[\#bbb\] {
+            color: #bbb !important;
+        }
 
-.dark .glass-panel .border-\[\#2a2a2a\],
-.dark .glass-card .border-\[\#2a2a2a\],
-.dark .modal-content .border-\[\#2a2a2a\] { border-color: #2a2a2a !important; }
-.glass-panel .border-\[\#2a2a2a\],
-.glass-card .border-\[\#2a2a2a\],
-.modal-content .border-\[\#2a2a2a\] { border-color: #cbd5e1 !important; }
+        .glass-panel .text-\[\#bbb\],
+        .glass-card .text-\[\#bbb\] {
+            color: #334155 !important;
+        }
 
-.dark .glass-panel .border-\[\#1a1a1a\],
-.dark .glass-card .border-\[\#1a1a1a\] { border-color: #1a1a1a !important; }
-.glass-panel .border-\[\#1a1a1a\],
-.glass-card .border-\[\#1a1a1a\] { border-color: #e2e8f0 !important; }
+        .dark .glass-panel .text-\[\#ccc\],
+        .dark .glass-card .text-\[\#ccc\] {
+            color: #ccc !important;
+        }
 
-/* ═══ PRESERVE ACCENT COLORS ═══ */
-.text-blue-400 { color: #3b82f6 !important; }
-.text-emerald-400 { color: #10b981 !important; }
-.text-red-400 { color: #f87171 !important; }
-.text-amber-400 { color: #f59e0b !important; }
-.text-purple-400 { color: #a78bfa !important; }
-.text-yellow-400 { color: #facc15 !important; }
+        .glass-panel .text-\[\#ccc\],
+        .glass-card .text-\[\#ccc\] {
+            color: #334155 !important;
+        }
 
-/* ═══ FIX: Same-element class combos (no space = self, not descendant) ═══ */
+        .dark .glass-panel .text-\[\#ddd\],
+        .dark .glass-card .text-\[\#ddd\] {
+            color: #ddd !important;
+        }
 
-/* text-white on the glass element itself */
-.glass-panel.text-white { color: #0f172a !important; }
-.glass-card.text-white { color: #0f172a !important; }
-.glass.text-white { color: #0f172a !important; }
-.dark .glass-panel.text-white { color: #ffffff !important; }
-.dark .glass-card.text-white { color: #ffffff !important; }
-.dark .glass.text-white { color: #ffffff !important; }
+        .glass-panel .text-\[\#ddd\],
+        .glass-card .text-\[\#ddd\] {
+            color: #0f172a !important;
+        }
 
-/* text-[#xxx] on the glass element itself */
-.glass-panel.text-\[\#888\] { color: #64748b !important; }
-.glass-panel.text-\[\#666\] { color: #64748b !important; }
-.glass-panel.text-\[\#555\] { color: #94a3b8 !important; }
-.glass-panel.text-\[\#444\] { color: #94a3b8 !important; }
-.dark .glass-panel.text-\[\#888\] { color: #888 !important; }
-.dark .glass-panel.text-\[\#666\] { color: #666 !important; }
-.dark .glass-panel.text-\[\#555\] { color: #555 !important; }
-.dark .glass-panel.text-\[\#444\] { color: #444 !important; }
+        /* ═══ BG-[#XXX] CATCHES ═══ */
+        .dark .glass-panel .bg-\[\#111\],
+        .dark .glass-card .bg-\[\#111\],
+        .dark .modal-content .bg-\[\#111\],
+        .dark .tutorial-modal-box .bg-\[\#111\],
+        .dark .mobile-sheet .bg-\[\#111\] {
+            background: #111 !important;
+        }
 
-/* bg-[#xxx] on the glass element itself */
-.glass-card.bg-\[\#111\] { background: #f8fafc !important; }
-.glass-card.bg-\[\#1a1a1a\] { background: #f1f5f9 !important; }
-.glass-card.bg-\[\#0a0a0a\] { background: #f8fafc !important; }
-.dark .glass-card.bg-\[\#111\] { background: #111 !important; }
-.dark .glass-card.bg-\[\#1a1a1a\] { background: #1a1a1a !important; }
-.dark .glass-card.bg-\[\#0a0a0a\] { background: #0a0a0a !important; }
+        .glass-panel .bg-\[\#111\],
+        .glass-card .bg-\[\#111\],
+        .modal-content .bg-\[\#111\],
+        .tutorial-modal-box .bg-\[\#111\],
+        .mobile-sheet .bg-\[\#111\] {
+            background: #f8fafc !important;
+        }
 
-/* border-[#xxx] on the glass element itself */
-.glass-card.border-\[\#1e1e1e\] { border-color: #e2e8f0 !important; }
-.glass-card.border-\[\#222\] { border-color: #e2e8f0 !important; }
-.glass-card.border-\[\#1a1a1a\] { border-color: #e2e8f0 !important; }
-.dark .glass-card.border-\[\#1e1e1e\] { border-color: #1e1e1e !important; }
-.dark .glass-card.border-\[\#222\] { border-color: #222 !important; }
-.dark .glass-card.border-\[\#1a1a1a\] { border-color: #1a1a1a !important; }
+        .dark .glass-panel .bg-\[\#1a1a1a\],
+        .dark .glass-card .bg-\[\#1a1a1a\],
+        .dark .modal-content .bg-\[\#1a1a1a\],
+        .dark .tutorial-modal-box .bg-\[\#1a1a1a\] {
+            background: #1a1a1a !important;
+        }
 
-/* modal-content self-referencing */
-.modal-content.bg-\[\#111\] { background: #ffffff !important; }
-.modal-content.border-\[\#222\] { border-color: #e2e8f0 !important; }
-.dark .modal-content.bg-\[\#111\] { background: #111 !important; }
-.dark .modal-content.border-\[\#222\] { border-color: #222 !important; }
+        .glass-panel .bg-\[\#1a1a1a\],
+        .glass-card .bg-\[\#1a1a1a\],
+        .modal-content .bg-\[\#1a1a1a\],
+        .tutorial-modal-box .bg-\[\#1a1a1a\] {
+            background: #f1f5f9 !important;
+        }
 
-/* Theme toggle — solid bg in both modes */
-.theme-toggle-btn {
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0;
-}
-.theme-toggle-btn:hover { background: #f1f5f9 !important; }
-.dark .theme-toggle-btn {
-    background: #111111 !important;
-    border: 1px solid #1e1e1e;
-}
-.dark .theme-toggle-btn:hover { background: #1a1a1a !important; }
+        .dark .glass-card .bg-\[\#0a0a0a\] {
+            background: #0a0a0a !important;
+        }
 
-/* Log in button — blue in light, white in dark */
-.header-btn.bg-white { background: #2563eb !important; border-color: #2563eb !important; color: #ffffff !important; }
-.header-btn.bg-white:hover { background: #1d4ed8 !important; }
-.dark .header-btn.bg-white { background: #ffffff !important; border-color: #ffffff !important; color: #000000 !important; }
-.dark .header-btn.bg-white:hover { background: #e2e8f0 !important; }
-.dark .header-btn.border-white { border-color: #ffffff !important; }
+        .glass-card .bg-\[\#0a0a0a\] {
+            background: #f8fafc !important;
+        }
 
-</style>
+        /* ═══ BORDER-[#XXX] CATCHES ═══ */
+        .dark .glass-panel .border-\[\#1e1e1e\],
+        .dark .glass-card .border-\[\#1e1e1e\],
+        .dark .modal-content .border-\[\#1e1e1e\],
+        .dark .tutorial-modal-box .border-\[\#1e1e1e\],
+        .dark .mobile-sheet .border-\[\#1e1e1e\] {
+            border-color: #1e1e1e !important;
+        }
+
+        .glass-panel .border-\[\#1e1e1e\],
+        .glass-card .border-\[\#1e1e1e\],
+        .modal-content .border-\[\#1e1e1e\],
+        .tutorial-modal-box .border-\[\#1e1e1e\],
+        .mobile-sheet .border-\[\#1e1e1e\] {
+            border-color: #e2e8f0 !important;
+        }
+
+        .dark .glass-panel .border-\[\#222\],
+        .dark .glass-card .border-\[\#222\],
+        .dark .modal-content .border-\[\#222\],
+        .dark .tutorial-modal-box .border-\[\#222\] {
+            border-color: #222 !important;
+        }
+
+        .glass-panel .border-\[\#222\],
+        .glass-card .border-\[\#222\],
+        .modal-content .border-\[\#222\],
+        .tutorial-modal-box .border-\[\#222\] {
+            border-color: #e2e8f0 !important;
+        }
+
+        .dark .glass-panel .border-\[\#2a2a2a\],
+        .dark .glass-card .border-\[\#2a2a2a\],
+        .dark .modal-content .border-\[\#2a2a2a\] {
+            border-color: #2a2a2a !important;
+        }
+
+        .glass-panel .border-\[\#2a2a2a\],
+        .glass-card .border-\[\#2a2a2a\],
+        .modal-content .border-\[\#2a2a2a\] {
+            border-color: #cbd5e1 !important;
+        }
+
+        .dark .glass-panel .border-\[\#1a1a1a\],
+        .dark .glass-card .border-\[\#1a1a1a\] {
+            border-color: #1a1a1a !important;
+        }
+
+        .glass-panel .border-\[\#1a1a1a\],
+        .glass-card .border-\[\#1a1a1a\] {
+            border-color: #e2e8f0 !important;
+        }
+
+        /* ═══ PRESERVE ACCENT COLORS ═══ */
+        .text-blue-400 {
+            color: #3b82f6 !important;
+        }
+
+        .text-emerald-400 {
+            color: #10b981 !important;
+        }
+
+        .text-red-400 {
+            color: #f87171 !important;
+        }
+
+        .text-amber-400 {
+            color: #f59e0b !important;
+        }
+
+        .text-purple-400 {
+            color: #a78bfa !important;
+        }
+
+        .text-yellow-400 {
+            color: #facc15 !important;
+        }
+
+        /* ═══ FIX: Same-element class combos (no space = self, not descendant) ═══ */
+
+        /* text-white on the glass element itself */
+        .glass-panel.text-white {
+            color: #0f172a !important;
+        }
+
+        .glass-card.text-white {
+            color: #0f172a !important;
+        }
+
+        .glass.text-white {
+            color: #0f172a !important;
+        }
+
+        .dark .glass-panel.text-white {
+            color: #ffffff !important;
+        }
+
+        .dark .glass-card.text-white {
+            color: #ffffff !important;
+        }
+
+        .dark .glass.text-white {
+            color: #ffffff !important;
+        }
+
+        /* text-[#xxx] on the glass element itself */
+        .glass-panel.text-\[\#888\] {
+            color: #64748b !important;
+        }
+
+        .glass-panel.text-\[\#666\] {
+            color: #64748b !important;
+        }
+
+        .glass-panel.text-\[\#555\] {
+            color: #94a3b8 !important;
+        }
+
+        .glass-panel.text-\[\#444\] {
+            color: #94a3b8 !important;
+        }
+
+        .dark .glass-panel.text-\[\#888\] {
+            color: #888 !important;
+        }
+
+        .dark .glass-panel.text-\[\#666\] {
+            color: #666 !important;
+        }
+
+        .dark .glass-panel.text-\[\#555\] {
+            color: #555 !important;
+        }
+
+        .dark .glass-panel.text-\[\#444\] {
+            color: #444 !important;
+        }
+
+        /* bg-[#xxx] on the glass element itself */
+        .glass-card.bg-\[\#111\] {
+            background: #f8fafc !important;
+        }
+
+        .glass-card.bg-\[\#1a1a1a\] {
+            background: #f1f5f9 !important;
+        }
+
+        .glass-card.bg-\[\#0a0a0a\] {
+            background: #f8fafc !important;
+        }
+
+        .dark .glass-card.bg-\[\#111\] {
+            background: #111 !important;
+        }
+
+        .dark .glass-card.bg-\[\#1a1a1a\] {
+            background: #1a1a1a !important;
+        }
+
+        .dark .glass-card.bg-\[\#0a0a0a\] {
+            background: #0a0a0a !important;
+        }
+
+        /* border-[#xxx] on the glass element itself */
+        .glass-card.border-\[\#1e1e1e\] {
+            border-color: #e2e8f0 !important;
+        }
+
+        .glass-card.border-\[\#222\] {
+            border-color: #e2e8f0 !important;
+        }
+
+        .glass-card.border-\[\#1a1a1a\] {
+            border-color: #e2e8f0 !important;
+        }
+
+        .dark .glass-card.border-\[\#1e1e1e\] {
+            border-color: #1e1e1e !important;
+        }
+
+        .dark .glass-card.border-\[\#222\] {
+            border-color: #222 !important;
+        }
+
+        .dark .glass-card.border-\[\#1a1a1a\] {
+            border-color: #1a1a1a !important;
+        }
+
+        /* modal-content self-referencing */
+        .modal-content.bg-\[\#111\] {
+            background: #ffffff !important;
+        }
+
+        .modal-content.border-\[\#222\] {
+            border-color: #e2e8f0 !important;
+        }
+
+        .dark .modal-content.bg-\[\#111\] {
+            background: #111 !important;
+        }
+
+        .dark .modal-content.border-\[\#222\] {
+            border-color: #222 !important;
+        }
+
+        /* Theme toggle — solid bg in both modes */
+        .theme-toggle-btn {
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0;
+        }
+
+        .theme-toggle-btn:hover {
+            background: #f1f5f9 !important;
+        }
+
+        .dark .theme-toggle-btn {
+            background: #111111 !important;
+            border: 1px solid #1e1e1e;
+        }
+
+        .dark .theme-toggle-btn:hover {
+            background: #1a1a1a !important;
+        }
+
+        /* Log in button — blue in light, white in dark */
+        .header-btn.bg-white {
+            background: #2563eb !important;
+            border-color: #2563eb !important;
+            color: #ffffff !important;
+        }
+
+        .header-btn.bg-white:hover {
+            background: #1d4ed8 !important;
+        }
+
+        .dark .header-btn.bg-white {
+            background: #ffffff !important;
+            border-color: #ffffff !important;
+            color: #000000 !important;
+        }
+
+        .dark .header-btn.bg-white:hover {
+            background: #e2e8f0 !important;
+        }
+
+        .dark .header-btn.border-white {
+            border-color: #ffffff !important;
+        }
+    </style>
 </head>
 
 <body class="antialiased">
@@ -797,7 +1500,8 @@ body, html {
     @endif
 
     <!-- ══════════ MOBILE LEFT SIDEBAR MODAL (Bottom Sheet) ══════════ -->
-    <div id="mobile-left-backdrop" class="mobile-sheet-backdrop md:hidden" onclick="closeMobileSidebar('left')"></div>
+    <div id="mobile-left-backdrop" class="mobile-sheet-backdrop md:hidden" onclick="closeMobileSidebar('left')">
+    </div>
     <div id="mobile-left-sheet" class="mobile-sheet md:hidden">
         <div class="mobile-sheet-handle">
             <div></div>
@@ -1371,7 +2075,8 @@ body, html {
                                         class="flex flex-col items-center justify-center py-8 px-4 border border-dashed border-[#222] rounded-xl">
                                         <div
                                             class="w-10 h-10 bg-[#111] rounded-full flex items-center justify-center mb-3">
-                                            <i class="fa-solid fa-file-invoice text-[#333] text-sm"></i></div>
+                                            <i class="fa-solid fa-file-invoice text-[#333] text-sm"></i>
+                                        </div>
                                         <p class="text-[10px] font-medium text-[#444] text-center">No receipts yet</p>
                                         <p class="text-[8px] text-[#333] text-center mt-1">New trips will appear here
                                         </p>
@@ -1419,7 +2124,8 @@ body, html {
                                 </div>
                                 <div
                                     class="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center border border-green-500/15">
-                                    <i class="fa-solid fa-route text-green-400 text-xs"></i></div>
+                                    <i class="fa-solid fa-route text-green-400 text-xs"></i>
+                                </div>
                             </div>
                             <div id="live-location-info" class="text-[11px] text-[#777] space-y-2 mb-5">
                                 <div class="flex justify-between items-center"><span
@@ -1441,7 +2147,8 @@ body, html {
                                 </div>
                                 <div
                                     class="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center border border-blue-500/15">
-                                    <i class="fa-solid fa-satellite-dish text-blue-400 text-xs"></i></div>
+                                    <i class="fa-solid fa-satellite-dish text-blue-400 text-xs"></i>
+                                </div>
                             </div>
                             <div id="gps-status" class="tracking-controls-panel text-center">
                                 <div class="flex items-center justify-center gap-2 mb-3">
@@ -1833,7 +2540,7 @@ body, html {
                         statusText.textContent = 'Tap the map to set pick-up point';
                         statusText.className = 'text-[9px] uppercase tracking-[0.15em] text-blue-400 font-bold';
                         statusIndicator.querySelector('.dot-pulse').className =
-                        'w-2 h-2 rounded-full bg-blue-500 dot-pulse';
+                            'w-2 h-2 rounded-full bg-blue-500 dot-pulse';
                         statusIndicator.className =
                             'mb-4 p-3 rounded-xl bg-blue-500/8 border border-blue-500/20 flex items-center gap-2.5';
                     } else {
@@ -2829,16 +3536,30 @@ body, html {
     </div>
 
     <script>
-function toggleMapTheme() {
-    const html = document.documentElement;
-    if (html.classList.contains('dark')) {
-        html.classList.remove('dark');
-        localStorage.setItem('color-theme', 'light');
-    } else {
-        html.classList.add('dark');
-        localStorage.setItem('color-theme', 'dark');
-    }
-}
+        function toggleMapTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            const theme = isDark ? 'dark' : 'light';
+            localStorage.setItem('color-theme', theme);
+
+            // Update map style if needed
+            if (typeof updateMapStyle === 'function') updateMapStyle(isDark);
+
+            // Persist to database
+            fetch('{{ route('settings.update.theme') }}', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
+                },
+                body: JSON.stringify({
+                    theme
+                })
+            }).catch(() => {
+                // Revert on failure
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('color-theme', isDark ? 'light' : 'dark');
+            });
+        }
     </script>
 
 </body>

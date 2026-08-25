@@ -7,7 +7,6 @@
 
 <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
 
-{{-- Wrapper with Alpine scope (no local data, uses store) --}}
 <div x-data x-cloak>
 
     <!-- ══════════ MOBILE BOTTOM BAR ══════════ -->
@@ -23,7 +22,6 @@
                             class="text-[7px] font-bold uppercase tracking-wider">{{ $item['mobile_label'] ?? $item['label'] }}</span>
                     </a>
                 @endforeach
-
                 <button type="button" @click="openMobileDrawer()"
                     class="flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl text-gray-400 dark:text-gray-500 transition-all active:scale-90">
                     <i class="fa-solid fa-bars text-[15px]"></i>
@@ -36,13 +34,11 @@
     <!-- ══════════ MOBILE DRAWER BACKDROP ══════════ -->
     <div id="mobile-drawer-backdrop"
         class="fixed inset-0 z-[60] bg-black/50 dark:bg-black/70 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 md:hidden"
-        @click="closeMobileDrawer()">
-    </div>
+        @click="closeMobileDrawer()"></div>
 
     <!-- ══════════ MOBILE DRAWER ══════════ -->
     <div id="mobile-drawer"
         class="fixed top-0 left-0 h-full w-72 z-[65] bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 transform -translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col md:hidden">
-
         <div class="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-gray-800">
             <div class="flex items-center gap-3 overflow-hidden whitespace-nowrap">
                 <div
@@ -57,7 +53,6 @@
                 <i class="fa-solid fa-xmark text-[10px]"></i>
             </button>
         </div>
-
         <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
             @foreach ($menuItems as $item)
                 @if (!isset($item['route']))
@@ -69,7 +64,6 @@
                     @endif
                     @continue
                 @endif
-
                 @if (isset($item['section']) && $item['section'] !== null)
                     <div class="my-2 mx-3 border-t border-gray-100 dark:border-gray-800"></div>
                     <p
@@ -77,7 +71,6 @@
                         {{ $item['section'] }}</p>
                     @continue
                 @endif
-
                 <a href="{{ route($item['route']) }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs($item['route']) ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' : 'text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200' }}">
                     <div
@@ -88,12 +81,11 @@
                 </a>
             @endforeach
         </nav>
-
-        <!-- Mobile Drawer Footer -->
         <div class="p-3 border-t border-gray-100 dark:border-gray-800 space-y-1">
             @if ($themeToggle)
                 <button type="button" @click="$store.sidebar.toggleTheme($store.sidebar.isDark ? 'light' : 'dark')"
-                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all text-left">
+                    :disabled="$store.sidebar.syncing"
+                    class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all text-left disabled:opacity-50">
                     <div
                         class="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
                         <i x-show="!$store.sidebar.isDark" class="fa-solid fa-moon text-[10px] text-gray-600"></i>
@@ -105,7 +97,6 @@
                     </span>
                 </button>
             @endif
-
             <button type="button" @click="$store.sidebar.toggleLogoutModal()"
                 class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-all text-left">
                 <div class="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
@@ -119,9 +110,7 @@
     <!-- ══════════ DESKTOP SIDEBAR ══════════ -->
     <aside :class="$store.sidebar.open ? 'w-[270px] p-3' : 'w-[76px] p-2'"
         class="overflow-y-auto overflow-x-hidden sidebar-transition fixed left-0 top-0 h-screen bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 z-50 flex-col justify-between hidden md:flex">
-
         <div>
-            <!-- Logo + Toggle -->
             <div :class="$store.sidebar.open ? 'flex-row justify-between px-1 mb-6' : 'flex-col items-center gap-2.5 mb-6 pt-0.5'"
                 class="flex items-center overflow-hidden whitespace-nowrap">
                 <div class="flex items-center overflow-hidden whitespace-nowrap"
@@ -140,8 +129,6 @@
                         :class="$store.sidebar.open ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
                 </button>
             </div>
-
-            <!-- Navigation Links -->
             <nav class="space-y-1">
                 @foreach ($menuItems as $item)
                     @if (!isset($item['route']))
@@ -154,7 +141,6 @@
                         @endif
                         @continue
                     @endif
-
                     @if (isset($item['section']) && $item['section'] !== null)
                         <div x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
                             class="my-3 mx-3 border-t border-gray-100 dark:border-gray-800"></div>
@@ -163,7 +149,6 @@
                             {{ $item['section'] }}</p>
                         @continue
                     @endif
-
                     <a href="{{ route($item['route']) }}"
                         :class="$store.sidebar.open ? 'gap-3 px-3' : 'justify-center px-0'"
                         class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs($item['route']) ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' : 'text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-200 dark:hover:border-gray-700' }}">
@@ -177,16 +162,14 @@
                 @endforeach
             </nav>
         </div>
-
-        <!-- Desktop Sidebar Footer -->
         <div class="mt-4 space-y-1">
             <div x-show="$store.sidebar.open" x-transition.opacity.duration.150ms
                 class="mx-3 border-t border-gray-100 dark:border-gray-800 mb-3"></div>
-
             @if ($themeToggle)
                 <button type="button" @click="$store.sidebar.toggleTheme($store.sidebar.isDark ? 'light' : 'dark')"
+                    :disabled="$store.sidebar.syncing"
                     :class="$store.sidebar.open ? 'gap-3 px-3' : 'justify-center px-0'"
-                    class="w-full flex items-center py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all text-left group">
+                    class="w-full flex items-center py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-all text-left group disabled:opacity-50">
                     <div
                         class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 flex items-center justify-center shrink-0 transition relative">
                         <i x-show="!$store.sidebar.isDark" class="fa-solid fa-moon text-[11px] text-gray-600"></i>
@@ -199,7 +182,6 @@
                     </span>
                 </button>
             @endif
-
             <button type="button" @click="$store.sidebar.toggleLogoutModal()"
                 :class="$store.sidebar.open ? 'gap-3 px-3' : 'justify-center px-0'"
                 class="w-full flex items-center py-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-all text-left group">
@@ -220,13 +202,11 @@
         x-transition:leave-end="opacity-0" @click.outside="$store.sidebar.showLogoutModal = false"
         class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 dark:bg-black/80 p-4"
         style="display: none;">
-
         <div x-show="$store.sidebar.showLogoutModal" x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
             x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95"
             class="bg-white dark:bg-[#111] w-full max-w-sm rounded-[1.5rem] border border-gray-200 dark:border-gray-700 shadow-2xl shadow-black/10 dark:shadow-black/60 p-8 text-center">
-
             <div
                 class="w-14 h-14 bg-red-50 dark:bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-red-200 dark:border-red-500/20">
                 <i class="fa-solid fa-power-off text-red-500 dark:text-red-400 text-lg"></i>
@@ -236,50 +216,37 @@
                 {{ $consoleName }}?</p>
             <div class="flex gap-2.5">
                 <button type="button" @click="$store.sidebar.showLogoutModal = false"
-                    class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-700 transition active:scale-[0.98]">
-                    Cancel
-                </button>
+                    class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-700 transition active:scale-[0.98]">Cancel</button>
                 <form action="{{ route('users.logout') }}" method="POST" class="flex-1 m-0">
                     @csrf
                     <button type="submit"
-                        class="w-full py-3 rounded-xl bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 transition active:scale-[0.98] shadow-lg shadow-red-600/10">
-                        Logout
-                    </button>
+                        class="w-full py-3 rounded-xl bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 transition active:scale-[0.98] shadow-lg shadow-red-600/10">Logout</button>
                 </form>
             </div>
         </div>
     </div>
-
 </div>
 
 @once
     <script>
         function openMobileDrawer() {
-            const backdrop = document.getElementById('mobile-drawer-backdrop');
-            const drawer = document.getElementById('mobile-drawer');
-            if (!backdrop || !drawer) return;
-            backdrop.classList.remove('opacity-0', 'pointer-events-none');
-            drawer.classList.remove('-translate-x-full');
+            const b = document.getElementById('mobile-drawer-backdrop');
+            const d = document.getElementById('mobile-drawer');
+            if (!b || !d) return;
+            b.classList.remove('opacity-0', 'pointer-events-none');
+            d.classList.remove('-translate-x-full');
             document.body.style.overflow = 'hidden';
         }
 
         function closeMobileDrawer() {
-            const backdrop = document.getElementById('mobile-drawer-backdrop');
-            const drawer = document.getElementById('mobile-drawer');
-            if (!backdrop || !drawer) return;
-            backdrop.classList.add('opacity-0', 'pointer-events-none');
-            drawer.classList.add('-translate-x-full');
+            const b = document.getElementById('mobile-drawer-backdrop');
+            const d = document.getElementById('mobile-drawer');
+            if (!b || !d) return;
+            b.classList.add('opacity-0', 'pointer-events-none');
+            d.classList.add('-translate-x-full');
             document.body.style.overflow = '';
         }
-
-        document.querySelectorAll('#mobile-drawer a').forEach(link => {
-            link.addEventListener('click', () => setTimeout(closeMobileDrawer, 50));
-        });
+        document.querySelectorAll('#mobile-drawer a').forEach(l => l.addEventListener('click', () => setTimeout(
+            closeMobileDrawer, 50)));
     </script>
 @endonce
-
-<style>
-    [x-cloak] {
-        display: none !important;
-    }
-</style>

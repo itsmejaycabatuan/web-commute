@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>SmartCommute | Maintenance Tasks</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -139,25 +140,33 @@
     animating: false,
     editMode: false,
     editId: null,
-    openModal() { this.editMode = false;
+    openModal() {
+        this.editMode = false;
         this.editId = null;
         this.showModal = true;
         this.animating = true;
-        setTimeout(() => this.animating = false, 300); },
-    openEditModal(id, name, miles, months) { this.editMode = true;
+        setTimeout(() => this.animating = false, 300);
+    },
+    openEditModal(id, name, miles, months) {
+        this.editMode = true;
         this.editId = id;
         document.getElementById('field_task').value = name;
         document.getElementById('field_miles').value = miles || '';
         document.getElementById('field_months').value = months || '';
         this.showModal = true;
         this.animating = true;
-        setTimeout(() => this.animating = false, 300); },
-    closeModal() { this.animating = true;
-        setTimeout(() => { this.showModal = false;
+        setTimeout(() => this.animating = false, 300);
+    },
+    closeModal() {
+        this.animating = true;
+        setTimeout(() => {
+            this.showModal = false;
             this.animating = false;
             document.getElementById('field_task').value = '';
             document.getElementById('field_miles').value = '';
-            document.getElementById('field_months').value = ''; }, 200); }
+            document.getElementById('field_months').value = '';
+        }, 200);
+    }
 }"
     @keydown.escape="if(showModal) closeModal()">
 
@@ -205,7 +214,8 @@
                         class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Configuration</span>
                 </div>
                 <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 dark:text-white">Maintenance
-                    <span class="text-blue-600 dark:text-blue-500">Tasks</span></h1>
+                    <span class="text-blue-600 dark:text-blue-500">Tasks</span>
+                </h1>
                 <p class="text-[11px] text-gray-500 dark:text-[#555] mt-1 flex items-center gap-2">
                     <i class="fa-solid fa-wrench text-[9px] text-amber-500 dark:text-amber-400"></i>
                     Standard service intervals and frequency reference

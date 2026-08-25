@@ -80,7 +80,7 @@ return [
     'role_settings' => [
         'admin' => [
             'show_theme_toggle' => true,   // Light/dark mode toggle
-            'theme' => 'light',             // auto, light, or dark
+            'theme' => 'auto',             // auto, light, or dark
             'console_name' => 'Admin Console',
         ],
         'driver' => [

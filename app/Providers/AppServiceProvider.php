@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Driver;
 use App\Models\User;
+use App\Models\UserPreference;
 use App\Services\MenuService;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -33,9 +34,18 @@ class AppServiceProvider extends ServiceProvider
             ]);
         });
 
-        // ── Universal Menu Composer ──
+        // ── Universal Menu + Theme Composer ──
         View::composer('*', function ($view) {
             $menuService = app(MenuService::class);
+
+            // Theme from database
+            $theme = 'light';
+            if (auth()->check()) {
+                $pref = UserPreference::where('user_id', auth()->id())->value('theme');
+                if ($pref) {
+                    $theme = $pref;
+                }
+            }
 
             $view->with([
                 'sidebarMenu' => $menuService->getSidebarMenu(),
@@ -43,6 +53,7 @@ class AppServiceProvider extends ServiceProvider
                 'showThemeToggle' => $menuService->showThemeToggle(),
                 'consoleName' => $menuService->getConsoleName(),
                 'forcedTheme' => $menuService->getForcedTheme(),
+                'userTheme' => $theme,
             ]);
         });
     }

@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>SmartCommute | Admin Console</title>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -581,7 +582,7 @@
                             <i
                                 class="fa-solid fa-chevron-right text-[8px] text-gray-300 dark:text-[#555] group-hover:text-gray-500 dark:group-hover:text-[#777] transition"></i>
                         </a>
-                        <a href="{{ route('admin.drivers.index') }}"
+                        <a href="{{ route('drivers.index') }}"
                             class="flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] transition group cursor-pointer">
                             <div class="flex items-center gap-3">
                                 <div

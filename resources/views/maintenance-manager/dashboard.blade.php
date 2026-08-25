@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>SmartCommute | Maintenance Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -375,7 +376,8 @@
                 <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200 dark:border-[#1e1e1e]">
                     <span
                         class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333]">VIN</span>
-                    <span class="font-mono text-[9px] text-gray-500 dark:text-[#444]">{{ $vehicle->vin ?? '—' }}</span>
+                    <span
+                        class="font-mono text-[9px] text-gray-500 dark:text-[#444]">{{ $vehicle->vin ?? '—' }}</span>
                 </div>
             </div>
 
