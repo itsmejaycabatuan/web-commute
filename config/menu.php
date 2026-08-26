@@ -15,7 +15,7 @@ return [
             ['label' => 'Map', 'icon' => 'fa-map-location-dot', 'route' => 'map', 'mobile_label' => 'Map'],
             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'fa-gauge-high', 'section' => null, 'mobile_label' => 'Home'],
             ['label' => 'Management', 'section' => 'Management'],
-            ['label' => 'PUJ Commuters', 'route' => 'admin.commuters.index', 'icon' => 'fa-users', 'section' => null],
+            ['label' => 'PUJ Commuters', 'route' => 'commuters.index', 'icon' => 'fa-users', 'section' => null],
             ['label' => 'PUJ Drivers', 'route' => 'drivers.index', 'icon' => 'fa-id-card', 'section' => null],
             ['label' => 'Fare Rates', 'route' => 'fares.index', 'icon' => 'fa-money-bill', 'section' => null],
             ['label' => 'Fare Transactions', 'route' => 'faretransactions', 'icon' => 'fa-receipt', 'section' => null],

@@ -106,7 +106,7 @@ class ImportantDataSeeder extends Seeder
                     'tank_capacity' => 70.0,
                     'vin' => '5TDBW5G14ES567890',
                     'location' => 'Cebu Branch',
-                    'acquistion_date' => '2020-11-01',
+                    'acquisition_date' => '2020-11-01',
                     'exp_disposal_date' => '2025-11-01',
                 ],
             ],

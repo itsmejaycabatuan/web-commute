@@ -178,9 +178,9 @@ namespace App\Models{
  * @property string $payment_method
  * @property string $price
  * @property string $paid_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\User $user
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read User $user
  * @method static \Illuminate\Database\Eloquent\Builder|Payment newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Payment newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Payment query()
@@ -228,12 +228,12 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereLastServiceOdo($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereTaskId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereUpdatedAt($value)
- * @mixin \Eloquent
  * @property int $vehicle_id
  * @property-read \App\Models\Vehicle $vehicle
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleMaintenanceLog> $vehicleMaintenanceLog
  * @property-read int|null $vehicle_maintenance_log_count
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereVehicleId($value)
+ * @mixin \Eloquent
  */
 	class PreventiveMaintenance extends \Eloquent {}
 }
@@ -385,10 +385,36 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|User whereExpirationDate($value)
  * @property string|null $driver_code
  * @method static \Illuminate\Database\Eloquent\Builder|User whereDriverCode($value)
- * @property-read \App\Models\Driver|null $driver
+ * @property-read Driver|null $driver
+ * @property-read \App\Models\UserPreference|null $preference
  * @mixin \Eloquent
  */
 	class User extends \Eloquent implements \Illuminate\Contracts\Auth\MustVerifyEmail {}
+}
+
+namespace App\Models{
+/**
+ * App\Models\UserPreference
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property string $theme
+ * @property int $font_size
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder|UserPreference newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|UserPreference newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|UserPreference query()
+ * @method static \Illuminate\Database\Eloquent\Builder|UserPreference whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|UserPreference whereFontSize($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|UserPreference whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|UserPreference whereTheme($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|UserPreference whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|UserPreference whereUserId($value)
+ * @mixin \Eloquent
+ */
+	class UserPreference extends \Eloquent {}
 }
 
 namespace App\Models{
@@ -406,15 +432,15 @@ namespace App\Models{
  * @property string|null $tank_capacity
  * @property string|null $vin
  * @property string|null $location
- * @property \Illuminate\Support\Carbon|null $acquistion_date
- * @property \Illuminate\Support\Carbon|null $exp_disposal_date
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Driver|null $driver
+ * @property Carbon|null $acquistion_date
+ * @property Carbon|null $exp_disposal_date
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Driver|null $driver
  * @property-read mixed $driver_name
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleMaintenanceLog> $maintenanceLogs
+ * @property-read Collection<int, VehicleMaintenanceLog> $maintenanceLogs
  * @property-read int|null $maintenance_logs_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PreventiveMaintenance> $preventiveMaintenances
+ * @property-read Collection<int, PreventiveMaintenance> $preventiveMaintenances
  * @property-read int|null $preventive_maintenances_count
  * @method static \Illuminate\Database\Eloquent\Builder|Vehicle newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Vehicle newQuery()
@@ -434,6 +460,9 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereVin($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereYear($value)
+ * @property Carbon|null $acquisition_date
+ * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereAcquisitionDate($value)
+ * @mixin \Eloquent
  */
 	class Vehicle extends \Eloquent {}
 }
@@ -531,7 +560,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereRemarks($value)
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereServiceDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereUpdatedAt($value)
- * @mixin \Eloquent
  * @property int $maintenance_id
  * @property-read mixed $comments
  * @property-read mixed $last_service_cost
@@ -540,6 +568,7 @@ namespace App\Models{
  * @property-read mixed $maintenance_task
  * @property-read \App\Models\PreventiveMaintenance $preventiveMaintenance
  * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereMaintenanceId($value)
+ * @mixin \Eloquent
  */
 	class VehicleMaintenanceLog extends \Eloquent {}
 }

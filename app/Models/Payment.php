@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\Payment
@@ -18,9 +19,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $payment_method
  * @property string $price
  * @property string $paid_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\User $user
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read User $user
  * @method static \Illuminate\Database\Eloquent\Builder|Payment newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Payment newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Payment query()
@@ -53,10 +54,11 @@ class Payment extends Model
         'transaction_id',
         'paid_at',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
-    public function user() {
+    public function user()
+    {
         return $this->belongsTo(User::class, 'paid_by');
     }
 }

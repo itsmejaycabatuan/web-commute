@@ -33,6 +33,14 @@ class UserController extends Controller
     public function map(Request $request)
     {
         $user = Auth::user();
+        $rates = FareRate::get();
+
+        if (! $user) {
+            return view('map', [
+                'rates' => $rates,
+            ]);
+        }
+
         $userId = Auth::user()->id;
         $role = $user->roles->first()->name;
         $latestFare = Fare::get()->last();
@@ -40,8 +48,6 @@ class UserController extends Controller
         $driverStatus = $request->user()->driver?->status ?? 'inactive';
 
         $recentReceipts = Payment::where('paid_by', $userId)->latest()->take(3)->get();
-
-        $rates = FareRate::get();
 
         if ($latestFare) {
             $latestFareId = $latestFare->id;
@@ -125,6 +131,7 @@ class UserController extends Controller
                 'obfuscatedMarkers' => $obfuscatedMarkers,
             ]);
         }
+
     }
 
     public function dashboard(Request $request)
@@ -455,30 +462,6 @@ class UserController extends Controller
                 'payments' => $payments,
                 'topups' => $topups,
                 'wallet' => $wallet,
-            ]);
-        }
-
-        if ($role == 'admin') {
-            return view('admin.profile', [
-                'user' => $user,
-            ]);
-        }
-
-        if ($role == 'driver') {
-            return view('driver.profile', [
-                'user' => $user,
-            ]);
-        }
-
-        if ($role == 'driver_manager') {
-            return view('driver-manager.profile', [
-                'user' => $user,
-            ]);
-        }
-
-        if ($role == 'maintenance_manager') {
-            return view('maintenance-manager.profile', [
-                'user' => $user,
             ]);
         }
     }

@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\Vehicle
@@ -19,15 +21,15 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $tank_capacity
  * @property string|null $vin
  * @property string|null $location
- * @property \Illuminate\Support\Carbon|null $acquistion_date
- * @property \Illuminate\Support\Carbon|null $exp_disposal_date
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Driver|null $driver
+ * @property Carbon|null $acquistion_date
+ * @property Carbon|null $exp_disposal_date
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Driver|null $driver
  * @property-read mixed $driver_name
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleMaintenanceLog> $maintenanceLogs
+ * @property-read Collection<int, VehicleMaintenanceLog> $maintenanceLogs
  * @property-read int|null $maintenance_logs_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PreventiveMaintenance> $preventiveMaintenances
+ * @property-read Collection<int, PreventiveMaintenance> $preventiveMaintenances
  * @property-read int|null $preventive_maintenances_count
  * @method static \Illuminate\Database\Eloquent\Builder|Vehicle newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Vehicle newQuery()
@@ -47,6 +49,8 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereVin($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereYear($value)
+ * @property Carbon|null $acquisition_date
+ * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereAcquisitionDate($value)
  * @mixin \Eloquent
  */
 class Vehicle extends Model
@@ -64,13 +68,13 @@ class Vehicle extends Model
         'tank_capacity',
         'vin',
         'location',
-        'acquistion_date',
+        'acquisition_date',
         'exp_disposal_date',
     ];
 
     protected $casts = [
         'year' => 'integer',
-        'acquistion_date' => 'date',
+        'acquisition_date' => 'date',
         'exp_disposal_date' => 'date',
     ];
 

@@ -29,61 +29,6 @@
             filter: invert(0.4);
             cursor: pointer;
         }
-
-        .pagination {
-            display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
-        }
-
-        .pagination a,
-        .pagination span {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 32px;
-            height: 32px;
-            padding: 0 8px;
-            border-radius: 8px;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s;
-            border: 1px solid #e2e8f0;
-            background: #f8fafc;
-            color: #64748b;
-        }
-
-        .pagination a:hover {
-            background: #f1f5f9;
-            color: #1e293b;
-            border-color: #cbd5e1;
-        }
-
-        .pagination .active {
-            background-color: #2563eb;
-            color: #fff;
-            border-color: #2563eb;
-        }
-
-        .pagination .disabled {
-            opacity: 0.3;
-            pointer-events: none;
-        }
-
-        .dark .pagination a,
-        .dark .pagination span {
-            border-color: #1e1e1e;
-            background: #111;
-            color: #555;
-        }
-
-        .dark .pagination a:hover {
-            background: #1a1a1a;
-            color: #ccc;
-            border-color: #333;
-        }
     </style>
 </head>
 
@@ -308,7 +253,7 @@
 
                 @if ($allTransactions->hasPages())
                     <div class="px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-[#1e1e1e]">
-                        {{ $allTransactions->links() }}
+                        {{ $allTransactions->links('vendor.pagination.custom') }}
                     </div>
                 @endif
             </div>
@@ -408,7 +353,8 @@
                     </div>
                 </div>
 
-                <a :href="'{{ route('admin.receipt.show', '__ID__') }}'.replace('__ID__', selectedTx?.txId || '')"
+                <a :href="'{{ route('admin.receipt.show', '__ID__') }}'.replace('__ID__', encodeURIComponent(selectedTx?.txId ||
+                    ''))"
                     class="flex items-center justify-center gap-2 w-full mt-5 py-2.5 rounded-xl bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-200 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] text-[9px] font-bold uppercase tracking-widest text-gray-600 dark:text-[#888] hover:text-gray-900 dark:hover:text-white transition">
                     <i class="fa-solid fa-file-invoice text-[8px]"></i>
                     <span>View Full Receipt</span>

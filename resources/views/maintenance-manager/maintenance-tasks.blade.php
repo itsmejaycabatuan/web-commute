@@ -137,9 +137,12 @@
 
 <body class="antialiased text-gray-900 dark:text-white bg-white dark:bg-[#050505]" x-data="{
     showModal: false,
+    showDeleteModal: false,
     animating: false,
     editMode: false,
     editId: null,
+    deleteTarget: null,
+    deleteUrl: '',
     openModal() {
         this.editMode = false;
         this.editId = null;
@@ -157,6 +160,11 @@
         this.animating = true;
         setTimeout(() => this.animating = false, 300);
     },
+    openDeleteModal(id, name) {
+        this.deleteTarget = { id, name };
+        this.deleteUrl = '{{ route('maintenance-manager.maintenance-tasks.destroy', 'ID_PLACEHOLDER') }}'.replace('ID_PLACEHOLDER', id);
+        this.showDeleteModal = true;
+    },
     closeModal() {
         this.animating = true;
         setTimeout(() => {
@@ -168,7 +176,7 @@
         }, 200);
     }
 }"
-    @keydown.escape="if(showModal) closeModal()">
+    @keydown.escape="if(showModal) closeModal(); if(showDeleteModal) showDeleteModal = false">
 
     @include('components.flash')
     <x-layout.sidebar />
@@ -214,8 +222,7 @@
                         class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Configuration</span>
                 </div>
                 <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 dark:text-white">Maintenance
-                    <span class="text-blue-600 dark:text-blue-500">Tasks</span>
-                </h1>
+                    <span class="text-blue-600 dark:text-blue-500">Tasks</span></h1>
                 <p class="text-[11px] text-gray-500 dark:text-[#555] mt-1 flex items-center gap-2">
                     <i class="fa-solid fa-wrench text-[9px] text-amber-500 dark:text-amber-400"></i>
                     Standard service intervals and frequency reference
@@ -241,9 +248,8 @@
         <div class="grid grid-cols-3 gap-3 sm:gap-4 mb-5 sm:mb-6">
             <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-blue-500">
                 <div class="flex items-center gap-2 mb-2 sm:mb-3">
-                    <div class="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center">
-                        <i class="fa-solid fa-list-check text-[8px] text-blue-500 dark:text-blue-400"></i>
-                    </div>
+                    <div class="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center"><i
+                            class="fa-solid fa-list-check text-[8px] text-blue-500 dark:text-blue-400"></i></div>
                     <span
                         class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Total
                         Tasks</span>
@@ -257,9 +263,8 @@
             </div>
             <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-emerald-500">
                 <div class="flex items-center gap-2 mb-2 sm:mb-3">
-                    <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
-                        <i class="fa-solid fa-road text-[8px] text-emerald-500 dark:text-emerald-400"></i>
-                    </div>
+                    <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center"><i
+                            class="fa-solid fa-road text-[8px] text-emerald-500 dark:text-emerald-400"></i></div>
                     <span
                         class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Km-Based</span>
                 </div>
@@ -271,9 +276,8 @@
             </div>
             <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-purple-500">
                 <div class="flex items-center gap-2 mb-2 sm:mb-3">
-                    <div class="w-6 h-6 rounded-md bg-purple-500/10 flex items-center justify-center">
-                        <i class="fa-solid fa-calendar text-[8px] text-purple-500 dark:text-purple-400"></i>
-                    </div>
+                    <div class="w-6 h-6 rounded-md bg-purple-500/10 flex items-center justify-center"><i
+                            class="fa-solid fa-calendar text-[8px] text-purple-500 dark:text-purple-400"></i></div>
                     <span
                         class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Time-Based</span>
                 </div>
@@ -292,8 +296,7 @@
                     <div class="flex items-center gap-2.5">
                         <div
                             class="w-7 h-7 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center">
-                            <i class="fa-solid fa-clipboard-list text-[9px] text-blue-500 dark:text-blue-400"></i>
-                        </div>
+                            <i class="fa-solid fa-clipboard-list text-[9px] text-blue-500 dark:text-blue-400"></i></div>
                         <span
                             class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555]">Task
                             Definitions</span>
@@ -351,21 +354,18 @@
                                     <div
                                         class="flex items-center justify-center gap-1 opacity-30 group-hover:opacity-100 transition-opacity">
                                         <button type="button"
-                                            @click="openEditModal({{ $task->id }}, '{{ $task->tasks_performed }}', {{ $task->miles_between_service ?? 'null' }}, {{ $task->months_between_service ?? 'null' }})"
+                                            @click="openEditModal({{ $task->id }}, '{{ str_replace("'", "\'", $task->tasks_performed) }}', {{ $task->miles_between_service ?? 'null' }}, {{ $task->months_between_service ?? 'null' }})"
                                             class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 dark:text-[#555] hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 transition-all"
                                             title="Edit">
                                             <i class="fa-solid fa-pen-to-square text-[9px]"></i>
                                         </button>
-                                        <form method="POST"
-                                            action="{{ route('maintenance-manager.maintenance-tasks.destroy', $task->id) }}"
-                                            class="inline" onsubmit="return confirm('Delete this task?')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit"
-                                                class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 dark:text-[#555] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 transition-all"
-                                                title="Delete">
-                                                <i class="fa-solid fa-trash-can text-[9px]"></i>
-                                            </button>
-                                        </form>
+                                        {{-- UPDATED DELETE BUTTON --}}
+                                        <button type="button"
+                                            @click="openDeleteModal({{ $task->id }}, '{{ str_replace("'", "\'", $task->tasks_performed) }}')"
+                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 dark:text-[#555] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                                            title="Delete">
+                                            <i class="fa-solid fa-trash-can text-[9px]"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -413,7 +413,7 @@
         </div>
     </main>
 
-    <!-- ══════════ MODAL: Add / Edit Task ══════════ -->
+    <!-- ══════════ MODAL: Add / Edit Task (Redesigned) ══════════ -->
     <template x-teleport="body">
         <div x-show="showModal" x-cloak
             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
@@ -422,86 +422,73 @@
             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0" style="display: none;">
 
-            <div x-show="showModal" x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0 scale-95 translate-y-2"
-                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                x-transition:leave="transition ease-in duration-200"
-                x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                x-transition:leave-end="opacity-0 scale-95 translate-y-2" @click.stop
-                class="relative w-full max-w-lg glass-panel rounded-[2rem] flex flex-col max-h-[90vh] overflow-hidden">
+            <div x-show="showModal" x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95" @click.stop
+                class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-lg w-full max-h-[90vh] overflow-y-auto">
 
-                <div
-                    class="flex items-center justify-between px-6 sm:px-8 pt-6 sm:pt-7 pb-5 border-b border-gray-200 dark:border-[#1e1e1e] shrink-0">
-                    <div class="flex items-center gap-3.5">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-3">
                         <div
-                            class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                            <i class="fa-solid fa-wrench text-[11px] text-blue-500 dark:text-blue-400"></i>
+                            class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/15 flex items-center justify-center">
+                            <i class="fa-solid fa-wrench text-[10px] text-blue-400"></i>
                         </div>
                         <div>
-                            <h3 class="text-sm sm:text-base font-black tracking-tight text-gray-900 dark:text-white"
+                            <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white"
                                 x-text="editMode ? 'Edit Task' : 'New Task'"></h3>
-                            <p class="text-[9px] sm:text-[10px] text-gray-500 dark:text-[#555] mt-0.5">Define service
-                                interval</p>
+                            <p class="text-[10px] text-[#555] mt-0.5">Define service interval</p>
                         </div>
                     </div>
                     <button @click="closeModal()"
-                        class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#222] flex items-center justify-center text-gray-500 dark:text-[#555] hover:text-gray-900 dark:hover:text-white transition-colors">
-                        <i class="fa-solid fa-xmark text-xs"></i>
+                        class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] flex items-center justify-center hover:bg-gray-200 dark:hover:bg-[#222] transition">
+                        <i class="fa-solid fa-xmark text-[10px] text-gray-500 dark:text-[#555]"></i>
                     </button>
                 </div>
 
                 <form
                     x-bind:action="editMode ? '{{ route('maintenance-manager.maintenance-tasks.update', '') }}/' + editId :
                         '{{ route('maintenance-manager.maintenance-tasks.store') }}'"
-                    x-bind:method="editMode ? 'POST' : 'POST'"
-                    class="flex-1 overflow-y-auto px-6 sm:px-8 py-5 sm:py-6 space-y-4 sm:space-y-5">
+                    method="POST" class="space-y-4">
                     @csrf
                     <input type="hidden" name="_method" x-bind:value="editMode ? 'PUT' : ''">
 
                     <div>
-                        <label
-                            class="flex items-center gap-2 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555] mb-2">
-                            <span class="w-[3px] h-3 rounded-sm bg-blue-500 shrink-0"></span>
-                            Task Performed <span class="text-rose-500 dark:text-rose-400/60">*</span>
-                        </label>
+                        <label class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Task
+                            Performed <span class="text-red-400">*</span></label>
                         <input type="text" id="field_task"
-                            class="form-input w-full rounded-xl px-4 py-2.5 text-[10px] sm:text-xs"
+                            class="form-input w-full rounded-xl px-4 py-3 text-[11px]"
                             placeholder="e.g. Transmission Fluid Change" name="tasks_performed">
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label
-                                class="flex items-center gap-2 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555] mb-2">
-                                <span class="w-[3px] h-3 rounded-sm bg-emerald-500 shrink-0"></span>
-                                Km Interval
-                            </label>
+                            <label class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Km
+                                Interval</label>
                             <div class="relative">
                                 <input type="number" id="field_miles" min="0"
-                                    class="form-input w-full rounded-xl px-4 py-2.5 text-[10px] sm:text-xs font-mono pr-12"
+                                    class="form-input w-full rounded-xl px-4 py-3 text-[11px] font-mono pr-12"
                                     placeholder="5,000" name="miles_between_service">
                                 <span
-                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#333] text-[9px] font-bold">km</span>
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-bold text-[#333]">km</span>
                             </div>
                         </div>
                         <div>
                             <label
-                                class="flex items-center gap-2 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555] mb-2">
-                                <span class="w-[3px] h-3 rounded-sm bg-purple-500 shrink-0"></span>
-                                Month Interval
-                            </label>
+                                class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Month
+                                Interval</label>
                             <div class="relative">
                                 <input type="number" id="field_months" min="0"
-                                    class="form-input w-full rounded-xl px-4 py-2.5 text-[10px] sm:text-xs font-mono pr-14"
+                                    class="form-input w-full rounded-xl px-4 py-3 text-[11px] font-mono pr-14"
                                     placeholder="6" name="months_between_service">
                                 <span
-                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#333] text-[9px] font-bold">mos</span>
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-bold text-[#333]">mos</span>
                             </div>
                         </div>
                     </div>
 
                     <div
-                        class="flex items-start gap-2.5 p-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e]">
+                        class="flex items-start gap-2.5 p-3.5 rounded-xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]">
                         <i class="fa-solid fa-circle-info text-[9px] text-blue-500/40 mt-0.5 shrink-0"></i>
                         <p class="text-[9px] text-gray-500 dark:text-[#444] leading-relaxed">
                             At least one of <span class="text-gray-700 dark:text-[#666] font-bold">Km Interval</span>
@@ -510,16 +497,63 @@
                         </p>
                     </div>
 
-                    <div class="flex items-center justify-end gap-2.5 pt-2">
+                    <div class="flex gap-2.5 pt-1">
                         <button type="button" @click="closeModal()"
-                            class="px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-500 dark:text-[#888] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] hover:text-gray-900 dark:hover:text-white transition">Cancel</button>
+                            class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">Cancel</button>
                         <button type="submit"
-                            class="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-[9px] sm:text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500 transition-all active:scale-[0.98] flex items-center gap-2">
-                            <i class="fa-solid fa-check text-[9px]"></i>
-                            <span x-text="editMode ? 'Update' : 'Add Task'"></span>
+                            class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-blue-600/10">
+                            <i class="fa-solid fa-check text-[8px]"></i>
+                            <span x-text="editMode ? 'Update Task' : 'Create Task'"></span>
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </template>
+
+    <!-- ══════════ MODAL: Delete Task ══════════ -->
+    <template x-teleport="body">
+        <div x-show="showDeleteModal" x-cloak
+            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
+            @click.self="showDeleteModal = false" x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0" style="display: none;">
+
+            <div x-show="showDeleteModal" @click.stop class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-sm w-full"
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+
+                <div class="text-center">
+                    <div
+                        class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-red-500/20">
+                        <i class="fa-solid fa-trash text-red-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold mb-1.5 text-gray-900 dark:text-white">Delete Task?</h3>
+                    <p class="text-xs text-[#555] mb-5">This action is permanent and cannot be undone.</p>
+
+                    <!-- Target Info Box -->
+                    <div
+                        class="inline-flex items-start gap-3 p-4 rounded-xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] mb-7 text-left">
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-[7px] font-bold uppercase text-[#333]">Task Name</span>
+                            <span class="text-[11px] font-bold text-[#ccc]" x-text="deleteTarget?.name"></span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2.5">
+                        <button @click="showDeleteModal = false"
+                            class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">Cancel</button>
+
+                        <!-- Dynamic Form Action -->
+                        <form :action="deleteUrl" method="POST" class="flex-1">
+                            @csrf @method('DELETE')
+                            <button type="submit"
+                                class="w-full py-3 rounded-xl bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 transition active:scale-[0.98] shadow-lg shadow-red-600/10">Delete</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </template>

@@ -244,9 +244,10 @@ class PaymentController extends Controller
 
     public function showReceiptAdmin(string $id)
     {
-        $payment = Payment::with('user')->where('id', $id)->first();
+        // Laravel automatically decodes %23 back to #, so $id will be #SC-...
+        // We can safely query the database directly
+        $payment = Payment::with('user')->where('transaction_id', $id)->firstOrFail();
 
-        // dd($payment);
         return view('admin.commuters.receipt', [
             'pickup' => $payment->starting_point,
             'destination' => $payment->destination,

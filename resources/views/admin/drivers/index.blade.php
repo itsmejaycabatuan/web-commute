@@ -52,6 +52,8 @@
                     editLicenseCode: '',
                     editExpirationDate: '',
                     editDriverCode: '',
+                    editUpdateUrl: '',
+                    deleteUrl: '',
 
                     deleteId: '',
                     deleteEmail: '',
@@ -117,6 +119,7 @@
                             editLicenseCode: d.license_code || '',
                             editExpirationDate: d.expiration_date || '',
                             editDriverCode: d.driver_code || '',
+                            editUpdateUrl: d.update_url || '', // <-- add this
                         });
                         this.editModal = true;
                     },
@@ -125,6 +128,7 @@
                         this.deleteId = d.id;
                         this.deleteEmail = d.email;
                         this.deleteName = d.name || d.email;
+                        this.deleteUrl = d.delete_url || ''; // <-- add this
                         this.deleteModal = true;
                     },
 
@@ -248,7 +252,7 @@
             if ($d->license_image_path) {
                 $licenseUrl = asset('storage/' . $d->license_image_path);
             } elseif ($hasLicenseInDb) {
-                $licenseUrl = route('admin.drivers.license', $d, true);
+                $licenseUrl = route('drivers.license', $d, true);
             } else {
                 $licenseUrl = '';
             }
@@ -285,10 +289,10 @@
                 'has_license' => $hasLicense,
                 'license_url' => $licenseUrl,
                 'created_at' => $d->created_at->format('M j, Y'),
-                'approve_url' => route('admin.drivers.approve', $d->id),
-                'reject_url' => route('admin.drivers.reject', $d->id),
-                'update_url' => route('admin.drivers.update', $d->id),
-                'delete_url' => route('admin.drivers.destroy', $d->id),
+                'approve_url' => route('drivers.approve', $d->id),
+                'reject_url' => route('drivers.reject', $d->id),
+                'update_url' => route('drivers.update', $d->id),
+                'delete_url' => route('drivers.destroy', $d->id),
             ];
         })
         ->values();
@@ -596,7 +600,7 @@
                 </div>
 
                 <div class="px-6 sm:px-8 pb-6 sm:pb-8 modal-scroll overflow-y-auto" style="max-height: 75vh;">
-                    <form action="{{ route('admin.drivers.store') }}" method="POST" enctype="multipart/form-data"
+                    <form action="{{ route('drivers.store') }}" method="POST" enctype="multipart/form-data"
                         class="space-y-4">
                         @csrf
                         <input type="hidden" name="_form_type" value="add">
@@ -985,7 +989,173 @@
                 </div>
             </div>
         </div>
+
+        <!-- ==================== EDIT DRIVER MODAL ==================== -->
+        <div x-show="editModal" x-cloak
+            class="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
+            @click.self="editModal = false" x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0">
+
+            <div class="glass-panel w-full max-w-lg rounded-[2rem] overflow-hidden" @click.stop x-show="editModal"
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+
+                <div class="flex items-center justify-between px-6 sm:px-8 pt-6 sm:pt-7 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/15 flex items-center justify-center">
+                            <i class="fa-solid fa-pen text-xs text-amber-500 dark:text-amber-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-bold text-gray-900 dark:text-white">Edit Driver</h3>
+                            <p class="text-[9px] text-gray-500 dark:text-[#555]" x-text="editEmail"></p>
+                        </div>
+                    </div>
+                    <button @click="editModal = false"
+                        class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] flex items-center justify-center hover:bg-gray-200 dark:hover:bg-[#222] transition">
+                        <i class="fa-solid fa-xmark text-[10px] text-gray-500 dark:text-[#555]"></i>
+                    </button>
+                </div>
+
+                <div class="px-6 sm:px-8 pb-6 sm:pb-8 modal-scroll overflow-y-auto" style="max-height: 75vh;">
+                    <form :action="editUpdateUrl" method="POST" enctype="multipart/form-data" class="space-y-4">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="_form_type" value="edit">
+
+                        <div>
+                            <label
+                                class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Name
+                                <span class="text-red-500 dark:text-red-400">*</span></label>
+                            <input type="text" name="name" :value="editName" required
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
+                                placeholder="Full name">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label
+                                    class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">License
+                                    Number <span class="text-red-500 dark:text-red-400">*</span></label>
+                                <input type="text" name="license_number" :value="editLicenseNumber" required
+                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
+                                    placeholder="S45-98-765432">
+                            </div>
+                            <div>
+                                <label
+                                    class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">License
+                                    Code <span class="text-red-500 dark:text-red-400">*</span></label>
+                                <input type="text" name="license_code" :value="editLicenseCode" required
+                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
+                                    placeholder="A, B, C">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label
+                                    class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Expiration
+                                    Date <span class="text-red-500 dark:text-red-400">*</span></label>
+                                <input type="date" name="expiration_date" :value="editExpirationDate" required
+                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
+                            </div>
+                            <div>
+                                <label
+                                    class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Driver
+                                    Code <span class="text-red-500 dark:text-red-400">*</span></label>
+                                <input type="text" name="driver_code" :value="editDriverCode" required
+                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
+                                    placeholder="Unique ID">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label
+                                class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Replace
+                                License Image</label>
+                            <input type="file" name="license_image" accept="image/jpg,image/jpeg,image/png"
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-500 dark:text-[#444] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
+                            <p class="mt-1.5 text-[8px] text-gray-400 dark:text-[#333]">Leave empty to keep current
+                                image. JPG, PNG — Max 4MB.</p>
+                        </div>
+
+                        <div class="flex gap-2.5 pt-2">
+                            <button type="button" @click="editModal = false"
+                                class="flex-1 py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-900 dark:text-white text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                class="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98]">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ==================== DELETE DRIVER MODAL ==================== -->
+        <div x-show="deleteModal" x-cloak
+            class="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
+            @click.self="deleteModal = false" x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0">
+
+            <div class="glass-panel w-full max-w-sm rounded-[2rem] overflow-hidden" @click.stop x-show="deleteModal"
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+
+                <div class="px-6 sm:px-8 pt-7 sm:pt-8 pb-6 sm:pb-8 text-center">
+                    <div
+                        class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-red-500/20">
+                        <i class="fa-solid fa-triangle-exclamation text-red-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-gray-900 dark:text-white mb-1.5">Delete Driver?</h3>
+                    <p class="text-[11px] text-gray-500 dark:text-[#666] mb-1">
+                        You're about to permanently remove:
+                    </p>
+                    <p class="text-[12px] font-bold text-gray-900 dark:text-white mb-1" x-text="deleteName"></p>
+                    <p class="text-[10px] text-gray-400 dark:text-[#555] mb-6" x-text="deleteEmail"></p>
+
+                    <div class="bg-red-500/5 border border-red-500/15 rounded-xl p-3 mb-6 text-left">
+                        <p class="text-[9px] text-red-500 dark:text-red-400 font-bold">• Driver account will be
+                            permanently deleted</p>
+                        <p class="text-[9px] text-red-500 dark:text-red-400 font-bold mt-1">• License data and
+                            verification status will be lost</p>
+                        <p class="text-[9px] text-red-500 dark:text-red-400 font-bold mt-1">• This action cannot be
+                            undone</p>
+                    </div>
+
+                    <form :action="deleteUrl" method="POST" class="space-y-2.5">
+                        @csrf
+                        @method('DELETE')
+
+                        <button type="submit"
+                            class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98] flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-trash-can text-[9px]"></i>
+                            Delete Driver
+                        </button>
+                    </form>
+
+                    <button @click="deleteModal = false"
+                        class="mt-3 text-[10px] font-bold text-gray-400 dark:text-[#555] hover:text-gray-900 dark:hover:text-white transition">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
+</body>
+
+</html>
+</div>
 </body>
 
 </html>

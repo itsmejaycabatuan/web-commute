@@ -14,6 +14,17 @@
         rel="stylesheet">
 
     <style>
+        /* Delete modal active state */
+        #delete-modal.active {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        #delete-modal.active #delete-modal-content {
+            transform: scale(1) !important;
+            opacity: 1 !important;
+        }
+
         body,
         html {
             margin: 0;
@@ -297,7 +308,7 @@
                             </div>
                             <div>
                                 <p class="text-[11px] font-bold text-gray-700 dark:text-[#ccc]">Preferences</p>
-                                <p class="text-[8px] text-gray-400 dark:text-[#444]">Appearance & notifications</p>
+                                <p class="text-[8px] text-gray-400 dark:text-[#444]">Appearance</p>
                             </div>
                         </div>
                         <div class="nav-item" data-section="danger" onclick="switchSection('danger', this)">
@@ -559,10 +570,6 @@
                         </div>
 
                         <div class="flex items-center justify-end gap-3 mt-4">
-                            <a href="{{ route('profile') }}"
-                                class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] hover:text-gray-900 dark:hover:text-white transition flex items-center gap-2">
-                                <i class="fa-solid fa-xmark text-[10px]"></i> Cancel
-                            </a>
                             <button type="submit"
                                 class="bg-blue-600 text-white px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-500 transition shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center gap-2">
                                 <i class="fa-solid fa-check text-[9px]"></i> Update Password
@@ -644,92 +651,8 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="glass-card p-5 sm:p-6 rounded-[1.5rem] mt-4">
-                        <div class="flex items-center gap-2.5 mb-5">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/15 flex items-center justify-center">
-                                <i class="fa-solid fa-bell text-[10px] text-blue-500 dark:text-blue-400"></i>
-                            </div>
-                            <div>
-                                <span
-                                    class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">Notifications</span>
-                                <p class="text-[8px] text-gray-300 dark:text-[#444]">Manage your notification
-                                    preferences</p>
-                            </div>
-                        </div>
-
-                        <div class="space-y-1">
-                            <div class="setting-row flex items-center justify-between p-4 rounded-xl">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                                        <i
-                                            class="fa-solid fa-envelope text-[11px] text-emerald-500 dark:text-emerald-400"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-[11px] font-bold text-gray-900 dark:text-white">Email
-                                            Notifications</p>
-                                        <p class="text-[8px] text-gray-400 dark:text-[#444]">Receipts and account
-                                            updates</p>
-                                    </div>
-                                </div>
-                                <div class="toggle-track active" onclick="this.classList.toggle('active')">
-                                    <div class="toggle-thumb"></div>
-                                </div>
-                            </div>
-
-                            <div class="setting-row flex items-center justify-between p-4 rounded-xl">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                                        <i class="fa-solid fa-route text-[11px] text-blue-500 dark:text-blue-400"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-[11px] font-bold text-gray-900 dark:text-white">Trip Reminders
-                                        </p>
-                                        <p class="text-[8px] text-gray-400 dark:text-[#444]">Upcoming scheduled rides
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="toggle-track active" onclick="this.classList.toggle('active')">
-                                    <div class="toggle-thumb"></div>
-                                </div>
-                            </div>
-
-                            <div class="setting-row flex items-center justify-between p-4 rounded-xl">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                                        <i class="fa-solid fa-wallet text-[11px] text-amber-500"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-[11px] font-bold text-gray-900 dark:text-white">Low Balance
-                                            Alert</p>
-                                        <p class="text-[8px] text-gray-400 dark:text-[#444]">Notify when balance is low
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="toggle-track active" onclick="this.classList.toggle('active')">
-                                    <div class="toggle-thumb"></div>
-                                </div>
-                            </div>
-
-                            <div class="setting-row flex items-center justify-between p-4 rounded-xl">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-lg inner-card flex items-center justify-center">
-                                        <i class="fa-solid fa-bullhorn text-[11px] text-gray-400 dark:text-[#555]"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-[11px] font-bold text-gray-900 dark:text-white">Promotions</p>
-                                        <p class="text-[8px] text-gray-400 dark:text-[#444]">Discounts and special
-                                            offers</p>
-                                    </div>
-                                </div>
-                                <div class="toggle-track" onclick="this.classList.toggle('active')">
-                                    <div class="toggle-thumb"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
+
                 <!-- ══════════ SECTION: DANGER ZONE ══════════ -->
                 <div id="section-danger" class="settings-section hidden">
                     <div class="glass-card p-5 sm:p-6 rounded-[1.5rem] border-red-500/20">
@@ -758,7 +681,7 @@
                                             undone.</p>
                                     </div>
                                 </div>
-                                <button onclick="document.getElementById('delete-modal').classList.add('active')"
+                                <button onclick="openDeleteModal()"
                                     class="mt-4 px-4 py-2.5 rounded-xl border border-red-500/30 text-red-500 dark:text-red-400 text-[9px] font-bold uppercase tracking-wider hover:bg-red-500/10 transition flex items-center gap-2">
                                     <i class="fa-solid fa-trash-can text-[8px]"></i> Delete My Account
                                 </button>
@@ -773,8 +696,9 @@
                                     <div>
                                         <p class="text-[11px] font-bold text-gray-900 dark:text-white mb-1">Request
                                             Data Export</p>
-                                        <p class="text-[9px] text-gray-400 dark:text-[#444] leading-relaxed">Download a
-                                            copy of all your data including trips, payments, and account information.
+                                        <p class="text-[9px] text-gray-400 dark:text-[#444] leading-relaxed">
+                                            Download a copy of all your data including trips, payments, and account
+                                            information.
                                         </p>
                                     </div>
                                 </div>
@@ -790,6 +714,7 @@
             </div>
         </div>
     </div>
+    </div>
 
     <!-- ══════════ DELETE ACCOUNT MODAL ══════════ -->
     <div id="delete-modal"
@@ -801,13 +726,16 @@
                 <i class="fa-solid fa-triangle-exclamation text-red-400 text-lg"></i>
             </div>
             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1.5">Delete Account?</h3>
-            <p class="text-xs text-gray-500 dark:text-[#666] mb-3 leading-relaxed">This will permanently delete your
+            <p class="text-xs text-gray-500 dark:text-[#666] mb-3 leading-relaxed">This will permanently delete
+                your
                 account and all data.</p>
             <div class="bg-red-500/5 border border-red-500/15 rounded-xl p-3 mb-6">
-                <p class="text-[9px] text-red-500 dark:text-red-400 font-bold">• All travel history will be lost</p>
+                <p class="text-[9px] text-red-500 dark:text-red-400 font-bold">• All travel history will be lost
+                </p>
                 <p class="text-[9px] text-red-500 dark:text-red-400 font-bold mt-1">• Wallet balance cannot be
                     recovered</p>
-                <p class="text-[9px] text-red-500 dark:text-red-400 font-bold mt-1">• This action is irreversible</p>
+                <p class="text-[9px] text-red-500 dark:text-red-400 font-bold mt-1">• This action is irreversible
+                </p>
             </div>
             <div class="space-y-2">
                 <div class="relative">
@@ -877,6 +805,19 @@
         }
         updateThemeLabel();
         window.addEventListener('storage', updateThemeLabel);
+
+        function openDeleteModal() {
+            const modal = document.getElementById('delete-modal');
+            const content = document.getElementById('delete-modal-content');
+            modal.classList.add('active');
+            modal.style.opacity = '';
+            modal.style.pointerEvents = '';
+            content.style.transform = '';
+            content.style.opacity = '';
+            document.getElementById('delete-confirm-input').value = '';
+            updateDeleteBtn();
+            document.getElementById('delete-confirm-input').focus();
+        }
 
         // Delete modal
         function closeDeleteModal() {

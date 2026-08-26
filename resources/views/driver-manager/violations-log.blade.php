@@ -641,434 +641,456 @@
 
             <p class="text-center text-[7px] sm:text-[8px] text-[#222] uppercase tracking-[0.2em] pt-5 sm:pt-6">
                 SmartCommute Driver Systems &bull; Violations Log Module</p>
-        </main>
 
-        <!-- ══════════ SINGLE ENTRY MODAL ══════════ -->
-        <div x-show="showModal" x-cloak
-            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
-            @click.self="showModal = false" x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0">
-            <div @click.stop class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-lg w-full max-h-[90vh] overflow-y-auto"
-                x-show="showModal" x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
-                x-transition:leave-end="opacity-0 scale-95">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/15 flex items-center justify-center">
-                            <i class="fa-solid fa-file text-[10px] text-blue-400"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-base sm:text-lg font-bold">New Violation</h3>
-                            <p class="text-[10px] text-[#555] mt-0.5">Log a traffic violation entry</p>
-                        </div>
-                    </div>
-                    <button @click="showModal = false"
-                        class="w-8 h-8 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center hover:bg-[#222] transition"><i
-                            class="fa-solid fa-xmark text-[10px] text-[#555]"></i></button>
-                </div>
-                <form method="POST" action="{{ route('driver-manager.violations-log.store') }}" class="space-y-4">
-                    @csrf
-                    <div>
-                        <label class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Driver
-                            <span class="text-red-400">*</span></label>
-                        <select name="user_id" x-model="form.driverId" @change="onDriverChange()"
-                            class="w-full px-4 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[11px] focus:outline-none focus:border-[#333] transition pr-10">
-                            <option value="">Select a driver...</option>
-                            <template x-for="d in drivers" :key="d.id">
-                                <option :value="d.id" x-text="d.name + ' — ' + d.license"></option>
-                            </template>
-                        </select>
-                        @error('user_id')
-                            <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                    class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div x-show="selectedDriver" x-cloak class="p-3 rounded-xl bg-[#0a0a0a] border border-[#1e1e1e]">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-[10px] font-bold text-[#ccc]" x-text="selectedDriver.name"></p>
-                                <p class="text-[8px] text-[#444]"
-                                    x-text="selectedDriver.license + ' · Exp: ' + selectedDriver.expirationDate"></p>
-                            </div>
-                            <span class="text-[7px] sm:text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-md"
-                                :class="selectedDriver.isExpired ? 'bg-red-500/10 text-red-400 border border-red-500/15' :
-                                    'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'"
-                                x-text="selectedDriver.isExpired ? 'Expired' : 'Valid'"></span>
-                        </div>
-                    </div>
-                    <div>
-                        <label
-                            class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Violation
-                            Type <span class="text-red-400">*</span></label>
-                        <select name="vc_id" x-model="form.violationCodeId" @change="onViolationChange()"
-                            class="w-full px-4 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[11px] focus:outline-none focus:border-[#333] transition pr-10">
-                            <option value="">Select violation...</option>
-                            <template x-for="vc in violationCodes" :key="vc.id">
-                                <option :value="vc.id" x-text="vc.code + ' — ' + vc.violation_name"></option>
-                            </template>
-                        </select>
-                        @error('vc_id')
-                            <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                    class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div>
-                        <label
-                            class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Offense
-                            Instance <span class="text-red-400">*</span></label>
-                        <select name="violation_instance" x-model="form.offenseCount" @change="calculateFine()"
-                            class="w-full px-4 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[11px] focus:outline-none focus:border-[#333] transition pr-10">
-                            <option value="">Select...</option>
-                            <option value="1">1st Offense</option>
-                            <option value="2">2nd Offense</option>
-                            <option value="3">3rd Offense</option>
-                            <option value="4">4th+ Offense</option>
-                        </select>
-                        @error('violation_instance')
-                            <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                    class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                        @enderror
-                    </div>
-                    <input type="hidden" name="violation_fine" :value="form.violationFine">
-                    <div x-show="form.violationFine > 0"
-                        class="flex items-center justify-between p-3.5 rounded-xl bg-[#0a0a0a] border border-[#1e1e1e]">
-                        <div class="flex items-center gap-2">
-                            <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                            <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#333]">Auto-calculated
-                                fine</span>
-                        </div>
-                        <span class="text-sm font-bold text-blue-400"
-                            x-text="'₱' + Number(form.violationFine).toLocaleString('en-PH', {minimumFractionDigits: 2})"></span>
-                    </div>
-                    <div>
-                        <label
-                            class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Location
-                            <span class="text-red-400">*</span></label>
-                        <input type="text" name="place_of_violation" x-model="form.location"
-                            value="{{ old('place_of_violation') }}" placeholder="e.g., Marikina City"
-                            class="w-full px-4 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[11px] placeholder-[#333] focus:outline-none focus:border-[#333] transition">
-                        @error('place_of_violation')
-                            <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                    class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                        @enderror
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label
-                                class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Date
-                                <span class="text-red-400">*</span></label>
-                            <input type="date" name="date_of_violation" x-model="form.date"
-                                value="{{ old('date_of_violation') }}"
-                                class="w-full px-4 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[11px] focus:outline-none focus:border-[#333] transition">
-                            @error('date_of_violation')
-                                <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                            @enderror
-                        </div>
-                        <div>
-                            <label
-                                class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Time
-                                <span class="text-red-400">*</span></label>
-                            <input type="time" name="time_of_violation" x-model="form.time"
-                                value="{{ old('time_of_violation') }}"
-                                class="w-full px-4 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[11px] focus:outline-none focus:border-[#333] transition">
-                            @error('time_of_violation')
-                                <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-                    <div>
-                        <label
-                            class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Remarks</label>
-                        <textarea name="remarks" x-model="form.remarks" rows="2" placeholder="Optional notes..."
-                            class="w-full px-4 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[11px] placeholder-[#333] focus:outline-none focus:border-[#333] transition resize-none">{{ old('remarks') }}</textarea>
-                    </div>
-                    <div class="flex gap-2.5 pt-1">
-                        <button type="button" @click="showModal = false"
-                            class="flex-1 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] transition">Cancel</button>
-                        <button type="submit"
-                            class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98]"><i
-                                class="fa-solid fa-check mr-1.5 text-[8px]"></i> Save Entry</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- ══════════ BULK ADD MODAL ══════════ -->
-        <div x-show="showBulkModal" x-cloak
-            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
-            @click.self="showBulkModal = false" x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0">
-            <div @click.stop class="glass-panel rounded-[2rem] max-w-3xl w-full overflow-hidden flex flex-col"
-                style="max-height: 90vh;">
-                <div class="p-6 sm:p-8 pb-4 shrink-0">
-                    <div class="flex items-center justify-between">
+            <!-- ══════════ SINGLE ENTRY MODAL ══════════ -->
+            <div x-show="showModal" x-cloak
+                class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
+                @click.self="showModal = false" x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0">
+                <div @click.stop
+                    class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-lg w-full max-h-[90vh] overflow-y-auto"
+                    x-show="showModal" x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+                    <div class="flex items-center justify-between mb-6">
                         <div class="flex items-center gap-3">
                             <div
-                                class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/15 flex items-center justify-center">
-                                <i class="fa-solid fa-layer-group text-[10px] text-purple-400"></i>
+                                class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/15 flex items-center justify-center">
+                                <i class="fa-solid fa-file text-[10px] text-blue-400"></i>
                             </div>
                             <div>
-                                <h3 class="text-base sm:text-lg font-bold">Bulk Add Violations</h3>
-                                <p class="text-[10px] text-[#555] mt-0.5">Log multiple violations for a single driver
-                                </p>
+                                <h3 class="text-base sm:text-lg font-bold">New Violation</h3>
+                                <p class="text-[10px] text-[#555] mt-0.5">Log a traffic violation entry</p>
                             </div>
                         </div>
-                        <button @click="showBulkModal = false"
-                            class="w-8 h-8 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center hover:bg-[#222] transition"><i
-                                class="fa-solid fa-xmark text-[10px] text-[#555]"></i></button>
+                        <button @click="showModal = false"
+                            class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] flex items-center justify-center hover:bg-gray-200 dark:hover:bg-[#222] transition">
+                            <i class="fa-solid fa-xmark text-[10px] text-gray-500 dark:text-[#555]"></i>
+                        </button>
                     </div>
-                </div>
-                <div class="px-6 sm:px-8 pb-4 overflow-y-auto flex-1">
-                    <form id="bulkViolationForm" method="POST"
-                        action="{{ route('driver-manager.violations-log.store-bulk') }}" class="space-y-5">
+                    <form method="POST" action="{{ route('driver-manager.violations-log.store') }}"
+                        class="space-y-4">
                         @csrf
-                        @if ($errors->has('user_id') || $errors->has('violations'))
-                            <div class="p-4 rounded-xl bg-red-500/5 border border-red-500/15">
-                                <div class="flex items-center gap-2 mb-2.5">
-                                    <div class="w-5 h-5 rounded-md bg-red-500/10 flex items-center justify-center"><i
-                                            class="fa-solid fa-circle-exclamation text-[7px] text-red-400"></i></div>
-                                    <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-red-400">Please
-                                        fix the following</span>
-                                </div>
-                                <ul class="space-y-1.5">
-                                    @if ($errors->has('user_id'))
-                                        <li class="text-[9px] text-red-400/80 flex items-start gap-2"><span
-                                                class="text-red-500/50 mt-0.5">·</span>{{ $errors->first('user_id') }}
-                                        </li>
-                                    @endif
-                                    @foreach ($errors->get('violations') as $key => $messages)
-                                        @php
-                                            $rowNum = is_int($key) ? $key + 1 : $key;
-                                            $fieldLabel = '';
-                                            if (str_contains($key, 'vc_id')) {
-                                                $fieldLabel = 'Violation Type';
-                                            } elseif (str_contains($key, 'violation_instance')) {
-                                                $fieldLabel = 'Offense';
-                                            } elseif (str_contains($key, 'violation_fine')) {
-                                                $fieldLabel = 'Fine';
-                                            } elseif (str_contains($key, 'place_of_violation')) {
-                                                $fieldLabel = 'Location';
-                                            } elseif (str_contains($key, 'date_of_violation')) {
-                                                $fieldLabel = 'Date';
-                                            } elseif (str_contains($key, 'time_of_violation')) {
-                                                $fieldLabel = 'Time';
-                                            } elseif (str_contains($key, 'remarks')) {
-                                                $fieldLabel = 'Remarks';
-                                            } else {
-                                                $fieldLabel = $key;
-                                            }
-                                        @endphp
-                                        @foreach ($messages as $message)
-                                            <li class="text-[9px] text-red-400/80 flex items-start gap-2"><span
-                                                    class="text-red-500/50 mt-0.5">·</span><span><span
-                                                        class="font-bold text-red-400">Entry #{{ $rowNum }}
-                                                        ({{ $fieldLabel }})
-                                                        :</span> {{ $message }}</span></li>
-                                        @endforeach
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
-                        <div class="p-4 rounded-xl bg-[#0a0a0a] border border-[#1e1e1e]">
+                        <div>
                             <label
                                 class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Driver
                                 <span class="text-red-400">*</span></label>
-                            <select name="user_id" x-model="bulk.driverId" @change="onBulkDriverChange()"
-                                class="w-full px-4 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] text-[11px] focus:outline-none focus:border-[#333] transition pr-10"
-                                :class="{ 'border-red-500/50': {{ $errors->has('user_id') ? 'true' : 'false' }} }">
+                            <select name="user_id" x-model="form.driverId" @change="onDriverChange()"
+                                class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition pr-10">
                                 <option value="">Select a driver...</option>
                                 <template x-for="d in drivers" :key="d.id">
                                     <option :value="d.id" x-text="d.name + ' — ' + d.license"></option>
                                 </template>
                             </select>
-                            <div x-show="bulk.selectedDriver" x-cloak class="mt-3 flex items-center justify-between">
+                            @error('user_id')
+                                <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
+                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div x-show="selectedDriver" x-cloak
+                            class="p-3 rounded-xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]">
+                            <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-[10px] font-bold text-[#ccc]" x-text="bulk.selectedDriver.name">
-                                    </p>
+                                    <p class="text-[10px] font-bold text-[#ccc]" x-text="selectedDriver.name"></p>
                                     <p class="text-[8px] text-[#444]"
-                                        x-text="bulk.selectedDriver.license + ' · Exp: ' + bulk.selectedDriver.expirationDate">
+                                        x-text="selectedDriver.license + ' · Exp: ' + selectedDriver.expirationDate">
                                     </p>
                                 </div>
                                 <span class="text-[7px] sm:text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-md"
-                                    :class="bulk.selectedDriver.isExpired ?
-                                        'bg-red-500/10 text-red-400 border border-red-500/15' :
+                                    :class="selectedDriver.isExpired ? 'bg-red-500/10 text-red-400 border border-red-500/15' :
                                         'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'"
-                                    x-text="bulk.selectedDriver.isExpired ? 'Expired' : 'Valid'"></span>
+                                    x-text="selectedDriver.isExpired ? 'Expired' : 'Valid'"></span>
                             </div>
                         </div>
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Violation
-                                    Entries <span class="text-purple-400 ml-1"
-                                        x-text="'(' + bulk.rows.length + ')'"></span></span>
-                                <button type="button" @click="addBulkRow()"
-                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/15 text-purple-400 text-[9px] font-bold uppercase tracking-wider transition"><i
-                                        class="fa-solid fa-plus text-[7px]"></i> Add Row</button>
+                        <div>
+                            <label
+                                class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Violation
+                                Type <span class="text-red-400">*</span></label>
+                            <select name="vc_id" x-model="form.violationCodeId" @change="onViolationChange()"
+                                class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition pr-10">
+                                <option value="">Select violation...</option>
+                                <template x-for="vc in violationCodes" :key="vc.id">
+                                    <option :value="vc.id" x-text="vc.code + ' — ' + vc.violation_name">
+                                    </option>
+                                </template>
+                            </select>
+                            @error('vc_id')
+                                <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
+                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label
+                                class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Offense
+                                Instance <span class="text-red-400">*</span></label>
+                            <select name="violation_instance" x-model="form.offenseCount" @change="calculateFine()"
+                                class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition pr-10">
+                                <option value="">Select...</option>
+                                <option value="1">1st Offense</option>
+                                <option value="2">2nd Offense</option>
+                                <option value="3">3rd Offense</option>
+                                <option value="4">4th+ Offense</option>
+                            </select>
+                            @error('violation_instance')
+                                <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
+                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
+                            @enderror
+                        </div>
+                        <input type="hidden" name="violation_fine" :value="form.violationFine">
+                        <div x-show="form.violationFine > 0"
+                            class="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]">
+                            <div class="flex items-center gap-2">
+                                <div class="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                <span
+                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#333]">Auto-calculated
+                                    fine</span>
                             </div>
-                            <template x-for="(row, index) in bulk.rows" :key="row.id">
-                                <div class="p-4 rounded-xl border border-[#1e1e1e] bg-[#111] relative group">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <div class="flex items-center gap-2">
-                                            <span
-                                                class="flex items-center justify-center w-6 h-6 rounded-lg bg-purple-500/10 text-purple-400 text-[9px] font-black"
-                                                x-text="index + 1"></span>
-                                            <span class="text-[9px] font-bold text-[#555]">Entry #<span
-                                                    x-text="index + 1"></span></span>
-                                        </div>
-                                        <button type="button" @click="removeBulkRow(index)"
-                                            x-show="bulk.rows.length > 1"
-                                            class="opacity-0 group-hover:opacity-100 flex items-center justify-center w-7 h-7 rounded-lg bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 text-red-400/60 hover:text-red-400 text-[9px] transition-all">
-                                            <i class="fa-solid fa-trash-can text-[8px]"></i>
-                                        </button>
-                                    </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                                        <div class="sm:col-span-2">
-                                            <label
-                                                class="block mb-1 text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">Violation
-                                                Type <span class="text-red-400/60">*</span></label>
-                                            <select :name="'violations[' + index + '][vc_id]'" x-model="row.vcId"
-                                                @change="calculateBulkRowFine(index)"
-                                                class="w-full px-3 py-2.5 rounded-lg bg-[#0a0a0a] border border-[#1e1e1e] text-[10px] focus:outline-none focus:border-[#333] transition pr-10">
-                                                <option value="">Select violation...</option>
-                                                <template x-for="vc in violationCodes" :key="vc.id">
-                                                    <option :value="vc.id"
-                                                        x-text="vc.code + ' — ' + vc.violation_name"></option>
-                                                </template>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label
-                                                class="block mb-1 text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">Offense
-                                                <span class="text-red-400/60">*</span></label>
-                                            <select :name="'violations[' + index + '][violation_instance]'"
-                                                x-model="row.offenseCount" @change="calculateBulkRowFine(index)"
-                                                class="w-full px-3 py-2.5 rounded-lg bg-[#0a0a0a] border border-[#1e1e1e] text-[10px] focus:outline-none focus:border-[#333] transition pr-10">
-                                                <option value="">Select...</option>
-                                                <option value="1">1st Offense</option>
-                                                <option value="2">2nd Offense</option>
-                                                <option value="3">3rd Offense</option>
-                                                <option value="4">4th+ Offense</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label
-                                                class="block mb-1 text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">Location
-                                                <span class="text-red-400/60">*</span></label>
-                                            <input type="text"
-                                                :name="'violations[' + index + '][place_of_violation]'"
-                                                x-model="row.location" placeholder="e.g., Marikina City"
-                                                class="w-full px-3 py-2.5 rounded-lg bg-[#0a0a0a] border border-[#1e1e1e] text-[10px] placeholder-[#222] focus:outline-none focus:border-[#333] transition">
-                                        </div>
-                                        <div>
-                                            <label
-                                                class="block mb-1 text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">Date
-                                                <span class="text-red-400/60">*</span></label>
-                                            <input type="date"
-                                                :name="'violations[' + index + '][date_of_violation]'"
-                                                x-model="row.date"
-                                                class="w-full px-3 py-2.5 rounded-lg bg-[#0a0a0a] border border-[#1e1e1e] text-[10px] focus:outline-none focus:border-[#333] transition">
-                                        </div>
-                                        <div>
-                                            <label
-                                                class="block mb-1 text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">Time
-                                                <span class="text-red-400/60">*</span></label>
-                                            <input type="time"
-                                                :name="'violations[' + index + '][time_of_violation]'"
-                                                x-model="row.time"
-                                                class="w-full px-3 py-2.5 rounded-lg bg-[#0a0a0a] border border-[#1e1e1e] text-[10px] focus:outline-none focus:border-[#333] transition">
-                                        </div>
-                                        <div class="sm:col-span-2">
-                                            <label
-                                                class="block mb-1 text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">Remarks</label>
-                                            <input type="text" :name="'violations[' + index + '][remarks]'"
-                                                x-model="row.remarks" placeholder="Optional notes..."
-                                                class="w-full px-3 py-2.5 rounded-lg bg-[#0a0a0a] border border-[#1e1e1e] text-[10px] placeholder-[#222] focus:outline-none focus:border-[#333] transition">
-                                        </div>
-                                    </div>
-                                    <input type="hidden" :name="'violations[' + index + '][violation_fine]'"
-                                        :value="row.fine">
-                                    <div class="flex items-center justify-end">
-                                        <div x-show="row.fine > 0"
-                                            class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/5 border border-blue-500/10">
-                                            <span
-                                                class="text-[7px] font-bold uppercase tracking-[0.15em] text-blue-400/60">Fine</span>
-                                            <span class="text-[10px] font-bold text-blue-400"
-                                                x-text="'₱' + Number(row.fine).toLocaleString('en-PH', {minimumFractionDigits: 2})"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
+                            <span class="text-sm font-bold text-blue-400"
+                                x-text="'₱' + Number(form.violationFine).toLocaleString('en-PH', {minimumFractionDigits: 2})"></span>
+                        </div>
+                        <div>
+                            <label
+                                class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Location
+                                <span class="text-red-400">*</span></label>
+                            <input type="text" name="place_of_violation" x-model="form.location"
+                                value="{{ old('place_of_violation') }}" placeholder="e.g., Marikina City"
+                                class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition">
+                            @error('place_of_violation')
+                                <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
+                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label
+                                    class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Date
+                                    <span class="text-red-400">*</span></label>
+                                <input type="date" name="date_of_violation" x-model="form.date"
+                                    value="{{ old('date_of_violation') }}"
+                                    class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition">
+                                @error('date_of_violation')
+                                    <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
+                                            class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label
+                                    class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Time
+                                    <span class="text-red-400">*</span></label>
+                                <input type="time" name="time_of_violation" x-model="form.time"
+                                    value="{{ old('time_of_violation') }}"
+                                    class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition">
+                                @error('time_of_violation')
+                                    <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
+                                            class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                        <div>
+                            <label
+                                class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Remarks</label>
+                            <textarea name="remarks" x-model="form.remarks" rows="2" placeholder="Optional notes..."
+                                class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition resize-none">{{ old('remarks') }}</textarea>
+                        </div>
+                        <div class="flex gap-2.5 pt-1">
+                            <button type="button" @click="showModal = false"
+                                class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">Cancel</button>
+                            <button type="submit"
+                                class="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98]"><i
+                                    class="fa-solid fa-check mr-1.5 text-[8px]"></i> Save Entry</button>
                         </div>
                     </form>
                 </div>
-                <div class="px-6 sm:px-8 py-5 border-t border-[#1e1e1e] shrink-0">
-                    <div
-                        class="flex items-center justify-between mb-4 p-3.5 rounded-xl bg-purple-500/5 border border-purple-500/15">
-                        <div>
-                            <span
-                                class="text-[8px] font-bold uppercase tracking-[0.15em] text-purple-400/60 block">Total
-                                Fines</span>
-                            <span class="text-[8px] text-[#333]"
-                                x-text="bulk.rows.length + ' entr' + (bulk.rows.length === 1 ? 'y' : 'ies')"></span>
-                        </div>
-                        <span class="text-lg font-black text-purple-400"
-                            x-text="'₱' + bulkTotalFine.toLocaleString('en-PH', {minimumFractionDigits: 2})"></span>
-                    </div>
-                    <div class="flex gap-2.5">
-                        <button type="button" @click="showBulkModal = false"
-                            class="flex-1 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] transition">Cancel</button>
-                        <button type="button" @click="addBulkRow()"
-                            class="px-5 py-3 rounded-xl bg-[#111] border border-[#1e1e1e] hover:bg-[#1a1a1a] hover:border-[#333] text-[#888] text-[10px] font-bold uppercase tracking-widest hover:text-[#ccc] transition"><i
-                                class="fa-solid fa-plus mr-1.5 text-[8px]"></i> Row</button>
-                        <button type="submit" form="bulkViolationForm"
-                            class="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98] shadow-lg shadow-purple-600/10"><i
-                                class="fa-solid fa-check-double mr-1.5 text-[8px]"></i> Save All</button>
-                    </div>
-                </div>
             </div>
-        </div>
 
-        <!-- ══════════ LOGOUT MODAL ══════════ -->
-        <div x-show="showLogoutModal" x-cloak
-            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
-            @click.self="showLogoutModal = false" x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0">
-            <div @click.stop class="glass-panel p-7 sm:p-8 rounded-[2rem] max-w-sm w-full" x-show="showLogoutModal"
-                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
-                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
-                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
-                <div class="text-center">
-                    <div
-                        class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-red-500/20">
-                        <i class="fa-solid fa-power-off text-red-400 text-lg"></i>
+            <!-- ══════════ BULK ADD MODAL ══════════ -->
+            <div x-show="showBulkModal" x-cloak
+                class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
+                @click.self="showBulkModal = false" x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0">
+                <div @click.stop class="glass-panel rounded-[2rem] max-w-3xl w-full overflow-hidden flex flex-col"
+                    style="max-height: 90vh;">
+                    <div class="p-6 sm:p-8 pb-4 shrink-0">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/15 flex items-center justify-center">
+                                    <i class="fa-solid fa-layer-group text-[10px] text-purple-400"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-base sm:text-lg font-bold">Bulk Add Violations</h3>
+                                    <p class="text-[10px] text-[#555] mt-0.5">Log multiple violations for a single
+                                        driver</p>
+                                </div>
+                            </div>
+                            <button @click="showBulkModal = false"
+                                class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] flex items-center justify-center hover:bg-gray-200 dark:hover:bg-[#222] transition">
+                                <i class="fa-solid fa-xmark text-[10px] text-gray-500 dark:text-[#555]"></i>
+                            </button>
+                        </div>
                     </div>
-                    <h3 class="text-lg font-bold mb-1.5">End Session?</h3>
-                    <p class="text-xs text-[#666] mb-7">Are you sure you want to exit?</p>
-                    <div class="flex gap-2.5">
-                        <button @click="showLogoutModal = false"
-                            class="flex-1 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] transition">Cancel</button>
-                        <form action="{{ route('users.logout') }}" method="POST" class="flex-1">
+                    <div class="px-6 sm:px-8 pb-4 overflow-y-auto flex-1">
+                        <form id="bulkViolationForm" method="POST"
+                            action="{{ route('driver-manager.violations-log.store-bulk') }}" class="space-y-5">
                             @csrf
-                            <button type="submit"
-                                class="w-full py-3 rounded-xl bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 transition active:scale-[0.98]">Logout</button>
+                            @if ($errors->has('user_id') || $errors->has('violations'))
+                                <div class="p-4 rounded-xl bg-red-500/5 border border-red-500/15">
+                                    <div class="flex items-center gap-2 mb-2.5">
+                                        <div class="w-5 h-5 rounded-md bg-red-500/10 flex items-center justify-center">
+                                            <i class="fa-solid fa-circle-exclamation text-[7px] text-red-400"></i>
+                                        </div>
+                                        <span
+                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-red-400">Please
+                                            fix the following</span>
+                                    </div>
+                                    <ul class="space-y-1.5">
+                                        @if ($errors->has('user_id'))
+                                            <li class="text-[9px] text-red-400/80 flex items-start gap-2"><span
+                                                    class="text-red-500/50 mt-0.5">·</span>{{ $errors->first('user_id') }}
+                                            </li>
+                                        @endif
+                                        @foreach ($errors->get('violations') as $key => $messages)
+                                            @php
+                                                $rowNum = is_int($key) ? $key + 1 : $key;
+                                                $fieldLabel = '';
+                                                if (str_contains($key, 'vc_id')) {
+                                                    $fieldLabel = 'Violation Type';
+                                                } elseif (str_contains($key, 'violation_instance')) {
+                                                    $fieldLabel = 'Offense';
+                                                } elseif (str_contains($key, 'violation_fine')) {
+                                                    $fieldLabel = 'Fine';
+                                                } elseif (str_contains($key, 'place_of_violation')) {
+                                                    $fieldLabel = 'Location';
+                                                } elseif (str_contains($key, 'date_of_violation')) {
+                                                    $fieldLabel = 'Date';
+                                                } elseif (str_contains($key, 'time_of_violation')) {
+                                                    $fieldLabel = 'Time';
+                                                } elseif (str_contains($key, 'remarks')) {
+                                                    $fieldLabel = 'Remarks';
+                                                } else {
+                                                    $fieldLabel = $key;
+                                                }
+                                            @endphp
+                                            @foreach ($messages as $message)
+                                                <li class="text-[9px] text-red-400/80 flex items-start gap-2"><span
+                                                        class="text-red-500/50 mt-0.5">·</span><span><span
+                                                            class="font-bold text-red-400">Entry #{{ $rowNum }}
+                                                            ({{ $fieldLabel }})
+                                                            :</span> {{ $message }}</span>
+                                                </li>
+                                            @endforeach
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
+                            <div
+                                class="p-4 rounded-xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]">
+                                <label
+                                    class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Driver
+                                    <span class="text-red-400">*</span></label>
+                                <select name="user_id" x-model="bulk.driverId" @change="onBulkDriverChange()"
+                                    class="w-full px-4 py-3 rounded-xl bg-white dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition pr-10"
+                                    :class="{ 'border-red-500/50': {{ $errors->has('user_id') ? 'true' : 'false' }} }">
+                                    <option value="">Select a driver...</option>
+                                    <template x-for="d in drivers" :key="d.id">
+                                        <option :value="d.id" x-text="d.name + ' — ' + d.license"></option>
+                                    </template>
+                                </select>
+                                <div x-show="bulk.selectedDriver" x-cloak
+                                    class="mt-3 flex items-center justify-between">
+                                    <div>
+                                        <p class="text-[10px] font-bold text-[#ccc]"
+                                            x-text="bulk.selectedDriver.name"></p>
+                                        <p class="text-[8px] text-[#444]"
+                                            x-text="bulk.selectedDriver.license + ' · Exp: ' + bulk.selectedDriver.expirationDate">
+                                        </p>
+                                    </div>
+                                    <span class="text-[7px] sm:text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-md"
+                                        :class="bulk.selectedDriver.isExpired ?
+                                            'bg-red-500/10 text-red-400 border border-red-500/15' :
+                                            'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'"
+                                        x-text="bulk.selectedDriver.isExpired ? 'Expired' : 'Valid'"></span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span
+                                        class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Violation
+                                        Entries <span class="text-purple-400 ml-1"
+                                            x-text="'(' + bulk.rows.length + ')'"></span></span>
+                                    <button type="button" @click="addBulkRow()"
+                                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/15 text-purple-400 text-[9px] font-bold uppercase tracking-wider transition">
+                                        <i class="fa-solid fa-plus text-[7px]"></i> Add Row
+                                    </button>
+                                </div>
+
+                                <template x-for="(row, index) in bulk.rows" :key="row.id">
+                                    <div
+                                        class="p-4 rounded-xl border border-gray-200 dark:border-[#1e1e1e] bg-gray-50 dark:bg-[#111] relative group">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="flex items-center justify-center w-6 h-6 rounded-lg bg-purple-500/10 text-purple-400 text-[9px] font-black"
+                                                    x-text="index + 1"></span>
+                                                <span class="text-[9px] font-bold text-[#555]">Entry #<span
+                                                        x-text="index + 1"></span></span>
+                                            </div>
+                                            <button type="button" @click="removeBulkRow(index)"
+                                                x-show="bulk.rows.length > 1"
+                                                class="opacity-0 group-hover:opacity-100 flex items-center justify-center w-7 h-7 rounded-lg bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 text-red-400/60 hover:text-red-400 text-[9px] transition-all">
+                                                <i class="fa-solid fa-trash-can text-[8px]"></i>
+                                            </button>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                                            <div class="sm:col-span-2">
+                                                <label
+                                                    class="block mb-1 text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">Violation
+                                                    Type <span class="text-red-400/60">*</span></label>
+                                                <select :name="'violations[' + index + '][vc_id]'" x-model="row.vcId"
+                                                    @change="calculateBulkRowFine(index)"
+                                                    class="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[10px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition pr-10">
+                                                    <option value="">Select violation...</option>
+                                                    <template x-for="vc in violationCodes" :key="vc.id">
+                                                        <option :value="vc.id"
+                                                            x-text="vc.code + ' — ' + vc.violation_name"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label
+                                                    class="block mb-1 text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">Offense
+                                                    <span class="text-red-400/60">*</span></label>
+                                                <select :name="'violations[' + index + '][violation_instance]'"
+                                                    x-model="row.offenseCount" @change="calculateBulkRowFine(index)"
+                                                    class="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[10px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition pr-10">
+                                                    <option value="">Select...</option>
+                                                    <option value="1">1st Offense</option>
+                                                    <option value="2">2nd Offense</option>
+                                                    <option value="3">3rd Offense</option>
+                                                    <option value="4">4th+ Offense</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label
+                                                    class="block mb-1 text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">Location
+                                                    <span class="text-red-400/60">*</span></label>
+                                                <input type="text"
+                                                    :name="'violations[' + index + '][place_of_violation]'"
+                                                    x-model="row.location" placeholder="e.g., Marikina City"
+                                                    class="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[10px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#222] focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition">
+                                            </div>
+                                            <div>
+                                                <label
+                                                    class="block mb-1 text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">Date
+                                                    <span class="text-red-400/60">*</span></label>
+                                                <input type="date"
+                                                    :name="'violations[' + index + '][date_of_violation]'"
+                                                    x-model="row.date"
+                                                    class="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[10px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition">
+                                            </div>
+                                            <div>
+                                                <label
+                                                    class="block mb-1 text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">Time
+                                                    <span class="text-red-400/60">*</span></label>
+                                                <input type="time"
+                                                    :name="'violations[' + index + '][time_of_violation]'"
+                                                    x-model="row.time"
+                                                    class="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[10px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition">
+                                            </div>
+                                            <div class="sm:col-span-2">
+                                                <label
+                                                    class="block mb-1 text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">Remarks</label>
+                                                <input type="text" :name="'violations[' + index + '][remarks]'"
+                                                    x-model="row.remarks" placeholder="Optional notes..."
+                                                    class="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[10px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#222] focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition">
+                                            </div>
+                                        </div>
+                                        <input type="hidden" :name="'violations[' + index + '][violation_fine]'"
+                                            :value="row.fine">
+                                        <div class="flex items-center justify-end">
+                                            <div x-show="row.fine > 0"
+                                                class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/5 border border-blue-500/10">
+                                                <span
+                                                    class="text-[7px] font-bold uppercase tracking-[0.15em] text-blue-400/60">Fine</span>
+                                                <span class="text-[10px] font-bold text-blue-400"
+                                                    x-text="'₱' + Number(row.fine).toLocaleString('en-PH', {minimumFractionDigits: 2})"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
                         </form>
                     </div>
+
+                    <div class="px-6 sm:px-8 py-5 border-t border-gray-200 dark:border-[#1e1e1e] shrink-0">
+                        <div
+                            class="flex items-center justify-between mb-4 p-3.5 rounded-xl bg-purple-500/5 border border-purple-500/15">
+                            <div>
+                                <span
+                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-purple-400/60 block">Total
+                                    Fines</span>
+                                <span class="text-[8px] text-[#333]"
+                                    x-text="bulk.rows.length + ' entr' + (bulk.rows.length === 1 ? 'y' : 'ies')"></span>
+                            </div>
+                            <span class="text-lg font-black text-purple-400"
+                                x-text="'₱' + bulkTotalFine.toLocaleString('en-PH', {minimumFractionDigits: 2})"></span>
+                        </div>
+                        <div class="flex gap-2.5">
+                            <button type="button" @click="showBulkModal = false"
+                                class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">Cancel</button>
+                            <button type="button" @click="addBulkRow()"
+                                class="px-5 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] text-gray-500 dark:text-[#888] text-[10px] font-bold uppercase tracking-widest hover:text-gray-700 dark:hover:text-[#ccc] transition">
+                                <i class="fa-solid fa-plus mr-1.5 text-[8px]"></i> Row
+                            </button>
+                            <button type="submit" form="bulkViolationForm"
+                                class="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98] shadow-lg shadow-purple-600/10">
+                                <i class="fa-solid fa-check-double mr-1.5 text-[8px]"></i> Save All
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
+            <!-- ══════════ LOGOUT MODAL ══════════ -->
+            <div x-show="showLogoutModal" x-cloak
+                class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
+                @click.self="showLogoutModal = false" x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0">
+                <div @click.stop class="glass-panel p-7 sm:p-8 rounded-[2rem] max-w-sm w-full"
+                    x-show="showLogoutModal" x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+                    <div class="text-center">
+                        <div
+                            class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-red-500/20">
+                            <i class="fa-solid fa-power-off text-red-400 text-lg"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-1.5">End Session?</h3>
+                        <p class="text-xs text-[#666] mb-7">Are you sure you want to exit?</p>
+                        <div class="flex gap-2.5">
+                            <button @click="showLogoutModal = false"
+                                class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">Cancel</button>
+                            <form action="{{ route('users.logout') }}" method="POST" class="flex-1">
+                                @csrf
+                                <button type="submit"
+                                    class="w-full py-3 rounded-xl bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 transition active:scale-[0.98]">Logout</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-
     @if ($errors->any())
         <script>
             window.__openViolationModal = true;

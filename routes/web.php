@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Admin\CommuterController;
 use App\Http\Controllers\Admin\DriverApprovalController;
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DevMarkerController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\DriverManagerController;
@@ -19,10 +18,8 @@ use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\VehicleTrackingController;
 use App\Models\Fare;
 use App\Models\FareRate;
-use App\Models\User;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,7 +35,6 @@ use Illuminate\Support\Facades\Route;
 
 // Changed from /home to / so that the landing page will automatically show up upon starting the server
 Route::get('/', function (Request $request) {
-    // dd(Auth::user());
     return view('home');
 })->name('home');
 
@@ -48,17 +44,28 @@ Route::post('/fire-event', [PusherController::class, 'fireEvent'])->name('fire.e
 Route::post('/track/vehicle/broadcast', [VehicleTrackingController::class, 'broadcastLocation'])->name('vehicle.broadcast');
 Route::get('/track/vehicles/active', [VehicleTrackingController::class, 'getActiveVehicles']);
 
-Route::get('/register', function () {
-    return view('auth.register');
-})->name('register');
+Route::get('/map', [UserController::class, 'map'])->name('map');
 
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
+Route::middleware('guest')->group(function () {
+    Route::get('/register', function () {
+        return view('auth.register');
+    })->name('register');
 
-Route::post('/logout', [UserController::class, 'logout'])->name('users.logout');
-Route::post('/register', [UserController::class, 'register'])->name('users.register');
-Route::post('/login', [UserController::class, 'login'])->name('users.login');
+    Route::get('/login', function () {
+        return view('auth.login');
+    })->name('login');
+
+    Route::post('/register', [UserController::class, 'register'])->name('users.register');
+    Route::post('/login', [UserController::class, 'login'])->name('users.login');
+
+    Route::get('/register/driver', [DriverController::class, 'create'])->name('driver.register.page');
+    Route::post('/register/driver', [DriverController::class, 'store'])->name('driver.register');
+
+    Route::get('/forgot-password', [UserController::class, 'forgotPassword'])->name('password.request');
+    Route::post('/forgot-password', [UserController::class, 'requestPassword'])->name('password.email');
+    Route::get('/reset-password/{token}', [UserController::class, 'resetPassword'])->name('password.reset');
+    Route::post('/reset-password', [UserController::class, 'updatePassword'])->name('password.update');
+});
 
 Route::get('/email/verify', function () {
     return view('auth.verify-email');
@@ -87,39 +94,12 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
     ]);
 })->middleware(['auth', 'signed'])->name('verification.verify');
 
-Route::middleware('guest')->group(function () {
-    Route::get('/map/guest', function () {
-        $latestFare = Fare::get()->last();
-
-        $rates = FareRate::get();
-
-        if ($latestFare) {
-            $latestFareId = $latestFare->id;
-            $rates = FareRate::where('fare_id', $latestFareId)->get();
-        }
-
-        return view('map', [
-            'rates' => $rates,
-        ]);
-    })->name('guest.map');
-
-    Route::get('/register/driver', [DriverController::class, 'create'])->name('driver.register.page');
-    Route::post('/register/driver', [DriverController::class, 'store'])->name('driver.register');
-
-    Route::get('/forgot-password', [UserController::class, 'forgotPassword'])->name('password.request');
-    Route::post('/forgot-password', [UserController::class, 'requestPassword'])->name('password.email');
-    Route::get('/reset-password/{token}', [UserController::class, 'resetPassword'])->name('password.reset');
-    Route::post('/reset-password', [UserController::class, 'updatePassword'])->name('password.update');
-});
-
-Route::middleware(['role:commuter|admin|driver|driver_manager|maintenance_manager', 'auth', 'verified'])->group(function () {
-    Route::get('/map', [UserController::class, 'map'])->name('map');
-    Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
-});
-
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/logout', [UserController::class, 'logout'])->name('users.logout');
+
+    Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
+
     Route::get('/profile', [UserController::class, 'profile'])->name('profile');
-    Route::get('/profile/edit', [UserController::class, 'editProfile'])->name('profile.edit');
     Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
 
     Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
@@ -137,7 +117,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/topups', [PaymentController::class, 'showTopupsAdmin'])->name('admin.topups');
     Route::get('/transactions', [PaymentController::class, 'showTransactions'])->name('faretransactions');
-    Route::get('/trasanctions/receipt/{id}', [PaymentController::class, 'showReceiptAdmin'])->name('admin.receipt.show');
+    Route::get('/transactions/receipt/{id}', [PaymentController::class, 'showReceiptAdmin'])->name('admin.receipt.show');
 
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
@@ -146,26 +126,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/settings/theme', [UserPreferenceController::class, 'updateTheme'])->name('settings.update.theme');
     Route::patch('/settings/font-size', [UserPreferenceController::class, 'updateFontSize'])->name('settings.update.fontsize');
 
-    Route::get('/drivers', [DriverApprovalController::class, 'index'])->name('drivers.index');
+    Route::middleware('role:admin|driver_manager')->group(function () {
+        Route::get('/drivers', [DriverApprovalController::class, 'index'])->name('drivers.index');
+        Route::post('/drivers', [DriverApprovalController::class, 'store'])->name('drivers.store');
+        Route::get('/drivers/create', [DriverApprovalController::class, 'create'])->name('drivers.create');
+        Route::get('/drivers/{user}/edit', [DriverApprovalController::class, 'edit'])->name('drivers.edit');
+        Route::put('/drivers/{user}', [DriverApprovalController::class, 'update'])->name('drivers.update');
+        Route::delete('/drivers/{driver}', [DriverApprovalController::class, 'destroy'])->name('drivers.destroy');
+        Route::get('/drivers/{user}/license', [DriverApprovalController::class, 'showLicense'])->name('drivers.license');
+        Route::post('/drivers/{user}/approve', [DriverApprovalController::class, 'approve'])->name('drivers.approve');
+        Route::put('/drivers/{user}/reject', [DriverApprovalController::class, 'reject'])->name('drivers.reject');
+    });
 
     Route::middleware('role:admin')->group(function () {
-        //        Route::get('/dashboard/admin', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+        Route::get('/commuters/create', [CommuterController::class, 'create'])->name('commuters.create');
+        Route::post('/commuters', [CommuterController::class, 'store'])->name('commuters.store');
+        Route::get('/commuters/{user}/edit', [CommuterController::class, 'edit'])->name('commuters.edit');
+        Route::put('/commuters/{user}', [CommuterController::class, 'update'])->name('commuters.update');
+        Route::delete('/commuters/{user}', [CommuterController::class, 'destroy'])->name('commuters.destroy');
+        Route::get('/commuters', [CommuterController::class, 'index'])->name('commuters.index');
 
-        Route::get('/admin/commuters/create', [CommuterController::class, 'create'])->name('admin.commuters.create');
-        Route::post('/admin/commuters', [CommuterController::class, 'store'])->name('admin.commuters.store');
-        Route::get('/admin/commuters/{user}/edit', [CommuterController::class, 'edit'])->name('admin.commuters.edit');
-        Route::put('/admin/commuters/{user}', [CommuterController::class, 'update'])->name('admin.commuters.update');
-        Route::delete('/admin/commuters/{user}', [CommuterController::class, 'destroy'])->name('admin.commuters.destroy');
-        Route::get('/admin/commuters', [CommuterController::class, 'index'])->name('admin.commuters.index');
+        Route::get('/fare/{id}', [FareController::class, 'view'])->name('fares.view');
+        Route::get('/fares', [FareController::class, 'index'])->name('fares.index');
+        Route::put('/fare/upload', [FareController::class, 'upload'])->name('fares.upload');
+        Route::put('/fare/update', [FareController::class, 'bulkUpdate'])->name('fares.bulk-update');
+        Route::delete('/fare/{id}/delete', [FareController::class, 'delete'])->name('fares.destroy');
 
-        Route::post('/admin/drivers', [DriverApprovalController::class, 'store'])->name('admin.drivers.store');
-        Route::get('/admin/drivers/create', [DriverApprovalController::class, 'create'])->name('admin.drivers.create');
-        Route::get('/admin/drivers/{user}/edit', [DriverApprovalController::class, 'edit'])->name('admin.drivers.edit');
-        Route::put('/admin/drivers/{user}', [DriverApprovalController::class, 'update'])->name('admin.drivers.update');
-        Route::delete('/admin/drivers/{driver}', [DriverApprovalController::class, 'destroy'])->name('admin.drivers.destroy');
-        Route::get('/admin/drivers/{user}/license', [DriverApprovalController::class, 'showLicense'])->name('admin.drivers.license');
-        Route::post('/admin/drivers/{user}/approve', [DriverApprovalController::class, 'approve'])->name('admin.drivers.approve');
-        Route::put('/admin/drivers/{user}/reject', [DriverApprovalController::class, 'reject'])->name('admin.drivers.reject');
+        Route::resource('routes', RouteController::class);
+        Route::resource('rates', RateController::class);
     });
 
     Route::middleware('role:driver_manager')->group(function () {
@@ -207,18 +195,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/status', [DriverController::class, 'updateStatus'])->name('driver.status.update');
     });
 
-    Route::get('/fare/{id}', [FareController::class, 'view'])->middleware('role:admin')->name('fares.view');
-    Route::get('/fares', [FareController::class, 'index'])->middleware('role:admin')->name('fares.index');
-    Route::put('/fare/upload', [FareController::class, 'upload'])->middleware('role:admin')->name('fares.upload');
-    Route::put('/fare/update', [FareController::class, 'bulkUpdate'])->middleware('role:admin')->name('fares.bulk-update');
-    Route::delete('/fare/{id}/delete', [FareController::class, 'delete'])->middleware('role:admin')->name('fares.destroy');
-
     Route::post('/driver/dev/markers', [DevMarkerController::class, 'store'])->name('driver.dev.add-marker');
     Route::post('/driver/dev/markers/{marker}/toggle', [DevMarkerController::class, 'toggle'])->name('driver.dev.toggle-marker');
     Route::delete('/driver/dev/markers/{marker}', [DevMarkerController::class, 'remove'])->name('driver.dev.remove-marker');
     Route::delete('/driver/dev/markers', [DevMarkerController::class, 'clear'])->name('driver.dev.clear-markers');
 
-    Route::resource('users', UserController::class);
-    Route::resource('routes', RouteController::class)->middleware('role:admin');
-    Route::resource('rates', RateController::class)->middleware('role:admin');
+    // Route::resource('users', UserController::class);
 });

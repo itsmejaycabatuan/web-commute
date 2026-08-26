@@ -672,7 +672,6 @@
                     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
                     x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
                     x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" style="display: none;">
-                    <div class="absolute inset-0" @click="showViewModal = false"></div>
                     <div x-show="showViewModal" @click.stop x-transition:enter="transition ease-out duration-300"
                         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
@@ -680,7 +679,6 @@
                         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                         x-transition:leave-end="opacity-0 scale-95 translate-y-2"
                         class="relative w-full max-w-lg glass-panel rounded-[2rem] flex flex-col max-h-[90vh] overflow-hidden">
-                        <!-- Header -->
                         <div
                             class="flex items-center justify-between px-6 sm:px-8 pt-6 sm:pt-7 pb-5 border-b border-gray-200 dark:border-[#1e1e1e] shrink-0">
                             <div class="flex items-center gap-3.5">
@@ -698,16 +696,11 @@
                                 </div>
                             </div>
                             <button type="button" @click="showViewModal = false"
-                                class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#222] flex items-center justify-center text-gray-500 dark:text-[#555] hover:text-gray-900 dark:hover:text-white transition-colors">
-                                <i class="fa-solid fa-xmark text-xs"></i>
-                            </button>
+                                class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#222] flex items-center justify-center text-gray-500 dark:text-[#555] hover:text-gray-900 dark:hover:text-white transition-colors"><i
+                                    class="fa-solid fa-xmark text-xs"></i></button>
                         </div>
-
-                        <!-- Scrollable Body -->
-                        <div class="flex-1 overflow-y-auto px-6 sm:px-8 py-5 sm:py-6 space-y-5">
-
-                            <!-- Status + Location Badge Row -->
-                            <div class="flex items-center gap-2.5 flex-wrap">
+                        <div class="flex-1 overflow-y-auto px-6 sm:px-8 py-5 sm:py-6">
+                            <div class="flex items-center gap-2.5 mb-5">
                                 <span
                                     class="inline-flex items-center gap-1 text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border"
                                     :class="viewData.status === 'active' ?
@@ -719,7 +712,8 @@
                                         'text-gray-400 dark:text-[#333] bg-gray-100 dark:bg-[#111] border-gray-200 dark:border-[#1e1e1e]'">
                                     <span class="w-1.5 h-1.5 rounded-full"
                                         :class="viewData.status === 'active' ? 'bg-emerald-500 dark:bg-emerald-400' :
-                                            viewData.status === 'maintenance' ?
+                                            viewData
+                                            .status === 'maintenance' ?
                                             'bg-amber-500 dark:bg-amber-400 animate-pulse' :
                                             viewData.status === 'inactive' ? 'bg-rose-500 dark:bg-rose-400/70' :
                                             'bg-gray-400 dark:bg-[#333]'"></span>
@@ -729,321 +723,216 @@
                                 <span class="text-[9px] text-gray-500 dark:text-[#555] font-bold"
                                     x-text="viewData.location || 'No location'"></span>
                             </div>
-
-                            <!-- Identification -->
-                            <div>
-                                <p
-                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3 flex items-center gap-2">
-                                    <i class="fa-solid fa-fingerprint text-[7px]"></i> Identification
-                                </p>
-                                <div
-                                    class="p-4 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e]">
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <span
-                                                class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Plate
-                                                Number</span>
-                                            <span
-                                                class="text-[10px] font-bold font-mono text-blue-600 dark:text-blue-400/70"
-                                                x-text="viewData.plate_number || '—'"></span>
-                                        </div>
-                                        <div>
-                                            <span
-                                                class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">VIN</span>
-                                            <span
-                                                class="text-[10px] font-bold font-mono text-gray-500 dark:text-[#666] truncate block"
-                                                x-text="viewData.vin || '—'"></span>
-                                        </div>
+                            <p
+                                class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3">
+                                Identification</p>
+                            <div
+                                class="p-4 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] mb-5">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div><span
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Plate
+                                            Number</span><span
+                                            class="text-[10px] font-bold font-mono text-blue-600 dark:text-blue-400/70"
+                                            x-text="viewData.plate_number || '—'"></span></div>
+                                    <div><span
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">VIN</span><span
+                                            class="text-[10px] font-bold font-mono text-gray-500 dark:text-[#666] truncate block"
+                                            x-text="viewData.vin || '—'"></span></div>
+                                </div>
+                            </div>
+                            <p
+                                class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3">
+                                Vehicle Info</p>
+                            <div
+                                class="p-4 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] mb-5">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div><span
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Brand</span><span
+                                            class="text-[10px] font-bold text-gray-700 dark:text-[#888]"
+                                            x-text="viewData.brand || '—'"></span></div>
+                                    <div><span
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Model</span><span
+                                            class="text-[10px] font-bold text-gray-700 dark:text-[#888]"
+                                            x-text="viewData.model || '—'"></span></div>
+                                    <div><span
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Year</span><span
+                                            class="text-[10px] font-bold text-gray-700 dark:text-[#888] font-mono"
+                                            x-text="viewData.year || '—'"></span></div>
+                                    <div><span
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Fuel
+                                            Type</span><span
+                                            class="text-[10px] font-bold text-gray-700 dark:text-[#888]"
+                                            x-text="viewData.fuel_type || '—'"></span></div>
+                                    <div><span
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Tank
+                                            Capacity</span><span
+                                            class="text-[10px] font-bold text-gray-700 dark:text-[#888] font-mono"
+                                            x-text="viewData.tank_capacity ? viewData.tank_capacity + ' L' : '—'"></span>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Vehicle Info -->
-                            <div>
-                                <p
-                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3 flex items-center gap-2">
-                                    <i class="fa-solid fa-car text-[7px]"></i> Vehicle Information
-                                </p>
-                                <div
-                                    class="p-4 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e]">
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <span
-                                                class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Brand</span>
-                                            <span class="text-[10px] font-bold text-gray-700 dark:text-[#888]"
-                                                x-text="viewData.brand || '—'"></span>
-                                        </div>
-                                        <div>
-                                            <span
-                                                class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Model</span>
-                                            <span class="text-[10px] font-bold text-gray-700 dark:text-[#888]"
-                                                x-text="viewData.model || '—'"></span>
-                                        </div>
-                                        <div>
-                                            <span
-                                                class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Year</span>
-                                            <span
-                                                class="text-[10px] font-bold text-gray-700 dark:text-[#888] font-mono"
-                                                x-text="viewData.year || '—'"></span>
-                                        </div>
-                                        <div>
-                                            <span
-                                                class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Fuel
-                                                Type</span>
-                                            <span class="text-[10px] font-bold text-gray-700 dark:text-[#888]"
-                                                x-text="viewData.fuel_type || '—'"></span>
-                                        </div>
-                                        <div>
-                                            <span
-                                                class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Tank
-                                                Capacity</span>
-                                            <span
-                                                class="text-[10px] font-bold text-gray-700 dark:text-[#888] font-mono"
-                                                x-text="viewData.tank_capacity ? viewData.tank_capacity + ' L' : '—'"></span>
-                                        </div>
+                            <p
+                                class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3">
+                                Assignment</p>
+                            <div
+                                class="p-3.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] mb-5">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-purple-500/10 border border-purple-500/15 flex items-center justify-center shrink-0">
+                                        <i
+                                            class="fa-solid fa-user text-[9px] text-purple-500 dark:text-purple-400"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-bold text-gray-700 dark:text-[#ccc]"
+                                            x-text="viewData.driver_name || 'Unassigned'"></p>
+                                        <p class="text-[8px] text-gray-400 dark:text-[#444] font-bold uppercase">
+                                            Assigned
+                                            Driver</p>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Driver Assignment -->
-                            <div>
-                                <p
-                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3 flex items-center gap-2">
-                                    <i class="fa-solid fa-user text-[7px]"></i> Driver Assignment
-                                </p>
+                            <p
+                                class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3">
+                                Important Dates</p>
+                            <div class="space-y-2 mb-4">
                                 <div
-                                    class="p-3.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e]">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                                            :class="viewData.driver_name ?
-                                                'bg-purple-500/10 border border-purple-500/15' :
-                                                'bg-gray-100 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]'">
-                                            <i class="fa-solid fa-user text-[9px]"
-                                                :class="viewData.driver_name ?
-                                                    'text-purple-500 dark:text-purple-400' :
-                                                    'text-gray-300 dark:text-[#333]'"></i>
-                                        </div>
-                                        <div>
-                                            <span class="text-[10px] font-bold block"
-                                                :class="viewData.driver_name ? 'text-gray-700 dark:text-[#ccc]' :
-                                                    'text-gray-400 dark:text-[#444]'"
-                                                x-text="viewData.driver_name || 'Unassigned'"></span>
-                                            <span class="text-[8px] text-gray-400 dark:text-[#444]"
-                                                x-text="viewData.driver_email || ''"></span>
-                                        </div>
+                                    class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e]">
+                                    <div class="flex items-center gap-2"><i
+                                            class="fa-solid fa-calendar-plus text-gray-300 dark:text-[#333] text-[9px]"></i><span
+                                            class="text-[9px] font-bold text-gray-500 dark:text-[#555] uppercase">Acquisition</span>
                                     </div>
+                                    <span class="text-[10px] font-bold font-mono text-gray-700 dark:text-[#888]"
+                                        x-text="dateStr(viewData.acquistion_date)"></span>
+                                </div>
+                                <div
+                                    class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e]">
+                                    <div class="flex items-center gap-2"><i
+                                            class="fa-solid fa-calendar-xmark text-gray-300 dark:text-[#333] text-[9px]"></i><span
+                                            class="text-[9px] font-bold text-gray-500 dark:text-[#555] uppercase">Disposal</span>
+                                    </div>
+                                    <span class="text-[10px] font-bold font-mono"
+                                        :class="isOverdue(viewData.exp_disposal_date) ? 'text-rose-600 dark:text-rose-400' :
+                                            'text-gray-700 dark:text-[#888]'"
+                                        x-text="dateStr(viewData.exp_disposal_date)"></span>
                                 </div>
                             </div>
-
-                            <!-- Important Dates -->
-                            <div>
-                                <p
-                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3 flex items-center gap-2">
-                                    <i class="fa-solid fa-calendar-days text-[7px]"></i> Important Dates
-                                </p>
-                                <div
-                                    class="p-4 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e]">
-                                    <div class="grid grid-cols-1 gap-3">
-                                        <div>
-                                            <span
-                                                class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Acquisition
-                                                Date</span>
-                                            <div class="flex items-center gap-1.5">
-                                                <i
-                                                    class="fa-solid fa-calendar-plus text-[7px] text-emerald-500/60 dark:text-emerald-400/40"></i>
-                                                <span class="text-[10px] font-bold text-gray-700 dark:text-[#888]"
-                                                    x-text="viewData.acquisition_date || '—'"></span>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <span
-                                                class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Expected
-                                                Disposal Date</span>
-                                            <div class="flex items-center gap-1.5">
-                                                <i
-                                                    class="fa-solid fa-calendar-minus text-[7px] text-rose-500/60 dark:text-rose-400/40"></i>
-                                                <span class="text-[10px] font-bold"
-                                                    :class="viewData.exp_disposal_date ? 'text-gray-700 dark:text-[#888]' :
-                                                        'text-gray-400 dark:text-[#444]'"
-                                                    x-text="viewData.exp_disposal_date || '—'"></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Audit Trail -->
-                            <div x-show="viewData.created_at || viewData.updated_at">
-                                <p
-                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3 flex items-center gap-2">
-                                    <i class="fa-solid fa-clock-rotate-left text-[7px]"></i> Audit Trail
-                                </p>
-                                <div
-                                    class="p-4 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e]">
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <div>
-                                            <span
-                                                class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Created</span>
-                                            <span class="text-[10px] font-bold text-gray-700 dark:text-[#888]"
-                                                x-text="viewData.created_at || '—'"></span>
-                                        </div>
-                                        <div>
-                                            <span
-                                                class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Last
-                                                Updated</span>
-                                            <span class="text-[10px] font-bold text-gray-700 dark:text-[#888]"
-                                                x-text="viewData.updated_at || '—'"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        <!-- Footer -->
-                        <div
-                            class="px-6 sm:px-8 py-4 border-t border-gray-200 dark:border-[#1e1e1e] bg-gray-50/50 dark:bg-[#0a0a0a]/50 shrink-0">
-                            <div class="flex items-center justify-between gap-2.5">
-                                <span
-                                    class="text-[8px] text-gray-400 dark:text-[#333] font-bold uppercase tracking-widest"
-                                    x-text="'ID: #' + (viewData.id || '—')"></span>
-                                <div class="flex items-center gap-2">
-                                    <button type="button" @click="showViewModal = false; openEditModal(viewData)"
-                                        class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-blue-600/20 dark:shadow-blue-900/30 transition-all active:scale-[0.97]">
-                                        <i class="fa-solid fa-pen-to-square text-[9px]"></i> Edit
-                                    </button>
-                                    <button type="button" @click="showViewModal = false"
-                                        class="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-[#555] hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-[#222] transition-all">
-                                        Close
-                                    </button>
-                                </div>
+                            <div
+                                class="pt-4 border-t border-gray-200 dark:border-[#1e1e1e] flex items-center justify-between">
+                                <span class="text-[7px] text-gray-400 dark:text-[#333] font-bold uppercase">Created
+                                    <span class="font-mono text-gray-500 dark:text-[#444]"
+                                        x-text="dateTimeStr(viewData.created_at)"></span></span>
+                                <span class="text-[7px] text-gray-400 dark:text-[#333] font-bold uppercase">Updated
+                                    <span class="font-mono text-gray-500 dark:text-[#444]"
+                                        x-text="dateTimeStr(viewData.updated_at)"></span></span>
                             </div>
                         </div>
                     </div>
                 </div>
             </template>
 
-            <!-- ══════════ ADD / EDIT VEHICLE MODAL ══════════ -->
+            <!-- ══════════ ADD VEHICLE MODAL ══════════ -->
             <template x-teleport="body">
-                <div x-show="showEditModal" x-cloak
+                <div x-show="showModal" x-cloak @keydown.escape.window="showModal = false"
                     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
                     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
                     x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                    @keydown.escape.window="showEditModal = false" style="display: none;">
+                    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" style="display: none;">
 
-                    <!-- Backdrop click to close -->
-                    <div class="absolute inset-0" @click="showEditModal = false"></div>
+                    <div x-show="showModal" @click.stop
+                        class="relative w-full max-w-md glass-panel rounded-[2rem] overflow-hidden">
 
-                    <div x-show="showEditModal" @click.stop x-transition:enter="transition ease-out duration-300"
-                        x-transition:enter-start="opacity-0 scale-95 translate-y-3"
-                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                        x-transition:leave="transition ease-in duration-200"
-                        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                        x-transition:leave-end="opacity-0 scale-95 translate-y-3"
-                        class="relative w-full max-w-xl glass-panel rounded-[2rem] flex flex-col max-h-[92vh] overflow-hidden">
-
-                        <!-- ── Header ── -->
-                        <div
-                            class="flex items-center justify-between px-6 sm:px-8 pt-6 sm:pt-7 pb-5 border-b border-gray-200 dark:border-[#1e1e1e] shrink-0">
-                            <div class="flex items-center gap-3.5">
-                                <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                                    :class="editMode === 'add'
-                                        ?
-                                        'bg-emerald-500/10 border border-emerald-500/20' :
-                                        'bg-blue-500/10 border border-blue-500/20'">
-                                    <i class="text-[11px]"
-                                        :class="editMode === 'add'
-                                            ?
-                                            'fa-solid fa-plus text-emerald-500 dark:text-emerald-400' :
-                                            'fa-solid fa-pen-to-square text-blue-500 dark:text-blue-400'"></i>
+                        <!-- Header -->
+                        <div class="flex items-center justify-between px-6 sm:px-7 pt-6 pb-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/15 flex items-center justify-center">
+                                    <i class="fa-solid fa-plus text-[11px] text-blue-400"></i>
                                 </div>
                                 <div>
-                                    <h3 class="text-sm sm:text-base font-black tracking-tight text-gray-900 dark:text-white"
-                                        x-text="editMode === 'add' ? 'Add Vehicle' : 'Edit Vehicle'"></h3>
-                                    <p class="text-[9px] sm:text-[10px] text-gray-500 dark:text-[#555] mt-0.5"
-                                        x-text="editMode === 'add'
-                                            ? 'Register a new vehicle to the fleet'
-                                            : (editForm.brand + ' ' + editForm.model + ' (' + editForm.year + ')')">
-                                    </p>
+                                    <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Add
+                                        Vehicle</h3>
+                                    <p class="text-[9px] text-[#555] mt-0.5">Register a new vehicle to the fleet</p>
                                 </div>
                             </div>
-                            <button type="button" @click="showEditModal = false"
+                            <button type="button" @click="showModal = false"
                                 class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#222] flex items-center justify-center text-gray-500 dark:text-[#555] hover:text-gray-900 dark:hover:text-white transition-colors">
-                                <i class="fa-solid fa-xmark text-xs"></i>
+                                <i class="fa-solid fa-xmark text-[10px]"></i>
                             </button>
                         </div>
 
-                        <!-- ── Scrollable Body ── -->
-                        <div class="flex-1 overflow-y-auto px-6 sm:px-8 py-5 sm:py-6 space-y-5">
+                        <!-- Scrollable Form Container -->
+                        <form method="POST" action="{{ route('vehicles.store') }}" @submit="showModal = false"
+                            class="flex flex-col">
+                            @csrf
+                            <div class="px-6 sm:px-7 py-4 overflow-y-auto max-h-[70vh] space-y-3">
 
-                            <!-- Identification Section -->
-                            <div>
-                                <p
-                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3 flex items-center gap-2">
-                                    <i class="fa-solid fa-fingerprint text-[7px]"></i> Identification
-                                </p>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <!-- Vehicle Information -->
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="w-[3px] h-[3px] rounded-sm bg-blue-500"></span>
+                                    <span
+                                        class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555]">Vehicle
+                                        Information</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2.5">
                                     <div>
                                         <label
-                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1.5">Plate
-                                            Number <span class="text-rose-400">*</span></label>
-                                        <input type="text" x-model="editForm.plate_number"
-                                            placeholder="e.g. ABC-1234"
-                                            class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold font-mono uppercase"
-                                            :class="editErrors.plate_number ? 'border-rose-400 dark:border-rose-500/50' : ''">
-                                        <p x-show="editErrors.plate_number" x-text="editErrors.plate_number"
-                                            class="text-[8px] text-rose-500 mt-1 font-medium"></p>
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Year
+                                            <span class="text-rose-500 dark:text-rose-400/60">*</span></label>
+                                        <input type="number" name="year" placeholder="2024" min="1990"
+                                            max="2030"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-mono font-bold"
+                                            required>
                                     </div>
                                     <div>
                                         <label
-                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1.5">VIN</label>
-                                        <input type="text" x-model="editForm.vin"
-                                            placeholder="Vehicle Identification Number"
-                                            class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold font-mono uppercase">
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Brand
+                                            <span class="text-rose-500 dark:text-rose-400/60">*</span></label>
+                                        <input type="text" name="brand" placeholder="Toyota"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-bold"
+                                            required>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Model
+                                            <span class="text-rose-500 dark:text-rose-400/60">*</span></label>
+                                        <input type="text" name="model" placeholder="HiAce"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-bold"
+                                            required>
                                     </div>
                                 </div>
-                            </div>
+                                <div class="grid grid-cols-2 gap-2.5 mt-1">
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Plate
+                                            Number <span class="text-rose-500 dark:text-rose-400/60">*</span></label>
+                                        <input type="text" name="plate_number" placeholder="ABC-1234"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-mono font-bold"
+                                            required>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">VIN</label>
+                                        <input type="text" name="vin"
+                                            placeholder="Vehicle Identification Number"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-mono font-bold">
+                                    </div>
+                                </div>
 
-                            <!-- Vehicle Info Section -->
-                            <div>
-                                <p
-                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3 flex items-center gap-2">
-                                    <i class="fa-solid fa-car text-[7px]"></i> Vehicle Information
-                                </p>
-                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <!-- Specifications & Assignment -->
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="w-[3px] h-[3px] rounded-sm bg-emerald-500"></span>
+                                    <span
+                                        class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555]">Specifications
+                                        & Assignment</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2.5 mt-1">
                                     <div>
                                         <label
-                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1.5">Brand
-                                            <span class="text-rose-400">*</span></label>
-                                        <input type="text" x-model="editForm.brand" placeholder="Toyota"
-                                            class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold"
-                                            :class="editErrors.brand ? 'border-rose-400 dark:border-rose-500/50' : ''">
-                                        <p x-show="editErrors.brand" x-text="editErrors.brand"
-                                            class="text-[8px] text-rose-500 mt-1 font-medium"></p>
-                                    </div>
-                                    <div>
-                                        <label
-                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1.5">Model
-                                            <span class="text-rose-400">*</span></label>
-                                        <input type="text" x-model="editForm.model" placeholder="Hilux"
-                                            class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold"
-                                            :class="editErrors.model ? 'border-rose-400 dark:border-rose-500/50' : ''">
-                                        <p x-show="editErrors.model" x-text="editErrors.model"
-                                            class="text-[8px] text-rose-500 mt-1 font-medium"></p>
-                                    </div>
-                                    <div>
-                                        <label
-                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1.5">Year</label>
-                                        <input type="number" x-model="editForm.year" placeholder="2024"
-                                            min="1900" max="2099"
-                                            class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold font-mono">
-                                    </div>
-                                    <div>
-                                        <label
-                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1.5">Fuel
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Fuel
                                             Type</label>
-                                        <select x-model="editForm.fuel_type"
-                                            class="form-input form-select w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold cursor-pointer">
-                                            <option value="">Select type</option>
+                                        <select name="fuel_type"
+                                            class="form-input form-select w-full rounded-xl px-3 py-2 text-[10px] font-bold">
+                                            <option value="">Select fuel type</option>
                                             <option value="Diesel">Diesel</option>
                                             <option value="Gasoline">Gasoline</option>
                                             <option value="Electric">Electric</option>
@@ -1051,308 +940,421 @@
                                             <option value="LPG">LPG</option>
                                         </select>
                                     </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3 mt-3">
                                     <div>
                                         <label
-                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1.5">Tank
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Tank
                                             Capacity (L)</label>
-                                        <input type="number" x-model="editForm.tank_capacity" placeholder="60"
-                                            min="0" step="0.1"
-                                            class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold font-mono">
+                                        <input type="number" name="tank_capacity" placeholder="50" min="0"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-mono font-bold">
                                     </div>
                                     <div>
                                         <label
-                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1.5">Location</label>
-                                        <input type="text" x-model="editForm.location"
-                                            placeholder="e.g. Main Garage"
-                                            class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold">
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Assign
+                                            Driver</label>
+                                        <select name="driver_id"
+                                            class="form-input form-select w-full rounded-xl px-3 py-2 text-[10px] font-bold">
+                                            <option value="">Unassigned</option>
+                                            @foreach ($drivers as $driver)
+                                                <option value="{{ $driver->id }}">{{ $driver->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Status</label>
+                                        <select name="status"
+                                            class="form-input form-select w-full rounded-xl px-3 py-2 text-[10px] font-bold">
+                                            <option value="active">Active</option>
+                                            <option value="maintenance">Maintenance</option>
+                                            <option value="inactive">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Location & Dates -->
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="w-[3px] h-[3px] rounded-sm bg-amber-500"></span>
+                                    <span
+                                        class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555]">Location
+                                        & Dates</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2.5 mt-1">
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Location</label>
+                                        <input type="text" name="location" placeholder="Office / Garage"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-bold">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Acq.
+                                            Date</label>
+                                        <input type="date" name="acquistion_date"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-mono font-bold">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1] Exp. Disposal Date</label>
+                            <input type="date"
+                                            name="exp_disposal_date"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-mono font-bold">
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Driver Assignment -->
-                            <div>
-                                <p
-                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3 flex items-center gap-2">
-                                    <i class="fa-solid fa-user text-[7px]"></i> Driver Assignment
-                                </p>
-                                <select x-model="editForm.driver_id"
-                                    class="form-input form-select w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold cursor-pointer">
-                                    <option value="">— No Driver Assigned —</option>
-                                    <template x-for="d in drivers" :key="d.id">
-                                        <option :value="String(d.id)" x-text="d.name + ' (' + d.email + ')'">
-                                        </option>
-                                    </template>
-                                </select>
-                            </div>
-
-                            <!-- Status -->
-                            <div>
-                                <p
-                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3 flex items-center gap-2">
-                                    <i class="fa-solid fa-circle-dot text-[7px]"></i> Status
-                                </p>
-                                <div class="flex flex-wrap gap-2">
-                                    <button type="button" @click="editForm.status = 'active'" class="status-btn"
-                                        :class="editForm.status === 'active' ?
-                                            'active text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/25' :
-                                            'text-gray-400 dark:text-[#444] border-gray-200 dark:border-[#222] hover:border-emerald-500/25 hover:text-emerald-500'">
-                                        <span class="w-1.5 h-1.5 rounded-full"
-                                            :class="editForm.status === 'active' ? 'bg-emerald-500' :
-                                                'bg-gray-300 dark:bg-[#333]'"></span>
-                                        Active
-                                    </button>
-                                    <button type="button" @click="editForm.status = 'maintenance'"
-                                        class="status-btn"
-                                        :class="editForm.status === 'maintenance' ?
-                                            'active text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/25' :
-                                            'text-gray-400 dark:text-[#444] border-gray-200 dark:border-[#222] hover:border-amber-500/25 hover:text-amber-500'">
-                                        <span class="w-1.5 h-1.5 rounded-full"
-                                            :class="editForm.status === 'maintenance' ? 'bg-amber-500 animate-pulse' :
-                                                'bg-gray-300 dark:bg-[#333]'"></span>
-                                        Maintenance
-                                    </button>
-                                    <button type="button" @click="editForm.status = 'inactive'" class="status-btn"
-                                        :class="editForm.status === 'inactive' ?
-                                            'active text-rose-500 dark:text-rose-400 bg-rose-500/10 border-rose-500/25' :
-                                            'text-gray-400 dark:text-[#444] border-gray-200 dark:border-[#222] hover:border-rose-500/25 hover:text-rose-500'">
-                                        <span class="w-1.5 h-1.5 rounded-full"
-                                            :class="editForm.status === 'inactive' ? 'bg-rose-500' :
-                                                'bg-gray-300 dark:bg-[#333]'"></span>
-                                        Inactive
-                                    </button>
-                                    <button type="button" @click="editForm.status = 'disposed'" class="status-btn"
-                                        :class="editForm.status === 'disposed' ?
-                                            'active text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-[#111] border-gray-300 dark:border-[#333]' :
-                                            'text-gray-400 dark:text-[#444] border-gray-200 dark:border-[#222] hover:border-gray-400 dark:hover:border-[#333] hover:text-gray-500'">
-                                        <span class="w-1.5 h-1.5 rounded-full"
-                                            :class="editForm.status === 'disposed' ? 'bg-gray-400 dark:bg-[#555]' :
-                                                'bg-gray-300 dark:bg-[#333]'"></span>
-                                        Disposed
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- ── Footer ── -->
-                        <div
-                            class="px-6 sm:px-8 py-4 border-t border-gray-200 dark:border-[#1e1e1e] bg-gray-50/50 dark:bg-[#0a0a0a]/50 shrink-0">
-                            <div class="flex items-center justify-end gap-2.5">
-                                <button type="button" @click="showEditModal = false"
-                                    class="px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-[#555] hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-[#222] transition-all">
+                            <!-- Inline Footer -->
+                            <div
+                                class="px-6 sm:px-7 py-4 border-t border-gray-200 dark:border-[#1e1e1e1e] flex items-center justify-end gap-2.5">
+                                <button type="button" @click="showModal = false"
+                                    class="px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-[#555] hover:bg-gray-200 dark:hover:bg-[#222] hover:text-gray-900 dark:hover:text-white transition-all">
                                     Cancel
                                 </button>
-                                <button type="button" @click="submitEditForm()" :disabled="editSubmitting"
-                                    class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest text-white transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
-                                    :class="editMode === 'add'
-                                        ?
-                                        'bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-600/20 dark:shadow-emerald-900/30' :
-                                        'bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 dark:shadow-blue-900/30'">
-                                    <i x-show="!editSubmitting"
-                                        :class="editMode === 'add' ? 'fa-solid fa-plus' : 'fa-solid fa-check'"
-                                        class="text-[9px]"></i>
-                                    <i x-show="editSubmitting" class="fa-solid fa-spinner fa-spin text-[9px]"></i>
-                                    <span
-                                        x-text="editSubmitting ? 'Saving...' : (editMode === 'add' ? 'Add Vehicle' : 'Save Changes')"></span>
+                                <button type="submit"
+                                    class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-blue-600/20 transition-all active:scale-[0.97]">
+                                    Add Vehicle
                                 </button>
                             </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </template>
 
-            <!-- ══════════ DELETE VEHICLE MODAL ══════════ -->
+            <!-- ══════════ EDIT VEHICLE MODAL ══════════ -->
             <template x-teleport="body">
-                <div x-show="showDeleteModal" x-cloak
-                    class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
+                <div x-show="showEditModal" x-cloak @keydown.escape.window="showEditModal = false"
+                    class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
                     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
                     x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                    @keydown.escape.window="showDeleteModal = false" style="display: none;">
-                    <div class="absolute inset-0" @click="showDeleteModal = false"></div>
-                    <div x-show="showDeleteModal" @click.stop x-transition:enter="transition ease-out duration-300"
-                        x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                        x-transition:leave="transition ease-in duration-200"
-                        x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                        class="relative w-full max-w-sm glass-panel rounded-[2rem] overflow-hidden">
+                    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" style="display: none;">
 
-                        <div class="px-6 sm:px-8 pt-7 pb-6 text-center">
-                            <div
-                                class="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto mb-4">
-                                <i
-                                    class="fa-solid fa-triangle-exclamation text-xl text-rose-500 dark:text-rose-400"></i>
+                    <div x-show="showEditModal" @click.stop
+                        class="relative w-full max-w-md glass-panel rounded-[2rem] overflow-hidden">
+
+                        <!-- Header -->
+                        <div class="flex items-center justify-between px-6 sm:px-7 pt-6 pb-4">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/15 flex items-center justify-center">
+                                    <i class="fa-solid fa-pen text-[11px] text-amber-400"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Edit
+                                        Vehicle</h3>
+                                    <p class="text-[9px] text-[#555] mt-0.5">Update vehicle information</p>
+                                </div>
                             </div>
-                            <h3 class="text-base font-black tracking-tight text-gray-900 dark:text-white mb-1.5">Delete
-                                Vehicle</h3>
-                            <p class="text-[10px] text-gray-500 dark:text-[#555] leading-relaxed">
-                                This will permanently remove
-                                <span class="font-bold text-gray-700 dark:text-[#ccc] font-mono"
-                                    x-text="deletePlateNumber"></span>
-                                from the fleet. This action cannot be undone.
-                            </p>
-                        </div>
-
-                        <div class="px-6 sm:px-8 pb-6 flex items-center gap-2.5">
-                            <button type="button" @click="showDeleteModal = false"
-                                class="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-[#555] hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-[#222] transition-all text-center">
-                                Cancel
-                            </button>
-                            <button type="button" @click="confirmDelete()" :disabled="deleteSubmitting"
-                                class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-rose-600/20 dark:shadow-rose-900/30 transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed">
-                                <i x-show="!deleteSubmitting" class="fa-solid fa-trash-can text-[9px]"></i>
-                                <i x-show="deleteSubmitting" class="fa-solid fa-spinner fa-spin text-[9px]"></i>
-                                <span x-text="deleteSubmitting ? 'Deleting...' : 'Delete'"></span>
+                            <button type="button" @click="showEditModal = false"
+                                class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] hover:bg-gray-200 dark:hover:bg-[#222] flex items-center justify-center text-gray-500 dark:text-[#555] hover:text-gray-900 dark:hover:text-white transition-colors">
+                                <i class="fa-solid fa-xmark text-[10px]"></i>
                             </button>
                         </div>
+
+                        <!-- Scrollable Form Container -->
+                        <form
+                            x-bind:action="editData.id ? '{{ route('vehicles.update', '') }}/' + editData.id :
+                                '{{ route('vehicles.store') }}"
+                            x-bind:method="editData.id ? 'PUT' : 'POST'" method="POST" class="flex flex-col">
+                            @csrf
+                            <div class="px-6 sm:px-7 py-4 overflow-y-auto max-h-[70vh] space-y-3">
+
+                                <!-- Vehicle Information -->
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="w-[3px] h-[3px] rounded-sm bg-amber-500"></span>
+                                    <span
+                                        class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555]">Vehicle
+                                        Information</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2.5">
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Year
+                                            <span class="text-rose-500 dark:text-rose-400/60">*</span></label>
+                                        <input type="number" name="year" x-model="editData.year"
+                                            placeholder="2024" min="1990" max="2030"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-mono font-bold">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Brand
+                                            <span class="text-rose-500 dark:text-rose-400/60">*</span></label>
+                                        <input type="text" name="brand" x-model="editData.brand"
+                                            placeholder="Toyota"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-bold">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Model
+                                            <span class="text-rose-500 dark:text-rose-400/60">*</span></label>
+                                        <input type="text" name="model" x-model="editData.model"
+                                            placeholder="HiAce"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-bold">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2.5 mt-1">
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Plate
+                                            Number <span class="text-rose-500 dark:text-rose-400/60">*</span></label>
+                                        <input type="text" name="plate_number" x-model="editData.plate_number"
+                                            placeholder="ABC-1234"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-mono font-bold">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">VIN</label>
+                                        <input type="text" name="vin" x-model="editData.vin"
+                                            placeholder="Vehicle Identification Number"
+                                            class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-mono font-bold">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Specifications & Assignment -->
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="w-[3px] h-[3px] rounded-sm bg-emerald-500"></span>
+                                <span
+                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555]">Specifications
+                                    & Assignment</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2.5 mt-1">
+                                <div>
+                                    <label
+                                        class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Fuel
+                                        Type</label>
+                                    <select name="fuel_type" x-model="editData.fuel_type"
+                                        class="form-input form-select w-full rounded-xl px-3 py-2 text-[10px] font-bold">
+                                        <option value="">Select fuel type</option>
+                                        <option value="Diesel">Diesel</option>
+                                        <option value="Gasoline">Gasoline</option>
+                                        <option value="Electric">Electric</option>
+                                        <option value="Hybrid">Hybrid</option>
+                                        <option value="LPG">LPG</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label
+                                        class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Tank
+                                        Capacity (L)</label>
+                                    <input type="number" name="tank_capacity" x-model="editData.tank_capacity"
+                                        placeholder="50" min="0"
+                                        class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-mono font-bold">
+                                </div>
+                                <div>
+                                    <label
+                                        class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Assign
+                                        Driver</label>
+                                    <select name="driver_id" x-model="editData.driver_id"
+                                        class="form-input form-select w-full rounded-xl px-3 py-2 text-[10px] font-bold">
+                                        <option value="">Unassigned</option>
+                                        @foreach ($drivers as $driver)
+                                            <option value="{{ $driver->id }}">{{ $driver->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label
+                                        class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Status</label>
+                                    <select name="status" x-model="editData.status"
+                                        class="form-input form-select w-full rounded-xl px-3 py-2 text-[10px] font-bold">
+                                        <option value="active">Active</option>
+                                        <option value="maintenance">Maintenance</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Location & Dates -->
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="w-[3px] h-[3px] rounded-sm bg-amber-500"></span>
+                                <span
+                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555]">Location
+                                    & Dates</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2.5 mt-1">
+                                <div>
+                                    <label
+                                        class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Location</label>
+                                    <input type="text" name="location" x-model="editData.location"
+                                        placeholder="Office / Garage"
+                                        class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-bold">
+                                </div>
+                                <div>
+                                    <label
+                                        class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Acq.
+                                        Date</label>
+                                    <input type="date" name="acquistion_date" x-model="editData.acquistion_date"
+                                        class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-mono font-bold">
+                                </div>
+                                <div>
+                                    <label
+                                        class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1">Exp.
+                                        Disposal Date</label>
+                                    <input type="date" name="exp_disposal_date"
+                                        x-model="editData.exp_disposal_date"
+                                        class="form-input w-full rounded-xl px-3 py-2 text-[10px] font-mono font-bold">
+                                </div>
+                            </div>
                     </div>
                 </div>
-            </template>
 
-            <!-- ══════════ TOAST NOTIFICATION ══════════ -->
-            <template x-teleport="body">
-                <div x-show="toast.show" x-cloak
-                    class="fixed bottom-6 right-6 z-[200] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-2xl border"
-                    :class="toast.type === 'success' ?
-                        'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20' :
-                        toast.type === 'error' ?
-                        'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20' :
-                        'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20'"
-                    x-transition:enter="transition ease-out duration-300"
-                    x-transition:enter-start="opacity-0 translate-y-3 scale-95"
-                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                    x-transition:leave="transition ease-in duration-200"
-                    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                    x-transition:leave-end="opacity-0 translate-y-3 scale-95" style="display: none;">
-                    <div class="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
-                        :class="toast.type === 'success' ?
-                            'bg-emerald-500/15' :
-                            toast.type === 'error' ?
-                            'bg-rose-500/15' :
-                            'bg-blue-500/15'">
-                        <i class="text-[10px]"
-                            :class="toast.type === 'success' ?
-                                'fa-solid fa-check text-emerald-600 dark:text-emerald-400' :
-                                toast.type === 'error' ?
-                                'fa-solid fa-xmark text-rose-600 dark:text-rose-400' :
-                                'fa-solid fa-info text-blue-600 dark:text-blue-400'"></i>
-                    </div>
-                    <span class="text-[10px] font-bold"
-                        :class="toast.type === 'success' ?
-                            'text-emerald-700 dark:text-emerald-300' :
-                            toast.type === 'error' ?
-                            'text-rose-700 dark:text-rose-300' :
-                            'text-blue-700 dark:text-blue-300'"
-                        x-text="toast.message"></span>
+                <!-- Inline Footer -->
+                <div
+                    class="px-6 sm:px-7 py-4 border-t border-gray-200 dark:border-[#1e1e1e] flex items-center justify-end gap-2.5">
+                    <button type="button" @click="showEditModal = false"
+                        class="px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-[#555] hover:bg-gray-200 dark:hover:bg-[#222] hover:text-gray-900 dark:hover:text-white transition-all">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-amber-600/20 transition-all active:scale-[0.97]">
+                        <span x-text="editData.id ? 'Update Vehicle' : 'Add Vehicle'"></span>
+                    </button>
                 </div>
+                </form>
             </template>
-
     </div>
-    </main>
 
+    <!-- ══════════ DELETE VEHICLE MODAL ══════════ -->
+    <template x-teleport="body">
+        <div x-show="showDeleteModal" x-cloak
+            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
+            @click.self="showDeleteModal = false" x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0" style="display: none;">
+
+            <div x-show="showDeleteModal" @click.stop class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-sm w-full"
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+
+                <div class="text-center">
+                    <div
+                        class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-red-500/20">
+                        <i class="fa-solid fa-trash text-red-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold mb-1.5 text-gray-900 dark:text-white">Remove Vehicle?</h3>
+                    <p class="text-xs text-[#555] mb-5">This action is permanent and cannot be undone.</p>
+
+                    <!-- Target Info Box -->
+                    <div
+                        class="inline-flex items-start gap-3 p-4 rounded-xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] mb-7 text-left">
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-[7px] font-bold uppercase text-[#333]">Plate Number</span>
+                            <span class="text-[11px] font-bold font-mono text-blue-400"
+                                x-text="deleteTarget?.plate"></span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2.5">
+                        <button @click="showDeleteModal = false"
+                            class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">Cancel</button>
+
+                        <!-- Dynamic Form Action -->
+                        <form :action="deleteUrl" method="POST" class="flex-1">
+                            @csrf
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit"
+                                class="w-full py-3 rounded-xl bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 transition active:scale-[0.98] shadow-lg shadow-red-600/10">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    </main>
+    </div>
 
     <!-- ══════════ ALPINE.JS APP ══════════ -->
     <script>
         function vehicleManagementApp() {
             return {
-                // ── Data ──
-                vehicles: JSON.parse(document.getElementById('vehicles-data').textContent),
-                drivers: @json($drivers ?? []),
-
-                // ── Filters ──
+                vehicles: [],
                 search: '',
                 statusFilter: '',
                 fuelFilter: '',
                 assignmentFilter: '',
                 sortBy: 'newest',
-                sortLabels: {
-                    newest: 'Newest First',
-                    oldest: 'Oldest First',
-                    brand_asc: 'Brand A-Z',
-                    brand_desc: 'Brand Z-A',
-                    year_desc: 'Newest Year',
-                    year_asc: 'Oldest Year',
-                },
-
-                // ── View Modal ──
+                showModal: false,
                 showViewModal: false,
-                viewData: {},
-
-                // ── Edit Modal ──
                 showEditModal: false,
-                editMode: 'add', // 'add' | 'edit'
-                editId: null,
-                editForm: {
-                    plate_number: '',
-                    vin: '',
-                    brand: '',
-                    model: '',
-                    year: '',
-                    fuel_type: '',
-                    tank_capacity: '',
-                    location: '',
-                    driver_id: '',
-                    status: 'active',
-                },
-                editErrors: {},
-                editSubmitting: false,
-
-                // ── Delete Modal ──
                 showDeleteModal: false,
-                deleteId: null,
-                deletePlateNumber: '',
-                deleteSubmitting: false,
+                deleteTarget: null,
+                deleteUrl: '',
+                viewData: {},
+                editData: {},
 
-                // ── Toast ──
-                toast: {
-                    show: false,
-                    message: '',
-                    type: 'success'
+                sortLabels: {
+                    'newest': 'Newest First',
+                    'oldest': 'Oldest First',
+                    'brand_asc': 'Brand A-Z',
+                    'brand_desc': 'Brand Z-A',
+                    'year_desc': 'Newest Year',
+                    'year_asc': 'Oldest Year'
                 },
 
-                // ── Computed ──
+                init() {
+                    const dataElement = document.getElementById('vehicles-data');
+                    if (dataElement) {
+                        try {
+                            this.vehicles = JSON.parse(dataElement.textContent);
+                            console.log('Loaded vehicles:', this.vehicles.length);
+                        } catch (e) {
+                            console.error('Failed to parse vehicles data:', e);
+                            this.vehicles = [];
+                        }
+                    }
+                },
+
                 get hasActiveFilters() {
-                    return this.search.length > 0 || this.statusFilter || this.fuelFilter || this.assignmentFilter ||
+                    return this.search.length > 0 ||
+                        this.statusFilter !== '' ||
+                        this.fuelFilter !== '' ||
+                        this.assignmentFilter !== '' ||
                         this.sortBy !== 'newest';
                 },
 
                 get filtered() {
                     let result = [...this.vehicles];
 
-                    // Search
-                    if (this.search.length > 0) {
-                        const q = this.search.toLowerCase();
+                    // Search filter
+                    if (this.search && this.search.trim() !== '') {
+                        const search = this.search.toLowerCase().trim();
                         result = result.filter(v =>
-                            (v.brand || '').toLowerCase().includes(q) ||
-                            (v.model || '').toLowerCase().includes(q) ||
-                            (v.plate_number || '').toLowerCase().includes(q) ||
-                            (v.vin || '').toLowerCase().includes(q) ||
-                            (v.driver_name || '').toLowerCase().includes(q) ||
-                            (v.location || '').toLowerCase().includes(q)
+                            (v.brand && v.brand.toLowerCase().includes(search)) ||
+                            (v.model && v.model.toLowerCase().includes(search)) ||
+                            (v.plate_number && v.plate_number.toLowerCase().includes(search)) ||
+                            (v.vin && v.vin.toLowerCase().includes(search)) ||
+                            (v.driver_name && v.driver_name.toLowerCase().includes(search)) ||
+                            (v.location && v.location.toLowerCase().includes(search)) ||
+                            (v.fuel_type && v.fuel_type.toLowerCase().includes(search)) ||
+                            (v.year && String(v.year).includes(search))
                         );
                     }
 
-                    // Status
+                    // Status filter
                     if (this.statusFilter) {
                         result = result.filter(v => v.status === this.statusFilter);
                     }
 
-                    // Fuel
+                    // Fuel type filter
                     if (this.fuelFilter) {
                         result = result.filter(v => v.fuel_type === this.fuelFilter);
                     }
 
-                    // Assignment
+                    // Assignment filter
                     if (this.assignmentFilter === 'assigned') {
-                        result = result.filter(v => v.driver_id && v.driver_id !== '');
+                        result = result.filter(v => v.driver_name && v.driver_name !== '');
                     } else if (this.assignmentFilter === 'unassigned') {
-                        result = result.filter(v => !v.driver_id || v.driver_id === '');
+                        result = result.filter(v => !v.driver_name || v.driver_name === '');
                     }
 
-                    // Sort
+                    // Sorting
                     switch (this.sortBy) {
+                        case 'newest':
+                            result.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+                            break;
                         case 'oldest':
-                            result.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                            result.sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
                             break;
                         case 'brand_asc':
                             result.sort((a, b) => (a.brand || '').localeCompare(b.brand || ''));
@@ -1366,14 +1368,11 @@
                         case 'year_asc':
                             result.sort((a, b) => (a.year || 0) - (b.year || 0));
                             break;
-                        default: // newest
-                            result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                     }
 
                     return result;
                 },
 
-                // ── Methods ──
                 clearAllFilters() {
                     this.search = '';
                     this.statusFilter = '';
@@ -1381,195 +1380,73 @@
                     this.assignmentFilter = '';
                     this.sortBy = 'newest';
                 },
-                formatDate(dateStr) {
-                    if (!dateStr) return '—';
-                    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(String(dateStr))) return String(dateStr);
-                    try {
-                        const d = new Date(dateStr);
-                        if (isNaN(d.getTime())) return '—';
-                        return d.toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                        });
-                    } catch (e) {
-                        return '—';
-                    }
+
+                openAddModal() {
+                    this.showModal = true;
                 },
 
-                formatDateTime(dateStr) {
-                    if (!dateStr) return '—';
-                    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(String(dateStr))) return String(dateStr);
-                    try {
-                        const d = new Date(dateStr);
-                        if (isNaN(d.getTime())) return '—';
-                        const date = d.toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                        });
-                        const time = d.toLocaleTimeString('en-US', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        return date + ' · ' + time;
-                    } catch (e) {
-                        return '—';
-                    }
-                },
-
-                openViewModal(v) {
+                openViewModal(vehicle) {
                     this.viewData = {
-                        ...v
+                        ...vehicle
                     };
                     this.showViewModal = true;
                 },
 
-                openAddModal() {
-                    this.editMode = 'add';
-                    this.editId = null;
-                    this.editForm = {
-                        plate_number: '',
-                        vin: '',
-                        brand: '',
-                        model: '',
-                        year: new Date().getFullYear(),
-                        fuel_type: '',
-                        tank_capacity: '',
-                        location: '',
-                        driver_id: '',
-                        status: 'active',
+                openEditModal(vehicle) {
+                    this.editData = {
+                        ...vehicle
                     };
-                    this.editErrors = {};
                     this.showEditModal = true;
                 },
 
-                openEditModal(v) {
-                    this.editMode = 'edit';
-                    this.editId = v.id;
-                    this.editForm = {
-                        plate_number: v.plate_number || '',
-                        vin: v.vin || '',
-                        brand: v.brand || '',
-                        model: v.model || '',
-                        year: v.year || '',
-                        fuel_type: v.fuel_type || '',
-                        tank_capacity: v.tank_capacity || '',
-                        location: v.location || '',
-                        driver_id: v.driver_id ? String(v.driver_id) : '',
-                        status: v.status || 'active',
+                openDeleteModal(id, plate) {
+                    this.deleteTarget = {
+                        id,
+                        plate
                     };
-                    this.editErrors = {};
-                    this.showEditModal = true;
-                },
-
-                openDeleteModal(id, plateNumber) {
-                    this.deleteId = id;
-                    this.deletePlateNumber = plateNumber;
+                    this.deleteUrl = `{{ route('vehicles.destroy', 'ID_PLACEHOLDER') }}`.replace('ID_PLACEHOLDER', id);
                     this.showDeleteModal = true;
                 },
 
-                async submitEditForm() {
-                    this.editErrors = {};
-                    this.editSubmitting = true;
-
+                dateStr(date) {
+                    if (!date) return '—';
                     try {
-                        const url = this.editMode === 'add' ?
-                            '{{ route('vehicles.store') }}' :
-                            '{{ route('vehicles.update', ':id') }}'.replace(':id', this.editId);
-
-                        const method = this.editMode === 'add' ? 'POST' : 'PUT';
-
-                        const response = await fetch(url, {
-                            method: method,
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                                    'content'),
-                                'Accept': 'application/json',
-                            },
-                            body: JSON.stringify(this.editForm),
+                        return new Date(date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
                         });
-
-                        const data = await response.json();
-
-                        if (!response.ok) {
-                            if (data.errors) {
-                                this.editErrors = data.errors;
-                            }
-                            this.showToast(data.message || 'Something went wrong.', 'error');
-                            return;
-                        }
-
-                        // Refresh the vehicles list
-                        if (data.vehicle) {
-                            if (this.editMode === 'add') {
-                                this.vehicles.unshift(data.vehicle);
-                            } else {
-                                const idx = this.vehicles.findIndex(v => v.id === this.editId);
-                                if (idx !== -1) this.vehicles[idx] = data.vehicle;
-                            }
-                        }
-
-                        this.showEditModal = false;
-                        this.showToast(
-                            this.editMode === 'add' ? 'Vehicle added successfully.' :
-                            'Vehicle updated successfully.',
-                            'success'
-                        );
                     } catch (e) {
-                        this.showToast('Network error. Please try again.', 'error');
-                    } finally {
-                        this.editSubmitting = false;
+                        return '—';
                     }
                 },
 
-                async confirmDelete() {
-                    this.deleteSubmitting = true;
-
+                dateTimeStr(date) {
+                    if (!date) return '—';
                     try {
-                        const url = '{{ route('vehicles.destroy', ':id') }}'.replace(':id', this.deleteId);
-
-                        const response = await fetch(url, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                                    'content'),
-                                'Accept': 'application/json',
-                            },
+                        return new Date(date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
                         });
-
-                        const data = await response.json();
-
-                        if (!response.ok) {
-                            this.showToast(data.message || 'Failed to delete vehicle.', 'error');
-                            return;
-                        }
-
-                        this.vehicles = this.vehicles.filter(v => v.id !== this.deleteId);
-                        this.showDeleteModal = false;
-                        this.showToast('Vehicle deleted successfully.', 'success');
                     } catch (e) {
-                        this.showToast('Network error. Please try again.', 'error');
-                    } finally {
-                        this.deleteSubmitting = false;
+                        return '—';
                     }
                 },
 
-                showToast(message, type = 'success') {
-                    this.toast = {
-                        show: true,
-                        message,
-                        type
-                    };
-                    setTimeout(() => {
-                        this.toast.show = false;
-                    }, 3500);
-                },
-            };
+                isOverdue(date) {
+                    if (!date) return false;
+                    try {
+                        return new Date(date) < new Date();
+                    } catch (e) {
+                        return false;
+                    }
+                }
+            }
         }
     </script>
-
 </body>
 
 </html>

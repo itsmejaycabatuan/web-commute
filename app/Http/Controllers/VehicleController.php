@@ -23,11 +23,11 @@ class VehicleController extends Controller
                 'tank_capacity' => $vehicle->tank_capacity,
                 'vin' => $vehicle->vin,
                 'location' => $vehicle->location,
-                'acquistion_date' => $vehicle->acquistion_date?->format('Y-m-d'),
-                'exp_disposal_date' => $vehicle->exp_disposal_date?->format('Y-m-d'),
+                'acquisition_date' => $vehicle->acquisition_date?->format('M d, Y'),
+                'exp_disposal_date' => $vehicle->exp_disposal_date?->format('M d, Y'),
                 'driver_name' => $vehicle->driver?->name,
-                'created_at' => $vehicle->created_at?->toISOString(),
-                'updated_at' => $vehicle->updated_at?->toISOString(),
+                'created_at' => $vehicle->created_at?->format('M d, Y'),
+                'updated_at' => $vehicle->updated_at?->format('M d, Y'),
             ];
         });
 
@@ -49,8 +49,8 @@ class VehicleController extends Controller
             'driver_id' => 'nullable|exists:drivers,id',
             'location' => 'nullable|string|max:150',
             'status' => 'required|in:active,maintenance,inactive,disposed',
-            'acquistion_date' => 'required|date',
-            'exp_disposal_date' => 'nullable|date|after:acquistion_date',
+            'acquisition_date' => 'required|date',
+            'exp_disposal_date' => 'nullable|date|after:acquisition_date',
         ]);
 
         Vehicle::create($validated);
@@ -71,8 +71,8 @@ class VehicleController extends Controller
             'driver_id' => 'nullable|exists:drivers,id',
             'location' => 'nullable|string|max:150',
             'status' => 'required|in:active,maintenance,inactive,disposed',
-            'acquistion_date' => 'required|date',
-            'exp_disposal_date' => 'nullable|date|after:acquistion_date',
+            'acquisition_date' => 'required|date',
+            'exp_disposal_date' => 'nullable|date|after:acquisition_date',
         ]);
 
         $vehicle->update($validated);

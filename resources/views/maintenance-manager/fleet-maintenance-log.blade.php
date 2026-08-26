@@ -205,7 +205,7 @@
                         <div>
                             <span class="text-[10px] uppercase font-bold text-white/25 block mb-1">Acquired</span>
                             <span
-                                class="text-white/50 text-xs">{{ $fleet->vehicle?->acquistion_date ? $fleet->vehicle->acquistion_date->format('M d, Y') : '—' }}</span>
+                                class="text-white/50 text-xs">{{ $fleet->vehicle?->acquisition_date ? $fleet->vehicle->acquisition_date->format('M d, Y') : '—' }}</span>
                         </div>
                         <div>
                             <span class="text-[10px] uppercase font-bold text-white/25 block mb-1">Disposal</span>

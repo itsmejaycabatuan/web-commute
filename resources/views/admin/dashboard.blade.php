@@ -569,7 +569,7 @@
                             class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">Management</span>
                     </div>
                     <div class="space-y-2">
-                        <a href="{{ route('admin.commuters.index') }}"
+                        <a href="{{ route('commuters.index') }}"
                             class="flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] transition group cursor-pointer">
                             <div class="flex items-center gap-3">
                                 <div
@@ -657,7 +657,6 @@
         </div>
     </main>
 
-    <!-- ══════════ CHART INITIALIZATION ══════════ -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
@@ -667,33 +666,42 @@
             Chart.defaults.font.family = "'Inter', sans-serif";
             Chart.defaults.color = isDark ? '#444' : '#64748b';
 
-            const tooltipStyle = {
-                backgroundColor: isDark ? '#111' : '#ffffff',
-                borderColor: isDark ? '#1e1e1e' : '#e2e8f0',
-                borderWidth: 1,
-                titleColor: isDark ? '#ccc' : '#1e293b',
-                titleFont: {
-                    size: 10,
-                    weight: '700'
-                },
-                bodyColor: isDark ? '#888' : '#64748b',
-                bodyFont: {
-                    size: 10,
-                    weight: '600'
-                },
-                padding: 10,
-                cornerRadius: 10,
-                displayColors: true,
-                boxPadding: 4
-            };
+            function getTooltipStyle() {
+                const dark = document.documentElement.classList.contains('dark');
+                return {
+                    backgroundColor: dark ? '#111' : '#ffffff',
+                    borderColor: dark ? '#1e1e1e' : '#e2e8f0',
+                    borderWidth: 1,
+                    titleColor: dark ? '#ccc' : '#1e293b',
+                    titleFont: {
+                        size: 10,
+                        weight: '700'
+                    },
+                    bodyColor: dark ? '#888' : '#64748b',
+                    bodyFont: {
+                        size: 10,
+                        weight: '600'
+                    },
+                    padding: 10,
+                    cornerRadius: 10,
+                    displayColors: true,
+                    boxPadding: 4
+                };
+            }
 
-            const gridColor = isDark ? '#1a1a1a' : '#f1f5f9';
-            const tickColor = isDark ? '#444' : '#64748b';
+            function getGridColor() {
+                return document.documentElement.classList.contains('dark') ? '#1a1a1a' : '#f1f5f9';
+            }
+
+            function getTickColor() {
+                return document.documentElement.classList.contains('dark') ? '#444' : '#64748b';
+            }
 
             // ══════════ 7-DAY REVENUE VS INFLOW BAR CHART ══════════
             const revenueCtx = document.getElementById('revenueChart');
+            let revenueChart = null;
             if (revenueCtx) {
-                new Chart(revenueCtx, {
+                revenueChart = new Chart(revenueCtx, {
                     type: 'bar',
                     data: {
                         labels: @json($chartLabels),
@@ -731,7 +739,7 @@
                                 display: false
                             },
                             tooltip: {
-                                ...tooltipStyle,
+                                ...getTooltipStyle(),
                                 callbacks: {
                                     label: function(ctx) {
                                         return ' ' + ctx.dataset.label + ':  ₱' + ctx.parsed.y
@@ -745,7 +753,7 @@
                         scales: {
                             x: {
                                 grid: {
-                                    color: gridColor,
+                                    color: getGridColor(),
                                     drawBorder: false
                                 },
                                 ticks: {
@@ -753,7 +761,7 @@
                                         size: 9,
                                         weight: '600'
                                     },
-                                    color: tickColor
+                                    color: getTickColor()
                                 },
                                 border: {
                                     display: false
@@ -762,7 +770,7 @@
                             y: {
                                 beginAtZero: true,
                                 grid: {
-                                    color: gridColor,
+                                    color: getGridColor(),
                                     drawBorder: false
                                 },
                                 ticks: {
@@ -770,7 +778,7 @@
                                         size: 9,
                                         weight: '600'
                                     },
-                                    color: tickColor,
+                                    color: getTickColor(),
                                     callback: function(val) {
                                         return '₱' + val;
                                     },
@@ -787,15 +795,15 @@
 
             // ══════════ USER DISTRIBUTION DONUT ══════════
             const donutCtx = document.getElementById('donutChart');
+            let donutChart = null;
             if (donutCtx) {
-                new Chart(donutCtx, {
+                donutChart = new Chart(donutCtx, {
                     type: 'doughnut',
                     data: {
                         labels: ['Active', 'Inactive'],
                         datasets: [{
                             data: [{{ $activeUsersCount }},
-                                {{ $totalUsers - $activeUsersCount }}
-                            ],
+                                {{ $totalUsers - $activeUsersCount }}],
                             backgroundColor: ['#a855f7', isDark ? '#1e1e1e' : '#e2e8f0'],
                             hoverBackgroundColor: ['#a855f7', isDark ? '#2a2a2a' : '#cbd5e1'],
                             borderColor: isDark ? '#161616' : '#ffffff',
@@ -812,13 +820,13 @@
                                 display: false
                             },
                             tooltip: {
-                                ...tooltipStyle,
+                                ...getTooltipStyle(),
                                 callbacks: {
                                     label: function(ctx) {
                                         const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
                                         const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(
                                             1) : 0;
-                                        return ' ' + ctx.label + ':  ' + ctx.parsed + ' (' + pct + '%)';
+                                        return ' ' + ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
                                     }
                                 }
                             }
@@ -827,31 +835,42 @@
                 });
             }
 
-            // ══════════ TOP-UP METHOD HORIZONTAL BAR ══════════
+            // ══════════ TOP-UP METHOD CHART ══════════
             const methodCtx = document.getElementById('methodChart');
-            if (methodCtx) {
-                const methods = @json(array_keys($methodCounts));
-                const counts = @json(array_values($methodCounts));
-                const colorMap = {
-                    gcash: '#3b82f6',
-                    maya: '#10b981',
-                    bank: '#a855f7',
-                    cash: '#f59e0b',
-                    other: '#6b7280'
-                };
-                const barColors = methods.map(m => colorMap[m] || '#6b7280');
-
-                new Chart(methodCtx, {
+            let methodChart = null;
+            @php
+                $methodLabels = [];
+                $methodData = [];
+                $methodBgColors = [];
+                $methodBorderColors = [];
+                $colorMap = [
+                    'gcash' => ['rgba(59,130,246,0.75)', 'rgba(59,130,246,1)'],
+                    'maya' => ['rgba(16,185,129,0.75)', 'rgba(16,185,129,1)'],
+                    'bank' => ['rgba(168,85,247,0.75)', 'rgba(168,85,247,1)'],
+                    'cash' => ['rgba(245,158,11,0.75)', 'rgba(245,158,11,1)'],
+                    'other' => ['rgba(107,114,128,0.75)', 'rgba(107,114,128,1)'],
+                ];
+                foreach ($methodCounts as $m => $c) {
+                    $methodLabels[] = ucfirst($m);
+                    $methodData[] = $c;
+                    $cols = $colorMap[$m] ?? $colorMap['other'];
+                    $methodBgColors[] = $cols[0];
+                    $methodBorderColors[] = $cols[1];
+                }
+            @endphp
+            if (methodCtx && @json($methodLabels).length > 0) {
+                methodChart = new Chart(methodCtx, {
                     type: 'bar',
                     data: {
-                        labels: methods.map(m => m.toUpperCase()),
+                        labels: @json($methodLabels),
                         datasets: [{
-                            data: counts,
-                            backgroundColor: barColors.map(c => c + 'b3'),
-                            hoverBackgroundColor: barColors,
-                            borderRadius: 4,
+                            data: @json($methodData),
+                            backgroundColor: @json($methodBgColors),
+                            hoverBackgroundColor: @json($methodBorderColors),
+                            borderRadius: 5,
                             borderSkipped: false,
-                            barPercentage: 0.55
+                            barPercentage: 0.5,
+                            categoryPercentage: 0.7
                         }]
                     },
                     options: {
@@ -863,10 +882,11 @@
                                 display: false
                             },
                             tooltip: {
-                                ...tooltipStyle,
+                                ...getTooltipStyle(),
                                 callbacks: {
                                     label: function(ctx) {
-                                        return ' Count:  ' + ctx.parsed.x;
+                                        return ' ' + ctx.parsed.x + ' transaction' + (ctx.parsed.x !==
+                                            1 ? 's' : '');
                                     }
                                 }
                             }
@@ -875,7 +895,7 @@
                             x: {
                                 beginAtZero: true,
                                 grid: {
-                                    color: gridColor,
+                                    color: getGridColor(),
                                     drawBorder: false
                                 },
                                 ticks: {
@@ -883,7 +903,7 @@
                                         size: 9,
                                         weight: '600'
                                     },
-                                    color: tickColor,
+                                    color: getTickColor(),
                                     stepSize: 1
                                 },
                                 border: {
@@ -899,7 +919,7 @@
                                         size: 9,
                                         weight: '700'
                                     },
-                                    color: tickColor
+                                    color: getTickColor()
                                 },
                                 border: {
                                     display: false
@@ -909,6 +929,77 @@
                     }
                 });
             }
+
+            // ══════════ THEME REACTIVITY ══════════
+            function updateAllCharts() {
+                const dark = document.documentElement.classList.contains('dark');
+                const tooltip = getTooltipStyle();
+                const grid = getGridColor();
+                const tick = getTickColor();
+
+                Chart.defaults.color = dark ? '#444' : '#64748b';
+
+                // Bar chart
+                if (revenueChart) {
+                    revenueChart.options.scales.x.grid.color = grid;
+                    revenueChart.options.scales.x.ticks.color = tick;
+                    revenueChart.options.scales.y.grid.color = grid;
+                    revenueChart.options.scales.y.ticks.color = tick;
+                    revenueChart.options.plugins.tooltip = {
+                        ...tooltip,
+                        callbacks: revenueChart.options.plugins.tooltip.callbacks
+                    };
+                    revenueChart.update('none');
+                }
+
+                // Donut chart
+                if (donutChart) {
+                    donutChart.data.datasets[0].backgroundColor = ['#a855f7', dark ? '#1e1e1e' : '#e2e8f0'];
+                    donutChart.data.datasets[0].hoverBackgroundColor = ['#a855f7', dark ? '#2a2a2a' : '#cbd5e1'];
+                    donutChart.data.datasets[0].borderColor = dark ? '#161616' : '#ffffff';
+                    donutChart.options.plugins.tooltip = {
+                        ...tooltip,
+                        callbacks: donutChart.options.plugins.tooltip.callbacks
+                    };
+                    donutChart.update('none');
+                }
+
+                // Method chart
+                if (methodChart) {
+                    methodChart.options.scales.x.grid.color = grid;
+                    methodChart.options.scales.x.ticks.color = tick;
+                    methodChart.options.scales.y.ticks.color = tick;
+                    methodChart.options.plugins.tooltip = {
+                        ...tooltip,
+                        callbacks: methodChart.options.plugins.tooltip.callbacks
+                    };
+                    methodChart.update('none');
+                }
+            }
+
+            // Watch for dark class changes on <html>
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(m) {
+                    if (m.attributeName === 'class') {
+                        updateAllCharts();
+                    }
+                });
+            });
+            observer.observe(document.documentElement, {
+                attributes: true
+            });
+
+            // Also handle theme changes from other tabs
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'color-theme') {
+                    const dark = e.newValue === 'dark';
+                    if (dark) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                }
+            });
         });
     </script>
 

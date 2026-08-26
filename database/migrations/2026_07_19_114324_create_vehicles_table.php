@@ -24,7 +24,7 @@ return new class extends Migration {
             $table->string('tank_capacity')->nullable();
             $table->string('vin')->nullable();
             $table->string('location')->nullable();
-            $table->date('acquistion_date')->nullable();
+            $table->date('acquisition_date')->nullable();
             $table->date('exp_disposal_date')->nullable();
             $table->timestamps();
         });

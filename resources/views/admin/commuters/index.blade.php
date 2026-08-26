@@ -346,7 +346,7 @@
                     </button>
                 </div>
 
-                <form action="{{ route('admin.commuters.store') }}" method="POST" class="space-y-4">
+                <form action="{{ route('commuters.store') }}" method="POST" class="space-y-4">
                     @csrf
                     <input type="hidden" name="_form_type" value="create">
 
@@ -433,7 +433,7 @@
                     </button>
                 </div>
 
-                <form method="POST" :action="'/admin/commuters/' + (selectedUser?.id || '')" class="space-y-4">
+                <form method="POST" :action="'/commuters/' + (selectedUser?.id || '')" class="space-y-4">
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="_form_type" value="edit">
@@ -539,7 +539,7 @@
                             class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-900 dark:text-white text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">
                             Cancel
                         </button>
-                        <form method="POST" :action="'/admin/commuters/' + (selectedUser?.id || '')" class="flex-1">
+                        <form method="POST" :action="'/commuters/' + (selectedUser?.id || '')" class="flex-1">
                             @csrf
                             @method('DELETE')
                             <button type="submit"

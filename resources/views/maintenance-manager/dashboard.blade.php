@@ -363,7 +363,7 @@
                         <span
                             class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] block mb-1">Acquired</span>
                         <span
-                            class="text-[10px] font-bold text-gray-500 dark:text-[#555]">{{ $vehicle->acquistion_date ? $vehicle->acquistion_date->format('M d, Y') : '—' }}</span>
+                            class="text-[10px] font-bold text-gray-500 dark:text-[#555]">{{ $vehicle->acquisition_date ? $vehicle->acquisition_date->format('M d, Y') : '—' }}</span>
                     </div>
                     <div>
                         <span

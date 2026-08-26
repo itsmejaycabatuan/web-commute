@@ -466,11 +466,6 @@
 
                     <!-- ── Actions ── -->
                     <div class="flex items-center justify-between pt-2">
-                        <a href="{{ route('map') }}"
-                            class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#444] hover:text-slate-900 dark:hover:text-white transition flex items-center gap-2">
-                            <i class="fa-solid fa-xmark text-[10px]"></i>
-                            Cancel
-                        </a>
                         <button type="submit"
                             class="bg-blue-600 text-white px-8 py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-500 transition shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center gap-2.5">
                             <i class="fa-solid fa-lock text-[9px]"></i>

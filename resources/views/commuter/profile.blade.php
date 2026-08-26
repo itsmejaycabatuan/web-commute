@@ -138,7 +138,7 @@
                 <span class="hidden sm:inline">Top Up</span>
             </a>
             <a href="{{ route('settings.edit') }}"
-                class="header-btn bg-blue-600 px-3 sm:px-4 py-2 rounded-xl text-white text-[9px] sm:text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition active:scale-[0.98]">
+                class="bg-blue-600 px-3 sm:px-4 py-2 rounded-xl text-white text-[9px] sm:text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-blue-600/20 hover:bg-blue-400 transition active:scale-[0.98]">
                 <i class="fa-solid fa-gear text-[8px] sm:text-[9px]"></i>
                 <span class="hidden sm:inline">Settings</span>
             </a>

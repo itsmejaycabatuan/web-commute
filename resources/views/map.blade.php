@@ -16,11 +16,10 @@
     <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.umd.js">
     </script>
+
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.css" />
-
     @include('partials.commuter-head-scripts');
-
     <style>
         body,
         html {
@@ -1361,7 +1360,7 @@
                 <div class="w-px h-6 bg-[#222] mx-1"></div>
                 <a href="{{ route('payment.topup') }}" class="group">
                     <div
-                        class="flex items-center gap-2.5 py-1.5 px-3 rounded-xl hover:bg-[#1a1a1a] transition-all cursor-pointer">
+                        class="flex items-center gap-2.5 py-1.5 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-[#1a1a1a] transition-all cursor-pointer">
                         <div
                             class="w-7 h-7 bg-emerald-500/15 rounded-lg flex items-center justify-center border border-emerald-500/20">
                             <i class="fa-solid fa-wallet text-emerald-400 text-[10px]"></i>
@@ -1374,7 +1373,8 @@
                         </div>
                         <div
                             class="w-5 h-5 rounded-md bg-[#1a1a1a] flex items-center justify-center group-hover:bg-blue-600 transition-colors ml-0.5">
-                            <i class="fa-solid fa-plus text-[7px] text-[#666] group-hover:text-white transition"></i>
+                            <i
+                                class="fa-solid fa-plus text-[7px] text-slate-400 dark:text-[#666] group-hover:text-black dark:group-hover:text-white transition"></i>
                         </div>
                     </div>
                 </a>
@@ -2052,7 +2052,7 @@
                                 @if (isset($recentReceipts) && count($recentReceipts) > 0)
                                     @foreach ($recentReceipts as $receipt)
                                         <div
-                                            class="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#1a1a1a] transition group cursor-default">
+                                            class="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-[#1a1a1a] transition group cursor-default">
                                             <div class="flex items-center gap-2.5">
                                                 <div
                                                     class="w-8 h-8 bg-[#111] rounded-lg flex items-center justify-center border border-[#1e1e1e] group-hover:border-blue-500/20 transition">
