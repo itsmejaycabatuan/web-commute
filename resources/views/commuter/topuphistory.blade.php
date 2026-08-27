@@ -220,26 +220,23 @@
         class="fixed top-4 left-4 right-4 sm:top-5 sm:left-5 sm:right-5 z-50 flex items-center justify-between gap-3 pointer-events-none">
         <div class="glass-panel p-3 sm:p-3.5 rounded-2xl pointer-events-auto flex items-center gap-3 min-w-0">
             <a href="{{ route('map') }}"
-                class="header-btn w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border border-slate-200 dark:border-[#1e1e1e] bg-white dark:bg-[#111] hover:bg-slate-50 dark:hover:bg-[#1a1a1a] transition cursor-pointer">
-                <i class="fa-solid fa-arrow-left text-[10px] text-slate-400 dark:text-[#666]"></i>
+                class="header-btn w-11 h-11 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 border border-slate-200 dark:border-[#1e1e1e] bg-white dark:bg-[#111] hover:bg-slate-50 dark:hover:bg-[#1a1a1a] transition cursor-pointer">
+                <i class="fa-solid fa-arrow-left text-sm sm:text-[10px] text-slate-400 dark:text-[#666]"></i>
             </a>
             <div class="w-px h-6 bg-slate-200 dark:bg-[#222] mx-0.5 hidden sm:block"></div>
             <div
-                class="w-8 h-8 sm:w-9 sm:h-9 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
-                <i class="fa-solid fa-bus text-white text-xs sm:text-sm"></i>
+                class="w-9 h-9 sm:w-9 sm:h-9 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-bus text-white text-sm sm:text-sm"></i>
             </div>
-            <span
-                class="text-[13px] sm:text-sm font-bold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">Smart<span
-                    class="text-blue-500 dark:text-blue-400">Commute</span></span>
             <div class="w-px h-6 bg-slate-200 dark:bg-[#222] mx-0.5 hidden sm:block"></div>
             <span
                 class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555] hidden sm:inline">Top-up
                 History</span>
         </div>
-        <div class="flex items-center gap-2 pointer-events-auto z-50 shrink-0">
+        <div class="flex items-center gap-2.5 pointer-events-auto z-50 shrink-0">
             <a href="{{ route('payment.topup') }}"
-                class="header-btn bg-blue-600 px-3 sm:px-4 py-2 rounded-xl text-white text-[9px] sm:text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition active:scale-[0.98]">
-                <i class="fa-solid fa-plus text-[8px] sm:text-[9px]"></i>
+                class="header-btn bg-blue-600 w-11 h-11 sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-xl text-white text-[9px] sm:text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center justify-center sm:justify-start gap-2 shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition active:scale-[0.98]">
+                <i class="fa-solid fa-plus text-sm sm:text-[9px]"></i>
                 <span class="hidden sm:inline">New Top-up</span>
             </a>
         </div>

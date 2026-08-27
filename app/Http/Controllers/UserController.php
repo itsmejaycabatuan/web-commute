@@ -55,8 +55,14 @@ class UserController extends Controller
         }
 
         if ($role == 'admin') {
+            $dummyMarkers = app()->environment('local')
+                           ? DevMarker::where('user_id', Auth::id())->latest()->get()
+                           : collect();
+
             return view('map', [
                 'rates' => $rates,
+                'dummyMarkers' => $dummyMarkers,
+
             ]);
         }
 
@@ -75,9 +81,6 @@ class UserController extends Controller
         if ($role == 'driver') {
             $driver = Driver::where('user_id', $user->id)->first();
             $todayRecord = null;
-            $dummyMarkers = app()->environment('local')
-               ? DevMarker::where('user_id', Auth::id())->latest()->get()
-               : collect();
 
             $todayRecord = TimeKeeping::where('driver_id', $driver->id)
                 ->whereDate('date', today())
@@ -100,7 +103,6 @@ class UserController extends Controller
                 'recentReceipts' => $recentReceipts,
                 'todayRecord' => $todayRecord,
                 'driverStatus' => $driverStatus,
-                'dummyMarkers' => $dummyMarkers,
             ]);
         }
 

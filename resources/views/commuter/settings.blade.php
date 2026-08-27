@@ -265,9 +265,7 @@
                 class="w-8 h-8 sm:w-9 sm:h-9 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
                 <i class="fa-solid fa-bus text-white text-xs sm:text-sm"></i>
             </div>
-            <span
-                class="text-[13px] sm:text-sm font-bold tracking-tight text-gray-900 dark:text-white whitespace-nowrap">Smart<span
-                    class="text-blue-500 dark:text-blue-400">Commute</span></span>
+
             <div class="w-px h-6 bg-gray-200 dark:bg-[#222] mx-0.5 hidden sm:block"></div>
             <span
                 class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555] hidden sm:inline">Settings</span>

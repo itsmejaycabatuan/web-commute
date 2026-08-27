@@ -1410,13 +1410,15 @@
                         </div>
                     </a>
                 @endif
-                <a href="{{ route('profile') }}">
-                    <div
-                        class="header-btn glass-panel px-4 h-9 py-2 rounded-xl text-white text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2">
-                        <i class="fa-solid fa-user text-[9px] text-[#666]"></i><span
-                            class="hidden sm:inline">Profile</span>
-                    </div>
-                </a>
+                @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter')
+                    <a href="{{ route('profile') }}">
+                        <div
+                            class="header-btn glass-panel px-4 h-9 py-2 rounded-xl text-white text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-user text-[9px] text-[#666]"></i><span
+                                class="hidden sm:inline">Profile</span>
+                        </div>
+                    </a>
+                @endif
                 <button onclick="toggleLogoutModal()"
                     class="header-btn glass-panel px-4 h-9 py-2 rounded-xl text-white text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 hover:!border-red-500/30 hover:!bg-red-500/10">
                     <i class="fa-solid fa-right-from-bracket text-[9px] text-red-400"></i>
@@ -1483,7 +1485,7 @@
 
     <!-- ══════════ MOBILE FAB BUTTONS (stacked on bottom-right) ══════════ -->
     <!-- NEW -->
-    @if ((Auth::check() && Auth::user()->roles[0]->name !== 'admin') || Auth::guest())
+    @if ((Auth::check() && Auth::guest()))
         <div class="fixed bottom-[8.5rem] left-5 z-50 md:hidden">
             <button onclick="openMobileSidebar('left')" class="mobile-fab mobile-fab-left">
                 <i
@@ -1494,7 +1496,7 @@
     @if ((Auth::check() && Auth::user()->roles[0]->name !== 'admin') || !Auth::check())
         <div class="fixed bottom-[4.5rem] left-5 z-50 md:hidden">
             <button onclick="openMobileSidebar('right')" class="mobile-fab mobile-fab-right">
-                <i class="fa-solid fa-ellipsis-vertical text-white text-base"></i>
+                <i class="fa-solid fa-ellipsis-vertical text-base"></i>
             </button>
         </div>
     @endif
@@ -1548,7 +1550,7 @@
     <div id="map">
 
         <!-- LEFT SIDEBAR -->
-        @if (Auth::guest() || (Auth::check() && Auth::user()->roles[0]->name !== 'admin'))
+        @if (Auth::guest() || Auth::check() )
             <div id="left" class="sidebar flex-center left collapsed">
                 <div class="sidebar-content flex-center">
                     <div id="left-sidebar-anchor"></div>
@@ -1817,132 +1819,115 @@
                                     class="fa-solid fa-chevron-right text-[8px] text-[#333] ml-auto group-hover:text-blue-400 transition"></i>
                             </a>
 
-                            @env('local')
-                                <!-- ══════════ DEV TOOLS: DUMMY DRIVER MARKERS ══════════ -->
-                                <div class="glass-card p-5 rounded-[1.5rem] border-purple-500/15">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div class="flex items-center gap-2.5">
-                                            <div
-                                                class="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center border border-purple-500/20">
-                                                <i class="fa-solid fa-flask text-purple-400 text-xs"></i>
-                                            </div>
-                                            <div>
-                                                <h3
-                                                    class="text-[10px] font-bold uppercase tracking-[0.15em] text-purple-400">
-                                                    Dev Tools</h3>
-                                                <p class="text-[7px] text-[#333] uppercase tracking-wider font-bold">Local
-                                                    env only</p>
-                                            </div>
-                                        </div>
-                                        <span
-                                            class="text-[7px] font-bold uppercase tracking-widest text-[#333] bg-[#111] px-2 py-1 rounded-md border border-[#1e1e1e]">{{ isset($dummyMarkers) ? $dummyMarkers->count() : 0 }}
-                                            markers</span>
-                                    </div>
 
-                                    <!-- Add marker form -->
-                                    <form action="{{ route('driver.dev.add-marker') }}" method="POST"
-                                        id="dev-marker-form">
-                                        @csrf
-                                        <input type="hidden" name="lat" id="dev-marker-lat">
-                                        <input type="hidden" name="lng" id="dev-marker-lng">
-                                        <div class="flex gap-2 mb-3">
-                                            <button type="submit" onclick="captureMapCenter()"
-                                                class="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 flex items-center justify-center gap-2 transition active:scale-[0.98] text-[9px] font-bold uppercase tracking-widest">
-                                                <i class="fa-solid fa-location-crosshairs text-[8px]"></i>
-                                                <span>Add at Center</span>
-                                            </button>
-                                            <button type="button" onclick="enableMarkerPlacement()" id="dev-place-btn"
-                                                class="dev-place-btn py-2.5 px-3 rounded-xl bg-[#111] hover:bg-[#1a1a1a] border border-[#222] hover:border-purple-500/30 flex items-center justify-center gap-2 transition active:scale-[0.98] text-[9px] font-bold uppercase tracking-widest text-[#666] hover:text-purple-400">
-                                                <i class="fa-solid fa-map-pin text-[8px]"></i>
-                                                <span>Pin</span>
-                                            </button>
-                                        </div>
-                                    </form>
-
-                                    <!-- Marker list -->
-                                    <div class="space-y-1.5 max-h-[220px] overflow-y-auto custom-scroll pr-0.5">
-                                        @if (isset($dummyMarkers) && $dummyMarkers->count() > 0)
-                                            @foreach ($dummyMarkers as $marker)
-                                                <div
-                                                    class="flex items-center justify-between p-2.5 rounded-xl bg-[#111] border border-[#1e1e1e] group hover:border-[#2a2a2a] transition">
-                                                    <div class="flex items-center gap-2.5 min-w-0">
-                                                        <div
-                                                            class="w-7 h-7 rounded-lg {{ $marker->status === 'active' ? 'bg-emerald-500/10 border border-emerald-500/15' : 'bg-[#1a1a1a] border border-[#222]' }} flex items-center justify-center shrink-0">
-                                                            <i
-                                                                class="fa-solid fa-bus text-[9px] {{ $marker->status === 'active' ? 'text-emerald-400' : 'text-[#444]' }}"></i>
-                                                        </div>
-                                                        <div class="min-w-0">
-                                                            <p class="text-[10px] font-semibold text-[#bbb] truncate">
-                                                                {{ $marker->name }}</p>
-                                                            <div class="flex items-center gap-1.5 mt-0.5">
-                                                                <div
-                                                                    class="w-1.5 h-1.5 rounded-full {{ $marker->status === 'active' ? 'bg-emerald-400' : 'bg-[#444]' }}">
-                                                                </div>
-                                                                <span
-                                                                    class="text-[8px] font-bold uppercase tracking-wider {{ $marker->status === 'active' ? 'text-emerald-400/70' : 'text-[#444]' }}">{{ $marker->status }}</span>
-                                                                <span
-                                                                    class="text-[8px] text-[#333] font-mono ml-1">{{ number_format($marker->lat, 4) }},
-                                                                    {{ number_format($marker->lng, 4) }}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div
-                                                        class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition">
-                                                        <form
-                                                            action="{{ route('driver.dev.toggle-marker', $marker->id) }}"
-                                                            method="POST">
-                                                            @csrf
-                                                            <button type="submit"
-                                                                class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-{{ $marker->status === 'active' ? 'amber-500/20' : 'emerald-500/20' }} flex items-center justify-center transition"
-                                                                title="Toggle status">
-                                                                <i
-                                                                    class="fa-solid fa-{{ $marker->status === 'active' ? 'pause' : 'play' }} text-[7px] text-[#555] hover:text-{{ $marker->status === 'active' ? 'amber-400' : 'emerald-400' }}"></i>
-                                                            </button>
-                                                        </form>
-                                                        <form
-                                                            action="{{ route('driver.dev.remove-marker', $marker->id) }}"
-                                                            method="POST">
-                                                            @csrf @method('DELETE')
-                                                            <button type="submit"
-                                                                class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-red-500/20 flex items-center justify-center transition"
-                                                                title="Remove">
-                                                                <i
-                                                                    class="fa-solid fa-xmark text-[8px] text-[#555] hover:text-red-400"></i>
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        @else
-                                            <div
-                                                class="flex flex-col items-center justify-center py-5 px-4 border border-dashed border-[#1e1e1e] rounded-xl">
-                                                <i class="fa-solid fa-ghost text-[#222] text-lg mb-2"></i>
-                                                <p class="text-[9px] text-[#333] text-center">No dummy markers yet</p>
-                                                <p class="text-[7px] text-[#222] text-center mt-0.5">Add markers to test
-                                                    commuter view</p>
-                                            </div>
-                                        @endif
-                                    </div>
-
-                                    @if (isset($dummyMarkers) && $dummyMarkers->count() > 0)
-                                        <form action="{{ route('driver.dev.clear-markers') }}" method="POST"
-                                            class="mt-3">
-                                            @csrf @method('DELETE')
-                                            <button type="submit"
-                                                class="w-full py-2 rounded-lg bg-[#111] hover:bg-red-500/10 border border-[#1e1e1e] hover:border-red-500/20 text-[#444] hover:text-red-400 text-[8px] font-bold uppercase tracking-widest transition">
-                                                <i class="fa-solid fa-trash text-[7px] mr-1"></i> Clear All
-                                            </button>
-                                        </form>
-                                    @endif
-                                </div>
-                            @endenv
 
                         </div>
                     @endif
 
+@if (Auth::check() && Auth::user()->roles[0]->name === 'admin')
+    @env('local')
+        <div id="left-sidebar-form"
+            class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)] overflow-y-auto custom-scroll p-3 pb-6">
+
+            <!-- ══════════ DEV TOOLS: DUMMY DRIVER MARKERS ══════════ -->
+            <div class="glass-card p-5 rounded-[1.5rem] border-purple-500/15">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center border border-purple-500/20">
+                            <i class="fa-solid fa-flask text-purple-400 text-xs"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-purple-400">Dev Tools</h3>
+                            <p class="text-[7px] text-[#333] uppercase tracking-wider font-bold">Local env only</p>
+                        </div>
+                    </div>
+                    <span class="text-[7px] font-bold uppercase tracking-widest text-[#333] bg-[#111] px-2 py-1 rounded-md border border-[#1e1e1e]">
+                        {{ isset($dummyMarkers) ? $dummyMarkers->count() : 0 }} markers
+                    </span>
+                </div>
+
+                <!-- Add marker form -->
+                <form action="{{ route('driver.dev.add-marker') }}" method="POST" id="dev-marker-form">
+                    @csrf
+                    <input type="hidden" name="lat" id="dev-marker-lat">
+                    <input type="hidden" name="lng" id="dev-marker-lng">
+                    <div class="flex gap-2 mb-3">
+                        <button type="submit" onclick="captureMapCenter()"
+                            class="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 flex items-center justify-center gap-2 transition active:scale-[0.98] text-white text-[9px] font-bold uppercase tracking-widest">
+                            <i class="fa-solid fa-location-crosshairs text-[8px]"></i>
+                            <span>Add at Center</span>
+                        </button>
+                        <button type="button" onclick="enableMarkerPlacement()" id="dev-place-btn"
+                            class="dev-place-btn py-2.5 px-3 rounded-xl bg-[#111] hover:bg-[#1a1a1a] border border-[#222] hover:border-purple-500/30 flex items-center justify-center gap-2 transition active:scale-[0.98] text-[9px] font-bold uppercase tracking-widest text-[#666] hover:text-purple-400">
+                            <i class="fa-solid fa-map-pin text-[8px]"></i>
+                            <span>Pin</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Marker list -->
+                <div class="space-y-1.5 max-h-[220px] overflow-y-auto custom-scroll pr-0.5">
+                    @if (isset($dummyMarkers) && $dummyMarkers->count() > 0)
+                        @foreach ($dummyMarkers as $marker)
+                            <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#111] border border-[#1e1e1e] group hover:border-[#2a2a2a] transition">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="w-7 h-7 rounded-lg {{ $marker->status === 'active' ? 'bg-emerald-500/10 border border-emerald-500/15' : 'bg-[#1a1a1a] border border-[#222]' }} flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-bus text-[9px] {{ $marker->status === 'active' ? 'text-emerald-400' : 'text-[#444]' }}"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-[10px] font-semibold text-[#bbb] truncate">{{ $marker->name }}</p>
+                                        <div class="flex items-center gap-1.5 mt-0.5">
+                                            <div class="w-1.5 h-1.5 rounded-full {{ $marker->status === 'active' ? 'bg-emerald-400' : 'bg-[#444]' }}"></div>
+                                            <span class="text-[8px] font-bold uppercase tracking-wider {{ $marker->status === 'active' ? 'text-emerald-400/70' : 'text-[#444]' }}">{{ $marker->status }}</span>
+                                            <span class="text-[8px] text-[#333] font-mono ml-1">{{ number_format($marker->lat, 4) }}, {{ number_format($marker->lng, 4) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition">
+                                    <form action="{{ route('driver.dev.toggle-marker', $marker->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit"
+                                            class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-{{ $marker->status === 'active' ? 'amber-500/20' : 'emerald-500/20' }} flex items-center justify-center transition"
+                                            title="Toggle status">
+                                            <i class="fa-solid fa-{{ $marker->status === 'active' ? 'pause' : 'play' }} text-[7px] text-[#555] hover:text-{{ $marker->status === 'active' ? 'amber-400' : 'emerald-400' }}"></i>
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('driver.dev.remove-marker', $marker->id) }}" method="POST">
+                                        @csrf @method('DELETE')
+                                        <button type="submit"
+                                            class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-red-500/20 flex items-center justify-center transition"
+                                            title="Remove">
+                                            <i class="fa-solid fa-xmark text-[8px] text-[#555] hover:text-red-400"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="flex flex-col items-center justify-center py-5 px-4 border border-dashed border-[#1e1e1e] rounded-xl">
+                            <i class="fa-solid fa-ghost text-[#222] text-lg mb-2"></i>
+                            <p class="text-[9px] text-[#333] text-center">No dummy markers yet</p>
+                            <p class="text-[7px] text-[#222] text-center mt-0.5">Add markers to test commuter view</p>
+                        </div>
+                    @endif
+                </div>
+
+                @if (isset($dummyMarkers) && $dummyMarkers->count() > 0)
+                    <form action="{{ route('driver.dev.clear-markers') }}" method="POST" class="mt-3">
+                        @csrf @method('DELETE')
+                        <button type="submit"
+                            class="w-full py-2 rounded-lg bg-[#111] hover:bg-red-500/10 border border-[#1e1e1e] hover:border-red-500/20 text-[#444] hover:text-red-400 text-[8px] font-bold uppercase tracking-widest transition">
+                            <i class="fa-solid fa-trash text-[7px] mr-1"></i> Clear All
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </div>
+    @endenv
+@endif
                     @if (
                         !Auth::check() ||
-                            (Auth::check() && !in_array(Auth::user()->roles[0]->name, ['admin', 'maintenance_manager', 'driver_manager'])))
+                            (Auth::check() && !in_array(Auth::user()->roles[0]->name, ['maintenance_manager', 'driver_manager'])))
                         <div class="sidebar-toggle rounded-rect left hidden md:flex" onclick="toggleSidebar('left')">
                             <i class="fa-solid fa-chevron-right text-base"></i>
                         </div>
