@@ -656,9 +656,11 @@ class UserController extends Controller
         return $status === Password::RESET_LINK_SENT ? back()->with(['status' => __($status)]) : back()->withErrors(['email' => __($status)]);
     }
 
-    public function resetPassword(string $token)
+    public function resetPassword(string $token, Request $request)
     {
-        return view('auth.reset-password', ['token' => $token]);
+        $email = $request->query('email');
+
+        return view('auth.reset-password', ['token' => $token, 'email' => $email]);
     }
 
     public function updatePassword(Request $request)
@@ -685,6 +687,6 @@ class UserController extends Controller
             }
         );
 
-        return $status === Password::PASSWORD_RESET ? redirect()->route('login')->with('status', __($status)) : back()->withErrors(['email' => [__($status)]]);
+        return $status === Password::PASSWORD_RESET ? redirect()->route('login')->with('success', __($status)) : back()->withErrors(['email' => [__($status)]]);
     }
 }

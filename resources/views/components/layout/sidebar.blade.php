@@ -3,6 +3,10 @@
     'bottomItems' => $bottomBarMenu ?? [],
     'themeToggle' => $showThemeToggle ?? true,
     'consoleName' => $consoleName ?? 'SmartCommute',
+    'dashboardRoute' => 'dashboard',
+    'dashboardIcon' => 'fa-gauge-high',
+    'settingsRoute' => 'settings.edit',
+    'settingsIcon' => 'fa-gear',
 ])
 
 <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
@@ -12,21 +16,44 @@
     <!-- ══════════ MOBILE BOTTOM BAR ══════════ -->
     <div class="fixed bottom-0 left-0 right-0 z-[55] md:hidden">
         <div
-            class="bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-xl border-t border-gray-200 dark:border-gray-800 px-2 pb-[env(safe-area-inset-bottom)]">
-            <div class="flex items-center justify-around py-1.5">
-                @foreach ($bottomItems as $item)
-                    <a href="{{ route($item['route']) }}"
-                        class="flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl transition-all active:scale-90 {{ request()->routeIs($item['route']) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500' }}">
-                        <i class="fa-solid {{ $item['icon'] }} text-[15px]"></i>
-                        <span
-                            class="text-[7px] font-bold uppercase tracking-wider">{{ $item['mobile_label'] ?? $item['label'] }}</span>
-                    </a>
-                @endforeach
+            class="bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-xl border-t border-gray-200 dark:border-gray-800 pb-[env(safe-area-inset-bottom)]">
+            <div class="flex items-center justify-between px-4 py-1.5">
+
+                {{-- LEFT: Settings --}}
+                <a href="{{ route($settingsRoute) }}"
+                    class="flex flex-col items-center gap-0.5 py-2 px-4 rounded-2xl transition-all active:scale-90 {{ request()->routeIs($settingsRoute) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500' }}">
+                    <i class="fa-solid {{ $settingsIcon }} text-[16px]"></i>
+                    <span class="text-[7px] font-bold uppercase tracking-wider">Settings</span>
+                </a>
+
+                {{-- CENTER: Dashboard (elevated primary) --}}
+                <a href="{{ route($dashboardRoute) }}"
+                    class="flex flex-col items-center gap-0.5 py-1 px-5 rounded-2xl transition-all active:scale-90 -mt-4 {{ request()->routeIs($dashboardRoute) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500' }}">
+                    <div
+                        class="w-12 h-12 rounded-2xl {{ request()->routeIs($dashboardRoute) ? 'bg-blue-500 shadow-lg shadow-blue-500/30' : 'bg-gray-100 dark:bg-gray-800 shadow-md shadow-black/5 dark:shadow-black/30' }} flex items-center justify-center mb-0.5 transition-all">
+                        <i
+                            class="fa-solid {{ $dashboardIcon }} text-[17px] {{ request()->routeIs($dashboardRoute) ? 'text-white' : '' }}"></i>
+                    </div>
+                    <span class="text-[7px] font-bold uppercase tracking-wider">Dashboard</span>
+                </a>
+
+                {{-- RIGHT: More --}}
                 <button type="button" @click="openMobileDrawer()"
-                    class="flex flex-col items-center gap-0.5 py-1.5 px-3 rounded-xl text-gray-400 dark:text-gray-500 transition-all active:scale-90">
-                    <i class="fa-solid fa-bars text-[15px]"></i>
+                    class="flex flex-col items-center gap-0.5 py-2 px-4 rounded-2xl text-gray-400 dark:text-gray-500 transition-all active:scale-90">
+                    <div class="w-[16px] h-[16px] grid grid-cols-3 grid-rows-3 gap-[2.5px]">
+                        <span class="rounded-full bg-current"></span>
+                        <span class="rounded-full bg-current"></span>
+                        <span class="rounded-full bg-current"></span>
+                        <span class="rounded-full bg-current"></span>
+                        <span class="rounded-full bg-current"></span>
+                        <span class="rounded-full bg-current"></span>
+                        <span class="rounded-full bg-current"></span>
+                        <span class="rounded-full bg-current"></span>
+                        <span class="rounded-full bg-current"></span>
+                    </div>
                     <span class="text-[7px] font-bold uppercase tracking-wider">More</span>
                 </button>
+
             </div>
         </div>
     </div>
@@ -39,6 +66,8 @@
     <!-- ══════════ MOBILE DRAWER ══════════ -->
     <div id="mobile-drawer"
         class="fixed top-0 left-0 h-full w-72 z-[65] bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-gray-800 transform -translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col md:hidden">
+
+        {{-- Drawer Header --}}
         <div class="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
             <div class="flex items-center gap-3 overflow-hidden whitespace-nowrap">
                 <div
@@ -53,14 +82,17 @@
                 <i class="fa-solid fa-xmark text-[10px]"></i>
             </button>
         </div>
-        <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+
+        {{-- Scrollable Menu --}}
+        <nav class="flex-1 overflow-y-auto overscroll-contain p-3 space-y-1">
             @foreach ($menuItems as $item)
                 @if (!isset($item['route']))
                     @if (($item['section'] ?? null) !== null && $item['section'] !== 'hidden')
                         <div class="my-2 mx-3 border-t border-gray-100 dark:border-gray-800"></div>
                         <p
                             class="text-[8px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-600 px-3 pt-1 pb-1.5">
-                            {{ $item['section'] }}</p>
+                            {{ $item['section'] }}
+                        </p>
                     @endif
                     @continue
                 @endif
@@ -68,7 +100,8 @@
                     <div class="my-2 mx-3 border-t border-gray-100 dark:border-gray-800"></div>
                     <p
                         class="text-[8px] font-bold uppercase tracking-[0.2em] text-gray-400 dark:text-gray-600 px-3 pt-1 pb-1.5">
-                        {{ $item['section'] }}</p>
+                        {{ $item['section'] }}
+                    </p>
                     @continue
                 @endif
                 <a href="{{ route($item['route']) }}"
@@ -81,6 +114,8 @@
                 </a>
             @endforeach
         </nav>
+
+        {{-- Drawer Footer --}}
         <div class="p-3 border-t border-gray-100 dark:border-gray-800 space-y-1 shrink-0">
             @if ($themeToggle)
                 <button type="button" @click="$store.sidebar.toggleTheme($store.sidebar.isDark ? 'light' : 'dark')"
@@ -249,7 +284,9 @@
             d.classList.add('-translate-x-full');
             document.body.style.overflow = '';
         }
-        document.querySelectorAll('#mobile-drawer a').forEach(l => l.addEventListener('click', () => setTimeout(
-            closeMobileDrawer, 50)));
+
+        document.querySelectorAll('#mobile-drawer a').forEach(l =>
+            l.addEventListener('click', () => setTimeout(closeMobileDrawer, 50))
+        );
     </script>
 @endonce

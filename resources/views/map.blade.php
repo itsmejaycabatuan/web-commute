@@ -245,7 +245,6 @@
             width: 2em;
             height: 2em;
             overflow: visible;
-            display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
@@ -1485,7 +1484,7 @@
 
     <!-- ══════════ MOBILE FAB BUTTONS (stacked on bottom-right) ══════════ -->
     <!-- NEW -->
-    @if ((Auth::check() && Auth::guest()))
+    @if ((Auth::check() || Auth::user()->roles[0]->name === 'commuter' && Auth::guest()))
         <div class="fixed bottom-[8.5rem] left-5 z-50 md:hidden">
             <button onclick="openMobileSidebar('left')" class="mobile-fab mobile-fab-left">
                 <i

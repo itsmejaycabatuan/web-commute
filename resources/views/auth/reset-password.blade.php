@@ -7,7 +7,8 @@
     <title>Reset Password - SmartCommute</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
@@ -67,7 +68,9 @@
         }
 
         @keyframes shield-pulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.3);
             }
 
@@ -112,11 +115,13 @@
     </style>
 </head>
 
-<body class="flex relative justify-center items-center p-4 sm:p-6 min-h-screen reset-bg font-sans text-white overflow-x-hidden">
+<body
+    class="flex relative justify-center items-center p-4 sm:p-6 min-h-screen reset-bg font-sans text-white overflow-x-hidden">
 
     <!-- Decorative orbs -->
     <div class="absolute top-1/3 left-1/4 w-80 h-80 bg-green-500/8 rounded-full blur-[120px] pointer-events-none"></div>
-    <div class="absolute bottom-1/4 right-1/3 w-60 h-60 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+    <div class="absolute bottom-1/4 right-1/3 w-60 h-60 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none">
+    </div>
 
     <!-- Back button -->
     <a href="{{ route('login') }}"
@@ -131,8 +136,7 @@
     </a>
 
     <!-- Card -->
-    <div
-        class="card-animate glass-card p-7 sm:p-8 w-full max-w-[400px] rounded-[2rem] shadow-2xl shadow-black/30">
+    <div class="card-animate glass-card p-7 sm:p-8 w-full max-w-[400px] rounded-[2rem] shadow-2xl shadow-black/30">
 
         <div class="mb-8 text-center">
             <!-- Shield icon with pulse -->
@@ -145,7 +149,8 @@
 
             <!-- Brand -->
             <div class="flex items-center justify-center gap-2 mb-4">
-                <div class="flex items-center justify-center w-7 h-7 bg-blue-600 rounded-lg shadow-lg shadow-blue-600/30">
+                <div
+                    class="flex items-center justify-center w-7 h-7 bg-blue-600 rounded-lg shadow-lg shadow-blue-600/30">
                     <i class="fa-solid fa-bus text-white text-[10px]"></i>
                 </div>
                 <span class="text-base font-bold tracking-tight text-white">
@@ -157,31 +162,29 @@
             <p class="mt-2 text-xs text-gray-400 leading-relaxed px-3">
                 Enter your new credentials below to regain access to your account.
             </p>
+
+            <!-- Email indicator -->
+            <div class="mt-5 mx-auto max-w-[280px]">
+                <div
+                    class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    <div class="w-7 h-7 rounded-lg bg-white/[0.05] flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-envelope text-[10px] text-gray-500"></i>
+                    </div>
+                    <div class="min-w-0 text-left">
+                        <p class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-600">Resetting for</p>
+                        <p class="text-[11px] font-semibold text-gray-300 truncate">{{ $email }}</p>
+                    </div>
+                    <i class="fa-solid fa-circle-check text-[11px] text-green-500/60 shrink-0 ml-auto"></i>
+                </div>
+            </div>
         </div>
 
         <form action="{{ route('password.update') }}" method="POST" class="space-y-4">
             @csrf
 
-            <!-- Email -->
-            <div>
-                <label
-                    class="block mb-1.5 ml-1 font-semibold tracking-widest uppercase text-[10px] text-gray-400">Email</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-envelope text-xs text-white/20"></i>
-                    </div>
-                    <input type="email" name="email" placeholder="you@example.com" value="{{ old('email') }}"
-                        class="input-field py-3 pl-10 pr-4 w-full text-sm rounded-xl focus:outline-none">
-                </div>
-                @if ($errors->has('email'))
-                    <div class="error-inline mt-2 flex items-center gap-2">
-                        <i class="fa-solid fa-circle-exclamation text-red-400 text-[10px]"></i>
-                        @foreach ($errors->get('email') as $message)
-                            <span class="text-red-400 text-[11px]">{{ $message }}</span>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
+            <!-- Email (hidden) -->
+            <input type="email" name="email" placeholder="you@example.com" value="{{ $email }}"
+                class="hidden">
 
             <!-- Generic errors (token mismatch etc.) -->
             @if ($errors->any() && !$errors->has('email') && !$errors->has('password') && !$errors->has('confirm-password'))
@@ -195,8 +198,7 @@
 
             <!-- New Password -->
             <div>
-                <label
-                    class="block mb-1.5 ml-1 font-semibold tracking-widest uppercase text-[10px] text-gray-400">New
+                <label class="block mb-1.5 ml-1 font-semibold tracking-widest uppercase text-[10px] text-gray-400">New
                     Password</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
@@ -237,8 +239,8 @@
                     <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
                         <i class="fa-solid fa-lock text-xs text-white/20"></i>
                     </div>
-                    <input type="password" name="confirm-password" id="confirm-password"
-                        placeholder="••••••••" oninput="checkMatch()"
+                    <input type="password" name="confirm-password" id="confirm-password" placeholder="••••••••"
+                        oninput="checkMatch()"
                         class="input-field py-3 pl-10 pr-10 w-full text-sm rounded-xl focus:outline-none">
                     <button type="button" onclick="togglePassword('confirm-password', 'eye-icon-2')"
                         class="absolute inset-y-0 right-3.5 flex items-center text-white/30 hover:text-white/70 transition">
@@ -273,7 +275,8 @@
         <div class="pt-6 mt-7 text-center border-t border-white/5">
             <p class="text-xs text-gray-500">
                 Remember your password?
-                <a href="{{ route('login') }}" class="font-semibold text-white hover:text-blue-400 transition">Back to
+                <a href="{{ route('login') }}" class="font-semibold text-white hover:text-blue-400 transition">Back
+                    to
                     login</a>
             </p>
         </div>
