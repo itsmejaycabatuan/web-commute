@@ -108,6 +108,9 @@ class UserController extends Controller
 
         if ($role == 'commuter') {
             $obfuscatedMarkers = collect();
+            $dummyMarkers = app()->environment('local')
+            ? DevMarker::where('user_id', Auth::id())->latest()->get()
+            : collect();
             if (app()->environment('local')) {
                 $rawMarkers = DevMarker::where('status', 'active')->get();
                 $obfuscatedMarkers = $rawMarkers->map(function ($m) {
@@ -127,13 +130,13 @@ class UserController extends Controller
             }
 
             return view('map', [
+                'dummyMarkers' => $dummyMarkers,
                 'rates' => $rates,
                 'recentReceipts' => $recentReceipts,
                 'balance' => $wallet->balance ?? 0.00,
                 'obfuscatedMarkers' => $obfuscatedMarkers,
             ]);
         }
-
     }
 
     public function dashboard(Request $request)
