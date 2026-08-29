@@ -700,7 +700,7 @@
                                         </p>
                                     </div>
                                 </div>
-                                <button
+                                <button onclick="requestDataExport()" id="export-btn"
                                     class="mt-4 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-[#222] text-gray-500 dark:text-[#666] text-[9px] font-bold uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition flex items-center gap-2">
                                     <i class="fa-solid fa-download text-[8px]"></i> Request Export
                                 </button>
@@ -740,10 +740,18 @@
                     <input type="text" id="delete-confirm-input" placeholder='Type "DELETE" to confirm'
                         class="form-input w-full rounded-xl px-4 py-3 text-[12px] text-center font-mono uppercase tracking-widest">
                 </div>
-                <button id="delete-confirm-btn" onclick="handleDelete()" disabled
-                    class="w-full px-5 py-3 rounded-xl bg-red-600/50 text-white/50 text-[10px] font-bold uppercase tracking-widest cursor-not-allowed transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-trash-can text-[9px]"></i> Delete My Account
-                </button>
+                <form method="POST" action="{{ route('users.delete-account') }}" id="delete-form">
+                    <!-- This tells Laravel it's a DELETE request -->
+                    @method('DELETE')
+
+                    <!-- This generates the hidden CSRF token automatically -->
+                    @csrf
+
+                    <button id="delete-confirm-btn" type="submit" disabled
+                        class="w-full px-5 py-3 rounded-xl bg-red-600/50 text-white/50 text-[10px] font-bold uppercase tracking-widest cursor-not-allowed transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-trash-can text-[9px]"></i> Delete My Account
+                    </button>
+                </form>
             </div>
             <button onclick="closeDeleteModal()"
                 class="mt-3 text-[10px] font-bold text-gray-400 dark:text-[#555] hover:text-gray-900 dark:hover:text-white transition">
@@ -826,6 +834,7 @@
             content.style.transform = 'scale(0.95)';
             content.style.opacity = '0';
             document.getElementById('delete-confirm-input').value = '';
+            modal.classList.remove('active');
             updateDeleteBtn();
         }
 
@@ -844,12 +853,6 @@
                 btn.classList.remove('bg-red-600', 'text-white', 'cursor-pointer', 'hover:bg-red-700',
                     'active:scale-[0.98]');
             }
-        }
-
-        function handleDelete() {
-            // Submit delete request here
-            alert('Account deletion would be processed here.');
-            closeDeleteModal();
         }
 
         function toggleTheme() {
@@ -977,6 +980,75 @@
             document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
             document.querySelector(`.font-size-btn[data-size="${currentSize}"]`)?.classList.add('active');
         })();
+
+        async function requestDataExport() {
+            const btn = document.getElementById('export-btn');
+            const originalHTML = btn.innerHTML;
+
+            // 1. Set loading state
+            btn.disabled = true;
+            btn.classList.add('opacity-60', 'cursor-not-allowed');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-[8px]"></i> Generating...';
+
+            try {
+                // 2. Fetch data from Laravel
+                const response = await fetch('{{ route('settings.export-data') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Network response was not ok');
+
+                // 3. Convert response to Blob and trigger download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                // Extract filename from response headers, fallback to default
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'smartcommute_data_export.xlsx';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                    if (filenameMatch && filenameMatch.length === 2) filename = filenameMatch[1];
+                }
+
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+
+                // Clean up
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                // 4. Success state
+                btn.innerHTML =
+                    '<i class="fa-solid fa-circle-check text-[8px] text-emerald-500"></i> <span class="text-emerald-500">Downloaded!</span>';
+
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-60', 'cursor-not-allowed');
+                }, 3000);
+
+            } catch (error) {
+                console.error('Export failed:', error);
+
+                // 5. Error state
+                btn.innerHTML =
+                    '<i class="fa-solid fa-circle-exclamation text-[8px] text-red-400"></i> <span class="text-red-400">Error</span>';
+
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-60', 'cursor-not-allowed');
+                }, 3000);
+            }
+        }
     </script>
 
 </body>

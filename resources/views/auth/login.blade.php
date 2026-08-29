@@ -7,12 +7,15 @@
     <title>Login - SmartCommute</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
                 }
             }
         }
@@ -49,8 +52,15 @@
         }
 
         @keyframes card-enter {
-            from { opacity: 0; transform: translateY(30px) scale(0.96); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         .card-animate {
@@ -74,8 +84,15 @@
         }
 
         @keyframes modal-enter {
-            from { opacity: 0; transform: scale(0.9) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
 
         .modal-animate {
@@ -83,8 +100,15 @@
         }
 
         @keyframes flash-in {
-            from { opacity: 0; transform: translate(-50%, -20px); }
-            to { opacity: 1; transform: translate(-50%, 0); }
+            from {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
         }
 
         .flash-animate {
@@ -100,7 +124,8 @@
     </style>
 </head>
 
-<body class="flex relative justify-center items-center p-4 sm:p-6 min-h-screen login-bg font-sans text-white overflow-x-hidden">
+<body
+    class="flex relative justify-center items-center p-4 sm:p-6 min-h-screen login-bg font-sans text-white overflow-x-hidden">
 
     @include('components.flash')
 
@@ -114,7 +139,8 @@
                     </div>
                 </div>
                 <h3 class="text-lg font-bold tracking-tight">Your account is pending</h3>
-                <p class="mt-2 text-sm text-gray-500 leading-relaxed">An administrator must approve your driver account before you can sign in.</p>
+                <p class="mt-2 text-sm text-gray-500 leading-relaxed">An administrator must approve your driver account
+                    before you can sign in.</p>
                 <button type="button" onclick="document.getElementById('driver-pending-modal').remove()"
                     class="py-3 mt-6 w-full text-xs font-bold tracking-widest text-white uppercase bg-gray-900 rounded-xl transition hover:bg-gray-800 active:scale-[0.98]">
                     OK
@@ -133,7 +159,8 @@
                     </div>
                 </div>
                 <h3 class="text-lg font-bold tracking-tight">Account submission rejected</h3>
-                <p class="mt-2 text-sm text-gray-500 leading-relaxed">Your driver application was not approved. If you believe this is a mistake, contact support.</p>
+                <p class="mt-2 text-sm text-gray-500 leading-relaxed">Your driver application was not approved. If you
+                    believe this is a mistake, contact support.</p>
                 <button type="button" onclick="document.getElementById('driver-rejected-modal').remove()"
                     class="py-3 mt-6 w-full text-xs font-bold tracking-widest text-white uppercase bg-gray-900 rounded-xl transition hover:bg-gray-800 active:scale-[0.98]">
                     OK
@@ -144,7 +171,8 @@
 
     <!-- Decorative orbs -->
     <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none"></div>
-    <div class="absolute bottom-1/4 right-1/4 w-56 h-56 bg-purple-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-56 h-56 bg-purple-500/10 rounded-full blur-[80px] pointer-events-none">
+    </div>
 
     <!-- Back button -->
     <a href="{{ url('/') }}"
@@ -153,7 +181,9 @@
             class="flex justify-center items-center w-10 h-10 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-300">
             <i class="text-sm fa-solid fa-arrow-left text-white/60 group-hover:text-white transition"></i>
         </div>
-        <span class="hidden sm:inline text-[10px] font-bold tracking-widest uppercase text-white/50 group-hover:text-white/80 transition">Back to Home</span>
+        <span
+            class="hidden sm:inline text-[10px] font-bold tracking-widest uppercase text-white/50 group-hover:text-white/80 transition">Back
+            to Home</span>
     </a>
 
     <!-- Login Card -->
@@ -161,7 +191,8 @@
 
         <div class="mb-8 text-center">
             <div class="flex flex-col items-center justify-center mb-5">
-                <div class="flex items-center justify-center w-12 h-12 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/30 mb-3">
+                <div
+                    class="flex items-center justify-center w-12 h-12 bg-blue-600 rounded-xl shadow-lg shadow-blue-600/30 mb-3">
                     <i class="fa-solid fa-bus text-white text-lg"></i>
                 </div>
                 <span class="text-xl font-bold tracking-tight text-white">
@@ -176,7 +207,8 @@
             @csrf
 
             <div>
-                <label class="block mb-1.5 ml-1 font-semibold tracking-widest uppercase text-[10px] text-gray-400">Email Address</label>
+                <label class="block mb-1.5 ml-1 font-semibold tracking-widest uppercase text-[10px] text-gray-400">Email
+                    Address</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
                         <i class="fa-solid fa-envelope text-xs text-white/20"></i>
@@ -195,7 +227,8 @@
             </div>
 
             <div>
-                <label class="block mb-1.5 ml-1 font-semibold tracking-widest uppercase text-[10px] text-gray-400">Password</label>
+                <label
+                    class="block mb-1.5 ml-1 font-semibold tracking-widest uppercase text-[10px] text-gray-400">Password</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
                         <i class="fa-solid fa-lock text-xs text-white/20"></i>
@@ -246,7 +279,8 @@
         <div class="pt-6 mt-7 text-center border-t border-white/5">
             <p class="text-xs text-gray-500">
                 Don't have an account?
-                <a href="{{ url('/register') }}" class="font-semibold text-white hover:text-blue-400 transition">Create one</a>
+                <a href="{{ url('/register') }}"
+                    class="font-semibold text-white hover:text-blue-400 transition">Create one</a>
             </p>
         </div>
     </div>

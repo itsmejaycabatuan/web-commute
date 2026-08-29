@@ -125,6 +125,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/settings/logout-others', [SettingsController::class, 'logoutOtherDevices'])->name('settings.logout-others');
     Route::patch('/settings/theme', [UserPreferenceController::class, 'updateTheme'])->name('settings.update.theme');
     Route::patch('/settings/font-size', [UserPreferenceController::class, 'updateFontSize'])->name('settings.update.fontsize');
+    Route::post('/settings/export-data', [SettingsController::class, 'exportData'])->name('settings.export-data');
 
     Route::middleware('role:admin|driver_manager')->group(function () {
         Route::get('/drivers', [DriverApprovalController::class, 'index'])->name('drivers.index');
@@ -199,6 +200,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/driver/dev/markers/{marker}/toggle', [DevMarkerController::class, 'toggle'])->name('driver.dev.toggle-marker');
     Route::delete('/driver/dev/markers/{marker}', [DevMarkerController::class, 'remove'])->name('driver.dev.remove-marker');
     Route::delete('/driver/dev/markers', [DevMarkerController::class, 'clear'])->name('driver.dev.clear-markers');
+
+    Route::delete('/delete-account', [UserController::class, 'destroy'])->name('users.delete-account');
 
     // Route::resource('users', UserController::class);
 });

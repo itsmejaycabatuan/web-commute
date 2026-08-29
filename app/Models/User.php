@@ -43,6 +43,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read int|null $roles_count
  * @property-read Collection<int, PersonalAccessToken> $tokens
  * @property-read int|null $tokens_count
+ *
  * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder|User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|User newQuery()
@@ -64,14 +65,20 @@ use Spatie\Permission\Traits\HasRoles;
  * @method static \Illuminate\Database\Eloquent\Builder|User whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|User withoutPermission($permissions)
  * @method static \Illuminate\Database\Eloquent\Builder|User withoutRole($roles, $guard = null)
+ *
  * @property string|null $expiration_date
  * @property string|null $contact_info
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|User whereContactInfo($value)
  * @method static \Illuminate\Database\Eloquent\Builder|User whereExpirationDate($value)
+ *
  * @property string|null $driver_code
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|User whereDriverCode($value)
+ *
  * @property-read Driver|null $driver
- * @property-read \App\Models\UserPreference|null $preference
+ * @property-read UserPreference|null $preference
+ *
  * @mixin \Eloquent
  */
 class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
@@ -123,12 +130,22 @@ class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
 
     public function payment()
     {
-        return $this->hasMany(Payment::class);
+        return $this->hasMany(Payment::class, 'paid_by');
     }
 
     public function driver()
     {
         return $this->hasOne(Driver::class);
+    }
+
+    public function topupHistories()
+    {
+        return $this->hasMany(TopupHistory::class);
+    }
+
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
     }
 
     public function preference()

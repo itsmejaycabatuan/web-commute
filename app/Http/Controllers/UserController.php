@@ -560,9 +560,17 @@ class UserController extends Controller
      * @param  int  $id
      * @return Response
      */
-    public function destroy($id)
+    public function destroy(Request $request)
     {
-        //
+        $userId = Auth::user()->id;
+
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        User::destroy($userId);
+
+        return redirect()->route('login')->with('success', 'Account deleted successfully.');
     }
 
     public function register(Request $request)

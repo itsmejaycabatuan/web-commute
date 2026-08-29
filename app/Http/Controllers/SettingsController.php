@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\UserDataExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -51,5 +52,13 @@ class SettingsController extends Controller
         Auth::logoutOtherDevices($request->password());
 
         return back()->with('success', 'All other sessions have been terminated.');
+    }
+
+    public function exportData()
+    {
+        $user = Auth::user();
+        $fileName = 'smartcommute_data_export_' . $user->id . '_' . now()->format('Y_m_d_His') . '.xlsx';
+
+        return (new UserDataExport($user))->download($fileName);
     }
 }
