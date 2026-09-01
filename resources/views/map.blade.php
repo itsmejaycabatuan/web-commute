@@ -19,7 +19,7 @@
 
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.css" />
-    @include('partials.commuter-head-scripts');
+    @include('partials.commuter-head-scripts')
     <style>
         body,
         html {
@@ -32,89 +32,225 @@
             background: #f1f5f9;
         }
 
-/* ═══ SIMULATOR ═══ */
-.sim-waypoint-dot {
-    width: 12px;
-    height: 12px;
-    background: #a78bfa;
-    border: 2px solid white;
-    border-radius: 50%;
-    box-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
-    pointer-events: none;
-}
+        /* ── ETA Marker Badge ── */
+        .custom-vehicle-marker {
+            position: relative;
+        }
 
-.sim-waypoint-dot.first {
-    background: #10b981;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
-}
+        .eta-badge {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1px 6px;
+            border-radius: 6px;
+            font-size: 8px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+            z-index: 10;
+            pointer-events: none;
+            line-height: 1.5;
+            letter-spacing: 0.02em;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            transition: opacity 0.3s ease;
+        }
 
-.sim-route-line {
-    position: absolute;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-}
+        .eta-here {
+            background: #059669;
+            color: #fff;
+        }
 
-.sim-placeholder-mode {
-    cursor: crosshair !important;
-}
+        .eta-soon {
+            background: #d97706;
+            color: #fff;
+        }
 
-.sim-placeholder-mode .maplibregl-canvas {
-    cursor: crosshair !important;
-}
+        .eta-near {
+            background: #ea580c;
+            color: #fff;
+        }
 
-.sim-speed-btn {
-    width: 32px;
-    height: 28px;
-    border-radius: 8px;
-    font-size: 10px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
-    color: #64748b;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
+        .eta-far {
+            background: #1f2937;
+            color: #9ca3af;
+            border: 1px solid #374151;
+        }
 
-.sim-speed-btn:hover {
-    background: #f1f5f9;
-    color: #334155;
-}
+        .eta-unknown {
+            display: none;
+        }
 
-.sim-speed-btn.active {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: white;
-}
+        /* ── Nearest Vehicle Floating Indicator ── */
+        #nearest-vehicle-indicator {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            background: rgba(17, 17, 17, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid #222;
+            border-radius: 14px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            min-width: 200px;
+        }
 
-.dark .sim-speed-btn {
-    border-color: #222;
-    background: #0e0e0e;
-    color: #666;
-}
+        #nearest-vehicle-indicator:hover {
+            border-color: #333;
+            background: rgba(17, 17, 17, 0.96);
+            transform: translateX(-50%) translateY(-1px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        }
 
-.dark .sim-speed-btn:hover {
-    background: #1a1a1a;
-    color: #aaa;
-}
+        #nearest-vehicle-indicator:active {
+            transform: translateX(-50%) translateY(0);
+        }
 
-.dark .sim-speed-btn.active {
-    background: #2563eb;
-    border-color: #2563eb;
-    color: white;
-}
+        .nv-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            transition: background 0.3s ease;
+        }
 
-@keyframes sim-pulse-ring {
-    0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
-    100% { box-shadow: 0 0 0 14px rgba(37, 99, 235, 0); }
-}
+        .nv-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
 
-.sim-marker-active {
-    animation: sim-pulse-ring 1.5s ease-out infinite !important;
-}
+        .nv-label {
+            font-size: 8px;
+            color: #555;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .nv-time {
+            font-size: 14px;
+            font-weight: 800;
+            color: #34d399;
+            transition: color 0.3s ease;
+            line-height: 1.3;
+        }
+
+        .nv-distance {
+            font-size: 10px;
+            color: #666;
+            font-weight: 500;
+            margin-left: auto;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+
+        .nv-arrow {
+            color: #444;
+            font-size: 10px;
+            margin-left: 4px;
+            transition: color 0.2s;
+        }
+
+        #nearest-vehicle-indicator:hover .nv-arrow {
+            color: #888;
+        }
+
+        /* ═══ SIMULATOR ═══ */
+        .sim-waypoint-dot {
+            width: 12px;
+            height: 12px;
+            background: #a78bfa;
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+            pointer-events: none;
+        }
+
+        .sim-waypoint-dot.first {
+            background: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        .sim-route-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .sim-placeholder-mode {
+            cursor: crosshair !important;
+        }
+
+        .sim-placeholder-mode .maplibregl-canvas {
+            cursor: crosshair !important;
+        }
+
+        .sim-speed-btn {
+            width: 32px;
+            height: 28px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .sim-speed-btn:hover {
+            background: #f1f5f9;
+            color: #334155;
+        }
+
+        .sim-speed-btn.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: white;
+        }
+
+        .dark .sim-speed-btn {
+            border-color: #222;
+            background: #0e0e0e;
+            color: #666;
+        }
+
+        .dark .sim-speed-btn:hover {
+            background: #1a1a1a;
+            color: #aaa;
+        }
+
+        .dark .sim-speed-btn.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: white;
+        }
+
+        @keyframes sim-pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4);
+            }
+
+            100% {
+                box-shadow: 0 0 0 14px rgba(37, 99, 235, 0);
+            }
+        }
+
+        .sim-marker-active {
+            animation: sim-pulse-ring 1.5s ease-out infinite !important;
+        }
 
         .dark body,
         .dark html {
@@ -1424,8 +1560,6 @@
         .dark .header-btn.border-white {
             border-color: #ffffff !important;
         }
-
-
     </style>
 </head>
 
@@ -1570,7 +1704,7 @@
 
     <!-- ══════════ MOBILE FAB BUTTONS (stacked on bottom-right) ══════════ -->
     <!-- NEW -->
-    @if ((Auth::check() || Auth::user()->roles[0]->name === 'commuter' && Auth::guest()))
+    @if (Auth::guest() || Auth::check() && Auth::user()->roles[0]->name === 'commuter')
         <div class="fixed bottom-[8.5rem] left-5 z-50 md:hidden">
             <button onclick="openMobileSidebar('left')" class="mobile-fab mobile-fab-left">
                 <i
@@ -1635,7 +1769,7 @@
     <div id="map">
 
         <!-- LEFT SIDEBAR -->
-        @if (Auth::guest() || Auth::check() )
+        @if (Auth::guest() || Auth::check())
             <div id="left" class="sidebar flex-center left collapsed">
                 <div class="sidebar-content flex-center">
                     <div id="left-sidebar-anchor"></div>
@@ -1909,705 +2043,1154 @@
                         </div>
                     @endif
 
-@if (Auth::check() && Auth::user()->roles[0]->name === 'admin' || Auth::check() & Auth::user()->roles[0]->name === 'commuter')
-    @env('local')
-        <div id="left-sidebar-form"
-            class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)] overflow-y-auto custom-scroll p-3 pb-6">
+                    @if (
+                        (Auth::check() && Auth::user()->roles[0]->name === 'admin') ||
+                            Auth::check() && (Auth::user()->roles[0]->name === 'commuter'))
+                        @env('local')
+                            <div id="left-sidebar-form"
+                                class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)] overflow-y-auto custom-scroll p-3 pb-6">
 
-            <!-- ══════════ DEV TOOLS: DUMMY DRIVER MARKERS ══════════ -->
-            <div class="glass-card p-5 rounded-[1.5rem] border-purple-500/15">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center border border-purple-500/20">
-                            <i class="fa-solid fa-flask text-purple-400 text-xs"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-purple-400">Dev Tools</h3>
-                            <p class="text-[7px] text-[#333] uppercase tracking-wider font-bold">Local env only</p>
-                        </div>
-                    </div>
-                    <span class="text-[7px] font-bold uppercase tracking-widest text-[#333] bg-[#111] px-2 py-1 rounded-md border border-[#1e1e1e]">
-                        {{ isset($dummyMarkers) ? $dummyMarkers->count() : 0 }} markers
-                    </span>
-                </div>
-
-                <!-- Add marker form -->
-                <form action="{{ route('driver.dev.add-marker') }}" method="POST" id="dev-marker-form">
-                    @csrf
-                    <input type="hidden" name="lat" id="dev-marker-lat">
-                    <input type="hidden" name="lng" id="dev-marker-lng">
-                    <div class="flex gap-2 mb-3">
-                        <button type="submit" onclick="captureMapCenter()"
-                            class="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 flex items-center justify-center gap-2 transition active:scale-[0.98] text-white text-[9px] font-bold uppercase tracking-widest">
-                            <i class="fa-solid fa-location-crosshairs text-[8px]"></i>
-                            <span>Add at Center</span>
-                        </button>
-                        <button type="button" onclick="enableMarkerPlacement()" id="dev-place-btn"
-                            class="dev-place-btn py-2.5 px-3 rounded-xl bg-[#111] hover:bg-[#1a1a1a] border border-[#222] hover:border-purple-500/30 flex items-center justify-center gap-2 transition active:scale-[0.98] text-[9px] font-bold uppercase tracking-widest text-[#666] hover:text-purple-400">
-                            <i class="fa-solid fa-map-pin text-[8px]"></i>
-                            <span>Pin</span>
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Marker list -->
-                <div class="space-y-1.5 max-h-[140px] overflow-y-auto custom-scroll pr-0.5">
-                    @if (isset($dummyMarkers) && $dummyMarkers->count() > 0)
-                        @foreach ($dummyMarkers as $marker)
-                            <div class="flex items-center justify-between p-2.5 rounded-xl bg-[#111] border border-[#1e1e1e] group hover:border-[#2a2a2a] transition">
-                                <div class="flex items-center gap-2.5 min-w-0">
-                                    <div class="w-7 h-7 rounded-lg {{ $marker->status === 'active' ? 'bg-emerald-500/10 border border-emerald-500/15' : 'bg-[#1a1a1a] border border-[#222]' }} flex items-center justify-center shrink-0">
-                                        <i class="fa-solid fa-bus text-[9px] {{ $marker->status === 'active' ? 'text-emerald-400' : 'text-[#444]' }}"></i>
+                                <!-- ══════════ DEV TOOLS: DUMMY DRIVER MARKERS ══════════ -->
+                                <div class="glass-card p-5 rounded-[1.5rem] border-purple-500/15">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="flex items-center gap-2.5">
+                                            <div
+                                                class="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center border border-purple-500/20">
+                                                <i class="fa-solid fa-flask text-purple-400 text-xs"></i>
+                                            </div>
+                                            <div>
+                                                <h3
+                                                    class="text-[10px] font-bold uppercase tracking-[0.15em] text-purple-400">
+                                                    Dev Tools</h3>
+                                                <p class="text-[7px] text-[#333] uppercase tracking-wider font-bold">Local
+                                                    env only</p>
+                                            </div>
+                                        </div>
+                                        <span
+                                            class="text-[7px] font-bold uppercase tracking-widest text-[#333] bg-[#111] px-2 py-1 rounded-md border border-[#1e1e1e]">
+                                            {{ isset($dummyMarkers) ? $dummyMarkers->count() : 0 }} markers
+                                        </span>
                                     </div>
-                                    <div class="min-w-0">
-                                        <p class="text-[10px] font-semibold text-[#bbb] truncate">{{ $marker->name }}</p>
-                                        <div class="flex items-center gap-1.5 mt-0.5">
-                                            <div class="w-1.5 h-1.5 rounded-full {{ $marker->status === 'active' ? 'bg-emerald-400' : 'bg-[#444]' }}"></div>
-                                            <span class="text-[8px] font-bold uppercase tracking-wider {{ $marker->status === 'active' ? 'text-emerald-400/70' : 'text-[#444]' }}">{{ $marker->status }}</span>
-                                            <span class="text-[8px] text-[#333] font-mono ml-1">{{ number_format($marker->lat, 4) }}, {{ number_format($marker->lng, 4) }}</span>
+
+                                    <!-- Add marker form -->
+                                    <form action="{{ route('driver.dev.add-marker') }}" method="POST"
+                                        id="dev-marker-form">
+                                        @csrf
+                                        <input type="hidden" name="lat" id="dev-marker-lat">
+                                        <input type="hidden" name="lng" id="dev-marker-lng">
+                                        <div class="flex gap-2 mb-3">
+                                            <button type="submit" onclick="captureMapCenter()"
+                                                class="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 flex items-center justify-center gap-2 transition active:scale-[0.98] text-white text-[9px] font-bold uppercase tracking-widest">
+                                                <i class="fa-solid fa-location-crosshairs text-[8px]"></i>
+                                                <span>Add at Center</span>
+                                            </button>
+                                            <button type="button" onclick="enableMarkerPlacement()" id="dev-place-btn"
+                                                class="dev-place-btn py-2.5 px-3 rounded-xl bg-[#111] hover:bg-[#1a1a1a] border border-[#222] hover:border-purple-500/30 flex items-center justify-center gap-2 transition active:scale-[0.98] text-[9px] font-bold uppercase tracking-widest text-[#666] hover:text-purple-400">
+                                                <i class="fa-solid fa-map-pin text-[8px]"></i>
+                                                <span>Pin</span>
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                    <!-- Marker list -->
+                                    <div class="space-y-1.5 max-h-[140px] overflow-y-auto custom-scroll pr-0.5">
+                                        @if (isset($dummyMarkers) && $dummyMarkers->count() > 0)
+                                            @foreach ($dummyMarkers as $marker)
+                                                <div
+                                                    class="flex items-center justify-between p-2.5 rounded-xl bg-[#111] border border-[#1e1e1e] group hover:border-[#2a2a2a] transition">
+                                                    <div class="flex items-center gap-2.5 min-w-0">
+                                                        <div
+                                                            class="w-7 h-7 rounded-lg {{ $marker->status === 'active' ? 'bg-emerald-500/10 border border-emerald-500/15' : 'bg-[#1a1a1a] border border-[#222]' }} flex items-center justify-center shrink-0">
+                                                            <i
+                                                                class="fa-solid fa-bus text-[9px] {{ $marker->status === 'active' ? 'text-emerald-400' : 'text-[#444]' }}"></i>
+                                                        </div>
+                                                        <div class="min-w-0">
+                                                            <p class="text-[10px] font-semibold text-[#bbb] truncate">
+                                                                {{ $marker->name }}</p>
+                                                            <div class="flex items-center gap-1.5 mt-0.5">
+                                                                <div
+                                                                    class="w-1.5 h-1.5 rounded-full {{ $marker->status === 'active' ? 'bg-emerald-400' : 'bg-[#444]' }}">
+                                                                </div>
+                                                                <span
+                                                                    class="text-[8px] font-bold uppercase tracking-wider {{ $marker->status === 'active' ? 'text-emerald-400/70' : 'text-[#444]' }}">{{ $marker->status }}</span>
+                                                                <span
+                                                                    class="text-[8px] text-[#333] font-mono ml-1">{{ number_format($marker->lat, 4) }},
+                                                                    {{ number_format($marker->lng, 4) }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div
+                                                        class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition">
+                                                        <button type="button"
+                                                            onclick="simInitiate({{ $marker->id }}, '{{ $marker->name }}', 'fa-bus', {{ $marker->lng }}, {{ $marker->lat }})"
+                                                            class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-purple-500/20 flex items-center justify-center transition"
+                                                            title="Simulate route">
+                                                            <i
+                                                                class="fa-solid fa-route text-[7px] text-[#555] hover:text-purple-400"></i>
+                                                        </button>
+                                                        <form
+                                                            action="{{ route('driver.dev.toggle-marker', $marker->id) }}"
+                                                            method="POST">
+                                                            @csrf
+                                                            <button type="submit"
+                                                                class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-{{ $marker->status === 'active' ? 'amber-500/20' : 'emerald-500/20' }} flex items-center justify-center transition"
+                                                                title="Toggle status">
+                                                                <i
+                                                                    class="fa-solid fa-{{ $marker->status === 'active' ? 'pause' : 'play' }} text-[7px] text-[#555] hover:text-{{ $marker->status === 'active' ? 'amber-400' : 'emerald-400' }}"></i>
+                                                            </button>
+                                                        </form>
+                                                        <form
+                                                            action="{{ route('driver.dev.remove-marker', $marker->id) }}"
+                                                            method="POST">
+                                                            @csrf @method('DELETE')
+                                                            <button type="submit"
+                                                                class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-red-500/20 flex items-center justify-center transition"
+                                                                title="Remove">
+                                                                <i
+                                                                    class="fa-solid fa-xmark text-[8px] text-[#555] hover:text-red-400"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        @else
+                                            <div
+                                                class="flex flex-col items-center justify-center py-5 px-4 border border-dashed border-[#1e1e1e] rounded-xl">
+                                                <i class="fa-solid fa-ghost text-[#222] text-lg mb-2"></i>
+                                                <p class="text-[9px] text-[#333] text-center">No dummy markers yet</p>
+                                                <p class="text-[7px] text-[#222] text-center mt-0.5">Add markers to test
+                                                    commuter view</p>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    @if (isset($dummyMarkers) && $dummyMarkers->count() > 0)
+                                        <form action="{{ route('driver.dev.clear-markers') }}" method="POST"
+                                            class="mt-3">
+                                            @csrf @method('DELETE')
+                                            <button type="submit"
+                                                class="w-full py-2 rounded-lg bg-[#111] hover:bg-red-500/10 border border-[#1e1e1e] hover:border-red-500/20 text-[#444] hover:text-red-400 text-[8px] font-bold uppercase tracking-widest transition">
+                                                <i class="fa-solid fa-trash text-[7px] mr-1"></i> Clear All
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+
+                                <!-- ══════════ ROUTE SIMULATOR ══════════ -->
+                                <div id="sim-panel"
+                                    class="glass-card rounded-[1.5rem] border-purple-500/15 overflow-y-auto  hidden">
+                                    <div class="p-4 border-b border-[#1e1e1e]">
+                                        <div class="flex items-center gap-2.5 mb-1.5">
+                                            <div
+                                                class="w-7 h-7 bg-purple-500/10 rounded-lg flex items-center justify-center border border-purple-500/20">
+                                                <i class="fa-solid fa-route text-purple-400 text-[10px]"></i>
+                                            </div>
+                                            <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-purple-400">
+                                                Route Simulator</h3>
+                                        </div>
+                                        <p class="text-[10px] text-[#555] leading-relaxed" id="sim-status-text">
+                                            Click the route icon on a marker to begin.
+                                        </p>
+                                    </div>
+
+                                    <div id="sim-marker-info" class="hidden p-4 border-b border-[#1e1e1e]">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <div
+                                                    class="w-6 h-6 rounded-md bg-blue-500/15 flex items-center justify-center">
+                                                    <i class="fa-solid fa-bus text-blue-400 text-[9px]"
+                                                        id="sim-marker-icon"></i>
+                                                </div>
+                                                <span class="text-[11px] font-semibold text-[#ddd]"
+                                                    id="sim-marker-name">—</span>
+                                            </div>
+                                            <button onclick="simCancel()"
+                                                class="text-[#555] hover:text-red-400 transition text-xs" title="Cancel">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div id="sim-waypoints-section" class="hidden">
+                                        <div class="px-4 pt-3 pb-2 flex items-center justify-between">
+                                            <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">
+                                                Waypoints <span id="sim-wp-count" class="text-purple-400">0</span>
+                                            </span>
+                                            <button onclick="simClearWaypoints()"
+                                                class="text-[9px] font-bold uppercase tracking-wider text-[#444] hover:text-red-400 transition">Clear</button>
+                                        </div>
+                                        <div id="sim-waypoint-list"
+                                            class="px-4 pb-3 space-y-1 max-h-32 overflow-y-auto custom-scroll"></div>
+                                    </div>
+
+                                    <div id="sim-speed-section" class="hidden px-4 py-3 border-t border-[#1e1e1e]">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span
+                                                class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Speed</span>
+                                            <span class="text-[10px] font-bold text-purple-400 font-mono"
+                                                id="sim-kph-display">30 km/h</span>
+                                        </div>
+                                        <input type="range" id="sim-kph-slider" min="15" max="60"
+                                            value="30" step="5"
+                                            class="w-full h-1 bg-[#1a1a1a] rounded-full appearance-none cursor-pointer accent-purple-500">
+                                        <div class="flex justify-between mt-1.5">
+                                            <span class="text-[8px] text-[#333] font-mono">15</span>
+                                            <span class="text-[8px] text-[#333] font-mono">60</span>
+                                        </div>
+                                    </div>
+                                    <div id="sim-actions" class="hidden p-4 border-t border-[#1e1e1e] space-y-2">
+                                        <div id="sim-actions-place" class="hidden space-y-2">
+                                            <button onclick="simFinishPlacing()"
+                                                class="w-full py-2.5 rounded-xl bg-purple-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-purple-700 transition flex items-center justify-center gap-2 active:scale-[0.98]">
+                                                <i class="fa-solid fa-check text-[9px]"></i> Done Placing
+                                            </button>
+                                            <p class="text-[9px] text-[#333] text-center">Click on the map to add waypoints
+                                            </p>
+                                        </div>
+                                        <div id="sim-actions-ready" class="hidden">
+                                            <button onclick="simStart()"
+                                                class="w-full py-2.5 rounded-xl bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition flex items-center justify-center gap-2 active:scale-[0.98]">
+                                                <i class="fa-solid fa-play text-[9px]"></i> Start Simulation
+                                            </button>
+                                        </div>
+                                        <div id="sim-actions-running" class="hidden flex gap-2">
+                                            <button onclick="simTogglePause()"
+                                                class="flex-1 py-2.5 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-[#ddd] text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] transition flex items-center justify-center gap-2 active:scale-[0.98]">
+                                                <i class="fa-solid fa-pause text-[9px]" id="sim-pause-icon"></i>
+                                                <span id="sim-pause-label">Pause</span>
+                                            </button>
+                                            <button onclick="simStop()"
+                                                class="flex-1 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500/20 transition flex items-center justify-center gap-2 active:scale-[0.98]">
+                                                <i class="fa-solid fa-stop text-[9px]"></i> Stop
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition">
-                                    <button type="button" onclick="simInitiate({{ $marker->id }}, '{{ $marker->name }}', 'fa-bus', {{ $marker->lng }}, {{ $marker->lat }})"
-                                        class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-purple-500/20 flex items-center justify-center transition"
-                                        title="Simulate route">
-                                        <i class="fa-solid fa-route text-[7px] text-[#555] hover:text-purple-400"></i>
-                                    </button>
-                                    <form action="{{ route('driver.dev.toggle-marker', $marker->id) }}" method="POST">
-                                        @csrf
-                                        <button type="submit"
-                                            class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-{{ $marker->status === 'active' ? 'amber-500/20' : 'emerald-500/20' }} flex items-center justify-center transition"
-                                            title="Toggle status">
-                                            <i class="fa-solid fa-{{ $marker->status === 'active' ? 'pause' : 'play' }} text-[7px] text-[#555] hover:text-{{ $marker->status === 'active' ? 'amber-400' : 'emerald-400' }}"></i>
-                                        </button>
-                                    </form>
-                                    <form action="{{ route('driver.dev.remove-marker', $marker->id) }}" method="POST">
-                                        @csrf @method('DELETE')
-                                        <button type="submit"
-                                            class="w-6 h-6 rounded-md bg-[#1a1a1a] hover:bg-red-500/20 flex items-center justify-center transition"
-                                            title="Remove">
-                                            <i class="fa-solid fa-xmark text-[8px] text-[#555] hover:text-red-400"></i>
-                                        </button>
-                                    </form>
-                                </div>
+
                             </div>
-                        @endforeach
-                    @else
-                        <div class="flex flex-col items-center justify-center py-5 px-4 border border-dashed border-[#1e1e1e] rounded-xl">
-                            <i class="fa-solid fa-ghost text-[#222] text-lg mb-2"></i>
-                            <p class="text-[9px] text-[#333] text-center">No dummy markers yet</p>
-                            <p class="text-[7px] text-[#222] text-center mt-0.5">Add markers to test commuter view</p>
-                        </div>
-                    @endif
-                </div>
 
-                @if (isset($dummyMarkers) && $dummyMarkers->count() > 0)
-                    <form action="{{ route('driver.dev.clear-markers') }}" method="POST" class="mt-3">
-                        @csrf @method('DELETE')
-                        <button type="submit"
-                            class="w-full py-2 rounded-lg bg-[#111] hover:bg-red-500/10 border border-[#1e1e1e] hover:border-red-500/20 text-[#444] hover:text-red-400 text-[8px] font-bold uppercase tracking-widest transition">
-                            <i class="fa-solid fa-trash text-[7px] mr-1"></i> Clear All
-                        </button>
-                    </form>
-                @endif
-            </div>
+                            <script>
+                                // ══════════════════════════════════════════════
+                                // DEV MARKER PLACEMENT
+                                // ══════════════════════════════════════════════
+                                var devPlacingMode = false;
 
-            <!-- ══════════ ROUTE SIMULATOR ══════════ -->
-            <div id="sim-panel" class="glass-card rounded-[1.5rem] border-purple-500/15 overflow-y-auto  hidden">
-                <div class="p-4 border-b border-[#1e1e1e]">
-                    <div class="flex items-center gap-2.5 mb-1.5">
-                        <div class="w-7 h-7 bg-purple-500/10 rounded-lg flex items-center justify-center border border-purple-500/20">
-                            <i class="fa-solid fa-route text-purple-400 text-[10px]"></i>
-                        </div>
-                        <h3 class="text-[10px] font-bold uppercase tracking-[0.15em] text-purple-400">Route Simulator</h3>
-                    </div>
-                    <p class="text-[10px] text-[#555] leading-relaxed" id="sim-status-text">
-                        Click the route icon on a marker to begin.
-                    </p>
-                </div>
+                                function captureMapCenter() {
+                                    var m = window.map;
+                                    if (!m || typeof m.getCanvas !== 'function') return;
+                                    var c = m.getCenter();
+                                    document.getElementById('dev-marker-lat').value = c.lat;
+                                    document.getElementById('dev-marker-lng').value = c.lng;
+                                }
 
-                <div id="sim-marker-info" class="hidden p-4 border-b border-[#1e1e1e]">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <div class="w-6 h-6 rounded-md bg-blue-500/15 flex items-center justify-center">
-                                <i class="fa-solid fa-bus text-blue-400 text-[9px]" id="sim-marker-icon"></i>
-                            </div>
-                            <span class="text-[11px] font-semibold text-[#ddd]" id="sim-marker-name">—</span>
-                        </div>
-                        <button onclick="simCancel()" class="text-[#555] hover:text-red-400 transition text-xs" title="Cancel">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                </div>
+                                function enableMarkerPlacement() {
+                                    var m = window.map;
+                                    if (!m || typeof m.getCanvas !== 'function') return;
+                                    devPlacingMode = !devPlacingMode;
+                                    var btn = document.getElementById('dev-place-btn');
+                                    if (devPlacingMode) {
+                                        btn.classList.add('placing');
+                                        m.getCanvas().style.cursor = 'crosshair';
+                                    } else {
+                                        btn.classList.remove('placing');
+                                        m.getCanvas().style.cursor = '';
+                                    }
+                                }
 
-                <div id="sim-waypoints-section" class="hidden">
-                    <div class="px-4 pt-3 pb-2 flex items-center justify-between">
-                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">
-                            Waypoints <span id="sim-wp-count" class="text-purple-400">0</span>
-                        </span>
-                        <button onclick="simClearWaypoints()" class="text-[9px] font-bold uppercase tracking-wider text-[#444] hover:text-red-400 transition">Clear</button>
-                    </div>
-                    <div id="sim-waypoint-list" class="px-4 pb-3 space-y-1 max-h-32 overflow-y-auto custom-scroll"></div>
-                </div>
+                                function attachDevMarkerClick() {
+                                    var m = window.map;
+                                    if (!m || typeof m.on !== 'function') {
+                                        setTimeout(attachDevMarkerClick, 200);
+                                        return;
+                                    }
+                                    m.on('click', function(e) {
+                                        // Dev placement takes priority
+                                        if (devPlacingMode) {
+                                            devPlacingMode = false;
+                                            var btn = document.getElementById('dev-place-btn');
+                                            if (btn) btn.classList.remove('placing');
+                                            m.getCanvas().style.cursor = '';
+                                            document.getElementById('dev-marker-lat').value = e.lngLat.lat;
+                                            document.getElementById('dev-marker-lng').value = e.lngLat.lng;
+                                            document.getElementById('dev-marker-form').submit();
+                                            return;
+                                        }
+                                        // Simulator waypoint placement
+                                        simHandleMapClick(e);
+                                    });
+                                    console.log('[DEV] Click handler attached');
+                                }
 
-                <div id="sim-speed-section" class="hidden px-4 py-3 border-t border-[#1e1e1e]">
-    <div class="flex items-center justify-between mb-2">
-        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#555]">Speed</span>
-        <span class="text-[10px] font-bold text-purple-400 font-mono" id="sim-kph-display">30 km/h</span>
-    </div>
-    <input type="range" id="sim-kph-slider" min="15" max="60" value="30" step="5"
-        class="w-full h-1 bg-[#1a1a1a] rounded-full appearance-none cursor-pointer accent-purple-500">
-    <div class="flex justify-between mt-1.5">
-        <span class="text-[8px] text-[#333] font-mono">15</span>
-        <span class="text-[8px] text-[#333] font-mono">60</span>
-    </div>
-</div>
-                <div id="sim-actions" class="hidden p-4 border-t border-[#1e1e1e] space-y-2">
-                    <div id="sim-actions-place" class="hidden space-y-2">
-                        <button onclick="simFinishPlacing()"
-                            class="w-full py-2.5 rounded-xl bg-purple-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-purple-700 transition flex items-center justify-center gap-2 active:scale-[0.98]">
-                            <i class="fa-solid fa-check text-[9px]"></i> Done Placing
-                        </button>
-                        <p class="text-[9px] text-[#333] text-center">Click on the map to add waypoints</p>
-                    </div>
-                    <div id="sim-actions-ready" class="hidden">
-                        <button onclick="simStart()"
-                            class="w-full py-2.5 rounded-xl bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition flex items-center justify-center gap-2 active:scale-[0.98]">
-                            <i class="fa-solid fa-play text-[9px]"></i> Start Simulation
-                        </button>
-                    </div>
-                    <div id="sim-actions-running" class="hidden flex gap-2">
-                        <button onclick="simTogglePause()"
-                            class="flex-1 py-2.5 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-[#ddd] text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] transition flex items-center justify-center gap-2 active:scale-[0.98]">
-                            <i class="fa-solid fa-pause text-[9px]" id="sim-pause-icon"></i>
-                            <span id="sim-pause-label">Pause</span>
-                        </button>
-                        <button onclick="simStop()"
-                            class="flex-1 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500/20 transition flex items-center justify-center gap-2 active:scale-[0.98]">
-                            <i class="fa-solid fa-stop text-[9px]"></i> Stop
-                        </button>
-                    </div>
-                </div>
-            </div>
+                                attachDevMarkerClick();
 
-        </div>
+                                // ══════════════════════════════════════════════
+                                // DUMMY MARKER RENDERING
+                                // ══════════════════════════════════════════════
+                                window.dummyMapMarkers = window.dummyMapMarkers || {};
+                                window.driverPrivacyZones = window.driverPrivacyZones || {};
+                                window.dummyMapPopups = window.dummyMapPopups || {};   // ← ADD
 
-        <script>
-            // ══════════════════════════════════════════════
-            // DEV MARKER PLACEMENT
-            // ══════════════════════════════════════════════
-            var devPlacingMode = false;
+                                function renderDummyMarkers(markers) {
+                                    var m = window.map;
+                                    if (!m) return;
 
-            function captureMapCenter() {
-                var m = window.map;
-                if (!m || typeof m.getCanvas !== 'function') return;
-                var c = m.getCenter();
-                document.getElementById('dev-marker-lat').value = c.lat;
-                document.getElementById('dev-marker-lng').value = c.lng;
-            }
+                                    Object.keys(window.dummyMapMarkers).forEach(function(id) {
+                                        window.dummyMapMarkers[id].remove();
+                                    });
+                                    window.dummyMapMarkers = {};
+                                    window.dummyMapPopups = {};
+                                    window.driverPrivacyZones = {};
 
-            function enableMarkerPlacement() {
-                var m = window.map;
-                if (!m || typeof m.getCanvas !== 'function') return;
-                devPlacingMode = !devPlacingMode;
-                var btn = document.getElementById('dev-place-btn');
-                if (devPlacingMode) {
-                    btn.classList.add('placing');
-                    m.getCanvas().style.cursor = 'crosshair';
-                } else {
-                    btn.classList.remove('placing');
-                    m.getCanvas().style.cursor = '';
-                }
-            }
+                                    if (!markers || !markers.length) {
+                                        if (window.updatePrivacyZones) window.updatePrivacyZones();
+                                        return;
+                                    }
 
-            function attachDevMarkerClick() {
-                var m = window.map;
-                if (!m || typeof m.on !== 'function') {
-                    setTimeout(attachDevMarkerClick, 200);
-                    return;
-                }
-                m.on('click', function(e) {
-                    // Dev placement takes priority
-                    if (devPlacingMode) {
-                        devPlacingMode = false;
-                        var btn = document.getElementById('dev-place-btn');
-                        if (btn) btn.classList.remove('placing');
-                        m.getCanvas().style.cursor = '';
-                        document.getElementById('dev-marker-lat').value = e.lngLat.lat;
-                        document.getElementById('dev-marker-lng').value = e.lngLat.lng;
-                        document.getElementById('dev-marker-form').submit();
-                        return;
-                    }
-                    // Simulator waypoint placement
-                    simHandleMapClick(e);
-                });
-                console.log('[DEV] Click handler attached');
-            }
+                                    var isDriver = window.userRole === 'driver';
 
-            attachDevMarkerClick();
+                                    markers.forEach(function(d) {
+                                        var isMarkerActive = d.marker_status === 'active';
 
-            // ══════════════════════════════════════════════
-            // DUMMY MARKER RENDERING
-            // ══════════════════════════════════════════════
-            window.dummyMapMarkers = window.dummyMapMarkers || {};
-            window.driverPrivacyZones = window.driverPrivacyZones || {};
+                                        var el = document.createElement('div');
+                                        el.className = 'custom-vehicle-marker' + (isMarkerActive ? ' bus-pulse' : '');
+                                        if (!isMarkerActive) {
+                                            el.style.background = 'linear-gradient(135deg, #444, #333)';
+                                            el.style.borderColor = '#555';
+                                            el.style.boxShadow = '0 0 10px rgba(100,100,100,0.2)';
+                                        }
+                                        el.innerHTML = '<i class="fa-solid fa-bus"></i>';
 
-            function renderDummyMarkers(markers) {
-                var m = window.map;
-                if (!m) return;
+                                        var popup;
+                                        if (isDriver) {
+                                            var isDriverActive = d.driver_status === 'active';
+                                            var statusBg = isDriverActive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+                                            var statusBorder = isDriverActive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
+                                            var statusColor = isDriverActive ? '#34d399' : '#ef4444';
+                                            var statusLabel = isDriverActive ? 'Available' : 'Unavailable';
+                                            var statusIcon = isDriverActive ? 'fa-circle-check' : 'fa-circle-xmark';
 
-                Object.keys(window.dummyMapMarkers).forEach(function(id) {
-                    window.dummyMapMarkers[id].remove();
-                });
-                window.dummyMapMarkers = {};
-                window.driverPrivacyZones = {};
+                                            popup = new maplibregl.Popup({
+                                                offset: 20,
+                                                closeButton: false,
+                                                maxWidth: '220px'
+                                            }).setHTML(
+                                                '<div style="background:#111;border:1px solid #222;border-radius:16px;padding:16px;font-family:Inter,sans-serif;">' +
+                                                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
+                                                '<div style="width:36px;height:36px;border-radius:12px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+                                                '<i class="fa-solid fa-bus" style="font-size:13px;color:#60a5fa;"></i></div>' +
+                                                '<div style="min-width:0;"><p style="font-size:12px;font-weight:700;color:#eee;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+                                                d.name + '</p>' +
+                                                '<p style="font-size:9px;color:#555;margin:2px 0 0;">Driver</p></div></div>' +
+                                                '<div style="height:1px;background:#1e1e1e;margin:0 0 12px;"></div>' +
+                                                '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:' +
+                                                statusBg + ';border:1px solid ' + statusBorder + ';margin-bottom:8px;">' +
+                                                '<div style="display:flex;align-items:center;gap:6px;"><i class="fa-solid ' +
+                                                statusIcon + '" style="font-size:10px;color:' + statusColor + ';"></i>' +
+                                                '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:' +
+                                                statusColor + ';">' + statusLabel + '</span></div>' +
+                                                '<span style="font-size:7px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">Driver Status</span></div>' +
+                                                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
+                                                '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Plate</span>' +
+                                                '<span style="font-size:10px;color:#888;font-weight:600;font-family:monospace;">' + d
+                                                .plate_number + '</span></div>' +
+                                                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
+                                                '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Type</span>' +
+                                                '<span style="font-size:10px;color:#888;font-weight:600;">' + d.vehicle_type +
+                                                '</span></div>' +
+                                                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;">' +
+                                                '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Route</span>' +
+                                                '<span style="font-size:10px;color:#888;font-weight:600;">' + d.route +
+                                                '</span></div></div>'
+                                            );
+                                        } else {
+                                            popup = new maplibregl.Popup({
+                                                    offset: 20,
+                                                    closeButton: false,
+                                                    maxWidth: '220px'
+                                                })
+                                                .setHTML(window.createPrivacyPopup(d));
+                                        }
 
-                if (!markers || !markers.length) {
-                    if (window.updatePrivacyZones) window.updatePrivacyZones();
-                    return;
-                }
+                                        var mapMarker = new maplibregl.Marker({
+                                                element: el
+                                            })
+                                            .setLngLat([d.lng, d.lat])
+                                            .setPopup(popup)
+                                            .addTo(m);
 
-                var isDriver = window.userRole === 'driver';
+                                        window.dummyMapMarkers[d.id] = mapMarker;
 
-                markers.forEach(function(d) {
-                    var isMarkerActive = d.marker_status === 'active';
+                                        if (!isDriver && d.privacy_radius) {
+                                            window.driverPrivacyZones[d.id] = {
+                                                lat: d.lat,
+                                                lng: d.lng,
+                                                radius: d.privacy_radius
+                                            };
+                                        }
+                                    });
 
-                    var el = document.createElement('div');
-                    el.className = 'custom-vehicle-marker' + (isMarkerActive ? ' bus-pulse' : '');
-                    if (!isMarkerActive) {
-                        el.style.background = 'linear-gradient(135deg, #444, #333)';
-                        el.style.borderColor = '#555';
-                        el.style.boxShadow = '0 0 10px rgba(100,100,100,0.2)';
-                    }
-                    el.innerHTML = '<i class="fa-solid fa-bus"></i>';
+                                    if (!isDriver && window.updatePrivacyZones) {
+                                        window.updatePrivacyZones();
+                                    }
+                                    // Refresh ETA badges after markers are (re)rendered
+                                    if (window.ETA && window.userRole !== 'driver') {
+                                        setTimeout(function() {
+                                            window.ETA.refresh();
+                                        }, 100);
+                                    }
+                                }
 
-                    var popup;
-                    if (isDriver) {
-                        var isDriverActive = d.driver_status === 'active';
-                        var statusBg = isDriverActive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
-                        var statusBorder = isDriverActive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
-                        var statusColor = isDriverActive ? '#34d399' : '#ef4444';
-                        var statusLabel = isDriverActive ? 'Available' : 'Unavailable';
-                        var statusIcon = isDriverActive ? 'fa-circle-check' : 'fa-circle-xmark';
+                                function loadDummyMarkers() {
+                                    var m = window.map;
+                                    if (!m || typeof m.on !== 'function') {
+                                        setTimeout(loadDummyMarkers, 200);
+                                        return;
+                                    }
+                                    console.log('[DEV] Map ready, fetching markers...');
+                                    fetch('/api/markers?t=' + Date.now())
+                                        .then(function(r) {
+                                            return r.json();
+                                        })
+                                        .then(function(markers) {
+                                            renderDummyMarkers(markers);
+                                        })
+                                        .catch(function(err) {
+                                            console.log('[DEV] Fetch error:', err);
+                                        });
+                                }
 
-                        popup = new maplibregl.Popup({ offset: 20, closeButton: false, maxWidth: '220px' }).setHTML(
-                            '<div style="background:#111;border:1px solid #222;border-radius:16px;padding:16px;font-family:Inter,sans-serif;">' +
-                            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
-                            '<div style="width:36px;height:36px;border-radius:12px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
-                            '<i class="fa-solid fa-bus" style="font-size:13px;color:#60a5fa;"></i></div>' +
-                            '<div style="min-width:0;"><p style="font-size:12px;font-weight:700;color:#eee;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + d.name + '</p>' +
-                            '<p style="font-size:9px;color:#555;margin:2px 0 0;">Driver</p></div></div>' +
-                            '<div style="height:1px;background:#1e1e1e;margin:0 0 12px;"></div>' +
-                            '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:' + statusBg + ';border:1px solid ' + statusBorder + ';margin-bottom:8px;">' +
-                            '<div style="display:flex;align-items:center;gap:6px;"><i class="fa-solid ' + statusIcon + '" style="font-size:10px;color:' + statusColor + ';"></i>' +
-                            '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:' + statusColor + ';">' + statusLabel + '</span></div>' +
-                            '<span style="font-size:7px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">Driver Status</span></div>' +
-                            '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
-                            '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Plate</span>' +
-                            '<span style="font-size:10px;color:#888;font-weight:600;font-family:monospace;">' + d.plate_number + '</span></div>' +
-                            '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
-                            '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Type</span>' +
-                            '<span style="font-size:10px;color:#888;font-weight:600;">' + d.vehicle_type + '</span></div>' +
-                            '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;">' +
-                            '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Route</span>' +
-                            '<span style="font-size:10px;color:#888;font-weight:600;">' + d.route + '</span></div></div>'
-                        );
-                    } else {
-                        popup = new maplibregl.Popup({ offset: 20, closeButton: false, maxWidth: '220px' })
-                            .setHTML(window.createPrivacyPopup(d));
-                    }
+                                loadDummyMarkers();
 
-                    var mapMarker = new maplibregl.Marker({ element: el })
-                        .setLngLat([d.lng, d.lat])
-                        .setPopup(popup)
-                        .addTo(m);
+                                // ══════════════════════════════════════════════
+                                // ETA ENGINE — Commuter → PUJ
+                                // ══════════════════════════════════════════════
+                                window.ETA = {
+                                    // ── State ──
+                                    userLat: null,
+                                    userLng: null,
+                                    userAccuracy: null,
+                                    watchId: null,
+                                    _debounceTimer: null,
+                                    _periodicTimer: null,
+                                    _ready: false,
 
-                    window.dummyMapMarkers[d.id] = mapMarker;
+                                    // ── Config ──
+                                    AVG_SPEED_KPH: 20, // Average PUJ speed (urban Cebu)
+                                    PRIVACY_BUFFER_SEC: 30, // Extra seconds for privacy uncertainty
+                                    BADGE_MAX_DIST_KM: 5, // Don't show badge beyond this
+                                    INDICATOR_MAX_DIST_KM: 10, // Don't show floating indicator beyond this
+                                    DEBOUNCE_MS: 2000, // Debounce GPS updates
+                                    PERIODIC_MS: 15000, // Periodic refresh interval
 
-                    if (!isDriver && d.privacy_radius) {
-                        window.driverPrivacyZones[d.id] = {
-                            lat: d.lat,
-                            lng: d.lng,
-                            radius: d.privacy_radius
-                        };
-                    }
-                });
+                                    // ── Haversine (km) ──
+                                    haversine: function(lat1, lon1, lat2, lon2) {
+                                        var R = 6371;
+                                        var dLat = (lat2 - lat1) * Math.PI / 180;
+                                        var dLon = (lon2 - lon1) * Math.PI / 180;
+                                        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                                            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                                            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                                        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                                    },
 
-                if (!isDriver && window.updatePrivacyZones) {
-                    window.updatePrivacyZones();
-                }
-            }
+                                    // ── Calculate ETA for one vehicle ──
+                                    calc: function(vLat, vLng, privacyR) {
+                                        if (this.userLat === null || !vLat || !vLng) return null;
 
-            function loadDummyMarkers() {
-                var m = window.map;
-                if (!m || typeof m.on !== 'function') {
-                    setTimeout(loadDummyMarkers, 200);
-                    return;
-                }
-                console.log('[DEV] Map ready, fetching markers...');
-                fetch('/api/markers?t=' + Date.now())
-                    .then(function(r) { return r.json(); })
-                    .then(function(markers) { renderDummyMarkers(markers); })
-                    .catch(function(err) { console.log('[DEV] Fetch error:', err); });
-            }
+                                        var distKm = this.haversine(this.userLat, this.userLng, vLat, vLng);
 
-            loadDummyMarkers();
+                                        // Privacy buffer: subtract half the privacy radius (optimistic estimate)
+                                        var bufferKm = (privacyR || 200) / 2000;
+                                        var effDistKm = Math.max(0, distKm - bufferKm);
 
-            // ══════════════════════════════════════════════
-            // ROUTE SIMULATOR
-            // ══════════════════════════════════════════════
+                                        // Time in minutes at average speed
+                                        var timeMin = (effDistKm / this.AVG_SPEED_KPH) * 60;
+                                        var bufferMin = this.PRIVACY_BUFFER_SEC / 60;
 
-var sim = {
-    mode: 'idle',
-    markerId: null,
-    markerEl: null,
-    originalLngLat: null,
-    waypoints: [],
-    waypointMarkers: [],
-    routeLine: false,
-    segmentIndex: 0,
-    segmentProgress: 0,
-    speed: 1,          // multiplier (½× to 8×)
-    kph: 30,           // base speed in km/h
-    animFrame: null,
-    lastTime: null
-};
+                                        return {
+                                            distKm: distKm,
+                                            effDistKm: effDistKm,
+                                            timeMin: timeMin,
+                                            low: Math.max(1, Math.round(timeMin)),
+                                            high: Math.max(2, Math.round(timeMin + bufferMin * 2)),
+                                            display: Math.max(1, Math.ceil(timeMin + bufferMin)),
+                                            here: distKm < 0.05 // ~50m
+                                        };
+                                    },
 
-            function simInitiate(markerId, markerName, markerIcon, markerLng, markerLat) {
-                if (sim.mode === 'running' || sim.mode === 'paused') simStop();
-                simCleanTemp();
+                                    // ── Format ETA for display ──
+                                    fmt: function(e) {
+                                        if (!e) return {
+                                            text: '--',
+                                            cls: 'eta-unknown'
+                                        };
+                                        if (e.here) return {
+                                            text: 'Arriving',
+                                            cls: 'eta-here'
+                                        };
+                                        if (e.display <= 1) return {
+                                            text: '< 1 min',
+                                            cls: 'eta-soon'
+                                        };
+                                        if (e.display <= 3) return {
+                                            text: e.low + '–' + e.high + ' min',
+                                            cls: 'eta-soon'
+                                        };
+                                        if (e.display <= 10) return {
+                                            text: '~' + e.display + ' min',
+                                            cls: 'eta-near'
+                                        };
+                                        return {
+                                            text: '~' + e.display + ' min',
+                                            cls: 'eta-far'
+                                        };
+                                    },
 
-                sim.markerId = markerId;
-                sim.originalLngLat = [markerLng, markerLat];
-                sim.waypoints = [[markerLng, markerLat]];
-                sim.segmentIndex = 0;
-                sim.segmentProgress = 0;
+                                    fmtDist: function(km) {
+                                        if (km < 0.1) return '< 100m';
+                                        if (km < 1) return Math.round(km * 1000) + 'm';
+                                        return km.toFixed(1) + ' km';
+                                    },
 
-                document.getElementById('sim-panel').classList.remove('hidden');
-                document.getElementById('sim-marker-info').classList.remove('hidden');
-                document.getElementById('sim-marker-name').textContent = markerName;
-                document.getElementById('sim-marker-icon').className = 'fa-solid ' + markerIcon + ' text-blue-400 text-[9px]';
+                                    // ── Color for a given cls ──
+                                    colorFor: function(cls) {
+                                        switch (cls) {
+                                            case 'eta-here':
+                                                return '#34d399';
+                                            case 'eta-soon':
+                                                return '#fbbf24';
+                                            case 'eta-near':
+                                                return '#fb923c';
+                                            default:
+                                                return '#6b7280';
+                                        }
+                                    },
 
-                simSetMode('placing');
-            }
+                                    // ── Start GPS tracking ──
+                                    // ── Start GPS tracking ──
+                                    start: function() {
+                                        if (this._ready || window.userRole === 'driver') return;
+                                        if (!navigator.geolocation) {
+                                            console.log('[ETA] Geolocation not supported');
+                                            return;
+                                        }
+                                        this._ready = true;
+                                        var self = this;
 
-            function simSetMode(mode) {
-                sim.mode = mode;
+                                        console.log('[ETA] Starting location tracking…');
 
-                var statusText = document.getElementById('sim-status-text');
-                var wpSection = document.getElementById('sim-waypoints-section');
-                var speedSection = document.getElementById('sim-speed-section');
-                var actions = document.getElementById('sim-actions');
-                var actionPlace = document.getElementById('sim-actions-place');
-                var actionReady = document.getElementById('sim-actions-ready');
-                var actionRunning = document.getElementById('sim-actions-running');
+                                        // 1) Immediate single fix so we don't wait for the first watch callback
+                                        navigator.geolocation.getCurrentPosition(
+                                            function(pos) {
+                                                self._receivePosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+                                            },
+                                            function() {}, // silent fail — watchPosition may still succeed
+                                            {
+                                                enableHighAccuracy: true,
+                                                maximumAge: 15000,
+                                                timeout: 10000
+                                            }
+                                        );
 
-                actionPlace.classList.add('hidden');
-                actionReady.classList.add('hidden');
-                actionRunning.classList.add('hidden');
-                actions.classList.add('hidden');
-                wpSection.classList.add('hidden');
-                speedSection.classList.add('hidden');
-                document.getElementById('map').classList.remove('sim-placeholder-mode');
+                                        // 2) Continuous watch for live updates
+                                        this.watchId = navigator.geolocation.watchPosition(
+                                            function(pos) {
+                                                self._receivePosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+                                            },
+                                            function(err) {
+                                                console.log('[ETA] Watch error:', err.message);
+                                            }, {
+                                                enableHighAccuracy: true,
+                                                maximumAge: 10000,
+                                                timeout: 15000
+                                            }
+                                        );
 
-                switch (mode) {
-                    case 'placing':
-                        statusText.textContent = 'Click on the map to add waypoints for the route.';
-                        wpSection.classList.remove('hidden');
-                        actions.classList.remove('hidden');
-                        actionPlace.classList.remove('hidden');
-                        document.getElementById('map').classList.add('sim-placeholder-mode');
-                        break;
-                    case 'ready':
-                        statusText.textContent = 'Route set with ' + (sim.waypoints.length - 1) + ' stop(s). Ready to simulate.';
-                        wpSection.classList.remove('hidden');
-                        speedSection.classList.remove('hidden');
-                        actions.classList.remove('hidden');
-                        actionReady.classList.remove('hidden');
-                        break;
-                    case 'running':
-                        statusText.textContent = 'Simulating...';
-                        wpSection.classList.remove('hidden');
-                        speedSection.classList.remove('hidden');
-                        actions.classList.remove('hidden');
-                        actionRunning.classList.remove('hidden');
-                        document.getElementById('sim-pause-icon').className = 'fa-solid fa-pause text-[9px]';
-                        document.getElementById('sim-pause-label').textContent = 'Pause';
-                        break;
-                    case 'paused':
-                        statusText.textContent = 'Paused.';
-                        wpSection.classList.remove('hidden');
-                        speedSection.classList.remove('hidden');
-                        actions.classList.remove('hidden');
-                        actionRunning.classList.remove('hidden');
-                        document.getElementById('sim-pause-icon').className = 'fa-solid fa-play text-[9px]';
-                        document.getElementById('sim-pause-label').textContent = 'Resume';
-                        break;
-                    case 'idle':
-                        statusText.textContent = 'Click the route icon on a marker to begin.';
-                        break;
-                }
+                                        // 3) Periodic refresh (catches vehicle movements even if user is stationary)
+                                        this._periodicTimer = setInterval(function() {
+                                            self.refresh();
+                                        }, this.PERIODIC_MS);
+                                    },
 
-                simRenderWaypointList();
-            }
+                                    // ── Called by GeolocateControl event OR our own watch ──
+                                    _receivePosition: function(lat, lng, accuracy) {
+                                        var changed = (this.userLat !== lat || this.userLng !== lng);
+                                        this.userLat = lat;
+                                        this.userLng = lng;
+                                        this.userAccuracy = accuracy;
+                                        if (changed) {
+                                            this._scheduleUpdate();
+                                        }
+                                    },
 
-            function simHandleMapClick(e) {
-                if (sim.mode !== 'placing') return;
-                var lng = e.lngLat.lng;
-                var lat = e.lngLat.lat;
-                sim.waypoints.push([lng, lat]);
-                simAddWaypointDot(lng, lat);
-                simUpdateRouteLine();
-                simRenderWaypointList();
-            }
+                                    stop: function() {
+                                        if (this.watchId !== null) {
+                                            navigator.geolocation.clearWatch(this.watchId);
+                                            this.watchId = null;
+                                        }
+                                        clearTimeout(this._debounceTimer);
+                                        clearInterval(this._periodicTimer);
+                                        this._ready = false;
+                                    },
 
-            function simAddWaypointDot(lng, lat) {
-                var el = document.createElement('div');
-                el.className = 'sim-waypoint-dot' + (sim.waypointMarkers.length === 0 ? ' first' : '');
-                var m = new maplibregl.Marker({ element: el, anchor: 'center' })
-                    .setLngLat([lng, lat])
-                    .addTo(window.map);
-                sim.waypointMarkers.push(m);
-            }
+                                    _scheduleUpdate: function() {
+                                        var self = this;
+                                        clearTimeout(this._debounceTimer);
+                                        this._debounceTimer = setTimeout(function() {
+                                            self.refresh();
+                                        }, this.DEBOUNCE_MS);
+                                    },
 
-            function simUpdateRouteLine() {
-                if (sim.routeLine) {
-                    try { window.map.removeLayer('sim-route-line'); } catch(e) {}
-                    try { window.map.removeSource('sim-route-source'); } catch(e) {}
-                    sim.routeLine = false;
-                }
-                if (sim.waypoints.length < 2) return;
+                                    // ── Main refresh ──
+                                    refresh: function() {
+                                        if (this.userLat === null) return;
+                                        this._updateBadges();
+                                        this._updatePopups();
+                                        this._updateNearestIndicator();
+                                    },
 
-                window.map.addSource('sim-route-source', {
-                    type: 'geojson',
-                    data: { type: 'Feature', geometry: { type: 'LineString', coordinates: sim.waypoints.slice() } }
-                });
-                window.map.addLayer({
-                    id: 'sim-route-line',
-                    type: 'line',
-                    source: 'sim-route-source',
-                    layout: { 'line-join': 'round', 'line-cap': 'round' },
-                    paint: { 'line-color': '#a78bfa', 'line-width': 3, 'line-opacity': 0.6, 'line-dasharray': [2, 2] }
-                });
-                sim.routeLine = true;
-            }
+                                    // ── Collect all vehicle markers ──
+                                    _allMarkers: function() {
+                                        var all = {};
+                                        if (window.dummyMapMarkers) Object.assign(all, window.dummyMapMarkers);
+                                        if (window.echoMarkers) Object.assign(all, window.echoMarkers);
+                                        return all;
+                                    },
 
-            function simRenderWaypointList() {
-                var list = document.getElementById('sim-waypoint-list');
-                var count = document.getElementById('sim-wp-count');
-                count.textContent = Math.max(0, sim.waypoints.length - 1);
-                list.innerHTML = '';
+                                    // ── Update ETA badges on marker elements ──
+_updateBadges: function() {
+    var markers = this._allMarkers();
+    var self = this;
 
-                sim.waypoints.forEach(function(wp, i) {
-                    var row = document.createElement('div');
-                    row.className = 'flex items-center gap-2 py-1.5 px-2 rounded-lg ' + (i === 0 ? 'bg-emerald-500/5' : 'bg-purple-500/5');
-                    var removeBtn = i > 0
-                        ? '<button onclick="simRemoveWaypoint(' + i + ')" class="ml-auto text-[#444] hover:text-red-400 transition"><i class="fa-solid fa-xmark text-[8px]"></i></button>'
-                        : '';
-                    row.innerHTML =
-                        '<span class="w-4 h-4 rounded-full text-[7px] font-bold flex items-center justify-center ' +
-                        (i === 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-purple-500/20 text-purple-400') + '">' + i + '</span>' +
-                        '<span class="text-[10px] text-[#888] font-mono">' + wp[1].toFixed(5) + ', ' + wp[0].toFixed(5) + '</span>' +
-                        removeBtn;
-                    list.appendChild(row);
-                });
-            }
+    Object.keys(markers).forEach(function(id) {
+        var marker = markers[id];
+        var el = marker.getElement();
+        if (!el) return;
 
-            function simRemoveWaypoint(index) {
-                if (index <= 0 || sim.mode === 'running' || sim.mode === 'paused') return;
-                sim.waypoints.splice(index, 1);
-                sim.waypointMarkers.forEach(function(m) { m.remove(); });
-                sim.waypointMarkers = [];
-                sim.waypoints.forEach(function(wp) { simAddWaypointDot(wp[0], wp[1]); });
-                simUpdateRouteLine();
-                simRenderWaypointList();
-            }
+        var old = el.querySelector('.eta-badge');
+        if (old) old.remove();
 
-            function simClearWaypoints() {
-                if (sim.mode === 'running' || sim.mode === 'paused') return;
-                sim.waypoints = [sim.originalLngLat];
-                sim.waypointMarkers.forEach(function(m) { m.remove(); });
-                sim.waypointMarkers = [];
-                if (sim.routeLine) {
-                    try { window.map.removeLayer('sim-route-line'); } catch(e) {}
-                    try { window.map.removeSource('sim-route-source'); } catch(e) {}
-                    sim.routeLine = false;
-                }
-                simRenderWaypointList();
-            }
-
-            function simFinishPlacing() {
-                if (sim.waypoints.length < 2) {
-                    document.getElementById('sim-status-text').textContent = 'Add at least one waypoint before starting.';
-                    return;
-                }
-                simSetMode('ready');
-            }
-
-            // Speed buttons
-            document.getElementById('sim-speed-btns').addEventListener('click', function(e) {
-                var btn = e.target.closest('.sim-speed-btn');
-                if (!btn) return;
-                sim.speed = parseFloat(btn.dataset.speed);
-                var all = document.querySelectorAll('.sim-speed-btn');
-                for (var i = 0; i < all.length; i++) all[i].classList.remove('active');
-                btn.classList.add('active');
-            });
-
-            function simStart() {
-                if (sim.waypoints.length < 2) return;
-
-                sim.markerEl = window.dummyMapMarkers[sim.markerId] || null;
-                if (sim.markerEl) {
-                    var el = sim.markerEl.getElement();
-                    if (el) el.classList.add('sim-marker-active');
-                }
-
-                sim.segmentIndex = 0;
-                sim.segmentProgress = 0;
-                sim.lastTime = null;
-                simSetMode('running');
-                sim.animFrame = requestAnimationFrame(simTick);
-            }
-
-            function simTick(timestamp) {
-    if (sim.mode !== 'running') return;
-
-    if (!sim.lastTime) sim.lastTime = timestamp;
-    var deltaMs = timestamp - sim.lastTime;
-    sim.lastTime = timestamp;
-
-    var from = sim.waypoints[sim.segmentIndex];
-    var to = sim.waypoints[sim.segmentIndex + 1];
-    if (!to) { simComplete(); return; }
-
-    // Distance in km between the two waypoints
-    var dLng = to[0] - from[0];
-    var dLat = to[1] - from[1];
-    var distKm = haversine(from[1], from[0], to[1], to[0]);
-
-    if (distKm < 0.0001) {
-        // Waypoints are basically on top of each other, skip
-        sim.segmentProgress = 0;
-        sim.segmentIndex++;
-        if (sim.segmentIndex >= sim.waypoints.length - 1) sim.segmentIndex = 0;
-        sim.lastTime = null;
-        sim.animFrame = requestAnimationFrame(simTick);
-        return;
-    }
-
-    // How long this segment takes at current speed
-    var effectiveKph = sim.kph * sim.speed;
-    var segmentDurationMs = (distKm / effectiveKph) * 3600000;
-
-    sim.segmentProgress += deltaMs / segmentDurationMs;
-
-    if (sim.segmentProgress >= 1) {
-        sim.segmentProgress = 0;
-        sim.segmentIndex++;
-        if (sim.segmentIndex >= sim.waypoints.length - 1) {
-            sim.segmentIndex = 0;
+        var ll = marker.getLngLat();
+        var pr = 200;
+        if (window.driverPrivacyZones && window.driverPrivacyZones[id]) {
+            pr = window.driverPrivacyZones[id].radius || 200;
         }
-    }
 
-    var curFrom = sim.waypoints[sim.segmentIndex];
-    var curTo = sim.waypoints[sim.segmentIndex + 1];
-    if (!curTo) { simComplete(); return; }
+        var e = self.calc(ll.lat, ll.lng, pr);
+        if (!e || e.distKm > self.BADGE_MAX_DIST_KM) return;
 
-    var lng = curFrom[0] + (curTo[0] - curFrom[0]) * sim.segmentProgress;
-    var lat = curFrom[1] + (curTo[1] - curFrom[1]) * sim.segmentProgress;
+        var f = self.fmt(e);
+        var badge = document.createElement('div');
+        badge.className = 'eta-badge ' + f.cls;
+        badge.textContent = f.text;
+        el.appendChild(badge);
+    });
+},
 
-    if (sim.markerEl) {
-        sim.markerEl.setLngLat([lng, lat]);
-    }
+                                    // ── Update ETA sections inside open popups ──
+                                    _updatePopups: function() {
+    if (this.userLat === null) return;
+    var self = this;
 
-    sim.animFrame = requestAnimationFrame(simTick);
-}
+    // Dummy markers
+    Object.keys(window.dummyMapPopups || {}).forEach(function(id) {
+        var entry = window.dummyMapPopups[id];
+        if (!entry || !entry.popup) return;
+        var marker = window.dummyMapMarkers[id];
+        if (!marker) return;
+        var ll = marker.getLngLat();
+        var data = Object.assign({}, entry.data, { lat: ll.lat, lng: ll.lng });
+        entry.popup.setHTML(window.createPrivacyPopup(data));
+    });
 
-function haversine(lat1, lon1, lat2, lon2) {
-    var R = 6371;
-    var dLat = (lat2 - lat1) * Math.PI / 180;
-    var dLon = (lon2 - lon1) * Math.PI / 180;
-    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+    // Echo markers
+    Object.keys(window.echoPopups || {}).forEach(function(id) {
+        var entry = window.echoPopups[id];
+        if (!entry || !entry.popup) return;
+        entry.popup.setHTML(window.createPrivacyPopup(entry.data));
+    });
+},
+                                    // ── Update the floating nearest-vehicle indicator ──
+                                    _updateNearestIndicator: function() {
+                                        var indicator = document.getElementById('nearest-vehicle-indicator');
+                                        if (!indicator) return;
 
-            function simTogglePause() {
-                if (sim.mode === 'running') {
-                    sim.mode = 'paused';
-                    cancelAnimationFrame(sim.animFrame);
-                    simSetMode('paused');
-                } else if (sim.mode === 'paused') {
-                    sim.lastTime = null;
-                    simSetMode('running');
-                    sim.animFrame = requestAnimationFrame(simTick);
-                }
-            }
+                                        var markers = this._allMarkers();
+                                        var self = this;
+                                        var best = null;
+                                        var bestMarker = null;
 
-            function simStop() {
-                cancelAnimationFrame(sim.animFrame);
-                sim.animFrame = null;
+                                        Object.keys(markers).forEach(function(id) {
+                                            var ll = markers[id].getLngLat();
+                                            var pr = 200;
+                                            if (window.driverPrivacyZones && window.driverPrivacyZones[id]) {
+                                                pr = window.driverPrivacyZones[id].radius || 200;
+                                            }
+                                            var e = self.calc(ll.lat, ll.lng, pr);
+                                            if (e && (!best || e.distKm < best.distKm)) {
+                                                best = e;
+                                                bestMarker = markers[id];
+                                            }
+                                        });
 
-                if (sim.markerEl && sim.originalLngLat) {
-                    sim.markerEl.setLngLat(sim.originalLngLat);
-                    var el = sim.markerEl.getElement();
-                    if (el) el.classList.remove('sim-marker-active');
-                }
+                                        if (!best || best.distKm > this.INDICATOR_MAX_DIST_KM) {
+                                            indicator.classList.add('hidden');
+                                            return;
+                                        }
 
-                simCleanTemp();
-                simSetMode('idle');
-                document.getElementById('sim-panel').classList.add('hidden');
-            }
+                                        var f = self.fmt(best);
+                                        var color = self.colorFor(f.cls);
 
-            function simComplete() {
-                sim.segmentIndex = 0;
-                sim.segmentProgress = 0;
-                sim.lastTime = null;
-            }
+                                        indicator.classList.remove('hidden');
+                                        indicator.querySelector('.nv-time').textContent = f.text;
+                                        indicator.querySelector('.nv-time').style.color = color;
+                                        indicator.querySelector('.nv-distance').textContent = self.fmtDist(best.distKm);
+                                        indicator.querySelector('.nv-dot').style.background = color;
 
-            function simCancel() {
-                if (sim.mode === 'running' || sim.mode === 'paused') {
-                    cancelAnimationFrame(sim.animFrame);
-                    sim.animFrame = null;
-                }
-                if (sim.markerEl) {
-                    var el = sim.markerEl.getElement();
-                    if (el) el.classList.remove('sim-marker-active');
-                    if (sim.originalLngLat) sim.markerEl.setLngLat(sim.originalLngLat);
-                }
-                simCleanTemp();
-                simSetMode('idle');
-                document.getElementById('sim-panel').classList.add('hidden');
-            }
+                                        // Click → fly to nearest vehicle
+                                        indicator.onclick = function() {
+                                            if (!bestMarker) return;
+                                            var ll = bestMarker.getLngLat();
+                                            window.map.flyTo({
+                                                center: [ll.lng, ll.lat],
+                                                zoom: Math.max(window.map.getZoom(), 16),
+                                                duration: 800
+                                            });
+                                            // Also open the popup
+                                            if (bestMarker.togglePopup) bestMarker.togglePopup();
+                                        };
+                                    },
 
-            function simCleanTemp() {
-                sim.waypointMarkers.forEach(function(m) { m.remove(); });
-                sim.waypointMarkers = [];
-                sim.waypoints = [];
-                sim.originalLngLat = null;
-                sim.markerEl = null;
-                sim.markerId = null;
-                if (sim.routeLine) {
-                    try { window.map.removeLayer('sim-route-line'); } catch(e) {}
-                    try { window.map.removeSource('sim-route-source'); } catch(e) {}
-                    sim.routeLine = false;
-                }
+                                    // ── Public: get nearest vehicle data ──
+                                    getNearest: function() {
+                                        if (this.userLat === null) return null;
+                                        var markers = this._allMarkers();
+                                        var self = this;
+                                        var best = null;
+                                        Object.keys(markers).forEach(function(id) {
+                                            var ll = markers[id].getLngLat();
+                                            var pr = 200;
+                                            if (window.driverPrivacyZones && window.driverPrivacyZones[id]) {
+                                                pr = window.driverPrivacyZones[id].radius || 200;
+                                            }
+                                            var e = self.calc(ll.lat, ll.lng, pr);
+                                            if (e && (!best || e.distKm < best.distKm)) best = e;
+                                        });
+                                        return best;
+                                    },
+// ── Watch DOM for popup sections appearing ──
 
-var kphSlider = document.getElementById('sim-kph-slider');
-            var kphDisplay = document.getElementById('sim-kph-display');
-            if (kphSlider) {
-                kphSlider.addEventListener('input', function() {
-                    sim.kph = parseInt(this.value);
-                    kphDisplay.textContent = sim.kph + ' km/h';
-                });
-            }
-            }
-        </script>
-    @endenv
-@endif
+                                };
+
+                                // ── Auto-start for commuters ──
+                                if (window.userRole && window.userRole !== 'driver') {
+                                    window.ETA.start();
+                                }
+
+                                // ══════════════════════════════════════════════
+                                // ROUTE SIMULATOR
+                                // ══════════════════════════════════════════════
+
+                                var sim = {
+                                    mode: 'idle',
+                                    markerId: null,
+                                    markerEl: null,
+                                    originalLngLat: null,
+                                    waypoints: [],
+                                    waypointMarkers: [],
+                                    routeLine: false,
+                                    segmentIndex: 0,
+                                    segmentProgress: 0,
+                                    speed: 1, // multiplier (½× to 8×)
+                                    kph: 30, // base speed in km/h
+                                    animFrame: null,
+                                    lastTime: null
+                                };
+
+                                function simInitiate(markerId, markerName, markerIcon, markerLng, markerLat) {
+                                    if (sim.mode === 'running' || sim.mode === 'paused') simStop();
+                                    simCleanTemp();
+
+                                    sim.markerId = markerId;
+                                    sim.originalLngLat = [markerLng, markerLat];
+                                    sim.waypoints = [
+                                        [markerLng, markerLat]
+                                    ];
+                                    sim.segmentIndex = 0;
+                                    sim.segmentProgress = 0;
+
+                                    document.getElementById('sim-panel').classList.remove('hidden');
+                                    document.getElementById('sim-marker-info').classList.remove('hidden');
+                                    document.getElementById('sim-marker-name').textContent = markerName;
+                                    document.getElementById('sim-marker-icon').className = 'fa-solid ' + markerIcon + ' text-blue-400 text-[9px]';
+
+                                    simSetMode('placing');
+                                }
+
+                                function simSetMode(mode) {
+                                    sim.mode = mode;
+
+                                    var statusText = document.getElementById('sim-status-text');
+                                    var wpSection = document.getElementById('sim-waypoints-section');
+                                    var speedSection = document.getElementById('sim-speed-section');
+                                    var actions = document.getElementById('sim-actions');
+                                    var actionPlace = document.getElementById('sim-actions-place');
+                                    var actionReady = document.getElementById('sim-actions-ready');
+                                    var actionRunning = document.getElementById('sim-actions-running');
+
+                                    actionPlace.classList.add('hidden');
+                                    actionReady.classList.add('hidden');
+                                    actionRunning.classList.add('hidden');
+                                    actions.classList.add('hidden');
+                                    wpSection.classList.add('hidden');
+                                    speedSection.classList.add('hidden');
+                                    document.getElementById('map').classList.remove('sim-placeholder-mode');
+
+                                    switch (mode) {
+                                        case 'placing':
+                                            statusText.textContent = 'Click on the map to add waypoints for the route.';
+                                            wpSection.classList.remove('hidden');
+                                            actions.classList.remove('hidden');
+                                            actionPlace.classList.remove('hidden');
+                                            document.getElementById('map').classList.add('sim-placeholder-mode');
+                                            break;
+                                        case 'ready':
+                                            statusText.textContent = 'Route set with ' + (sim.waypoints.length - 1) +
+                                            ' stop(s). Ready to simulate.';
+                                            wpSection.classList.remove('hidden');
+                                            speedSection.classList.remove('hidden');
+                                            actions.classList.remove('hidden');
+                                            actionReady.classList.remove('hidden');
+                                            break;
+                                        case 'running':
+                                            statusText.textContent = 'Simulating...';
+                                            wpSection.classList.remove('hidden');
+                                            speedSection.classList.remove('hidden');
+                                            actions.classList.remove('hidden');
+                                            actionRunning.classList.remove('hidden');
+                                            document.getElementById('sim-pause-icon').className = 'fa-solid fa-pause text-[9px]';
+                                            document.getElementById('sim-pause-label').textContent = 'Pause';
+                                            break;
+                                        case 'paused':
+                                            statusText.textContent = 'Paused.';
+                                            wpSection.classList.remove('hidden');
+                                            speedSection.classList.remove('hidden');
+                                            actions.classList.remove('hidden');
+                                            actionRunning.classList.remove('hidden');
+                                            document.getElementById('sim-pause-icon').className = 'fa-solid fa-play text-[9px]';
+                                            document.getElementById('sim-pause-label').textContent = 'Resume';
+                                            break;
+                                        case 'idle':
+                                            statusText.textContent = 'Click the route icon on a marker to begin.';
+                                            break;
+                                    }
+
+                                    simRenderWaypointList();
+                                }
+
+                                function simHandleMapClick(e) {
+                                    if (sim.mode !== 'placing') return;
+                                    var lng = e.lngLat.lng;
+                                    var lat = e.lngLat.lat;
+                                    sim.waypoints.push([lng, lat]);
+                                    simAddWaypointDot(lng, lat);
+                                    simUpdateRouteLine();
+                                    simRenderWaypointList();
+                                }
+
+                                function simAddWaypointDot(lng, lat) {
+                                    var el = document.createElement('div');
+                                    el.className = 'sim-waypoint-dot' + (sim.waypointMarkers.length === 0 ? ' first' : '');
+                                    var m = new maplibregl.Marker({
+                                            element: el,
+                                            anchor: 'center'
+                                        })
+                                        .setLngLat([lng, lat])
+                                        .addTo(window.map);
+                                    sim.waypointMarkers.push(m);
+                                }
+
+                                function simUpdateRouteLine() {
+                                    if (sim.routeLine) {
+                                        try {
+                                            window.map.removeLayer('sim-route-line');
+                                        } catch (e) {}
+                                        try {
+                                            window.map.removeSource('sim-route-source');
+                                        } catch (e) {}
+                                        sim.routeLine = false;
+                                    }
+                                    if (sim.waypoints.length < 2) return;
+
+                                    window.map.addSource('sim-route-source', {
+                                        type: 'geojson',
+                                        data: {
+                                            type: 'Feature',
+                                            geometry: {
+                                                type: 'LineString',
+                                                coordinates: sim.waypoints.slice()
+                                            }
+                                        }
+                                    });
+                                    window.map.addLayer({
+                                        id: 'sim-route-line',
+                                        type: 'line',
+                                        source: 'sim-route-source',
+                                        layout: {
+                                            'line-join': 'round',
+                                            'line-cap': 'round'
+                                        },
+                                        paint: {
+                                            'line-color': '#a78bfa',
+                                            'line-width': 3,
+                                            'line-opacity': 0.6,
+                                            'line-dasharray': [2, 2]
+                                        }
+                                    });
+                                    sim.routeLine = true;
+                                }
+
+                                function simRenderWaypointList() {
+                                    var list = document.getElementById('sim-waypoint-list');
+                                    var count = document.getElementById('sim-wp-count');
+                                    count.textContent = Math.max(0, sim.waypoints.length - 1);
+                                    list.innerHTML = '';
+
+                                    sim.waypoints.forEach(function(wp, i) {
+                                        var row = document.createElement('div');
+                                        row.className = 'flex items-center gap-2 py-1.5 px-2 rounded-lg ' + (i === 0 ? 'bg-emerald-500/5' :
+                                            'bg-purple-500/5');
+                                        var removeBtn = i > 0 ?
+                                            '<button onclick="simRemoveWaypoint(' + i +
+                                            ')" class="ml-auto text-[#444] hover:text-red-400 transition"><i class="fa-solid fa-xmark text-[8px]"></i></button>' :
+                                            '';
+                                        row.innerHTML =
+                                            '<span class="w-4 h-4 rounded-full text-[7px] font-bold flex items-center justify-center ' +
+                                            (i === 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-purple-500/20 text-purple-400') + '">' +
+                                            i + '</span>' +
+                                            '<span class="text-[10px] text-[#888] font-mono">' + wp[1].toFixed(5) + ', ' + wp[0].toFixed(
+                                            5) + '</span>' +
+                                            removeBtn;
+                                        list.appendChild(row);
+                                    });
+                                }
+
+                                function simRemoveWaypoint(index) {
+                                    if (index <= 0 || sim.mode === 'running' || sim.mode === 'paused') return;
+                                    sim.waypoints.splice(index, 1);
+                                    sim.waypointMarkers.forEach(function(m) {
+                                        m.remove();
+                                    });
+                                    sim.waypointMarkers = [];
+                                    sim.waypoints.forEach(function(wp) {
+                                        simAddWaypointDot(wp[0], wp[1]);
+                                    });
+                                    simUpdateRouteLine();
+                                    simRenderWaypointList();
+                                }
+
+                                function simClearWaypoints() {
+                                    if (sim.mode === 'running' || sim.mode === 'paused') return;
+                                    sim.waypoints = [sim.originalLngLat];
+                                    sim.waypointMarkers.forEach(function(m) {
+                                        m.remove();
+                                    });
+                                    sim.waypointMarkers = [];
+                                    if (sim.routeLine) {
+                                        try {
+                                            window.map.removeLayer('sim-route-line');
+                                        } catch (e) {}
+                                        try {
+                                            window.map.removeSource('sim-route-source');
+                                        } catch (e) {}
+                                        sim.routeLine = false;
+                                    }
+                                    simRenderWaypointList();
+                                }
+
+                                function simFinishPlacing() {
+                                    if (sim.waypoints.length < 2) {
+                                        document.getElementById('sim-status-text').textContent = 'Add at least one waypoint before starting.';
+                                        return;
+                                    }
+                                    simSetMode('ready');
+                                }
+
+                                // Speed buttons
+                                document.getElementById('sim-speed-btns').addEventListener('click', function(e) {
+                                    var btn = e.target.closest('.sim-speed-btn');
+                                    if (!btn) return;
+                                    sim.speed = parseFloat(btn.dataset.speed);
+                                    var all = document.querySelectorAll('.sim-speed-btn');
+                                    for (var i = 0; i < all.length; i++) all[i].classList.remove('active');
+                                    btn.classList.add('active');
+                                });
+
+                                function simStart() {
+                                    if (sim.waypoints.length < 2) return;
+
+                                    sim.markerEl = window.dummyMapMarkers[sim.markerId] || null;
+                                    if (sim.markerEl) {
+                                        var el = sim.markerEl.getElement();
+                                        if (el) el.classList.add('sim-marker-active');
+                                    }
+
+                                    sim.segmentIndex = 0;
+                                    sim.segmentProgress = 0;
+                                    sim.lastTime = null;
+                                    simSetMode('running');
+                                    sim.animFrame = requestAnimationFrame(simTick);
+                                }
+
+                                function simTick(timestamp) {
+                                    if (sim.mode !== 'running') return;
+
+                                    if (!sim.lastTime) sim.lastTime = timestamp;
+                                    var deltaMs = timestamp - sim.lastTime;
+                                    sim.lastTime = timestamp;
+
+                                    var from = sim.waypoints[sim.segmentIndex];
+                                    var to = sim.waypoints[sim.segmentIndex + 1];
+                                    if (!to) {
+                                        simComplete();
+                                        return;
+                                    }
+
+                                    // Distance in km between the two waypoints
+                                    var dLng = to[0] - from[0];
+                                    var dLat = to[1] - from[1];
+                                    var distKm = haversine(from[1], from[0], to[1], to[0]);
+
+                                    if (distKm < 0.0001) {
+                                        // Waypoints are basically on top of each other, skip
+                                        sim.segmentProgress = 0;
+                                        sim.segmentIndex++;
+                                        if (sim.segmentIndex >= sim.waypoints.length - 1) sim.segmentIndex = 0;
+                                        sim.lastTime = null;
+                                        sim.animFrame = requestAnimationFrame(simTick);
+                                        return;
+                                    }
+
+                                    // How long this segment takes at current speed
+                                    var effectiveKph = sim.kph * sim.speed;
+                                    var segmentDurationMs = (distKm / effectiveKph) * 3600000;
+
+                                    sim.segmentProgress += deltaMs / segmentDurationMs;
+
+                                    if (sim.segmentProgress >= 1) {
+                                        sim.segmentProgress = 0;
+                                        sim.segmentIndex++;
+                                        if (sim.segmentIndex >= sim.waypoints.length - 1) {
+                                            sim.segmentIndex = 0;
+                                        }
+                                    }
+
+                                    var curFrom = sim.waypoints[sim.segmentIndex];
+                                    var curTo = sim.waypoints[sim.segmentIndex + 1];
+                                    if (!curTo) {
+                                        simComplete();
+                                        return;
+                                    }
+
+                                    var lng = curFrom[0] + (curTo[0] - curFrom[0]) * sim.segmentProgress;
+                                    var lat = curFrom[1] + (curTo[1] - curFrom[1]) * sim.segmentProgress;
+
+                                    if (sim.markerEl) {
+                                        sim.markerEl.setLngLat([lng, lat]);
+                                    }
+
+                                    sim.animFrame = requestAnimationFrame(simTick);
+                                }
+
+                                function haversine(lat1, lon1, lat2, lon2) {
+                                    var R = 6371;
+                                    var dLat = (lat2 - lat1) * Math.PI / 180;
+                                    var dLon = (lon2 - lon1) * Math.PI / 180;
+                                    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                                        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                                    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                                }
+
+                                function simTogglePause() {
+                                    if (sim.mode === 'running') {
+                                        sim.mode = 'paused';
+                                        cancelAnimationFrame(sim.animFrame);
+                                        simSetMode('paused');
+                                    } else if (sim.mode === 'paused') {
+                                        sim.lastTime = null;
+                                        simSetMode('running');
+                                        sim.animFrame = requestAnimationFrame(simTick);
+                                    }
+                                }
+
+                                function simStop() {
+                                    cancelAnimationFrame(sim.animFrame);
+                                    sim.animFrame = null;
+
+                                    if (sim.markerEl && sim.originalLngLat) {
+                                        sim.markerEl.setLngLat(sim.originalLngLat);
+                                        var el = sim.markerEl.getElement();
+                                        if (el) el.classList.remove('sim-marker-active');
+                                    }
+
+                                    simCleanTemp();
+                                    simSetMode('idle');
+                                    document.getElementById('sim-panel').classList.add('hidden');
+                                }
+
+                                function simComplete() {
+                                    sim.segmentIndex = 0;
+                                    sim.segmentProgress = 0;
+                                    sim.lastTime = null;
+                                }
+
+                                function simCancel() {
+                                    if (sim.mode === 'running' || sim.mode === 'paused') {
+                                        cancelAnimationFrame(sim.animFrame);
+                                        sim.animFrame = null;
+                                    }
+                                    if (sim.markerEl) {
+                                        var el = sim.markerEl.getElement();
+                                        if (el) el.classList.remove('sim-marker-active');
+                                        if (sim.originalLngLat) sim.markerEl.setLngLat(sim.originalLngLat);
+                                    }
+                                    simCleanTemp();
+                                    simSetMode('idle');
+                                    document.getElementById('sim-panel').classList.add('hidden');
+                                }
+
+                                function simCleanTemp() {
+                                    sim.waypointMarkers.forEach(function(m) {
+                                        m.remove();
+                                    });
+                                    sim.waypointMarkers = [];
+                                    sim.waypoints = [];
+                                    sim.originalLngLat = null;
+                                    sim.markerEl = null;
+                                    sim.markerId = null;
+                                    if (sim.routeLine) {
+                                        try {
+                                            window.map.removeLayer('sim-route-line');
+                                        } catch (e) {}
+                                        try {
+                                            window.map.removeSource('sim-route-source');
+                                        } catch (e) {}
+                                        sim.routeLine = false;
+                                    }
+
+                                    var kphSlider = document.getElementById('sim-kph-slider');
+                                    var kphDisplay = document.getElementById('sim-kph-display');
+                                    if (kphSlider) {
+                                        kphSlider.addEventListener('input', function() {
+                                            sim.kph = parseInt(this.value);
+                                            kphDisplay.textContent = sim.kph + ' km/h';
+                                        });
+                                    }
+                                }
+                            </script>
+                        @endenv
+                    @endif
                     @if (
                         !Auth::check() ||
                             (Auth::check() && !in_array(Auth::user()->roles[0]->name, ['maintenance_manager', 'driver_manager'])))
@@ -2963,6 +3546,8 @@ var kphSlider = document.getElementById('sim-kph-slider');
             window.driverPrivacyZones = {};
             window.echoMarkers = {};
             window.dummyMapMarkers = {};
+window.dummyMapPopups = {};
+window.echoPopups = {};
             window.initialDrivers = @json($obfuscatedMarkers ?? []);
 
             window.updatePrivacyZones = function() {
@@ -2990,29 +3575,63 @@ var kphSlider = document.getElementById('sim-kph-slider');
             };
 
             window.createPrivacyPopup = function(d) {
-                return '<div style="font-family:Inter,sans-serif;padding:6px 4px;min-width:180px;">' +
-                    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
-                    '<div style="width:32px;height:32px;border-radius:10px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;">' +
-                    '<i class="fa-solid fa-bus" style="color:#60a5fa;font-size:12px;"></i>' +
-                    '</div>' +
-                    '<div>' +
-                    '<div style="font-size:12px;font-weight:700;color:#fff;">' + (d.plate_number || d.name || 'Vehicle') +
-                    '</div>' +
-                    '<div style="font-size:9px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">' +
-                    (d.route || 'Route') + '</div>' +
-                    '</div>' +
-                    '</div>' +
-                    '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.1);margin-bottom:8px;">' +
-                    '<i class="fa-solid fa-shield-halved" style="color:rgba(59,130,246,0.5);font-size:9px;"></i>' +
-                    '<span style="font-size:9px;color:rgba(59,130,246,0.7);font-weight:600;">Approximate location · ~' + (d
-                        .privacy_radius || window.PRIVACY_RADIUS) + 'm radius</span>' +
-                    '</div>' +
-                    '<div style="display:flex;align-items:center;gap:6px;">' +
-                    '<div style="width:6px;height:6px;border-radius:50%;background:#34d399;"></div>' +
-                    '<span style="font-size:9px;color:#34d399;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">Active</span>' +
-                    '</div>' +
-                    '</div>';
-            };
+    var etaSection = '';
+    if (window.userRole !== 'driver') {
+        var pr = d.privacy_radius || window.PRIVACY_RADIUS || 200;
+        var etaText = 'Locating you…';
+        var etaDist = 'Tap 📍 on map';
+        var etaColor = '#555';
+        var etaLabel = 'ETA';
+
+        if (window.ETA && window.ETA.userLat !== null && d.lat && d.lng) {
+            var e = window.ETA.calc(d.lat, d.lng, pr);
+            if (e) {
+                var f = window.ETA.fmt(e);
+                etaText = f.text;
+                etaDist = window.ETA.fmtDist(e.distKm);
+                etaColor = window.ETA.colorFor(f.cls);
+                etaLabel = e.here ? 'NOW' : 'ETA';
+            }
+        }
+
+        etaSection =
+            '<div class="eta-popup-section" data-marker-id="' + d.id + '">' +
+            '<div style="height:1px;background:#1e1e1e;margin:10px 0;"></div>' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.10);">' +
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<div style="width:28px;height:28px;border-radius:8px;background:rgba(16,185,129,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+            '<i class="fa-solid fa-route" style="font-size:10px;color:#34d399;opacity:0.7;"></i></div>' +
+            '<div>' +
+            '<div style="font-size:11px;font-weight:700;color:' + etaColor + ';line-height:1.3;">' + etaText + '</div>' +
+            '<div style="font-size:8px;color:#555;margin-top:2px;">' + etaDist + '</div>' +
+            '</div></div>' +
+            '<div style="font-size:7px;color:' + etaColor + ';text-transform:uppercase;letter-spacing:0.12em;font-weight:600;line-height:1;">' + etaLabel + '</div>' +
+            '</div>' +
+            '<div style="margin-top:6px;text-align:center;">' +
+            '<span style="font-size:7px;color:#2a2a2a;">≈ ' + pr + 'm accuracy zone</span>' +
+            '</div></div>';
+    }
+
+    return '<div style="font-family:Inter,sans-serif;padding:6px 4px;min-width:190px;">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
+        '<div style="width:32px;height:32px;border-radius:10px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;">' +
+        '<i class="fa-solid fa-bus" style="color:#60a5fa;font-size:12px;"></i>' +
+        '</div>' +
+        '<div>' +
+        '<div style="font-size:12px;font-weight:700;color:#fff;">' + (d.plate_number || d.name || 'Vehicle') + '</div>' +
+        '<div style="font-size:9px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">' + (d.route || 'Route') + '</div>' +
+        '</div></div>' +
+        '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.1);margin-bottom:8px;">' +
+        '<i class="fa-solid fa-shield-halved" style="color:rgba(59,130,246,0.5);font-size:9px;"></i>' +
+        '<span style="font-size:9px;color:rgba(59,130,246,0.7);font-weight:600;">Approximate location · ~' + pr + 'm radius</span>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;">' +
+        '<div style="width:6px;height:6px;border-radius:50%;background:#34d399;"></div>' +
+        '<span style="font-size:9px;color:#34d399;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">Active</span>' +
+        '</div>' +
+        etaSection +
+        '</div>';
+};
         </script>
 
         <script type="module">
@@ -3054,16 +3673,30 @@ var kphSlider = document.getElementById('sim-kph-slider');
             }), 'bottom-right');
 
             // ── Share Location (Geolocate) Button ──
-            map.addControl(
-                new maplibregl.GeolocateControl({
-                    positionOptions: {
-                        enableHighAccuracy: true
-                    },
-                    trackUserLocation: true,
-                    showUserHeading: true
-                }),
-                'bottom-right'
-            );
+            var geolocateCtrl = new maplibregl.GeolocateControl({
+                positionOptions: {
+                    enableHighAccuracy: true
+                },
+                trackUserLocation: true,
+                showUserHeading: true
+            });
+            map.addControl(geolocateCtrl, 'bottom-right');
+
+            // ── Feed GeolocateControl position into ETA ──
+            geolocateCtrl.on('geolocate', function(e) {
+                if (window.ETA) {
+                    window.ETA._receivePosition(
+                        e.coords.latitude,
+                        e.coords.longitude,
+                        e.coords.accuracy
+                    );
+                }
+            });
+            geolocateCtrl.on('error', function(e) {
+                if (e.error.code !== 1) { // ignore PERMISSION_DENIED (user chose not to share)
+                    console.log('[ETA] Geolocate error:', e.error.message);
+                }
+            });
 
             // ═══════════════ MAP STATE ═══════════════
             let userLat = null;
@@ -3377,6 +4010,9 @@ var kphSlider = document.getElementById('sim-kph-slider');
                 if (selectionMode === 'pickup') {
                     userLat = lat;
                     userLng = lng;
+
+
+                    if (window.ETA) window.ETA._receivePosition(lat, lng, 20);
 
                     if (map.getSource('pickup-point')) {
                         map.getSource('pickup-point').setData({
@@ -3842,6 +4478,10 @@ var kphSlider = document.getElementById('sim-kph-slider');
 
                         if (window.echoMarkers[id]) {
                             window.echoMarkers[id].setLngLat([e.lng, e.lat]);
+if (window.echoPopups[id]) {           // ← ADD
+                                window.echoPopups[id].data.lat = e.lat;   // ← ADD
+                                window.echoPopups[id].data.lng = e.lng;   // ← ADD
+                            }
                         } else {
                             var el = document.createElement('div');
                             el.className = 'custom-vehicle-marker bus-pulse';
@@ -3853,10 +4493,15 @@ var kphSlider = document.getElementById('sim-kph-slider');
                                     maxWidth: '220px'
                                 })
                                 .setHTML(window.createPrivacyPopup({
-                                    plate_number: 'Vehicle ' + id,
-                                    route: 'Live',
-                                    privacy_radius: e.privacy_radius
-                                }));
+    id: id,
+    lat: e.lat,
+    lng: e.lng,
+    plate_number: 'Vehicle ' + id,
+    route: 'Live',
+    privacy_radius: e.privacy_radius
+}));
+
+window.echoPopups[id] = { popup: popup, data: echoData };
 
                             window.echoMarkers[id] = new maplibregl.Marker({
                                     element: el,
@@ -3873,15 +4518,20 @@ var kphSlider = document.getElementById('sim-kph-slider');
                             radius: e.privacy_radius || window.PRIVACY_RADIUS
                         };
                         window.updatePrivacyZones();
+                        if (window.ETA) window.ETA.refresh();
                     });
             }
 
             // ═══════════════ DEV MARKERS REAL-TIME SYNC ═══════════════
             if (window.Echo) {
                 window.Echo.channel('dev-markers')
-                    .listen('.marker-updated', function() {
-                        loadDummyMarkers();
-                    });
+                .listen('.marker-updated', function() {
+                    loadDummyMarkers();
+                    // Refresh ETA after markers re-render (small delay for DOM)
+                    setTimeout(function() {
+                        if (window.ETA) window.ETA.refresh();
+                    }, 300);
+                });
             }
 
             async function fetchVehicles() {
@@ -4152,6 +4802,7 @@ var kphSlider = document.getElementById('sim-kph-slider');
                                 maxWidth: '220px'
                             })
                             .setHTML(window.createPrivacyPopup(d));
+window.dummyMapPopups[d.id] = { popup: popup, data: d };
                     }
 
                     var mapMarker = new maplibregl.Marker({
@@ -4201,6 +4852,17 @@ var kphSlider = document.getElementById('sim-kph-slider');
 
             loadDummyMarkers();
         </script>
+
+        <!-- Nearest Vehicle ETA Indicator -->
+        <div id="nearest-vehicle-indicator" class="hidden">
+            <div class="nv-dot" style="background:#34d399;"></div>
+            <div class="nv-info">
+                <span class="nv-label">Nearest PUJ</span>
+                <span class="nv-time">--</span>
+            </div>
+            <span class="nv-distance">--</span>
+            <i class="fa-solid fa-chevron-right nv-arrow"></i>
+        </div>
     </div>
 
     <script>
