@@ -2043,12 +2043,456 @@
                         </div>
                     @endif
 
+                        <script>
+// ══════════════════════════════════════════════
+                                // DUMMY MARKER RENDERING
+                                // ══════════════════════════════════════════════
+                                window.dummyMapMarkers = window.dummyMapMarkers || {};
+                                window.driverPrivacyZones = window.driverPrivacyZones || {};
+                                window.dummyMapPopups = window.dummyMapPopups || {};   // ← ADD
+
+                                function renderDummyMarkers(markers) {
+                                    var m = window.map;
+                                    if (!m) return;
+
+                                    Object.keys(window.dummyMapMarkers).forEach(function(id) {
+                                        window.dummyMapMarkers[id].remove();
+                                    });
+                                    window.dummyMapMarkers = {};
+                                    window.dummyMapPopups = {};
+                                    window.driverPrivacyZones = {};
+
+                                    if (!markers || !markers.length) {
+                                        if (window.updatePrivacyZones) window.updatePrivacyZones();
+                                        return;
+                                    }
+
+                                    var isDriver = window.userRole === 'driver';
+
+                                    markers.forEach(function(d) {
+                                        var isMarkerActive = d.marker_status === 'active';
+
+                                        var el = document.createElement('div');
+                                        el.className = 'custom-vehicle-marker' + (isMarkerActive ? ' bus-pulse' : '');
+                                        if (!isMarkerActive) {
+                                            el.style.background = 'linear-gradient(135deg, #444, #333)';
+                                            el.style.borderColor = '#555';
+                                            el.style.boxShadow = '0 0 10px rgba(100,100,100,0.2)';
+                                        }
+                                        el.innerHTML = '<i class="fa-solid fa-bus"></i>';
+
+                                        var popup;
+                                        if (isDriver) {
+                                            var isDriverActive = d.driver_status === 'active';
+                                            var statusBg = isDriverActive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+                                            var statusBorder = isDriverActive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
+                                            var statusColor = isDriverActive ? '#34d399' : '#ef4444';
+                                            var statusLabel = isDriverActive ? 'Available' : 'Unavailable';
+                                            var statusIcon = isDriverActive ? 'fa-circle-check' : 'fa-circle-xmark';
+
+                                            popup = new maplibregl.Popup({
+                                                offset: 20,
+                                                closeButton: false,
+                                                maxWidth: '220px'
+                                            }).setHTML(
+                                                '<div style="background:#111;border:1px solid #222;border-radius:16px;padding:16px;font-family:Inter,sans-serif;">' +
+                                                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
+                                                '<div style="width:36px;height:36px;border-radius:12px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+                                                '<i class="fa-solid fa-bus" style="font-size:13px;color:#60a5fa;"></i></div>' +
+                                                '<div style="min-width:0;"><p style="font-size:12px;font-weight:700;color:#eee;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+                                                d.name + '</p>' +
+                                                '<p style="font-size:9px;color:#555;margin:2px 0 0;">Driver</p></div></div>' +
+                                                '<div style="height:1px;background:#1e1e1e;margin:0 0 12px;"></div>' +
+                                                '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:' +
+                                                statusBg + ';border:1px solid ' + statusBorder + ';margin-bottom:8px;">' +
+                                                '<div style="display:flex;align-items:center;gap:6px;"><i class="fa-solid ' +
+                                                statusIcon + '" style="font-size:10px;color:' + statusColor + ';"></i>' +
+                                                '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:' +
+                                                statusColor + ';">' + statusLabel + '</span></div>' +
+                                                '<span style="font-size:7px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">Driver Status</span></div>' +
+                                                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
+                                                '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Plate</span>' +
+                                                '<span style="font-size:10px;color:#888;font-weight:600;font-family:monospace;">' + d
+                                                .plate_number + '</span></div>' +
+                                                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
+                                                '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Type</span>' +
+                                                '<span style="font-size:10px;color:#888;font-weight:600;">' + d.vehicle_type +
+                                                '</span></div>' +
+                                                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;">' +
+                                                '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Route</span>' +
+                                                '<span style="font-size:10px;color:#888;font-weight:600;">' + d.route +
+                                                '</span></div></div>'
+                                            );
+                                        } else {
+                                            popup = new maplibregl.Popup({
+                                                    offset: 20,
+                                                    closeButton: false,
+                                                    maxWidth: '220px'
+                                                })
+                                                .setHTML(window.createPrivacyPopup(d));
+                                        }
+
+                                        var mapMarker = new maplibregl.Marker({
+                                                element: el
+                                            })
+                                            .setLngLat([d.lng, d.lat])
+                                            .setPopup(popup)
+                                            .addTo(m);
+
+                                        window.dummyMapMarkers[d.id] = mapMarker;
+
+                                        if (!isDriver && d.privacy_radius) {
+                                            window.driverPrivacyZones[d.id] = {
+                                                lat: d.lat,
+                                                lng: d.lng,
+                                                radius: d.privacy_radius
+                                            };
+                                        }
+                                    });
+
+                                    if (!isDriver && window.updatePrivacyZones) {
+                                        window.updatePrivacyZones();
+                                    }
+                                    // Refresh ETA badges after markers are (re)rendered
+                                    if (window.ETA && window.userRole !== 'driver') {
+                                        setTimeout(function() {
+                                            window.ETA.refresh();
+                                        }, 100);
+                                    }
+                                }
+
+                                function loadDummyMarkers() {
+                                    var m = window.map;
+                                    if (!m || typeof m.on !== 'function') {
+                                        setTimeout(loadDummyMarkers, 200);
+                                        return;
+                                    }
+                                    console.log('[DEV] Map ready, fetching markers...');
+                                    fetch('/api/markers?t=' + Date.now())
+                                        .then(function(r) {
+                                            return r.json();
+                                        })
+                                        .then(function(markers) {
+                                            renderDummyMarkers(markers);
+                                        })
+                                        .catch(function(err) {
+                                            console.log('[DEV] Fetch error:', err);
+                                        });
+                                }
+
+                                loadDummyMarkers();
+
+                                // ══════════════════════════════════════════════
+                                // ETA ENGINE — Commuter → PUJ
+                                // ══════════════════════════════════════════════
+                                window.ETA = {
+                                    // ── State ──
+                                    userLat: null,
+                                    userLng: null,
+                                    userAccuracy: null,
+                                    watchId: null,
+                                    _debounceTimer: null,
+                                    _periodicTimer: null,
+                                    _ready: false,
+
+                                    // ── Config ──
+                                    AVG_SPEED_KPH: 20, // Average PUJ speed (urban Cebu)
+                                    PRIVACY_BUFFER_SEC: 30, // Extra seconds for privacy uncertainty
+                                    BADGE_MAX_DIST_KM: 5, // Don't show badge beyond this
+                                    INDICATOR_MAX_DIST_KM: 10, // Don't show floating indicator beyond this
+                                    DEBOUNCE_MS: 2000, // Debounce GPS updates
+                                    PERIODIC_MS: 15000, // Periodic refresh interval
+
+                                    // ── Haversine (km) ──
+                                    haversine: function(lat1, lon1, lat2, lon2) {
+                                        var R = 6371;
+                                        var dLat = (lat2 - lat1) * Math.PI / 180;
+                                        var dLon = (lon2 - lon1) * Math.PI / 180;
+                                        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                                            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                                            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                                        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                                    },
+
+                                    // ── Calculate ETA for one vehicle ──
+                                    calc: function(vLat, vLng, privacyR) {
+                                        if (this.userLat === null || !vLat || !vLng) return null;
+
+                                        var distKm = this.haversine(this.userLat, this.userLng, vLat, vLng);
+
+                                        // Privacy buffer: subtract half the privacy radius (optimistic estimate)
+                                        var bufferKm = (privacyR || 200) / 2000;
+                                        var effDistKm = Math.max(0, distKm - bufferKm);
+
+                                        // Time in minutes at average speed
+                                        var timeMin = (effDistKm / this.AVG_SPEED_KPH) * 60;
+                                        var bufferMin = this.PRIVACY_BUFFER_SEC / 60;
+
+                                        return {
+                                            distKm: distKm,
+                                            effDistKm: effDistKm,
+                                            timeMin: timeMin,
+                                            low: Math.max(1, Math.round(timeMin)),
+                                            high: Math.max(2, Math.round(timeMin + bufferMin * 2)),
+                                            display: Math.max(1, Math.ceil(timeMin + bufferMin)),
+                                            here: distKm < 0.05 // ~50m
+                                        };
+                                    },
+
+                                    // ── Format ETA for display ──
+                                    fmt: function(e) {
+                                        if (!e) return {
+                                            text: '--',
+                                            cls: 'eta-unknown'
+                                        };
+                                        if (e.here) return {
+                                            text: 'Arriving',
+                                            cls: 'eta-here'
+                                        };
+                                        if (e.display <= 1) return {
+                                            text: '< 1 min',
+                                            cls: 'eta-soon'
+                                        };
+                                        if (e.display <= 3) return {
+                                            text: e.low + '–' + e.high + ' min',
+                                            cls: 'eta-soon'
+                                        };
+                                        if (e.display <= 10) return {
+                                            text: '~' + e.display + ' min',
+                                            cls: 'eta-near'
+                                        };
+                                        return {
+                                            text: '~' + e.display + ' min',
+                                            cls: 'eta-far'
+                                        };
+                                    },
+
+                                    fmtDist: function(km) {
+                                        if (km < 0.1) return '< 100m';
+                                        if (km < 1) return Math.round(km * 1000) + 'm';
+                                        return km.toFixed(1) + ' km';
+                                    },
+
+                                    // ── Color for a given cls ──
+                                    colorFor: function(cls) {
+                                        switch (cls) {
+                                            case 'eta-here':
+                                                return '#34d399';
+                                            case 'eta-soon':
+                                                return '#fbbf24';
+                                            case 'eta-near':
+                                                return '#fb923c';
+                                            default:
+                                                return '#6b7280';
+                                        }
+                                    },
+
+                                    // ── Start GPS tracking ──
+                                    start: function() {
+    if (this._started || window.userRole === 'driver') return;
+    this._started = true;
+    var self = this;
+
+    console.log('[ETA] Starting…');
+
+    // Always start periodic refresh — idle until location arrives,
+    // then keeps badges/popups/indicator updated
+    this._periodicTimer = setInterval(function() {
+        self.refresh();
+    }, this.PERIODIC_MS);
+
+    // Single attempt — works if permission was previously granted.
+    // Silent fail is fine: GeolocateControl (📍) handles first-time guests.
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                self._receivePosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+            },
+            function() {},
+            { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 }
+        );
+    }
+},
+
+                                    // ── Called by GeolocateControl event OR our own watch ──
+                                    _receivePosition: function(lat, lng, accuracy) {
+                                        var changed = (this.userLat !== lat || this.userLng !== lng);
+                                        this.userLat = lat;
+                                        this.userLng = lng;
+                                        this.userAccuracy = accuracy;
+                                        if (changed) {
+                                            this._scheduleUpdate();
+                                        }
+                                    },
+
+                                    stop: function() {
+    clearTimeout(this._debounceTimer);
+    clearInterval(this._periodicTimer);
+    this._started = false;
+},
+
+                                    _scheduleUpdate: function() {
+                                        var self = this;
+                                        clearTimeout(this._debounceTimer);
+                                        this._debounceTimer = setTimeout(function() {
+                                            self.refresh();
+                                        }, this.DEBOUNCE_MS);
+                                    },
+
+                                    // ── Main refresh ──
+                                    refresh: function() {
+                                        if (this.userLat === null) return;
+                                        this._updateBadges();
+                                        this._updatePopups();
+                                        this._updateNearestIndicator();
+                                    },
+
+                                    // ── Collect all vehicle markers ──
+                                    _allMarkers: function() {
+                                        var all = {};
+                                        if (window.dummyMapMarkers) Object.assign(all, window.dummyMapMarkers);
+                                        if (window.echoMarkers) Object.assign(all, window.echoMarkers);
+                                        return all;
+                                    },
+
+                                    // ── Update ETA badges on marker elements ──
+_updateBadges: function() {
+    var markers = this._allMarkers();
+    var self = this;
+
+    Object.keys(markers).forEach(function(id) {
+        var marker = markers[id];
+        var el = marker.getElement();
+        if (!el) return;
+
+        var old = el.querySelector('.eta-badge');
+        if (old) old.remove();
+
+        var ll = marker.getLngLat();
+        var pr = 200;
+        if (window.driverPrivacyZones && window.driverPrivacyZones[id]) {
+            pr = window.driverPrivacyZones[id].radius || 200;
+        }
+
+        var e = self.calc(ll.lat, ll.lng, pr);
+        if (!e || e.distKm > self.BADGE_MAX_DIST_KM) return;
+
+        var f = self.fmt(e);
+        var badge = document.createElement('div');
+        badge.className = 'eta-badge ' + f.cls;
+        badge.textContent = f.text;
+        el.appendChild(badge);
+    });
+},
+
+                                    // ── Update ETA sections inside open popups ──
+                                    _updatePopups: function() {
+    if (this.userLat === null) return;
+    var self = this;
+
+    // Dummy markers
+    Object.keys(window.dummyMapPopups || {}).forEach(function(id) {
+        var entry = window.dummyMapPopups[id];
+        if (!entry || !entry.popup) return;
+        var marker = window.dummyMapMarkers[id];
+        if (!marker) return;
+        var ll = marker.getLngLat();
+        var data = Object.assign({}, entry.data, { lat: ll.lat, lng: ll.lng });
+        entry.popup.setHTML(window.createPrivacyPopup(data));
+    });
+
+    // Echo markers
+    Object.keys(window.echoPopups || {}).forEach(function(id) {
+        var entry = window.echoPopups[id];
+        if (!entry || !entry.popup) return;
+        entry.popup.setHTML(window.createPrivacyPopup(entry.data));
+    });
+},
+                                    // ── Update the floating nearest-vehicle indicator ──
+                                    _updateNearestIndicator: function() {
+                                        var indicator = document.getElementById('nearest-vehicle-indicator');
+                                        if (!indicator) return;
+
+                                        var markers = this._allMarkers();
+                                        var self = this;
+                                        var best = null;
+                                        var bestMarker = null;
+
+                                        Object.keys(markers).forEach(function(id) {
+                                            var ll = markers[id].getLngLat();
+                                            var pr = 200;
+                                            if (window.driverPrivacyZones && window.driverPrivacyZones[id]) {
+                                                pr = window.driverPrivacyZones[id].radius || 200;
+                                            }
+                                            var e = self.calc(ll.lat, ll.lng, pr);
+                                            if (e && (!best || e.distKm < best.distKm)) {
+                                                best = e;
+                                                bestMarker = markers[id];
+                                            }
+                                        });
+
+                                        if (!best || best.distKm > this.INDICATOR_MAX_DIST_KM) {
+                                            indicator.classList.add('hidden');
+                                            return;
+                                        }
+
+                                        var f = self.fmt(best);
+                                        var color = self.colorFor(f.cls);
+
+                                        indicator.classList.remove('hidden');
+                                        indicator.querySelector('.nv-time').textContent = f.text;
+                                        indicator.querySelector('.nv-time').style.color = color;
+                                        indicator.querySelector('.nv-distance').textContent = self.fmtDist(best.distKm);
+                                        indicator.querySelector('.nv-dot').style.background = color;
+
+                                        // Click → fly to nearest vehicle
+                                        indicator.onclick = function() {
+                                            if (!bestMarker) return;
+                                            var ll = bestMarker.getLngLat();
+                                            window.map.flyTo({
+                                                center: [ll.lng, ll.lat],
+                                                zoom: Math.max(window.map.getZoom(), 16),
+                                                duration: 800
+                                            });
+                                            // Also open the popup
+                                            if (bestMarker.togglePopup) bestMarker.togglePopup();
+                                        };
+                                    },
+
+                                    // ── Public: get nearest vehicle data ──
+                                    getNearest: function() {
+                                        if (this.userLat === null) return null;
+                                        var markers = this._allMarkers();
+                                        var self = this;
+                                        var best = null;
+                                        Object.keys(markers).forEach(function(id) {
+                                            var ll = markers[id].getLngLat();
+                                            var pr = 200;
+                                            if (window.driverPrivacyZones && window.driverPrivacyZones[id]) {
+                                                pr = window.driverPrivacyZones[id].radius || 200;
+                                            }
+                                            var e = self.calc(ll.lat, ll.lng, pr);
+                                            if (e && (!best || e.distKm < best.distKm)) best = e;
+                                        });
+                                        return best;
+                                    },
+// ── Watch DOM for popup sections appearing ──
+
+                                };
+
+                                // ── Auto-start for commuters ──
+                                if (window.userRole && window.userRole !== 'driver') {
+                                    window.ETA.start();
+                                }
+
+                    </script>
+
                     @if (
                         (Auth::check() && Auth::user()->roles[0]->name === 'admin') ||
                             Auth::check() && (Auth::user()->roles[0]->name === 'commuter'))
                         @env('local')
                             <div id="left-sidebar-form"
-                                class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)] overflow-y-auto custom-scroll p-3 pb-6">
+    class="absolute top-24 left-[368px] w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)] overflow-y-auto custom-scroll p-3 pb-6">
 
                                 <!-- ══════════ DEV TOOLS: DUMMY DRIVER MARKERS ══════════ -->
                                 <div class="glass-card p-5 rounded-[1.5rem] border-purple-500/15">
@@ -2323,469 +2767,6 @@
 
                                 attachDevMarkerClick();
 
-                                // ══════════════════════════════════════════════
-                                // DUMMY MARKER RENDERING
-                                // ══════════════════════════════════════════════
-                                window.dummyMapMarkers = window.dummyMapMarkers || {};
-                                window.driverPrivacyZones = window.driverPrivacyZones || {};
-                                window.dummyMapPopups = window.dummyMapPopups || {};   // ← ADD
-
-                                function renderDummyMarkers(markers) {
-                                    var m = window.map;
-                                    if (!m) return;
-
-                                    Object.keys(window.dummyMapMarkers).forEach(function(id) {
-                                        window.dummyMapMarkers[id].remove();
-                                    });
-                                    window.dummyMapMarkers = {};
-                                    window.dummyMapPopups = {};
-                                    window.driverPrivacyZones = {};
-
-                                    if (!markers || !markers.length) {
-                                        if (window.updatePrivacyZones) window.updatePrivacyZones();
-                                        return;
-                                    }
-
-                                    var isDriver = window.userRole === 'driver';
-
-                                    markers.forEach(function(d) {
-                                        var isMarkerActive = d.marker_status === 'active';
-
-                                        var el = document.createElement('div');
-                                        el.className = 'custom-vehicle-marker' + (isMarkerActive ? ' bus-pulse' : '');
-                                        if (!isMarkerActive) {
-                                            el.style.background = 'linear-gradient(135deg, #444, #333)';
-                                            el.style.borderColor = '#555';
-                                            el.style.boxShadow = '0 0 10px rgba(100,100,100,0.2)';
-                                        }
-                                        el.innerHTML = '<i class="fa-solid fa-bus"></i>';
-
-                                        var popup;
-                                        if (isDriver) {
-                                            var isDriverActive = d.driver_status === 'active';
-                                            var statusBg = isDriverActive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
-                                            var statusBorder = isDriverActive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
-                                            var statusColor = isDriverActive ? '#34d399' : '#ef4444';
-                                            var statusLabel = isDriverActive ? 'Available' : 'Unavailable';
-                                            var statusIcon = isDriverActive ? 'fa-circle-check' : 'fa-circle-xmark';
-
-                                            popup = new maplibregl.Popup({
-                                                offset: 20,
-                                                closeButton: false,
-                                                maxWidth: '220px'
-                                            }).setHTML(
-                                                '<div style="background:#111;border:1px solid #222;border-radius:16px;padding:16px;font-family:Inter,sans-serif;">' +
-                                                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
-                                                '<div style="width:36px;height:36px;border-radius:12px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
-                                                '<i class="fa-solid fa-bus" style="font-size:13px;color:#60a5fa;"></i></div>' +
-                                                '<div style="min-width:0;"><p style="font-size:12px;font-weight:700;color:#eee;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
-                                                d.name + '</p>' +
-                                                '<p style="font-size:9px;color:#555;margin:2px 0 0;">Driver</p></div></div>' +
-                                                '<div style="height:1px;background:#1e1e1e;margin:0 0 12px;"></div>' +
-                                                '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:' +
-                                                statusBg + ';border:1px solid ' + statusBorder + ';margin-bottom:8px;">' +
-                                                '<div style="display:flex;align-items:center;gap:6px;"><i class="fa-solid ' +
-                                                statusIcon + '" style="font-size:10px;color:' + statusColor + ';"></i>' +
-                                                '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:' +
-                                                statusColor + ';">' + statusLabel + '</span></div>' +
-                                                '<span style="font-size:7px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">Driver Status</span></div>' +
-                                                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
-                                                '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Plate</span>' +
-                                                '<span style="font-size:10px;color:#888;font-weight:600;font-family:monospace;">' + d
-                                                .plate_number + '</span></div>' +
-                                                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
-                                                '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Type</span>' +
-                                                '<span style="font-size:10px;color:#888;font-weight:600;">' + d.vehicle_type +
-                                                '</span></div>' +
-                                                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;">' +
-                                                '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Route</span>' +
-                                                '<span style="font-size:10px;color:#888;font-weight:600;">' + d.route +
-                                                '</span></div></div>'
-                                            );
-                                        } else {
-                                            popup = new maplibregl.Popup({
-                                                    offset: 20,
-                                                    closeButton: false,
-                                                    maxWidth: '220px'
-                                                })
-                                                .setHTML(window.createPrivacyPopup(d));
-                                        }
-
-                                        var mapMarker = new maplibregl.Marker({
-                                                element: el
-                                            })
-                                            .setLngLat([d.lng, d.lat])
-                                            .setPopup(popup)
-                                            .addTo(m);
-
-                                        window.dummyMapMarkers[d.id] = mapMarker;
-
-                                        if (!isDriver && d.privacy_radius) {
-                                            window.driverPrivacyZones[d.id] = {
-                                                lat: d.lat,
-                                                lng: d.lng,
-                                                radius: d.privacy_radius
-                                            };
-                                        }
-                                    });
-
-                                    if (!isDriver && window.updatePrivacyZones) {
-                                        window.updatePrivacyZones();
-                                    }
-                                    // Refresh ETA badges after markers are (re)rendered
-                                    if (window.ETA && window.userRole !== 'driver') {
-                                        setTimeout(function() {
-                                            window.ETA.refresh();
-                                        }, 100);
-                                    }
-                                }
-
-                                function loadDummyMarkers() {
-                                    var m = window.map;
-                                    if (!m || typeof m.on !== 'function') {
-                                        setTimeout(loadDummyMarkers, 200);
-                                        return;
-                                    }
-                                    console.log('[DEV] Map ready, fetching markers...');
-                                    fetch('/api/markers?t=' + Date.now())
-                                        .then(function(r) {
-                                            return r.json();
-                                        })
-                                        .then(function(markers) {
-                                            renderDummyMarkers(markers);
-                                        })
-                                        .catch(function(err) {
-                                            console.log('[DEV] Fetch error:', err);
-                                        });
-                                }
-
-                                loadDummyMarkers();
-
-                                // ══════════════════════════════════════════════
-                                // ETA ENGINE — Commuter → PUJ
-                                // ══════════════════════════════════════════════
-                                window.ETA = {
-                                    // ── State ──
-                                    userLat: null,
-                                    userLng: null,
-                                    userAccuracy: null,
-                                    watchId: null,
-                                    _debounceTimer: null,
-                                    _periodicTimer: null,
-                                    _ready: false,
-
-                                    // ── Config ──
-                                    AVG_SPEED_KPH: 20, // Average PUJ speed (urban Cebu)
-                                    PRIVACY_BUFFER_SEC: 30, // Extra seconds for privacy uncertainty
-                                    BADGE_MAX_DIST_KM: 5, // Don't show badge beyond this
-                                    INDICATOR_MAX_DIST_KM: 10, // Don't show floating indicator beyond this
-                                    DEBOUNCE_MS: 2000, // Debounce GPS updates
-                                    PERIODIC_MS: 15000, // Periodic refresh interval
-
-                                    // ── Haversine (km) ──
-                                    haversine: function(lat1, lon1, lat2, lon2) {
-                                        var R = 6371;
-                                        var dLat = (lat2 - lat1) * Math.PI / 180;
-                                        var dLon = (lon2 - lon1) * Math.PI / 180;
-                                        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                                            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                                            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-                                        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                                    },
-
-                                    // ── Calculate ETA for one vehicle ──
-                                    calc: function(vLat, vLng, privacyR) {
-                                        if (this.userLat === null || !vLat || !vLng) return null;
-
-                                        var distKm = this.haversine(this.userLat, this.userLng, vLat, vLng);
-
-                                        // Privacy buffer: subtract half the privacy radius (optimistic estimate)
-                                        var bufferKm = (privacyR || 200) / 2000;
-                                        var effDistKm = Math.max(0, distKm - bufferKm);
-
-                                        // Time in minutes at average speed
-                                        var timeMin = (effDistKm / this.AVG_SPEED_KPH) * 60;
-                                        var bufferMin = this.PRIVACY_BUFFER_SEC / 60;
-
-                                        return {
-                                            distKm: distKm,
-                                            effDistKm: effDistKm,
-                                            timeMin: timeMin,
-                                            low: Math.max(1, Math.round(timeMin)),
-                                            high: Math.max(2, Math.round(timeMin + bufferMin * 2)),
-                                            display: Math.max(1, Math.ceil(timeMin + bufferMin)),
-                                            here: distKm < 0.05 // ~50m
-                                        };
-                                    },
-
-                                    // ── Format ETA for display ──
-                                    fmt: function(e) {
-                                        if (!e) return {
-                                            text: '--',
-                                            cls: 'eta-unknown'
-                                        };
-                                        if (e.here) return {
-                                            text: 'Arriving',
-                                            cls: 'eta-here'
-                                        };
-                                        if (e.display <= 1) return {
-                                            text: '< 1 min',
-                                            cls: 'eta-soon'
-                                        };
-                                        if (e.display <= 3) return {
-                                            text: e.low + '–' + e.high + ' min',
-                                            cls: 'eta-soon'
-                                        };
-                                        if (e.display <= 10) return {
-                                            text: '~' + e.display + ' min',
-                                            cls: 'eta-near'
-                                        };
-                                        return {
-                                            text: '~' + e.display + ' min',
-                                            cls: 'eta-far'
-                                        };
-                                    },
-
-                                    fmtDist: function(km) {
-                                        if (km < 0.1) return '< 100m';
-                                        if (km < 1) return Math.round(km * 1000) + 'm';
-                                        return km.toFixed(1) + ' km';
-                                    },
-
-                                    // ── Color for a given cls ──
-                                    colorFor: function(cls) {
-                                        switch (cls) {
-                                            case 'eta-here':
-                                                return '#34d399';
-                                            case 'eta-soon':
-                                                return '#fbbf24';
-                                            case 'eta-near':
-                                                return '#fb923c';
-                                            default:
-                                                return '#6b7280';
-                                        }
-                                    },
-
-                                    // ── Start GPS tracking ──
-                                    // ── Start GPS tracking ──
-                                    start: function() {
-                                        if (this._ready || window.userRole === 'driver') return;
-                                        if (!navigator.geolocation) {
-                                            console.log('[ETA] Geolocation not supported');
-                                            return;
-                                        }
-                                        this._ready = true;
-                                        var self = this;
-
-                                        console.log('[ETA] Starting location tracking…');
-
-                                        // 1) Immediate single fix so we don't wait for the first watch callback
-                                        navigator.geolocation.getCurrentPosition(
-                                            function(pos) {
-                                                self._receivePosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-                                            },
-                                            function() {}, // silent fail — watchPosition may still succeed
-                                            {
-                                                enableHighAccuracy: true,
-                                                maximumAge: 15000,
-                                                timeout: 10000
-                                            }
-                                        );
-
-                                        // 2) Continuous watch for live updates
-                                        this.watchId = navigator.geolocation.watchPosition(
-                                            function(pos) {
-                                                self._receivePosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-                                            },
-                                            function(err) {
-                                                console.log('[ETA] Watch error:', err.message);
-                                            }, {
-                                                enableHighAccuracy: true,
-                                                maximumAge: 10000,
-                                                timeout: 15000
-                                            }
-                                        );
-
-                                        // 3) Periodic refresh (catches vehicle movements even if user is stationary)
-                                        this._periodicTimer = setInterval(function() {
-                                            self.refresh();
-                                        }, this.PERIODIC_MS);
-                                    },
-
-                                    // ── Called by GeolocateControl event OR our own watch ──
-                                    _receivePosition: function(lat, lng, accuracy) {
-                                        var changed = (this.userLat !== lat || this.userLng !== lng);
-                                        this.userLat = lat;
-                                        this.userLng = lng;
-                                        this.userAccuracy = accuracy;
-                                        if (changed) {
-                                            this._scheduleUpdate();
-                                        }
-                                    },
-
-                                    stop: function() {
-                                        if (this.watchId !== null) {
-                                            navigator.geolocation.clearWatch(this.watchId);
-                                            this.watchId = null;
-                                        }
-                                        clearTimeout(this._debounceTimer);
-                                        clearInterval(this._periodicTimer);
-                                        this._ready = false;
-                                    },
-
-                                    _scheduleUpdate: function() {
-                                        var self = this;
-                                        clearTimeout(this._debounceTimer);
-                                        this._debounceTimer = setTimeout(function() {
-                                            self.refresh();
-                                        }, this.DEBOUNCE_MS);
-                                    },
-
-                                    // ── Main refresh ──
-                                    refresh: function() {
-                                        if (this.userLat === null) return;
-                                        this._updateBadges();
-                                        this._updatePopups();
-                                        this._updateNearestIndicator();
-                                    },
-
-                                    // ── Collect all vehicle markers ──
-                                    _allMarkers: function() {
-                                        var all = {};
-                                        if (window.dummyMapMarkers) Object.assign(all, window.dummyMapMarkers);
-                                        if (window.echoMarkers) Object.assign(all, window.echoMarkers);
-                                        return all;
-                                    },
-
-                                    // ── Update ETA badges on marker elements ──
-_updateBadges: function() {
-    var markers = this._allMarkers();
-    var self = this;
-
-    Object.keys(markers).forEach(function(id) {
-        var marker = markers[id];
-        var el = marker.getElement();
-        if (!el) return;
-
-        var old = el.querySelector('.eta-badge');
-        if (old) old.remove();
-
-        var ll = marker.getLngLat();
-        var pr = 200;
-        if (window.driverPrivacyZones && window.driverPrivacyZones[id]) {
-            pr = window.driverPrivacyZones[id].radius || 200;
-        }
-
-        var e = self.calc(ll.lat, ll.lng, pr);
-        if (!e || e.distKm > self.BADGE_MAX_DIST_KM) return;
-
-        var f = self.fmt(e);
-        var badge = document.createElement('div');
-        badge.className = 'eta-badge ' + f.cls;
-        badge.textContent = f.text;
-        el.appendChild(badge);
-    });
-},
-
-                                    // ── Update ETA sections inside open popups ──
-                                    _updatePopups: function() {
-    if (this.userLat === null) return;
-    var self = this;
-
-    // Dummy markers
-    Object.keys(window.dummyMapPopups || {}).forEach(function(id) {
-        var entry = window.dummyMapPopups[id];
-        if (!entry || !entry.popup) return;
-        var marker = window.dummyMapMarkers[id];
-        if (!marker) return;
-        var ll = marker.getLngLat();
-        var data = Object.assign({}, entry.data, { lat: ll.lat, lng: ll.lng });
-        entry.popup.setHTML(window.createPrivacyPopup(data));
-    });
-
-    // Echo markers
-    Object.keys(window.echoPopups || {}).forEach(function(id) {
-        var entry = window.echoPopups[id];
-        if (!entry || !entry.popup) return;
-        entry.popup.setHTML(window.createPrivacyPopup(entry.data));
-    });
-},
-                                    // ── Update the floating nearest-vehicle indicator ──
-                                    _updateNearestIndicator: function() {
-                                        var indicator = document.getElementById('nearest-vehicle-indicator');
-                                        if (!indicator) return;
-
-                                        var markers = this._allMarkers();
-                                        var self = this;
-                                        var best = null;
-                                        var bestMarker = null;
-
-                                        Object.keys(markers).forEach(function(id) {
-                                            var ll = markers[id].getLngLat();
-                                            var pr = 200;
-                                            if (window.driverPrivacyZones && window.driverPrivacyZones[id]) {
-                                                pr = window.driverPrivacyZones[id].radius || 200;
-                                            }
-                                            var e = self.calc(ll.lat, ll.lng, pr);
-                                            if (e && (!best || e.distKm < best.distKm)) {
-                                                best = e;
-                                                bestMarker = markers[id];
-                                            }
-                                        });
-
-                                        if (!best || best.distKm > this.INDICATOR_MAX_DIST_KM) {
-                                            indicator.classList.add('hidden');
-                                            return;
-                                        }
-
-                                        var f = self.fmt(best);
-                                        var color = self.colorFor(f.cls);
-
-                                        indicator.classList.remove('hidden');
-                                        indicator.querySelector('.nv-time').textContent = f.text;
-                                        indicator.querySelector('.nv-time').style.color = color;
-                                        indicator.querySelector('.nv-distance').textContent = self.fmtDist(best.distKm);
-                                        indicator.querySelector('.nv-dot').style.background = color;
-
-                                        // Click → fly to nearest vehicle
-                                        indicator.onclick = function() {
-                                            if (!bestMarker) return;
-                                            var ll = bestMarker.getLngLat();
-                                            window.map.flyTo({
-                                                center: [ll.lng, ll.lat],
-                                                zoom: Math.max(window.map.getZoom(), 16),
-                                                duration: 800
-                                            });
-                                            // Also open the popup
-                                            if (bestMarker.togglePopup) bestMarker.togglePopup();
-                                        };
-                                    },
-
-                                    // ── Public: get nearest vehicle data ──
-                                    getNearest: function() {
-                                        if (this.userLat === null) return null;
-                                        var markers = this._allMarkers();
-                                        var self = this;
-                                        var best = null;
-                                        Object.keys(markers).forEach(function(id) {
-                                            var ll = markers[id].getLngLat();
-                                            var pr = 200;
-                                            if (window.driverPrivacyZones && window.driverPrivacyZones[id]) {
-                                                pr = window.driverPrivacyZones[id].radius || 200;
-                                            }
-                                            var e = self.calc(ll.lat, ll.lng, pr);
-                                            if (e && (!best || e.distKm < best.distKm)) best = e;
-                                        });
-                                        return best;
-                                    },
-// ── Watch DOM for popup sections appearing ──
-
-                                };
-
-                                // ── Auto-start for commuters ──
-                                if (window.userRole && window.userRole !== 'driver') {
-                                    window.ETA.start();
-                                }
 
                                 // ══════════════════════════════════════════════
                                 // ROUTE SIMULATOR
@@ -3099,6 +3080,13 @@ _updateBadges: function() {
                                         sim.markerEl.setLngLat([lng, lat]);
                                     }
 
+ // Refresh ETA every ~2 seconds during simulation
+    var now = Date.now();
+    if (!sim._lastEtaUpdate || now - sim._lastEtaUpdate > 2000) {
+        sim._lastEtaUpdate = now;
+        if (window.ETA) window.ETA.refresh();
+    }
+
                                     sim.animFrame = requestAnimationFrame(simTick);
                                 }
 
@@ -3127,6 +3115,7 @@ _updateBadges: function() {
                                 function simStop() {
                                     cancelAnimationFrame(sim.animFrame);
                                     sim.animFrame = null;
+                                    sim._lastEtaUpdate = null;
 
                                     if (sim.markerEl && sim.originalLngLat) {
                                         sim.markerEl.setLngLat(sim.originalLngLat);
@@ -3158,6 +3147,7 @@ _updateBadges: function() {
                                     simCleanTemp();
                                     simSetMode('idle');
                                     document.getElementById('sim-panel').classList.add('hidden');
+sim._lastEtaUpdate = null;
                                 }
 
                                 function simCleanTemp() {
@@ -3444,7 +3434,7 @@ _updateBadges: function() {
             window._rightMobileOpen = false;
 
             var LEFT_DESKTOP_CLASSES =
-                'fixed top-24 left-4 sm:left-5 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]';
+    'absolute top-24 left-[368px] w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]';
             var LEFT_MOBILE_CLASSES = 'flex flex-col gap-3 w-full';
             var RIGHT_DESKTOP_CLASSES =
                 'fixed top-24 right-4 sm:right-5 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]';
@@ -3579,7 +3569,7 @@ window.echoPopups = {};
     if (window.userRole !== 'driver') {
         var pr = d.privacy_radius || window.PRIVACY_RADIUS || 200;
         var etaText = 'Locating you…';
-        var etaDist = 'Tap 📍 on map';
+        var etaDist = 'Tap 📍 to see ETA';
         var etaColor = '#555';
         var etaLabel = 'ETA';
 
@@ -4663,6 +4653,7 @@ window.echoPopups[id] = { popup: popup, data: echoData };
                     if (window._rightMobileOpen) closeMobileSidebar('right');
                 }
             });
+
         </script>
 
         <script>
@@ -4890,6 +4881,8 @@ window.dummyMapPopups[d.id] = { popup: popup, data: d };
                 localStorage.setItem('color-theme', isDark ? 'light' : 'dark');
             });
         }
+
+
     </script>
 
 </body>

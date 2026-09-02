@@ -44,6 +44,11 @@ Route::post('/fire-event', [PusherController::class, 'fireEvent'])->name('fire.e
 Route::post('/track/vehicle/broadcast', [VehicleTrackingController::class, 'broadcastLocation'])->name('vehicle.broadcast');
 Route::get('/track/vehicles/active', [VehicleTrackingController::class, 'getActiveVehicles']);
 
+Route::post('/driver/dev/markers', [DevMarkerController::class, 'store'])->name('driver.dev.add-marker');
+Route::post('/driver/dev/markers/{marker}/toggle', [DevMarkerController::class, 'toggle'])->name('driver.dev.toggle-marker');
+Route::delete('/driver/dev/markers/{marker}', [DevMarkerController::class, 'remove'])->name('driver.dev.remove-marker');
+Route::delete('/driver/dev/markers', [DevMarkerController::class, 'clear'])->name('driver.dev.clear-markers');
+
 Route::get('/map', [UserController::class, 'map'])->name('map');
 
 Route::middleware('guest')->group(function () {
@@ -195,11 +200,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/timekeeping/clock-out', [DriverController::class, 'clockOut'])->name('driver.timekeeping.clock-out');
         Route::post('/status', [DriverController::class, 'updateStatus'])->name('driver.status.update');
     });
-
-    Route::post('/driver/dev/markers', [DevMarkerController::class, 'store'])->name('driver.dev.add-marker');
-    Route::post('/driver/dev/markers/{marker}/toggle', [DevMarkerController::class, 'toggle'])->name('driver.dev.toggle-marker');
-    Route::delete('/driver/dev/markers/{marker}', [DevMarkerController::class, 'remove'])->name('driver.dev.remove-marker');
-    Route::delete('/driver/dev/markers', [DevMarkerController::class, 'clear'])->name('driver.dev.clear-markers');
 
     Route::delete('/delete-account', [UserController::class, 'destroy'])->name('users.delete-account');
 
