@@ -89,7 +89,7 @@ class DriverApprovalController extends Controller
         $user->syncRoles(['driver']);
 
         return redirect()
-            ->route('admin.drivers.index')
+            ->route('drivers.index')
             ->with('success', 'Driver account created.');
     }
 

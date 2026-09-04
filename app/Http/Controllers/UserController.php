@@ -92,7 +92,7 @@ class UserController extends Controller
                 return redirect()->route('login')->with('driver_pending', true);
             }
 
-            if ($user->is_rejected == true) {
+            if ($driver->is_rejected == true) {
                 Auth::logout();
 
                 return redirect()->route('login')->with('driver_rejected', true);

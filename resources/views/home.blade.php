@@ -577,10 +577,6 @@
             <span class="mx-8 text-xs uppercase tracking-[0.3em] text-gray-600 font-medium flex items-center gap-3"><i
                     class="fa-solid fa-circle text-[3px] text-purple-500"></i> Contactless Payments</span>
             <span class="mx-8 text-xs uppercase tracking-[0.3em] text-gray-600 font-medium flex items-center gap-3"><i
-                    class="fa-solid fa-circle text-[3px] text-green-500"></i> AI Route Optimization</span>
-            <span class="mx-8 text-xs uppercase tracking-[0.3em] text-gray-600 font-medium flex items-center gap-3"><i
-                    class="fa-solid fa-circle text-[3px] text-orange-500"></i> Smart Scheduling</span>
-            <span class="mx-8 text-xs uppercase tracking-[0.3em] text-gray-600 font-medium flex items-center gap-3"><i
                     class="fa-solid fa-circle text-[3px] text-cyan-500"></i> Fleet Analytics</span>
             <span class="mx-8 text-xs uppercase tracking-[0.3em] text-gray-600 font-medium flex items-center gap-3"><i
                     class="fa-solid fa-circle text-[3px] text-pink-500"></i> Passenger Insights</span>
@@ -591,11 +587,8 @@
             <span class="mx-8 text-xs uppercase tracking-[0.3em] text-gray-600 font-medium flex items-center gap-3"><i
                     class="fa-solid fa-circle text-[3px] text-green-500"></i> AI Route Optimization</span>
             <span class="mx-8 text-xs uppercase tracking-[0.3em] text-gray-600 font-medium flex items-center gap-3"><i
-                    class="fa-solid fa-circle text-[3px] text-orange-500"></i> Smart Scheduling</span>
-            <span class="mx-8 text-xs uppercase tracking-[0.3em] text-gray-600 font-medium flex items-center gap-3"><i
                     class="fa-solid fa-circle text-[3px] text-cyan-500"></i> Fleet Analytics</span>
-            <span class="mx-8 text-xs uppercase tracking-[0.3em] text-gray-600 font-medium flex items-center gap-3"><i
-                    class="fa-solid fa-circle text-[3px] text-pink-500"></i> Passenger Insights</span>
+
         </div>
     </div>
 
@@ -677,14 +670,14 @@
                             <i class="fa-solid fa-bolt text-green-400"></i>
                         </div>
                         <h4 class="font-bold mb-2 text-sm sm:text-base">Real-Time</h4>
-                        <p class="text-[11px] sm:text-xs text-gray-500 leading-relaxed">Instant updates on bus
+                        <p class="text-[11px] sm:text-xs text-gray-500 leading-relaxed">Instant updates on PUJ
                             locations and traffic delays.</p>
                     </div>
 
                     <div class="glass-card p-5 sm:p-6 rounded-2xl reveal reveal-delay-3 group cursor-default">
                         <div
                             class="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-600/20 group-hover:scale-110 transition-all duration-500">
-                            <i class="fa-solid fa-shield-halved text-purple-400"></i>
+                            <i class="fa-solid fa-shield text-purple-400"></i>
                         </div>
                         <h4 class="font-bold mb-2 text-sm sm:text-base">Secure</h4>
                         <p class="text-[11px] sm:text-xs text-gray-500 leading-relaxed">End-to-end encrypted payments
@@ -727,6 +720,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
 
+                <!-- Card 1: Live GPS Tracking (Original) -->
                 <div
                     class="service-card glass-card p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] transition-all duration-500 group reveal reveal-delay-1">
                     <div
@@ -734,31 +728,33 @@
                         <i class="fa-solid fa-location-crosshairs text-blue-400 text-lg sm:text-xl"></i>
                     </div>
                     <h4 class="text-base sm:text-lg font-bold mb-3">Live GPS Tracking</h4>
-                    <p class="text-[11px] sm:text-xs text-gray-500 leading-relaxed mb-5 sm:mb-6">Track your bus in
+                    <p class="text-[11px] sm:text-xs text-gray-500 leading-relaxed mb-5 sm:mb-6">Track your PUJ in
                         real-time with meter-perfect precision. Never miss a ride or wait in the rain again.</p>
-                    <a href="#"
+                    <a
                         class="text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-white transition flex items-center gap-2 group/link">
                         Live Update <i
                             class="fa-solid fa-arrow-right text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
                     </a>
                 </div>
 
+                <!-- Card 2: Time Keeping (Replaced) -->
                 <div
                     class="service-card glass-card p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] transition-all duration-500 group reveal reveal-delay-2">
                     <div
                         class="w-12 h-12 sm:w-14 sm:h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-5 sm:mb-6 group-hover:scale-110 group-hover:bg-purple-500/20 transition-all duration-500">
-                        <i class="fa-solid fa-calendar-check text-purple-400 text-lg sm:text-xl"></i>
+                        <i class="fa-solid fa-clock text-purple-400 text-lg sm:text-xl"></i>
                     </div>
-                    <h4 class="text-base sm:text-lg font-bold mb-3">Smart Scheduling</h4>
-                    <p class="text-[11px] sm:text-xs text-gray-500 leading-relaxed mb-5 sm:mb-6">AI-driven route
-                        planning that learns your habits and suggests the fastest departure times automatically.</p>
-                    <a href="#"
+                    <h4 class="text-base sm:text-lg font-bold mb-3">Time Keeping</h4>
+                    <p class="text-[11px] sm:text-xs text-gray-500 leading-relaxed mb-5 sm:mb-6">Automated logs for
+                        driver shifts and attendance ensuring compliance and safety.</p>
+                    <a
                         class="text-[10px] font-bold uppercase tracking-widest text-purple-400 hover:text-white transition flex items-center gap-2 group/link">
-                        Optimized <i
+                        Compliance <i
                             class="fa-solid fa-arrow-right text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
                     </a>
                 </div>
 
+                <!-- Card 3: Contactless Pay (Original) -->
                 <div
                     class="service-card glass-card p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] transition-all duration-500 group reveal reveal-delay-3">
                     <div
@@ -768,25 +764,26 @@
                     <h4 class="text-base sm:text-lg font-bold mb-3">Contactless Pay</h4>
                     <p class="text-[11px] sm:text-xs text-gray-500 leading-relaxed mb-5 sm:mb-6">Swift, secure, and
                         cash-free. Manage your digital wallet and pay for rides with a single tap or scan.</p>
-                    <a href="#"
+                    <a
                         class="text-[10px] font-bold uppercase tracking-widest text-green-400 hover:text-white transition flex items-center gap-2 group/link">
                         Efficiency <i
                             class="fa-solid fa-arrow-right text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
                     </a>
                 </div>
 
+                <!-- Card 4: PUJ Maintenance Records (Replaced) -->
                 <div
                     class="service-card glass-card p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] transition-all duration-500 group reveal reveal-delay-4">
                     <div
                         class="w-12 h-12 sm:w-14 sm:h-14 bg-orange-500/10 rounded-2xl flex items-center justify-center mb-5 sm:mb-6 group-hover:scale-110 group-hover:bg-orange-500/20 transition-all duration-500">
-                        <i class="fa-solid fa-route text-orange-400 text-lg sm:text-xl"></i>
+                        <i class="fa-solid fa-wrench text-orange-400 text-lg sm:text-xl"></i>
                     </div>
-                    <h4 class="text-base sm:text-lg font-bold mb-3">Route Analytics</h4>
-                    <p class="text-[11px] sm:text-xs text-gray-500 leading-relaxed mb-5 sm:mb-6">Advanced heatmaps and
-                        traffic data help us optimize city-wide routes to reduce your travel time.</p>
-                    <a href="#"
+                    <h4 class="text-base sm:text-lg font-bold mb-3">PUJ Maintenance Records</h4>
+                    <p class="text-[11px] sm:text-xs text-gray-500 leading-relaxed mb-5 sm:mb-6">Digital logs for
+                        repairs, inspections, and service history to keep the fleet in top condition.</p>
+                    <a
                         class="text-[10px] font-bold uppercase tracking-widest text-orange-400 hover:text-white transition flex items-center gap-2 group/link">
-                        High Accuracy <i
+                        Fleet Health <i
                             class="fa-solid fa-arrow-right text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
                     </a>
                 </div>
@@ -862,7 +859,7 @@
 
                     <p class="text-gray-400 text-xs sm:text-sm italic leading-relaxed mb-7 sm:mb-8">
                         "Managing my routes and schedule through the app has reduced my stress significantly. The
-                        navigation is optimized for large buses, which is exactly what we needed."
+                        navigation is optimized for PUJ, which is exactly what we needed."
                     </p>
 
                     <div class="mt-auto">
@@ -1026,7 +1023,7 @@
                                 class="text-blue-400">Commute</span></span>
                     </div>
                     <p class="text-gray-500 text-xs sm:text-sm leading-relaxed max-w-xs">
-                        Revolutionizing the way you move. Real-time tracking, smart scheduling, and secure payments all
+                        Revolutionizing the way you move. Real-time tracking, and secure payments all
                         in one place.
                     </p>
                     <div class="flex space-x-3">

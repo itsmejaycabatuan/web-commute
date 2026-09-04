@@ -669,6 +669,21 @@
                             @enderror
                         </div>
 
+                        <!-- NEW CONTACT INFO FIELD -->
+                        <div>
+                            <label
+                                class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Contact
+                                Info
+                                <span class="text-red-500 dark:text-red-400">*</span></label>
+                            <input type="text" name="contact_info" value="{{ old('contact_info') }}" required
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
+                                placeholder="Phone number or email">
+                            @error('contact_info')
+                                <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5"><i
+                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label
@@ -990,6 +1005,7 @@
             </div>
         </div>
 
+
         <!-- ==================== EDIT DRIVER MODAL ==================== -->
         <div x-show="editModal" x-cloak
             class="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
@@ -1150,6 +1166,199 @@
                 </div>
             </div>
         </div>
+
+        <!-- ==================== REVIEW APPLICATION MODAL ==================== -->
+        <div x-show="reviewModal" x-cloak
+            class="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
+            @click.self="reviewModal = false" x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0">
+
+            <div class="glass-panel w-full max-w-4xl rounded-[2rem] overflow-hidden" @click.stop x-show="reviewModal"
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+
+                <!-- Header -->
+                <div
+                    class="flex items-center justify-between px-6 sm:px-8 pt-6 sm:pt-7 pb-4 border-b border-gray-200/50 dark:border-[#1e1e1e]/50">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/15 flex items-center justify-center">
+                            <i
+                                class="fa-solid fa-magnifying-glass-chart text-xs text-amber-500 dark:text-amber-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-bold text-gray-900 dark:text-white">Review Application
+                            </h3>
+                            <p class="text-[9px] text-gray-500 dark:text-[#555]"
+                                x-text="'Verifying ' + (reviewName || 'Driver')"></p>
+                        </div>
+                    </div>
+                    <button @click="reviewModal = false"
+                        class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] flex items-center justify-center hover:bg-gray-200 dark:hover:bg-[#222] transition">
+                        <i class="fa-solid fa-xmark text-[10px] text-gray-500 dark:text-[#555]"></i>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="px-6 sm:px-8 py-6 sm:py-8 modal-scroll overflow-y-auto" style="max-height: 75vh;">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                        <!-- Left Column: Details -->
+                        <div class="space-y-5">
+                            <div>
+                                <h4
+                                    class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444] mb-4 border-b border-gray-200 dark:border-[#1e1e1e] pb-2">
+                                    Personal Information</h4>
+
+                                <div class="space-y-4">
+                                    <div class="flex flex-col gap-1">
+                                        <label
+                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Full
+                                            Name</label>
+                                        <p class="text-xs font-medium text-gray-900 dark:text-white"
+                                            x-text="reviewName"></p>
+                                    </div>
+
+                                    <div class="flex flex-col gap-1">
+                                        <label
+                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Email
+                                            Address</label>
+                                        <p class="text-xs font-medium text-gray-900 dark:text-white"
+                                            x-text="reviewEmail"></p>
+                                    </div>
+
+                                    <div class="flex flex-col gap-1">
+                                        <label
+                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Contact
+                                            Info</label>
+                                        <p class="text-xs font-medium text-gray-900 dark:text-white"
+                                            x-text="reviewContactInfo || 'Not provided'"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4
+                                    class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444] mb-4 border-b border-gray-200 dark:border-[#1e1e1e] pb-2">
+                                    License Details</h4>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="flex flex-col gap-1">
+                                        <label
+                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">License
+                                            No.</label>
+                                        <p class="text-xs font-mono font-medium text-gray-900 dark:text-white"
+                                            x-text="reviewLicenseNumber"></p>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label
+                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Code</label>
+                                        <p class="text-xs font-medium text-gray-900 dark:text-white"
+                                            x-text="reviewLicenseCode"></p>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label
+                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Expiration</label>
+                                        <p class="text-xs font-medium text-gray-900 dark:text-white"
+                                            x-text="reviewExpirationFormatted"></p>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label
+                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Driver
+                                            Code</label>
+                                        <p class="text-xs font-mono font-medium text-gray-900 dark:text-white"
+                                            x-text="reviewDriverCode"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: License Image -->
+                        <div>
+                            <h4
+                                class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444] mb-4 border-b border-gray-200 dark:border-[#1e1e1e] pb-2">
+                                Document Verification</h4>
+
+                            <div
+                                class="border border-gray-200 dark:border-[#1e1e1e] rounded-xl bg-gray-50 dark:bg-[#111] aspect-[3/2] overflow-hidden relative group flex items-center justify-center">
+
+                                <template x-if="reviewHasLicense && reviewLicenseUrl">
+                                    <img :src="reviewLicenseUrl" alt="License Image"
+                                        class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
+                                </template>
+
+                                <template x-if="!reviewHasLicense">
+                                    <div class="flex flex-col items-center justify-center text-center p-6">
+                                        <div
+                                            class="w-12 h-12 rounded-full bg-gray-200 dark:bg-[#1a1a1a] flex items-center justify-center mb-3">
+                                            <i class="fa-regular fa-image text-gray-400 dark:text-[#333]"></i>
+                                        </div>
+                                        <p class="text-[10px] text-gray-500 dark:text-[#555] font-medium">No License
+                                            Image Uploaded</p>
+                                    </div>
+                                </template>
+
+                                <!-- Hover Overlay for Full View -->
+                                <template x-if="reviewHasLicense && reviewLicenseUrl">
+                                    <a :href="reviewLicenseUrl" target="_blank"
+                                        class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center cursor-pointer">
+                                        <span
+                                            class="px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                                            <i class="fa-solid fa-expand"></i> View Full
+                                        </span>
+                                    </a>
+                                </template>
+                            </div>
+
+                            <div
+                                class="mt-4 p-3 rounded-lg bg-blue-500/5 border border-blue-500/10 flex items-start gap-3">
+                                <i
+                                    class="fa-solid fa-circle-info text-[10px] text-blue-500 dark:text-blue-400 mt-0.5"></i>
+                                <p class="text-[9px] text-blue-700 dark:text-blue-300 leading-relaxed">
+                                    Please verify that the details on the left match the information shown on the
+                                    license image before approving.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div
+                    class="px-6 sm:px-8 py-4 border-t border-gray-200/50 dark:border-[#1e1e1e]/50 bg-gray-50/50 dark:bg-[#0a0a0a]/50">
+                    <div class="flex gap-3">
+                        <button @click="reviewModal = false"
+                            class="flex-1 py-2.5 rounded-xl bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-900 dark:text-white text-[10px] font-bold uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-[#222] transition">
+                            Cancel
+                        </button>
+
+                        <!-- Reject Form -->
+                        <form :action="reviewRejectUrl" method="POST" class="flex-1">
+                            @method('PUT')
+                            @csrf
+                            <button type="submit"
+                                class="w-full h-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98]">
+                                Reject
+                            </button>
+                        </form>
+
+                        <!-- Approve Form -->
+                        <form :action="reviewApproveUrl" method="POST" class="flex-1">
+                            @csrf
+                            <button type="submit"
+                                class="w-full h-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98]">
+                                Approve
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
 
     </div>
 </body>
