@@ -73,6 +73,9 @@
                     reviewApproveUrl: '',
                     reviewRejectUrl: '',
 
+                    showAddPassword: false,
+                    showAddConfirmPassword: false,
+
                     get filteredDrivers() {
                         return this.drivers.filter(d => {
                             const q = this.search.toLowerCase();
@@ -306,6 +309,7 @@
 
     <div x-data="driverReview()" @keydown.escape.window="closeAllModals()">
 
+        @include('components.flash')
         <x-layout.sidebar />
 
         <main :class="$store.sidebar.open ? 'md:ml-72' : 'md:ml-20'"
@@ -626,26 +630,46 @@
                             @enderror
                         </div>
 
+                        <!-- Password Field with Toggle -->
                         <div>
                             <label
                                 class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Password
                                 <span class="text-red-500 dark:text-red-400">*</span></label>
-                            <input type="password" name="password" required minlength="8"
-                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                placeholder="Minimum 8 characters">
+                            <div class="relative">
+                                <input :type="showAddPassword ? 'text' : 'password'" name="password" required
+                                    minlength="8"
+                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
+                                    placeholder="Minimum 8 characters">
+
+                                <button type="button" @click="showAddPassword = !showAddPassword"
+                                    class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#444] hover:text-gray-900 dark:hover:text-white transition">
+                                    <i :class="showAddPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"
+                                        class="text-[10px]"></i>
+                                </button>
+                            </div>
                             @error('password')
                                 <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5"><i
                                         class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
                             @enderror
                         </div>
 
+                        <!-- Confirm Password Field with Toggle -->
                         <div>
                             <label
                                 class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Confirm
                                 Password <span class="text-red-500 dark:text-red-400">*</span></label>
-                            <input type="password" name="password_confirmation" required
-                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                placeholder="Re-enter password">
+                            <div class="relative">
+                                <input :type="showAddConfirmPassword ? 'text' : 'password'"
+                                    name="password_confirmation" required
+                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
+                                    placeholder="Re-enter password">
+
+                                <button type="button" @click="showAddConfirmPassword = !showAddConfirmPassword"
+                                    class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#444] hover:text-gray-900 dark:hover:text-white transition">
+                                    <i :class="showAddConfirmPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"
+                                        class="text-[10px]"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="flex items-center gap-3 !my-4">
@@ -930,7 +954,7 @@
                                             class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Contact</span>
                                     </div>
                                     <span class="text-[11px] font-bold text-gray-600 dark:text-[#888]"
-                                        x-text="viewContact || '—'"></span>
+                                        x-text="viewContactInfo || '—'"></span>
                                 </div>
 
                                 <!-- License Number -->

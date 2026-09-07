@@ -63,6 +63,7 @@ class DriverApprovalController extends Controller
             'license_code' => 'required|string|max:255',
             'expiration_date' => 'required|string|max:255',
             'contact_info' => 'required|string|max:255',
+            'license_image' => 'required|image|max:2048',
         ]);
 
         $path = $request->file('license_image')->store('licenses', 'public');
@@ -138,7 +139,7 @@ class DriverApprovalController extends Controller
         $driver->update($validated);
 
         return redirect()
-            ->route('admin.drivers.index')
+            ->route('drivers.index')
             ->with('success', 'Driver updated.');
     }
 
@@ -151,14 +152,14 @@ class DriverApprovalController extends Controller
         $driver->delete();
 
         return redirect()
-            ->route('admin.drivers.index')
+            ->route('drivers.index')
             ->with('success', 'Driver removed.');
     }
 
-    public function approve(Request $request, string $id)
+    public function approve(Request $request, string $user)
     {
 
-        $driver = Driver::find($id);
+        $driver = Driver::find($user);
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -166,17 +167,18 @@ class DriverApprovalController extends Controller
             'license_code' => 'required|string|max:255',
             'expiration_date' => 'required|string|max:255',
             'driver_code' => 'required|string|max:255',
+
         ]);
 
-        if ($driver->is_approved === true) {
+        if ($driver->is_approved) {
             return redirect()
-                ->route('admin.drivers.index')
+                ->route('drivers.index')
                 ->with('error', 'This driver is already approved.');
         }
 
         $driver->update([
             'name' => $request->name,
-            'is_approved' => true,
+            'is_approved' => 1,
             'license_number' => $request->license_number,
             'license_code' => $request->license_code,
             'expiration_date' => $request->expiration_date,
@@ -184,7 +186,7 @@ class DriverApprovalController extends Controller
         ]);
 
         return redirect()
-            ->route('admin.drivers.index')
+            ->route('drivers.index')
             ->with('success', 'Driver approved. They can sign in now.');
     }
 
@@ -217,7 +219,7 @@ class DriverApprovalController extends Controller
 
         if ($driver->is_rejected === 1) {
             return redirect()
-                ->route('admin.drivers.index')
+                ->route('drivers.index')
                 ->with('error', 'This driver is already rejected.');
         }
 
@@ -228,7 +230,7 @@ class DriverApprovalController extends Controller
         }
 
         return redirect()
-            ->route('admin.drivers.index')
+            ->route('drivers.index')
             ->with('success', 'Driver registration rejected. They cannot sign in until you approve them again.');
     }
 
@@ -238,6 +240,7 @@ class DriverApprovalController extends Controller
      */
     public function showLicense(Request $request, User $user): BinaryFileResponse|Response
     {
+
         if (! $user->hasRole('driver')) {
             abort(404);
         }
@@ -286,8 +289,10 @@ class DriverApprovalController extends Controller
             abort(404);
         }
 
-        $full = storage_path('app/public/' . $relative);
-        if (! is_file($full)) {
+        $full = Storage::disk('public')->path($relative);
+
+        // We use Storage::exists() to be safe, but Storage::path() should work
+        if (! Storage::disk('public')->exists($relative)) {
             abort(404);
         }
 
@@ -327,7 +332,7 @@ class DriverApprovalController extends Controller
     {
         return rtrim($request->getSchemeAndHttpHost(), '/')
             . rtrim($request->getBasePath(), '/')
-            . route('admin.drivers.license', $user, false);
+            . route('drivers.license', $user, false);
     }
 
     /**
