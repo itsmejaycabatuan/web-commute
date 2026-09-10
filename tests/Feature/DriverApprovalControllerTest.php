@@ -216,3 +216,4 @@ class DriverApprovalControllerTest extends TestCase
         $this->assertDatabaseMissing('users', ['id' => $driver->user_id]);
     }
 }
+
