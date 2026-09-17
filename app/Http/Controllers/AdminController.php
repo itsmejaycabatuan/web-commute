@@ -9,6 +9,8 @@ class AdminController extends Controller
 {
     public function dashboard()
     {
+        activity()->event('Dashboard')->log('Action performed: dashboard');
+
         $totalRevenue = Payment::sum('price');
         $totalFundsAdded = TopupHistory::sum('amount_added');
         $activeUsersCount = Payment::distinct('paid_by')->count();

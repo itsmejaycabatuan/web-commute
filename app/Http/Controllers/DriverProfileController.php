@@ -7,15 +7,9 @@ use Illuminate\Support\Facades\Hash;
 
 class DriverProfileController extends Controller
 {
-    public function show()
-    {
-        return view('driver.profile', [
-            'user' => auth()->user(),
-        ]);
-    }
-
     public function update(Request $request)
     {
+        activity()->event('Update')->log('Action performed: update');
         if (! $request->filled('password')) {
             return redirect()
                 ->route('driverprofile')

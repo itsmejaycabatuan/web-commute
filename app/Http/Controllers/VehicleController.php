@@ -10,6 +10,7 @@ class VehicleController extends Controller
 {
     public function index()
     {
+        activity()->event('Index')->log('Action performed: index');
         $vehicles = Vehicle::with('driver')->latest()->get()->map(function ($vehicle) {
             return [
                 'id' => $vehicle->id,
@@ -38,6 +39,7 @@ class VehicleController extends Controller
 
     public function store(Request $request)
     {
+        activity()->event('Store')->log('Action performed: store');
         $validated = $request->validate([
             'year' => 'required|integer|min:1990|max:2030',
             'brand' => 'required|string|max:100',
@@ -60,6 +62,7 @@ class VehicleController extends Controller
 
     public function update(Request $request, Vehicle $vehicle)
     {
+        activity()->event('Update')->log('Action performed: update');
         $validated = $request->validate([
             'year' => 'required|integer|min:1990|max:2030',
             'brand' => 'required|string|max:100',
@@ -82,6 +85,7 @@ class VehicleController extends Controller
 
     public function destroy(Vehicle $vehicle)
     {
+        activity()->event('Destroy')->log('Action performed: destroy');
         $vehicle->delete();
 
         return back()->with('success', 'Vehicle successfully deleted.');

@@ -10,6 +10,7 @@ class UserPreferenceController extends Controller
 {
     public function updateTheme(Request $request)
     {
+        activity()->event('Updatetheme')->log('Action performed: updateTheme');
         $request->validate([
             'theme' => 'required|in:light,dark',
         ]);
@@ -24,6 +25,7 @@ class UserPreferenceController extends Controller
 
     public function updateFontSize(Request $request)
     {
+        activity()->event('Updatefontsize')->log('Action performed: updateFontSize');
         $request->validate([
             'font_size' => 'required|integer|in:10,11,12,13',
         ]);

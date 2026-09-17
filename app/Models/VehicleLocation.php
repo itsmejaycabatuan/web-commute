@@ -45,5 +45,6 @@ class VehicleLocation extends Model
         'accuracy',
         'last_update',
         'user_id',
+        'broadcast_timestamp',
     ];
 }

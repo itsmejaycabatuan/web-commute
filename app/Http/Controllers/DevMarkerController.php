@@ -21,6 +21,7 @@ class DevMarkerController extends Controller
 
     public function store(Request $request)
     {
+        activity()->event('Store')->log('Action performed: store');
         $request->validate([
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
@@ -43,6 +44,7 @@ class DevMarkerController extends Controller
 
     public function toggle($id)
     {
+        activity()->event('Toggle')->log('Action performed: toggle');
         $marker = DevMarker::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
         $marker->update([
             'status' => $marker->status === 'active' ? 'inactive' : 'active',
@@ -55,6 +57,7 @@ class DevMarkerController extends Controller
 
     public function remove($id)
     {
+        activity()->event('Remove')->log('Action performed: remove');
         DevMarker::where('id', $id)->where('user_id', Auth::id())->delete();
 
         $this->broadcastMarkerUpdate();
@@ -64,6 +67,7 @@ class DevMarkerController extends Controller
 
     public function clear()
     {
+        activity()->event('Clear')->log('Action performed: clear');
         DevMarker::where('user_id', Auth::id())->delete();
 
         $this->broadcastMarkerUpdate();

@@ -11,6 +11,7 @@ class FareController extends Controller
 {
     public function index()
     {
+        activity()->event('Index')->log('Action performed: index');
         $fares = Fare::get();
         $latestFare = Fare::get()->last();
         $rates = FareRate::get();
@@ -28,6 +29,7 @@ class FareController extends Controller
 
     public function view($id)
     {
+        activity()->event('View')->log('Action performed: view');
         $rates = FareRate::where('fare_id', $id)->get();
 
         if (! $rates) {
@@ -67,6 +69,7 @@ class FareController extends Controller
 
     public function upload(Request $request)
     {
+        activity()->event('Upload')->log('Action performed: upload');
         $validated = $request->validate([
             'fare' => 'required|file|mimes:pdf',
         ]);
@@ -138,6 +141,7 @@ class FareController extends Controller
 
     public function delete($id)
     {
+        activity()->event('Delete')->log('Action performed: delete');
         $fare = Fare::find($id);
 
         if (! $fare) {
@@ -151,6 +155,7 @@ class FareController extends Controller
 
     public function bulkUpdate(Request $request)
     {
+        activity()->event('Bulkupdate')->log('Action performed: bulkUpdate');
         foreach ($request->rates as $id => $data) {
             FareRate::where('id', $id)->update([
                 'regular' => $data['regular'],

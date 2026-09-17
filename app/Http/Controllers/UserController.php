@@ -32,14 +32,11 @@ class UserController extends Controller
 {
     public function map(Request $request)
     {
+
+        activity()->event('Map')->log('Action performed: map');
+
         $user = Auth::user();
         $rates = FareRate::get();
-
-        if (! $user) {
-            return view('map', [
-                'rates' => $rates,
-            ]);
-        }
 
         $userId = Auth::user()->id;
         $role = $user->roles->first()->name;
@@ -141,6 +138,7 @@ class UserController extends Controller
 
     public function dashboard(Request $request)
     {
+        activity()->event('Dashboard')->log('Action performed: dashboard');
         $user = Auth::user();
         $userId = Auth::user()->id;
         $role = $user->roles->first()->name;
@@ -455,6 +453,7 @@ class UserController extends Controller
 
     public function profile(Request $request)
     {
+        activity()->event('Profile')->log('Action performed: profile');
         $user = Auth::user();
         $userId = Auth::user()->id;
         $role = $user->roles->first()->name;
@@ -473,6 +472,7 @@ class UserController extends Controller
 
     public function updateProfile(Request $request)
     {
+        activity()->event('Updateprofile')->log('Action performed: updateProfile');
         $request->validate([
             'current_password' => ['required', 'current_password'],
             'password' => ['required', 'min:8', 'confirmed'],
@@ -562,6 +562,7 @@ class UserController extends Controller
      */
     public function destroy(Request $request)
     {
+        activity()->event('Destroy')->log('Action performed: destroy');
         $userId = Auth::user()->id;
 
         Auth::logout();
@@ -575,6 +576,7 @@ class UserController extends Controller
 
     public function register(Request $request)
     {
+        activity()->event('Register')->log('Action performed: register');
         // dd($request->all());
         $request->validate([
             'email' => 'required|email|unique:users,email',
@@ -605,6 +607,7 @@ class UserController extends Controller
 
     public function login(Request $request)
     {
+        activity()->event('Login')->log('Action performed: login');
 
         $validated = $request->validate([
             'email' => 'required|email',
@@ -630,6 +633,8 @@ class UserController extends Controller
 
     public function logout(Request $request)
     {
+        activity()->event('Logout')->log('Action performed: logout');
+
         $user = Auth::user();
 
         activity()->event('Log Out')->log('User logout attempt.');
@@ -645,6 +650,7 @@ class UserController extends Controller
 
     public function emailVerification()
     {
+        activity()->event('Emailverification')->log('Action performed: emailVerification');
         $userEmail = Auth::user()->email;
         Mail::to($userEmail)->send(new EmailVerification());
 
@@ -653,11 +659,14 @@ class UserController extends Controller
 
     public function forgotPassword()
     {
+        activity()->event('Forgotpassword')->log('Action performed: forgotPassword');
+
         return view('auth.forgot-password');
     }
 
     public function requestPassword(Request $request)
     {
+        activity()->event('Requestpassword')->log('Action performed: requestPassword');
         $request->validate(['email' => 'required|email']);
 
         $status = Password::sendResetLink(
@@ -669,6 +678,7 @@ class UserController extends Controller
 
     public function resetPassword(string $token, Request $request)
     {
+        activity()->event('Resetpassword')->log('Action performed: resetPassword');
         $email = $request->query('email');
 
         return view('auth.reset-password', ['token' => $token, 'email' => $email]);
@@ -676,6 +686,7 @@ class UserController extends Controller
 
     public function updatePassword(Request $request)
     {
+        activity()->event('Updatepassword')->log('Action performed: updatePassword');
         $request->validate([
             'token' => 'required',
             'email' => 'required|email',

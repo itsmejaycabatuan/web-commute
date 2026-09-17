@@ -390,7 +390,7 @@
                         <p class="text-[10px] text-gray-500">Access your account</p>
                     </div>
                 </a>
-                <a href="{{ route('map') }}" onclick="closeMobileMenu()"
+                <a href="{{ route('map.guest') }}" onclick="closeMobileMenu()"
                     class="flex items-center gap-4 px-4 py-4 rounded-2xl hover:bg-white/5 transition group">
                     <div
                         class="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center group-hover:bg-green-500/20 transition">
@@ -468,7 +468,7 @@
                         class="px-5 py-2 rounded-full hover:bg-white/10 transition text-gray-300 hover:text-white">Log
                         in</a>
                     <div class="w-px h-5 bg-white/10 mx-1"></div>
-                    <a href="{{ route('map') }}"
+                    <a href="{{ route('map.guest') }}"
                         class="px-5 py-2 rounded-full hover:bg-white/10 transition text-gray-300 hover:text-white flex items-center gap-2">
                         <i class="fa-solid fa-map-location-dot text-xs text-blue-400"></i> View Map
                     </a>

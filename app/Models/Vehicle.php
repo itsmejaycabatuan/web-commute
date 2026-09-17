@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 /**
- * App\Models\Vehicle
+ * App\\Models\\Vehicle
  *
  * @property int $id
  * @property int|null $driver_id
@@ -31,27 +31,27 @@ use Illuminate\Support\Carbon;
  * @property-read int|null $maintenance_logs_count
  * @property-read Collection<int, PreventiveMaintenance> $preventiveMaintenances
  * @property-read int|null $preventive_maintenances_count
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle query()
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereAcquistionDate($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereBrand($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereDriverId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereExpDisposalDate($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereFuelType($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereLocation($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereModel($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle wherePlateNumber($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereStatus($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereTankCapacity($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereVin($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereYear($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle newModelQuery()
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle newQuery()
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle query()
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereAcquistionDate($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereBrand($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereCreatedAt($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereDriverId($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereExpDisposalDate($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereFuelType($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereId($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereLocation($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereModel($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle wherePlateNumber($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereStatus($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereTankCapacity($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereUpdatedAt($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereVin($value)
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereYear($value)
  * @property Carbon|null $acquisition_date
- * @method static \Illuminate\Database\Eloquent\Builder|Vehicle whereAcquisitionDate($value)
- * @mixin \Eloquent
+ * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle whereAcquisitionDate($value)
+ * @mixin \\Eloquent
  */
 class Vehicle extends Model
 {
@@ -70,6 +70,7 @@ class Vehicle extends Model
         'location',
         'acquisition_date',
         'exp_disposal_date',
+        'is_active',
     ];
 
     protected $casts = [

@@ -7,10 +7,17 @@
     <title>Email Verification - SmartCommute</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <script>
         tailwind.config = {
-            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
         }
     </script>
     <style>
@@ -29,22 +36,47 @@
         }
 
         @keyframes card-enter {
-            from { opacity: 0; transform: translateY(30px) scale(0.96); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
-        .card-animate { animation: card-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
+        .card-animate {
+            animation: card-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+        }
 
         @keyframes envelope-float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
         }
 
-        .envelope-animate { animation: envelope-float 3s ease-in-out infinite; }
+        .envelope-animate {
+            animation: envelope-float 3s ease-in-out infinite;
+        }
 
         @keyframes pulse-ring {
-            0% { transform: scale(1); opacity: 0.4; }
-            100% { transform: scale(1.5); opacity: 0; }
+            0% {
+                transform: scale(1);
+                opacity: 0.4;
+            }
+
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
         }
 
         .pulse-ring::before {
@@ -68,7 +100,9 @@
             box-shadow: 0 8px 30px rgba(255, 255, 255, 0.15);
         }
 
-        .btn-primary:active { transform: scale(0.98) translateY(0); }
+        .btn-primary:active {
+            transform: scale(0.98) translateY(0);
+        }
 
         .btn-ghost {
             background: transparent;
@@ -83,34 +117,43 @@
             color: white;
         }
 
-        .btn-ghost:active { transform: scale(0.98); }
+        .btn-ghost:active {
+            transform: scale(0.98);
+        }
     </style>
 </head>
 
-<body class="flex relative justify-center items-center p-4 sm:p-6 min-h-screen login-bg font-sans text-white overflow-x-hidden">
+<body
+    class="flex relative justify-center items-center p-4 sm:p-6 min-h-screen login-bg font-sans text-white overflow-x-hidden">
 
     <!-- Decorative orbs -->
     <div class="absolute top-1/4 left-1/3 w-72 h-72 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none"></div>
-    <div class="absolute bottom-1/3 right-1/4 w-56 h-56 bg-cyan-500/8 rounded-full blur-[80px] pointer-events-none"></div>
+    <div class="absolute bottom-1/3 right-1/4 w-56 h-56 bg-cyan-500/8 rounded-full blur-[80px] pointer-events-none">
+    </div>
 
     <!-- Logout button (top-left) -->
     <form action="{{ route('users.logout') }}" method="POST" class="absolute top-5 left-5 sm:top-8 sm:left-8 z-10">
         @csrf
         <button type="submit" class="flex items-center gap-2.5 group transition">
-            <div class="flex justify-center items-center w-10 h-10 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-300">
-                <i class="text-sm fa-solid fa-arrow-right-from-bracket text-white/60 group-hover:text-white transition"></i>
+            <div
+                class="flex justify-center items-center w-10 h-10 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-300">
+                <i
+                    class="text-sm fa-solid fa-arrow-right-from-bracket text-white/60 group-hover:text-white transition"></i>
             </div>
-            <span class="hidden sm:inline text-[10px] font-bold tracking-widest uppercase text-white/50 group-hover:text-white/80 transition">Logout</span>
+            <span
+                class="hidden sm:inline text-[10px] font-bold tracking-widest uppercase text-white/50 group-hover:text-white/80 transition">Logout</span>
         </button>
     </form>
 
     <!-- Card -->
-    <div class="card-animate glass-card p-7 sm:p-10 w-full max-w-[420px] rounded-[2rem] shadow-2xl shadow-black/30 text-center">
+    <div
+        class="card-animate glass-card p-7 sm:p-10 w-full max-w-[420px] rounded-[2rem] shadow-2xl shadow-black/30 text-center">
 
         <!-- Envelope icon with pulse -->
         <div class="flex justify-center mb-6">
             <div class="relative envelope-animate">
-                <div class="pulse-ring w-20 h-20 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                <div
+                    class="pulse-ring w-20 h-20 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
                     <i class="fa-solid fa-envelope-open-text text-blue-400 text-2xl"></i>
                 </div>
             </div>
@@ -127,11 +170,13 @@
 
         <h2 class="text-2xl font-extrabold tracking-tight mt-4 mb-2">Verify your email</h2>
         <p class="text-xs text-gray-400 leading-relaxed px-2 mb-2">
-            We've sent an activation link to your inbox. Please check your email and click the link to verify your account.
+            We've sent an activation link to your inbox. Please check your email and click the link to verify your
+            account.
         </p>
 
         @if (session('message'))
-            <div class="my-5 flex items-center justify-center gap-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5">
+            <div
+                class="my-5 flex items-center justify-center gap-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5">
                 <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
                 <p class="text-emerald-300 text-xs leading-relaxed">{{ session('message') }}</p>
             </div>

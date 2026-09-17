@@ -11,6 +11,7 @@ class SettingsController extends Controller
 {
     public function edit()
     {
+        activity()->event('Edit')->log('Action performed: edit');
         $user = Auth::user();
         $userId = Auth::user()->id;
         $role = $user->roles->first()->name;
@@ -24,6 +25,7 @@ class SettingsController extends Controller
 
     public function update(Request $request)
     {
+        activity()->event('Update')->log('Action performed: update');
         $request->validate([
             'email' => 'required|email|max:255|unique:users,email,' . Auth::id(),
         ]);
@@ -35,6 +37,7 @@ class SettingsController extends Controller
 
     public function updatePassword(Request $request)
     {
+        activity()->event('Updatepassword')->log('Action performed: updatePassword');
         $request->validate([
             'current_password' => 'required|current_password',
             'password' => 'required|string|min:8|confirmed',
@@ -49,6 +52,7 @@ class SettingsController extends Controller
 
     public function logoutOtherDevices(Request $request)
     {
+        activity()->event('Logoutotherdevices')->log('Action performed: logoutOtherDevices');
         Auth::logoutOtherDevices($request->password());
 
         return back()->with('success', 'All other sessions have been terminated.');
@@ -56,6 +60,7 @@ class SettingsController extends Controller
 
     public function exportData()
     {
+        activity()->event('Exportdata')->log('Action performed: exportData');
         $user = Auth::user();
         $fileName = 'smartcommute_data_export_' . $user->id . '_' . now()->format('Y_m_d_His') . '.xlsx';
 

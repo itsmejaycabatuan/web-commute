@@ -12,6 +12,7 @@ class PaymentController extends Controller
 {
     public function index(Request $request)
     {
+        activity()->event('Index')->log('Action performed: index');
         // dd($request);
         $user = Auth::user();
         $userId = $user->id;
@@ -39,6 +40,7 @@ class PaymentController extends Controller
 
     public function process(Request $request)
     {
+        activity()->event('Process')->log('Action performed: process');
         $userId = Auth::user()->id;
         $wallet = Wallet::where('user_id', $userId)->first();
         $balance = $wallet->balance;
@@ -86,6 +88,7 @@ class PaymentController extends Controller
 
     public function history(Request $request)
     {
+        activity()->event('History')->log('Action performed: history');
         $userId = Auth::user()->id;
         $query = Payment::where('paid_by', $userId);
         $wallet = Wallet::where('user_id', $userId)->first();
@@ -124,6 +127,7 @@ class PaymentController extends Controller
 
     public function showReceipt(string $id)
     {
+        activity()->event('Showreceipt')->log('Action performed: showReceipt');
         $payment = Payment::where('id', $id)->first();
 
         return view('commuter.viewreceipt', [
@@ -139,6 +143,7 @@ class PaymentController extends Controller
 
     public function topup()
     {
+        activity()->event('Topup')->log('Action performed: topup');
         $user = Auth::user();
         $userId = $user->id;
         $wallet = Wallet::where('user_id', $userId)->first();
@@ -151,6 +156,7 @@ class PaymentController extends Controller
 
     public function topupProcess(Request $request)
     {
+        activity()->event('Topupprocess')->log('Action performed: topupProcess');
         $user = Auth::user();
         $userId = $user->id;
         $wallet = Wallet::where('user_id', $userId)->first();
@@ -186,6 +192,7 @@ class PaymentController extends Controller
 
     public function topupHistory(Request $request)
     {
+        activity()->event('Topuphistory')->log('Action performed: topupHistory');
         $userId = Auth::user()->id;
         $query = TopupHistory::where('user_id', $userId)->with('user', 'wallet');
 
@@ -217,6 +224,7 @@ class PaymentController extends Controller
 
     public function showTransactions(Request $request)
     {
+        activity()->event('Showtransactions')->log('Action performed: showTransactions');
         $query = Payment::with('user'); // Ensure the relationship is defined in Transaction model
 
         // dd($query->latest()->paginate(15));
@@ -244,6 +252,7 @@ class PaymentController extends Controller
 
     public function showReceiptAdmin(string $id)
     {
+        activity()->event('Showreceiptadmin')->log('Action performed: showReceiptAdmin');
         // Laravel automatically decodes %23 back to #, so $id will be #SC-...
         // We can safely query the database directly
         $payment = Payment::with('user')->where('transaction_id', $id)->firstOrFail();
@@ -262,6 +271,7 @@ class PaymentController extends Controller
 
     public function showTopupsAdmin(Request $request)
     {
+        activity()->event('Showtopupsadmin')->log('Action performed: showTopupsAdmin');
 
         $query = TopupHistory::with('user');
         $total = TopupHistory::sum('amount_added');

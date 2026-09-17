@@ -15,6 +15,7 @@ class DriverManagerController extends Controller
 {
     public function timeKeeping()
     {
+        activity()->event('Timekeeping')->log('Action performed: timeKeeping');
         $drivers = Driver::with('user')
             ->get()
             ->map(fn($driver) => [
@@ -31,6 +32,7 @@ class DriverManagerController extends Controller
 
     public function timeKeepingStore(Request $request)
     {
+        activity()->event('Timekeepingstore')->log('Action performed: timeKeepingStore');
         $validated = $request->validate([
             'driver_id' => 'required|exists:drivers,id',
             'date' => 'required|date',
@@ -61,6 +63,7 @@ class DriverManagerController extends Controller
 
     public function violationsLog()
     {
+        activity()->event('Violationslog')->log('Action performed: violationsLog');
         // Fetch drivers through User -> Driver relationship
         $drivers = User::with('driver')
             ->select('id', 'email')
@@ -125,6 +128,7 @@ class DriverManagerController extends Controller
 
     public function storeViolationLog(Request $request)
     {
+        activity()->event('Storeviolationlog')->log('Action performed: storeViolationLog');
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'vc_id' => 'required|exists:violation_codes,id',
@@ -143,6 +147,7 @@ class DriverManagerController extends Controller
 
     public function storeViolationLogBulk(Request $request)
     {
+        activity()->event('Storeviolationlogbulk')->log('Action performed: storeViolationLogBulk');
         $validator = $request->validate([
             'user_id' => 'required|exists:users,id',
             'violations' => 'required|array|min:1',
@@ -197,6 +202,7 @@ class DriverManagerController extends Controller
 
     public function violationCodes()
     {
+        activity()->event('Violationcodes')->log('Action performed: violationCodes');
         $violationCodes = ViolationCode::get();
 
         return view('driver-manager.violation-codes', [
@@ -206,6 +212,7 @@ class DriverManagerController extends Controller
 
     public function storeViolationCode(Request $request)
     {
+        activity()->event('Storeviolationcode')->log('Action performed: storeViolationCode');
         $request->validate([
             'code' => 'required|string|max:255',
             'name' => 'required|string|max:255',
@@ -235,6 +242,7 @@ class DriverManagerController extends Controller
 
     public function updateViolationCode(Request $request, string $id)
     {
+        activity()->event('Updateviolationcode')->log('Action performed: updateViolationCode');
 
         $request->validate([
             'code' => 'required|string|max:255|unique:violation_codes,code,' . $id,
@@ -267,6 +275,7 @@ class DriverManagerController extends Controller
 
     public function destroyViolationCode(string $id)
     {
+        activity()->event('Destroyviolationcode')->log('Action performed: destroyViolationCode');
         $violationCode = ViolationCode::destroy($id);
 
         if (! $violationCode) {
@@ -278,6 +287,7 @@ class DriverManagerController extends Controller
 
     public function profile()
     {
+        activity()->event('Profile')->log('Action performed: profile');
         $user = Auth::user();
 
         return view('driver-manager.profile', [
@@ -287,6 +297,7 @@ class DriverManagerController extends Controller
 
     public function updateProfile(Request $request)
     {
+        activity()->event('Updateprofile')->log('Action performed: updateProfile');
         $request->validate([
             'current_password' => 'required',
             'password' => 'required|min:8',

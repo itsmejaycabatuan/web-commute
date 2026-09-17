@@ -9,7 +9,6 @@ use App\Http\Controllers\FareController;
 use App\Http\Controllers\MaintenanceManagerController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PusherController;
-use App\Http\Controllers\RateController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
@@ -49,7 +48,7 @@ Route::post('/driver/dev/markers/{marker}/toggle', [DevMarkerController::class, 
 Route::delete('/driver/dev/markers/{marker}', [DevMarkerController::class, 'remove'])->name('driver.dev.remove-marker');
 Route::delete('/driver/dev/markers', [DevMarkerController::class, 'clear'])->name('driver.dev.clear-markers');
 
-Route::get('/map', [UserController::class, 'map'])->name('map');
+Route::get('/map', [UserController::class, 'map'])->name('map')->middleware(['auth', 'verified']);
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', function () {
@@ -70,11 +69,23 @@ Route::middleware('guest')->group(function () {
     Route::post('/forgot-password', [UserController::class, 'requestPassword'])->name('password.email');
     Route::get('/reset-password/{token}', [UserController::class, 'resetPassword'])->name('password.reset');
     Route::post('/reset-password', [UserController::class, 'updatePassword'])->name('password.update');
+
+    Route::get('/map/guest', function () {
+        $rates = FareRate::get();
+
+        return view('map', [
+            'rates' => $rates,
+        ]);
+    })->name('map.guest');
 });
 
 Route::get('/email/verify', function () {
+    if (Auth::user()->hasVerifiedEmail()) {
+        return redirect()->route('map');
+    }
+
     return view('auth.verify-email');
-})->middleware('auth')->name('verification.notice');
+})->middleware(['auth'])->name('verification.notice');
 
 Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
@@ -99,8 +110,9 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
     ]);
 })->middleware(['auth', 'signed'])->name('verification.verify');
 
+Route::post('/logout', [UserController::class, 'logout'])->name('users.logout')->middleware('auth');
+
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::post('/logout', [UserController::class, 'logout'])->name('users.logout');
 
     Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
 
@@ -159,7 +171,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/fare/{id}/delete', [FareController::class, 'delete'])->name('fares.destroy');
 
         Route::resource('routes', RouteController::class);
-        Route::resource('rates', RateController::class);
     });
 
     Route::middleware('role:driver_manager')->group(function () {

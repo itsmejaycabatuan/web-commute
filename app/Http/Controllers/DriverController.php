@@ -17,11 +17,14 @@ class DriverController extends Controller
 {
     public function create()
     {
+        activity()->event('Create')->log('Action performed: create');
+
         return view('auth.driver.register');
     }
 
     public function store(Request $request)
     {
+        activity()->event('Store')->log('Action performed: store');
         $request->validate([
             'email' => 'required|email|unique:users,email',
             'contact_info' => 'required|string|max:255',
@@ -60,6 +63,7 @@ class DriverController extends Controller
 
     public function index()
     {
+        activity()->event('Index')->log('Action performed: index');
         $userId = Auth::user()->id;
 
         $distance = VehicleLocationHistory::where('user_id', $userId)
@@ -75,6 +79,7 @@ class DriverController extends Controller
 
     public function timekeeping(Request $request)
     {
+        activity()->event('Timekeeping')->log('Action performed: timekeeping');
         $driver = Driver::where('user_id', Auth::id())->first();
 
         // Determine which week to show
@@ -126,6 +131,7 @@ class DriverController extends Controller
 
     public function clockIn(Request $request)
     {
+        activity()->event('Clockin')->log('Action performed: clockIn');
         $driver = Driver::where('user_id', Auth::id())->first();
 
         $exists = TimeKeeping::where('driver_id', $driver->id)
@@ -149,6 +155,7 @@ class DriverController extends Controller
 
     public function clockOut(Request $request)
     {
+        activity()->event('Clockout')->log('Action performed: clockOut');
         $driver = Driver::where('user_id', Auth::id())->first();
 
         $record = TimeKeeping::where('driver_id', $driver->id)
@@ -179,6 +186,7 @@ class DriverController extends Controller
 
     public function updateStatus(Request $request)
     {
+        activity()->event('Updatestatus')->log('Action performed: updateStatus');
         $request->validate(['status' => 'required|in:active,inactive']);
         $userId = Auth::user()->id;
         $driver = Driver::where('user_id', $userId)->first();
@@ -194,6 +202,7 @@ class DriverController extends Controller
 
     public function violations()
     {
+        activity()->event('Violations')->log('Action performed: violations');
         $userId = Auth::user()->id;
         $driver = Driver::where('user_id', $userId)->first();
 
