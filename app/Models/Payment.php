@@ -57,6 +57,10 @@ class Payment extends Model
         'updated_at',
     ];
 
+    protected $casts = [
+        'paid_at' => 'datetime',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'paid_by');

@@ -9,6 +9,7 @@ use App\Http\Controllers\FareController;
 use App\Http\Controllers\MaintenanceManagerController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PusherController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
@@ -169,6 +170,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/fare/upload', [FareController::class, 'upload'])->name('fares.upload');
         Route::put('/fare/update', [FareController::class, 'bulkUpdate'])->name('fares.bulk-update');
         Route::delete('/fare/{id}/delete', [FareController::class, 'delete'])->name('fares.destroy');
+
+        Route::get('/reports', [ReportController::class, 'generate'])->name('reports.generate');
+        Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
 
         Route::resource('routes', RouteController::class);
     });
