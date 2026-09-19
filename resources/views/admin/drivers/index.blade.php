@@ -1210,8 +1210,7 @@
                     <div class="flex items-center gap-3">
                         <div
                             class="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/15 flex items-center justify-center">
-                            <i
-                                class="fa-solid fa-magnifying-glass-chart text-xs text-amber-500 dark:text-amber-400"></i>
+                            <i class="fa-solid fa-magnifying-glass text-xs text-amber-500 dark:text-amber-400"></i>
                         </div>
                         <div>
                             <h3 class="text-sm sm:text-base font-bold text-gray-900 dark:text-white">Review Application

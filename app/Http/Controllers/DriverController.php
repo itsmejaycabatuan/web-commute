@@ -26,6 +26,7 @@ class DriverController extends Controller
     {
         activity()->event('Store')->log('Action performed: store');
         $request->validate([
+            'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'contact_info' => 'required|string|max:255',
             'password' => 'required|string|min:8',
@@ -43,6 +44,7 @@ class DriverController extends Controller
         ]);
 
         $driver = $user->driver()->create([
+            'name' => $request->name,
             'contact_info' => $request->contact_info,
             'license_image_path' => $path,
             'license_image_data' => null,

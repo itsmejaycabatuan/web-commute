@@ -247,6 +247,25 @@
             @csrf
 
             <!-- Email -->
+
+            <!-- Name -->
+            <div>
+                <label
+                    class="block mb-1.5 ml-1 font-semibold tracking-widest uppercase text-[10px] text-gray-400">Name</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-user text-xs text-white/20"></i>
+                    </div>
+                    <input type="text" name="name" placeholder="Full Name" value="{{ old('name') }}"
+                        class="input-field py-3 pl-10 pr-4 w-full text-sm rounded-xl focus:outline-none">
+                </div>
+                @error('name')
+                    <div class="error-inline mt-2 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-exclamation text-amber-400 text-[10px]"></i>
+                        <span class="text-amber-300 text-[11px]">{{ $message }}</span>
+                    </div>
+                @enderror
+            </div>
             <div>
                 <label
                     class="block mb-1.5 ml-1 font-semibold tracking-widest uppercase text-[10px] text-gray-400">Email</label>
