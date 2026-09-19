@@ -159,6 +159,13 @@ class DriverApprovalController extends Controller
     public function approve(Request $request, string $user)
     {
 
+        $validated = $request->validate([
+            'license_number' => 'required|string|max:255',
+            'license_code' => 'required|string|max:255',
+            'expiration_date' => 'required|date',
+            'driver_code' => 'required|string|max:255',
+        ]);
+
         $driver = Driver::find($user);
 
         if ($driver->is_approved) {
@@ -169,6 +176,10 @@ class DriverApprovalController extends Controller
 
         $driver->update([
             'is_approved' => 1,
+            'license_number' => $validated['license_number'],
+            'license_code' => $validated['license_code'],
+            'expiration_date' => $validated['expiration_date'],
+            'driver_code' => $validated['driver_code'],
         ]);
 
         return redirect()

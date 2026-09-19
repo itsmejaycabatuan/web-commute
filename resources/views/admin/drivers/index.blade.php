@@ -29,6 +29,7 @@
                     editModal: false,
                     deleteModal: false,
                     reviewModal: false,
+                    rejectConfirmModal: false,
 
                     viewDriverId: '',
                     viewEmail: '',
@@ -607,7 +608,11 @@
                     <form action="{{ route('drivers.store') }}" method="POST" enctype="multipart/form-data"
                         class="space-y-4">
                         @csrf
+
                         <input type="hidden" name="_form_type" value="add">
+
+                        <button type="submit" x-ref="realRejectButton" :formaction="reviewRejectUrl"
+                            class="hidden"></button>
 
                         <div class="flex items-center gap-3 !mb-4">
                             <div class="flex-1 h-px bg-gray-200 dark:bg-[#1e1e1e]"></div>
@@ -621,7 +626,7 @@
                             <label
                                 class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Email
                                 <span class="text-red-500 dark:text-red-400">*</span></label>
-                            <input type="email" name="email" value="{{ old('email') }}" required
+                            <input type="email" name="email" value="{{ old('email') }}"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                 placeholder="driver@email.com">
                             @error('email')
@@ -636,8 +641,7 @@
                                 class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Password
                                 <span class="text-red-500 dark:text-red-400">*</span></label>
                             <div class="relative">
-                                <input :type="showAddPassword ? 'text' : 'password'" name="password" required
-                                    minlength="8"
+                                <input :type="showAddPassword ? 'text' : 'password'" name="password" minlength="8"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                     placeholder="Minimum 8 characters">
 
@@ -660,7 +664,7 @@
                                 Password <span class="text-red-500 dark:text-red-400">*</span></label>
                             <div class="relative">
                                 <input :type="showAddConfirmPassword ? 'text' : 'password'"
-                                    name="password_confirmation" required
+                                    name="password_confirmation"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                     placeholder="Re-enter password">
 
@@ -684,7 +688,7 @@
                             <label
                                 class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Name
                                 <span class="text-red-500 dark:text-red-400">*</span></label>
-                            <input type="text" name="name" value="{{ old('name') }}" required
+                            <input type="text" name="name" value="{{ old('name') }}"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                 placeholder="Full name">
                             @error('name')
@@ -699,7 +703,7 @@
                                 class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Contact
                                 Info
                                 <span class="text-red-500 dark:text-red-400">*</span></label>
-                            <input type="text" name="contact_info" value="{{ old('contact_info') }}" required
+                            <input type="text" name="contact_info" value="{{ old('contact_info') }}"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                 placeholder="Phone number or email">
                             @error('contact_info')
@@ -714,7 +718,6 @@
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">License
                                     Number <span class="text-red-500 dark:text-red-400">*</span></label>
                                 <input type="text" name="license_number" value="{{ old('license_number') }}"
-                                    required
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                     placeholder="S45-98-765432">
                                 @error('license_number')
@@ -727,7 +730,7 @@
                                 <label
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">License
                                     Code <span class="text-red-500 dark:text-red-400">*</span></label>
-                                <input type="text" name="license_code" value="{{ old('license_code') }}" required
+                                <input type="text" name="license_code" value="{{ old('license_code') }}"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                     placeholder="A, B, C">
                                 @error('license_code')
@@ -744,7 +747,6 @@
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Expiration
                                     Date <span class="text-red-500 dark:text-red-400">*</span></label>
                                 <input type="date" name="expiration_date" value="{{ old('expiration_date') }}"
-                                    required
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
                                 @error('expiration_date')
                                     <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
@@ -756,7 +758,7 @@
                                 <label
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Driver
                                     Code <span class="text-red-500 dark:text-red-400">*</span></label>
-                                <input type="text" name="driver_code" value="{{ old('driver_code') }}" required
+                                <input type="text" name="driver_code" value="{{ old('driver_code') }}"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                     placeholder="Unique ID">
                                 @error('driver_code')
@@ -1070,7 +1072,7 @@
                             <label
                                 class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Name
                                 <span class="text-red-500 dark:text-red-400">*</span></label>
-                            <input type="text" name="name" :value="editName" required
+                            <input type="text" name="name" :value="editName"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                 placeholder="Full name">
                         </div>
@@ -1080,7 +1082,7 @@
                                 <label
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">License
                                     Number <span class="text-red-500 dark:text-red-400">*</span></label>
-                                <input type="text" name="license_number" :value="editLicenseNumber" required
+                                <input type="text" name="license_number" :value="editLicenseNumber"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                     placeholder="S45-98-765432">
                             </div>
@@ -1088,7 +1090,7 @@
                                 <label
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">License
                                     Code <span class="text-red-500 dark:text-red-400">*</span></label>
-                                <input type="text" name="license_code" :value="editLicenseCode" required
+                                <input type="text" name="license_code" :value="editLicenseCode"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                     placeholder="A, B, C">
                             </div>
@@ -1099,14 +1101,14 @@
                                 <label
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Expiration
                                     Date <span class="text-red-500 dark:text-red-400">*</span></label>
-                                <input type="date" name="expiration_date" :value="editExpirationDate" required
+                                <input type="date" name="expiration_date" :value="editExpirationDate"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
                             </div>
                             <div>
                                 <label
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Driver
                                     Code <span class="text-red-500 dark:text-red-400">*</span></label>
-                                <input type="text" name="driver_code" :value="editDriverCode" required
+                                <input type="text" name="driver_code" :value="editDriverCode"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                     placeholder="Unique ID">
                             </div>
@@ -1199,10 +1201,11 @@
             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0">
 
-            <div class="glass-panel w-full max-w-4xl rounded-[2rem] overflow-hidden" @click.stop x-show="reviewModal"
-                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
-                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
-                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+            <div class="glass-panel w-full max-w-4xl rounded-[2rem] overflow-hidden flex flex-col max-h-[90vh]"
+                @click.stop x-show="reviewModal" x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95">
 
                 <!-- Header -->
                 <div
@@ -1225,164 +1228,214 @@
                     </button>
                 </div>
 
-                <!-- Body -->
-                <div class="px-6 sm:px-8 py-6 sm:py-8 modal-scroll overflow-y-auto" style="max-height: 75vh;">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Main Form Wrapper -->
+                <!-- We use one form to ensure inputs are submitted with whichever button is clicked -->
+                <form method="POST" class="flex flex-col h-full">
+                    @csrf
 
-                        <!-- Left Column: Details -->
-                        <div class="space-y-5">
-                            <div>
-                                <h4
-                                    class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444] mb-4 border-b border-gray-200 dark:border-[#1e1e1e] pb-2">
-                                    Personal Information</h4>
+                    <!-- Body -->
+                    <div class="flex-1 overflow-y-auto px-6 sm:px-8 py-6 sm:py-8 modal-scroll">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-                                <div class="space-y-4">
-                                    <div class="flex flex-col gap-1">
-                                        <label
-                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Full
-                                            Name</label>
-                                        <p class="text-xs font-medium text-gray-900 dark:text-white"
-                                            x-text="reviewName"></p>
-                                    </div>
-
-                                    <div class="flex flex-col gap-1">
-                                        <label
-                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Email
-                                            Address</label>
-                                        <p class="text-xs font-medium text-gray-900 dark:text-white"
-                                            x-text="reviewEmail"></p>
-                                    </div>
-
-                                    <div class="flex flex-col gap-1">
-                                        <label
-                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Contact
-                                            Info</label>
-                                        <p class="text-xs font-medium text-gray-900 dark:text-white"
-                                            x-text="reviewContactInfo || 'Not provided'"></p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <h4
-                                    class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444] mb-4 border-b border-gray-200 dark:border-[#1e1e1e] pb-2">
-                                    License Details</h4>
-
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="flex flex-col gap-1">
-                                        <label
-                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">License
-                                            No.</label>
-                                        <p class="text-xs font-mono font-medium text-gray-900 dark:text-white"
-                                            x-text="reviewLicenseNumber"></p>
-                                    </div>
-                                    <div class="flex flex-col gap-1">
-                                        <label
-                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Code</label>
-                                        <p class="text-xs font-medium text-gray-900 dark:text-white"
-                                            x-text="reviewLicenseCode"></p>
-                                    </div>
-                                    <div class="flex flex-col gap-1">
-                                        <label
-                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Expiration</label>
-                                        <p class="text-xs font-medium text-gray-900 dark:text-white"
-                                            x-text="reviewExpirationFormatted"></p>
-                                    </div>
-                                    <div class="flex flex-col gap-1">
-                                        <label
-                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Driver
-                                            Code</label>
-                                        <p class="text-xs font-mono font-medium text-gray-900 dark:text-white"
-                                            x-text="reviewDriverCode"></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right Column: License Image -->
-                        <div>
-                            <h4
-                                class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444] mb-4 border-b border-gray-200 dark:border-[#1e1e1e] pb-2">
-                                Document Verification</h4>
-
-                            <div
-                                class="border border-gray-200 dark:border-[#1e1e1e] rounded-xl bg-gray-50 dark:bg-[#111] aspect-[3/2] overflow-hidden relative group flex items-center justify-center">
-
-                                <template x-if="reviewHasLicense && reviewLicenseUrl">
-                                    <img :src="reviewLicenseUrl" alt="License Image"
-                                        class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
-                                </template>
-
-                                <template x-if="!reviewHasLicense">
-                                    <div class="flex flex-col items-center justify-center text-center p-6">
-                                        <div
-                                            class="w-12 h-12 rounded-full bg-gray-200 dark:bg-[#1a1a1a] flex items-center justify-center mb-3">
-                                            <i class="fa-regular fa-image text-gray-400 dark:text-[#333]"></i>
+                            <!-- Left Column: Details -->
+                            <div class="space-y-5">
+                                <div>
+                                    <h4
+                                        class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444] mb-4 border-b border-gray-200 dark:border-[#1e1e1e] pb-2">
+                                        Personal Information</h4>
+                                    <div class="space-y-4">
+                                        <div class="flex flex-col gap-1">
+                                            <label
+                                                class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Full
+                                                Name</label>
+                                            <p class="text-xs font-medium text-gray-900 dark:text-white"
+                                                x-text="reviewName"></p>
                                         </div>
-                                        <p class="text-[10px] text-gray-500 dark:text-[#555] font-medium">No License
-                                            Image Uploaded</p>
+                                        <div class="flex flex-col gap-1">
+                                            <label
+                                                class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Email
+                                                Address</label>
+                                            <p class="text-xs font-medium text-gray-900 dark:text-white"
+                                                x-text="reviewEmail"></p>
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <label
+                                                class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Contact
+                                                Info</label>
+                                            <p class="text-xs font-medium text-gray-900 dark:text-white"
+                                                x-text="reviewContactInfo || 'Not provided'"></p>
+                                        </div>
                                     </div>
-                                </template>
+                                </div>
 
-                                <!-- Hover Overlay for Full View -->
-                                <template x-if="reviewHasLicense && reviewLicenseUrl">
-                                    <a :href="reviewLicenseUrl" target="_blank"
-                                        class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center cursor-pointer">
-                                        <span
-                                            class="px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
-                                            <i class="fa-solid fa-expand"></i> View Full
-                                        </span>
-                                    </a>
-                                </template>
+                                <div>
+                                    <h4
+                                        class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444] mb-4 border-b border-gray-200 dark:border-[#1e1e1e] pb-2">
+                                        License Details <span
+                                            class="text-amber-500 normal-case tracking-normal ml-1">(Required)</span>
+                                    </h4>
+
+                                    <div class="space-y-3">
+                                        <!-- License Number Input -->
+                                        <div class="flex flex-col gap-1">
+                                            <label
+                                                class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">License
+                                                No.</label>
+                                            <input type="text" name="license_number" x-model="reviewLicenseNumber"
+                                                class="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <!-- License Code Input -->
+                                            <div class="flex flex-col gap-1">
+                                                <label
+                                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Code</label>
+                                                <input type="text" name="license_code" x-model="reviewLicenseCode"
+                                                    class="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                                            </div>
+
+                                            <!-- Expiration Input -->
+                                            <div class="flex flex-col gap-1">
+                                                <label
+                                                    class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Expiration</label>
+                                                <input type="date" name="expiration_date"
+                                                    x-model="reviewExpirationDate"
+                                                    class="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                                            </div>
+                                        </div>
+
+                                        <!-- Driver Code Input (Added for completeness based on your previous logic) -->
+                                        <div class="flex flex-col gap-1">
+                                            <label
+                                                class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Driver
+                                                Code</label>
+                                            <input type="text" name="driver_code" x-model="reviewDriverCode"
+                                                class="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] font-mono text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div
-                                class="mt-4 p-3 rounded-lg bg-blue-500/5 border border-blue-500/10 flex items-start gap-3">
-                                <i
-                                    class="fa-solid fa-circle-info text-[10px] text-blue-500 dark:text-blue-400 mt-0.5"></i>
-                                <p class="text-[9px] text-blue-700 dark:text-blue-300 leading-relaxed">
-                                    Please verify that the details on the left match the information shown on the
-                                    license image before approving.
-                                </p>
+                            <!-- Right Column: License Image -->
+                            <div>
+                                <h4
+                                    class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444] mb-4 border-b border-gray-200 dark:border-[#1e1e1e] pb-2">
+                                    Document Verification</h4>
+
+                                <div
+                                    class="border border-gray-200 dark:border-[#1e1e1e] rounded-xl bg-gray-50 dark:bg-[#111] aspect-[3/2] overflow-hidden relative group flex items-center justify-center">
+                                    <template x-if="reviewHasLicense && reviewLicenseUrl">
+                                        <img :src="reviewLicenseUrl" alt="License Image"
+                                            class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
+                                    </template>
+
+                                    <template x-if="!reviewHasLicense">
+                                        <div class="flex flex-col items-center justify-center text-center p-6">
+                                            <div
+                                                class="w-12 h-12 rounded-full bg-gray-200 dark:bg-[#1a1a1a] flex items-center justify-center mb-3">
+                                                <i class="fa-regular fa-image text-gray-400 dark:text-[#333]"></i>
+                                            </div>
+                                            <p class="text-[10px] text-gray-500 dark:text-[#555] font-medium">No
+                                                License Image Uploaded</p>
+                                        </div>
+                                    </template>
+
+                                    <!-- Hover Overlay for Full View -->
+                                    <template x-if="reviewHasLicense && reviewLicenseUrl">
+                                        <a :href="reviewLicenseUrl" target="_blank"
+                                            class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center cursor-pointer">
+                                            <span
+                                                class="px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                                                <i class="fa-solid fa-expand"></i> View Full
+                                            </span>
+                                        </a>
+                                    </template>
+                                </div>
+
+                                <div
+                                    class="mt-4 p-3 rounded-lg bg-blue-500/5 border border-blue-500/10 flex items-start gap-3">
+                                    <i
+                                        class="fa-solid fa-circle-info text-[10px] text-blue-500 dark:text-blue-400 mt-0.5"></i>
+                                    <p class="text-[9px] text-blue-700 dark:text-blue-300 leading-relaxed">
+                                        Please verify that the editable details on the left match the information shown
+                                        on the license image before approving.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Footer Actions -->
-                <div
-                    class="px-6 sm:px-8 py-4 border-t border-gray-200/50 dark:border-[#1e1e1e]/50 bg-gray-50/50 dark:bg-[#0a0a0a]/50">
-                    <div class="flex gap-3">
-                        <button @click="reviewModal = false"
-                            class="flex-1 py-2.5 rounded-xl bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-900 dark:text-white text-[10px] font-bold uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-[#222] transition">
-                            Cancel
-                        </button>
+                    <!-- Footer Actions -->
+                    <div
+                        class="px-6 sm:px-8 py-4 border-t border-gray-200/50 dark:border-[#1e1e1e]/50 bg-gray-50/50 dark:bg-[#0a0a0a]/50">
+                        <div class="flex gap-3">
+                            <!-- Cancel (Does not submit) -->
+                            <button type="button" @click="reviewModal = false"
+                                class="flex-1 py-2.5 rounded-xl bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-900 dark:text-white text-[10px] font-bold uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-[#222] transition">
+                                Cancel
+                            </button>
 
-                        <!-- Reject Form -->
-                        <form :action="reviewRejectUrl" method="POST" class="flex-1">
-                            @method('PUT')
-                            @csrf
-                            <button type="submit"
-                                class="w-full h-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98]">
+                            <!-- Reject (Submits to Reject URL) -->
+                            <button type="button" @click="rejectConfirmModal = true"
+                                class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98]">
                                 Reject
                             </button>
-                        </form>
 
-                        <!-- Approve Form -->
-                        <form :action="reviewApproveUrl" method="POST" class="flex-1">
-                            @csrf
-                            <button type="submit"
-                                class="w-full h-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98]">
+                            <!-- Approve (Submits to Approve URL) -->
+                            <button type="submit" :formaction="reviewApproveUrl"
+                                class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98]">
                                 Approve
                             </button>
-                        </form>
+                        </div>
                     </div>
-                </div>
-
+                </form>
             </div>
         </div>
 
+        <!-- ==================== REJECT CONFIRMATION MODAL ==================== -->
+        <div x-show="rejectConfirmModal" x-cloak
+            class="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 dark:bg-black/90 backdrop-blur-sm"
+            @click.self="rejectConfirmModal = false" x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0">
 
+            <div class="glass-panel w-full max-w-sm rounded-[2rem] overflow-hidden text-center p-6 sm:p-8" @click.stop
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+
+                <!-- Icon -->
+                <div
+                    class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
+                    <i class="fa-solid fa-triangle-exclamation text-2xl text-red-600 dark:text-red-400"></i>
+                </div>
+
+                <!-- Text -->
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Reject Application?</h3>
+                <p class="text-sm text-gray-500 dark:text-[#888] mb-6 leading-relaxed">
+                    Are you sure you want to reject <span class="font-bold text-gray-900 dark:text-white"
+                        x-text="reviewName"></span>?
+                    This action cannot be undone.
+                </p>
+
+                <!-- Actions -->
+                <div class="flex gap-3 w-full">
+                    <!-- Cancel / Go Back -->
+                    <button type="button" @click="rejectConfirmModal = false"
+                        class="flex-1 py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-900 dark:text-white text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">
+                        Go Back
+                    </button>
+
+                    <!-- Confirm Rejection -->
+                    <!-- Logic: Sets the form action to the reject URL, submits the form, then closes modals -->
+                    <button type="button" @click="$refs.realRejectButton.click()"
+                        class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98] shadow-lg shadow-red-500/20">
+                        Yes, Reject
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 

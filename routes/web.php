@@ -154,7 +154,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/drivers/{driver}', [DriverApprovalController::class, 'destroy'])->name('drivers.destroy');
         // Route::get('/drivers/{user}/license', [DriverApprovalController::class, 'showLicense'])->name('drivers.license');
         Route::post('/drivers/{user}/approve', [DriverApprovalController::class, 'approve'])->name('drivers.approve');
-        Route::put('/drivers/{user}/reject', [DriverApprovalController::class, 'reject'])->name('drivers.reject');
+        Route::post('/drivers/{user}/reject', [DriverApprovalController::class, 'reject'])->name('drivers.reject');
     });
 
     Route::middleware('role:admin')->group(function () {
