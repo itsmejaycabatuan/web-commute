@@ -684,27 +684,6 @@
                                     <i class="fa-solid fa-trash-can text-[8px]"></i> Delete My Account
                                 </button>
                             </div>
-
-                            <div class="p-4 rounded-xl inner-card border">
-                                <div class="flex items-start gap-4">
-                                    <div
-                                        class="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                                        <i class="fa-solid fa-clock-rotate-left text-[11px] text-amber-500"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-[11px] font-bold text-gray-900 dark:text-white mb-1">Request
-                                            Data Export</p>
-                                        <p class="text-[9px] text-gray-400 dark:text-[#444] leading-relaxed">
-                                            Download a copy of all your data including trips, payments, and account
-                                            information.
-                                        </p>
-                                    </div>
-                                </div>
-                                <button onclick="requestDataExport()" id="export-btn"
-                                    class="mt-4 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-[#222] text-gray-500 dark:text-[#666] text-[9px] font-bold uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition flex items-center gap-2">
-                                    <i class="fa-solid fa-download text-[8px]"></i> Request Export
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -980,75 +959,6 @@
             document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
             document.querySelector(`.font-size-btn[data-size="${currentSize}"]`)?.classList.add('active');
         })();
-
-        async function requestDataExport() {
-            const btn = document.getElementById('export-btn');
-            const originalHTML = btn.innerHTML;
-
-            // 1. Set loading state
-            btn.disabled = true;
-            btn.classList.add('opacity-60', 'cursor-not-allowed');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-[8px]"></i> Generating...';
-
-            try {
-                // 2. Fetch data from Laravel
-                const response = await fetch('{{ route('settings.export-data') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    }
-                });
-
-                if (!response.ok) throw new Error('Network response was not ok');
-
-                // 3. Convert response to Blob and trigger download
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-
-                // Extract filename from response headers, fallback to default
-                const contentDisposition = response.headers.get('Content-Disposition');
-                let filename = 'smartcommute_data_export.xlsx';
-                if (contentDisposition) {
-                    const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-                    if (filenameMatch && filenameMatch.length === 2) filename = filenameMatch[1];
-                }
-
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-
-                // Clean up
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-
-                // 4. Success state
-                btn.innerHTML =
-                    '<i class="fa-solid fa-circle-check text-[8px] text-emerald-500"></i> <span class="text-emerald-500">Downloaded!</span>';
-
-                setTimeout(() => {
-                    btn.innerHTML = originalHTML;
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-60', 'cursor-not-allowed');
-                }, 3000);
-
-            } catch (error) {
-                console.error('Export failed:', error);
-
-                // 5. Error state
-                btn.innerHTML =
-                    '<i class="fa-solid fa-circle-exclamation text-[8px] text-red-400"></i> <span class="text-red-400">Error</span>';
-
-                setTimeout(() => {
-                    btn.innerHTML = originalHTML;
-                    btn.disabled = false;
-                    btn.classList.remove('opacity-60', 'cursor-not-allowed');
-                }, 3000);
-            }
-        }
     </script>
 
 </body>
