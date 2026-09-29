@@ -35,6 +35,15 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        @media (max-width: 639px) {
+            .glass-card {
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+            }
+        }
+
         @keyframes card-enter {
             from {
                 opacity: 0;
@@ -79,7 +88,7 @@
             }
         }
 
-        .pulse-ring::before {
+        .:pulse-ring::before {
             content: '';
             position: absolute;
             inset: -8px;
@@ -102,6 +111,7 @@
 
         .btn-primary:active {
             transform: scale(0.98) translateY(0);
+            :
         }
 
         .btn-ghost {
@@ -124,74 +134,78 @@
 </head>
 
 <body
-    class="flex relative justify-center items-center p-4 sm:p-6 min-h-screen login-bg font-sans text-white overflow-x-hidden">
+    class="flex relative justify-center items-center p-3 sm:p-4 md:p-6 min-h-[100svh] login-bg font-sans text-white overflow-x-hidden">
 
     <!-- Decorative orbs -->
-    <div class="absolute top-1/4 left-1/3 w-72 h-72 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none"></div>
-    <div class="absolute bottom-1/3 right-1/4 w-56 h-56 bg-cyan-500/8 rounded-full blur-[80px] pointer-events-none">
+    <div
+        class="absolute top-1/4 left-1/3 w-36 h-36 sm:w-72 sm:h-72 bg-blue-500/10 rounded-full blur-[60px] sm:blur-[100px] pointer-events-none">
+    </div>
+    <div
+        class="absolute bottom-1/3 right-1/4 w-28 h-28 sm:w-56 sm:h-56 bg-cyan-500/8 rounded-full blur-[50px] sm:blur-[80px] pointer-events-none">
     </div>
 
-    <!-- Logout button (top-left) -->
-    <form action="{{ route('users.logout') }}" method="POST" class="absolute top-5 left-5 sm:top-8 sm:left-8 z-10">
+    <!-- Logout button -->
+    <form action="{{ route('users.logout') }}" method="POST"
+        class="absolute top-3 left-3 sm:top-5 sm:left-5 md:top-8 md:left-8 z-10">
         @csrf
-        <button type="submit" class="flex items-center gap-2.5 group transition">
+        <button type="submit" class="flex items-center gap-2 sm:gap-2.5 group transition">
             <div
-                class="flex justify-center items-center w-10 h-10 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-300">
+                class="flex justify-center items-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl border border-white/10 bg-white/5 backdrop-blur-md group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-300">
                 <i
-                    class="text-sm fa-solid fa-arrow-right-from-bracket text-white/60 group-hover:text-white transition"></i>
+                    class="text-xs sm:text-sm fa-solid fa-arrow-right-from-bracket text-white/60 group-hover:text-white transition"></i>
             </div>
             <span
-                class="hidden sm:inline text-[10px] font-bold tracking-widest uppercase text-white/50 group-hover:text-white/80 transition">Logout</span>
+                class="hidden md:inline text-[10px] font-bold tracking-widest uppercase text-white/50 group-hover:text-white/80 transition">Logout</span>
         </button>
     </form>
 
     <!-- Card -->
     <div
-        class="card-animate glass-card p-7 sm:p-10 w-full max-w-[420px] rounded-[2rem] shadow-2xl shadow-black/30 text-center">
+        class="card-animate glass-card p-5 sm:p-7 md:p-10 w-full max-w-[340px] sm:max-w-[420px] rounded-2xl sm:rounded-[2rem] shadow-2xl shadow-black/30 text-center">
 
-        <!-- Envelope icon with pulse -->
-        <div class="flex justify-center mb-6">
+        <div class="flex justify-center mb-4 sm:mb-6">
             <div class="relative envelope-animate">
                 <div
-                    class="pulse-ring w-20 h-20 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-                    <i class="fa-solid fa-envelope-open-text text-blue-400 text-2xl"></i>
+                    class="pulse-ring w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                    <i class="fa-solid fa-envelope-open-text text-blue-400 text-lg sm:text-2xl"></i>
                 </div>
             </div>
         </div>
 
-        <div class="flex items-center justify-center gap-2 mb-2">
-            <div class="flex items-center justify-center w-7 h-7 bg-blue-600 rounded-lg shadow-lg shadow-blue-600/30">
-                <i class="fa-solid fa-bus text-white text-[10px]"></i>
+        <div class="flex items-center justify-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+            <div
+                class="flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 bg-blue-600 rounded-md sm:rounded-lg shadow-lg shadow-blue-600/30">
+                <i class="fa-solid fa-bus text-white text-[9px] sm:text-[10px]"></i>
             </div>
-            <span class="text-base font-bold tracking-tight text-white">
+            <span class="text-sm sm:text-base font-bold tracking-tight text-white">
                 Smart<span class="text-blue-400">Commute</span>
             </span>
         </div>
 
-        <h2 class="text-2xl font-extrabold tracking-tight mt-4 mb-2">Verify your email</h2>
-        <p class="text-xs text-gray-400 leading-relaxed px-2 mb-2">
+        <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight mt-3 sm:mt-4 mb-1.5 sm:mb-2">Verify your email</h2>
+        <p class="text-[11px] sm:text-xs text-gray-400 leading-relaxed px-1 sm:px-2 mb-1.5 sm:mb-2">
             We've sent an activation link to your inbox. Please check your email and click the link to verify your
             account.
         </p>
 
         @if (session('message'))
             <div
-                class="my-5 flex items-center justify-center gap-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5">
-                <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
-                <p class="text-emerald-300 text-xs leading-relaxed">{{ session('message') }}</p>
+                class="my-4 sm:my-5 flex items-center justify-center gap-2 sm:gap-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg sm:rounded-xl p-3 sm:p-3.5">
+                <i class="fa-solid fa-circle-check text-emerald-400 text-xs sm:text-sm"></i>
+                <p class="text-emerald-300 text-[11px] sm:text-xs leading-relaxed">{{ session('message') }}</p>
             </div>
         @endif
 
-        <form action="{{ route('verification.send') }}" method="POST" class="space-y-3 mt-6">
+        <form action="{{ route('verification.send') }}" method="POST" class="space-y-2.5 sm:space-y-3 mt-4 sm:mt-6">
             @csrf
             <button type="submit"
-                class="btn-primary py-3.5 w-full text-xs font-bold tracking-widest uppercase rounded-xl">
+                class="btn-primary py-2.5 sm:py-3.5 w-full text-[10px] sm:text-xs font-bold tracking-widest uppercase rounded-lg sm:rounded-xl">
                 Resend Verification Link
             </button>
         </form>
 
-        <div class="mt-4 pt-5 border-t border-white/5">
-            <p class="text-[11px] text-gray-600">
+        <div class="mt-3 sm:mt-4 pt-4 sm:pt-5 border-t border-white/5">
+            <p class="text-[10px] sm:text-[11px] text-gray-600">
                 Didn't receive the email? Check your spam folder or try again in a few minutes.
             </p>
         </div>

@@ -614,7 +614,7 @@ class UserController extends Controller
             'password' => 'required|min:8',
         ]);
 
-        if (Auth::attempt($validated)) {
+        if (Auth::attempt($validated, $request->has('remember'))) {
             $user = Auth::user();
             $userId = Auth::user()->id;
             $role = $user->roles->first()->name;
