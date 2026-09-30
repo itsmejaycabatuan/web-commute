@@ -1,7 +1,7 @@
 @if(session('success'))
-    <div id="flash-message" class="fixed top-24 right-6 z-50 animate-slide-in">
+    <div id="flash-message" class="fixed top-20 sm:top-24 left-3 right-3 sm:left-auto sm:right-6 z-50 animate-slide-in">
         <div
-            class="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-green-500/20 flex items-center gap-3 min-w-[300px]">
+            class="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 sm:px-6 py-3.5 sm:py-4 rounded-2xl shadow-2xl shadow-green-500/20 flex items-center gap-3 w-full sm:w-auto sm:min-w-[300px] max-w-full">
             <i class="fa-solid fa-check-circle text-xl"></i>
             <div class="flex-1">
                 <p class="font-bold text-sm">Success!</p>
@@ -15,9 +15,9 @@
 @endif
 
 @if(session('error'))
-    <div id="flash-message" class="fixed top-24 right-6 z-50 animate-slide-in">
+    <div id="flash-message" class="fixed top-20 sm:top-24 left-3 right-3 sm:left-auto sm:right-6 z-50 animate-slide-in">
         <div
-            class="bg-gradient-to-r from-red-500 to-rose-600 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-red-500/20 flex items-center gap-3 min-w-[300px]">
+            class="bg-gradient-to-r from-red-500 to-rose-600 text-white px-4 sm:px-6 py-3.5 sm:py-4 rounded-2xl shadow-2xl shadow-red-500/20 flex items-center gap-3 w-full sm:w-auto sm:min-w-[300px] max-w-full">
             <i class="fa-solid fa-circle-exclamation text-xl"></i>
             <div class="flex-1">
                 <p class="font-bold text-sm">Error!</p>
@@ -31,9 +31,9 @@
 @endif
 
 @if(session('warning'))
-    <div id="flash-message" class="fixed top-24 right-6 z-50 animate-slide-in">
+    <div id="flash-message" class="fixed top-20 sm:top-24 left-3 right-3 sm:left-auto sm:right-6 z-50 animate-slide-in">
         <div
-            class="bg-gradient-to-r from-yellow-500 to-amber-600 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-yellow-500/20 flex items-center gap-3 min-w-[300px]">
+            class="bg-gradient-to-r from-yellow-500 to-amber-600 text-white px-4 sm:px-6 py-3.5 sm:py-4 rounded-2xl shadow-2xl shadow-yellow-500/20 flex items-center gap-3 w-full sm:w-auto sm:min-w-[300px] max-w-full">
             <i class="fa-solid fa-triangle-exclamation text-xl"></i>
             <div class="flex-1">
                 <p class="font-bold text-sm">Warning!</p>
@@ -47,9 +47,9 @@
 @endif
 
 @if($errors->any())
-    <div id="flash-message" class="fixed top-24 right-6 z-50 animate-slide-in">
+    <div id="flash-message" class="fixed top-20 sm:top-24 left-3 right-3 sm:left-auto sm:right-6 z-50 animate-slide-in">
         <div
-            class="bg-gradient-to-r from-red-500 to-rose-600 text-white px-6 py-4 rounded-2xl shadow-2xl shadow-red-500/20 flex items-start gap-3 min-w-[300px]">
+            class="bg-gradient-to-r from-red-500 to-rose-600 text-white px-4 sm:px-6 py-3.5 sm:py-4 rounded-2xl shadow-2xl shadow-red-500/20 flex items-start gap-3 w-full sm:w-auto sm:min-w-[300px] max-w-full">
             <i class="fa-solid fa-circle-exclamation text-xl mt-0.5"></i>
             <div class="flex-1">
                 <p class="font-bold text-sm">Error </p>

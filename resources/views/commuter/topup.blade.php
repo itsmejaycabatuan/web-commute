@@ -199,49 +199,49 @@
 
     <!-- ══════════ HEADER ══════════ -->
     <header
-        class="fixed top-4 left-4 right-4 sm:top-5 sm:left-5 sm:right-5 z-50 flex items-center justify-between gap-3 pointer-events-none">
-        <div class="glass-panel p-3 sm:p-3.5 rounded-2xl pointer-events-auto flex items-center gap-3 min-w-0">
+        class="fixed top-3 left-3 right-3 sm:top-5 sm:left-5 sm:right-5 z-50 flex items-center justify-between gap-2 sm:gap-3 pointer-events-none">
+        <div class="glass-panel p-2.5 sm:p-3.5 rounded-2xl pointer-events-auto flex items-center gap-2 sm:gap-3 min-w-0">
             <a href="{{ route('map') }}"
-                class="header-btn w-11 h-11 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 border border-slate-200 dark:border-[#1e1e1e] bg-white dark:bg-[#111] hover:bg-slate-50 dark:hover:bg-[#1a1a1a] transition cursor-pointer">
-                <i class="fa-solid fa-arrow-left text-sm sm:text-[10px] text-slate-400 dark:text-[#666]"></i>
+                class="header-btn w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 border border-slate-200 dark:border-[#1e1e1e] bg-white dark:bg-[#111] hover:bg-slate-50 dark:hover:bg-[#1a1a1a] transition cursor-pointer">
+                <i class="fa-solid fa-arrow-left text-[13px] sm:text-[11px] text-slate-400 dark:text-[#666]"></i>
             </a>
             <div class="w-px h-6 bg-slate-200 dark:bg-[#222] mx-0.5 hidden sm:block"></div>
             <div
-                class="w-9 h-9 sm:w-9 sm:h-9 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
+                class="w-8 h-8 sm:w-9 sm:h-9 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
                 <i class="fa-solid fa-bus text-white text-sm sm:text-sm"></i>
             </div>
 
             <div class="w-px h-6 bg-slate-200 dark:bg-[#222] mx-0.5 hidden sm:block"></div>
             <span
-                class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555] hidden sm:inline">Top
+                class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555] hidden sm:inline">Top
                 Up</span>
         </div>
-        <div class="flex items-center gap-2.5 pointer-events-auto z-50 shrink-0">
+        <div class="flex items-center gap-1.5 sm:gap-2.5 pointer-events-auto z-50 shrink-0">
             <a href="{{ route('payment.topup.history') }}"
-                class="header-btn glass-panel w-11 h-11 sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-xl text-slate-900 dark:text-white text-[9px] sm:text-[10px] font-bold cursor-pointer uppercase tracking-wider flex items-center justify-center sm:justify-start gap-2">
-                <i class="fa-solid fa-clock-rotate-left text-sm sm:text-[9px] text-slate-400 dark:text-[#555]"></i>
+                class="header-btn glass-panel w-9 h-9 sm:w-auto sm:h-auto sm:px-4 sm:py-2 rounded-xl text-slate-900 dark:text-white text-[10px] sm:text-[11px] font-bold cursor-pointer uppercase tracking-wider flex items-center justify-center sm:justify-start gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-[13px] sm:text-[10px] text-slate-400 dark:text-[#555]"></i>
                 <span class="hidden sm:inline">History</span>
             </a>
             <div class="hidden sm:flex items-center gap-2.5 glass-panel px-4 py-2 rounded-xl">
-                <p class="text-[7px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#444]">Balance</p>
-                <p class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                <p class="text-[8px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#444]">Balance</p>
+                <p class="text-[12px] font-bold text-emerald-600 dark:text-emerald-400">
                     ₱{{ number_format($balance ?? 0, 2) }}</p>
             </div>
         </div>
     </header>
     <!-- ══════════ MAIN CONTENT ══════════ -->
-    <div class="pt-20 sm:pt-24 pb-8 sm:pb-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-5">
+    <div class="pt-[4.25rem] sm:pt-24 pb-8 sm:pb-10 max-w-6xl mx-auto px-3.5 sm:px-5 lg:px-6">
 
-        <!-- ── Mobile: Balance Card ── -->
-        <div class="sm:hidden mb-6">
+        <!-- ── Below xl: Balance Card (sidebar only shows on xl+) ── -->
+        <div class="xl:hidden mb-5 sm:mb-6">
             <div class="glass-card p-4 rounded-[1.25rem] flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div
                         class="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center border border-emerald-500/15">
-                        <i class="fa-solid fa-wallet text-emerald-600 dark:text-emerald-400 text-[10px]"></i>
+                        <i class="fa-solid fa-wallet text-emerald-600 dark:text-emerald-400 text-[11px]"></i>
                     </div>
                     <span
-                        class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#444]">Current
+                        class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#444]">Current
                         Balance</span>
                 </div>
                 <span
@@ -249,20 +249,20 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6 items-start">
 
             <!-- ══════════ LEFT SIDEBAR (desktop only) ══════════ -->
-            <div class="hidden lg:flex lg:col-span-4 flex-col gap-6">
+            <div class="hidden xl:flex xl:col-span-4 flex-col gap-5 sm:gap-6">
 
                 <!-- Balance Card -->
                 <div class="glass-card p-6 rounded-[1.5rem]">
                     <div class="flex items-center gap-2.5 mb-4">
                         <div
                             class="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center border border-emerald-500/15">
-                            <i class="fa-solid fa-wallet text-emerald-600 dark:text-emerald-400 text-[10px]"></i>
+                            <i class="fa-solid fa-wallet text-emerald-600 dark:text-emerald-400 text-[11px]"></i>
                         </div>
                         <span
-                            class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Current
+                            class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Current
                             Balance</span>
                     </div>
                     <h3 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
@@ -274,35 +274,35 @@
                     <div class="flex items-center gap-2.5 mb-4">
                         <div
                             class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] flex items-center justify-center">
-                            <i class="fa-solid fa-circle-info text-[10px] text-slate-400 dark:text-[#555]"></i>
+                            <i class="fa-solid fa-circle-info text-[11px] text-slate-400 dark:text-[#555]"></i>
                         </div>
                         <span
-                            class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Good
+                            class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Good
                             to Know</span>
                     </div>
                     <div class="space-y-3">
                         <div class="flex items-start gap-2.5">
                             <div
                                 class="w-5 h-5 rounded-md bg-blue-500/10 border border-blue-500/15 flex items-center justify-center shrink-0 mt-0.5">
-                                <i class="fa-solid fa-bolt text-[7px] text-blue-500 dark:text-blue-400"></i>
+                                <i class="fa-solid fa-bolt text-[8px] text-blue-500 dark:text-blue-400"></i>
                             </div>
-                            <p class="text-[10px] text-slate-500 dark:text-[#666] leading-relaxed">Funds are credited
+                            <p class="text-[11px] text-slate-500 dark:text-[#666] leading-relaxed">Funds are credited
                                 instantly after payment confirmation.</p>
                         </div>
                         <div class="flex items-start gap-2.5">
                             <div
                                 class="w-5 h-5 rounded-md bg-blue-500/10 border border-blue-500/15 flex items-center justify-center shrink-0 mt-0.5">
-                                <i class="fa-solid fa-coins text-[7px] text-blue-500 dark:text-blue-400"></i>
+                                <i class="fa-solid fa-coins text-[8px] text-blue-500 dark:text-blue-400"></i>
                             </div>
-                            <p class="text-[10px] text-slate-500 dark:text-[#666] leading-relaxed">Minimum top-up amount
+                            <p class="text-[11px] text-slate-500 dark:text-[#666] leading-relaxed">Minimum top-up amount
                                 is ₱10.00.</p>
                         </div>
                         <div class="flex items-start gap-2.5">
                             <div
                                 class="w-5 h-5 rounded-md bg-blue-500/10 border border-blue-500/15 flex items-center justify-center shrink-0 mt-0.5">
-                                <i class="fa-solid fa-shield text-[7px] text-blue-500 dark:text-blue-400"></i>
+                                <i class="fa-solid fa-shield text-[8px] text-blue-500 dark:text-blue-400"></i>
                             </div>
-                            <p class="text-[10px] text-slate-500 dark:text-[#666] leading-relaxed">All transactions are
+                            <p class="text-[11px] text-slate-500 dark:text-[#666] leading-relaxed">All transactions are
                                 encrypted and secured.</p>
                         </div>
                     </div>
@@ -311,7 +311,7 @@
             </div>
 
             <!-- ══════════ RIGHT CONTENT ══════════ -->
-            <div class="lg:col-span-8 flex flex-col gap-6">
+            <div class="xl:col-span-8 flex flex-col gap-5 sm:gap-6">
 
                 <form id="topup-form" action="{{ route('payment.topup.process') }}" method="POST"
                     class="flex flex-col gap-6">
@@ -322,10 +322,10 @@
                         <div class="flex items-center gap-2.5 mb-5">
                             <div
                                 class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] flex items-center justify-center">
-                                <i class="fa-solid fa-coins text-[10px] text-slate-400 dark:text-[#555]"></i>
+                                <i class="fa-solid fa-coins text-[11px] text-slate-400 dark:text-[#555]"></i>
                             </div>
                             <span
-                                class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Enter
+                                class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Enter
                                 Amount</span>
                         </div>
 
@@ -338,17 +338,17 @@
                                     class="w-full bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] rounded-xl pl-11 pr-4 py-4 text-2xl font-black text-slate-900 dark:text-white outline-none transition tracking-tight">
                             </div>
                             @error('amount')
-                                <p class="text-[9px] text-red-500 dark:text-red-400 ml-1 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-circle-exclamation text-[8px]"></i>
+                                <p class="text-[10px] text-red-500 dark:text-red-400 ml-1 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
                                     {{ $message }}
                                 </p>
                             @enderror
                         </div>
 
-                        <div class="grid grid-cols-4 gap-2">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             @foreach ([50, 100, 200, 500] as $preset)
                                 <button type="button" onclick="setAmount({{ $preset }})"
-                                    class="preset-btn py-3 rounded-xl bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[11px] font-bold text-slate-400 dark:text-[#555]">
+                                    class="preset-btn py-3 rounded-xl bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[12px] font-bold text-slate-400 dark:text-[#555]">
                                     ₱{{ $preset }}
                                 </button>
                             @endforeach
@@ -360,10 +360,10 @@
                         <div class="flex items-center gap-2.5 mb-5">
                             <div
                                 class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] flex items-center justify-center">
-                                <i class="fa-solid fa-credit-card text-[10px] text-slate-400 dark:text-[#555]"></i>
+                                <i class="fa-solid fa-credit-card text-[11px] text-slate-400 dark:text-[#555]"></i>
                             </div>
                             <span
-                                class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Payment
+                                class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Payment
                                 Method</span>
                         </div>
 
@@ -372,7 +372,8 @@
                             <!-- GCash -->
                             <label class="block">
                                 <input type="radio" name="payment-method" value="gcash" class="hidden" checked>
-                                <div class="method-card selected bg-slate-50 dark:bg-[#111] p-4 rounded-xl flex items-center justify-between"
+                                <div
+                                    class="method-card selected bg-slate-50 dark:bg-[#111] p-3 sm:p-4 rounded-xl flex items-center justify-between gap-2"
                                     onclick="selectMethod(this)">
                                     <div class="flex items-center gap-3">
                                         <div
@@ -381,9 +382,9 @@
                                                 class="fa-solid fa-mobile-screen-button text-blue-500 dark:text-blue-400 text-sm"></i>
                                         </div>
                                         <div>
-                                            <p class="text-[12px] font-bold text-slate-900 dark:text-white">GCash</p>
+                                            <p class="text-[13px] font-bold text-slate-900 dark:text-white">GCash</p>
                                             <p
-                                                class="text-[8px] text-slate-400 dark:text-[#444] font-bold uppercase tracking-wider">
+                                                class="text-[9px] text-slate-400 dark:text-[#444] font-bold uppercase tracking-wider">
                                                 Mobile Wallet</p>
                                         </div>
                                     </div>
@@ -396,18 +397,19 @@
                             <!-- Maya -->
                             <label class="block">
                                 <input type="radio" name="payment-method" value="maya" class="hidden">
-                                <div class="method-card bg-slate-50 dark:bg-[#111] p-4 rounded-xl flex items-center justify-between"
+                                <div
+                                    class="method-card bg-slate-50 dark:bg-[#111] p-3 sm:p-4 rounded-xl flex items-center justify-between gap-2"
                                     onclick="selectMethod(this)">
-                                    <div class="flex items-center gap-3">
+                                    <div class="flex items-center gap-3 min-w-0">
                                         <div
                                             class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center shrink-0">
                                             <i
                                                 class="fa-solid fa-bolt text-emerald-500 dark:text-emerald-400 text-sm"></i>
                                         </div>
                                         <div>
-                                            <p class="text-[12px] font-bold text-slate-900 dark:text-white">Maya</p>
+                                            <p class="text-[13px] font-bold text-slate-900 dark:text-white">Maya</p>
                                             <p
-                                                class="text-[8px] text-slate-400 dark:text-[#444] font-bold uppercase tracking-wider">
+                                                class="text-[9px] text-slate-400 dark:text-[#444] font-bold uppercase tracking-wider">
                                                 Mobile Wallet</p>
                                         </div>
                                     </div>
@@ -420,19 +422,20 @@
                             <!-- Admin Tab -->
                             <label class="block">
                                 <input type="radio" name="payment-method" value="admin" class="hidden">
-                                <div class="method-card bg-slate-50 dark:bg-[#111] p-4 rounded-xl flex items-center justify-between"
+                                <div
+                                    class="method-card bg-slate-50 dark:bg-[#111] p-3 sm:p-4 rounded-xl flex items-center justify-between gap-2"
                                     onclick="selectMethod(this)">
-                                    <div class="flex items-center gap-3">
+                                    <div class="flex items-center gap-3 min-w-0">
                                         <div
                                             class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/15 flex items-center justify-center shrink-0">
                                             <i
                                                 class="fa-solid fa-user-tie text-amber-500 dark:text-amber-400 text-sm"></i>
                                         </div>
                                         <div>
-                                            <p class="text-[12px] font-bold text-slate-900 dark:text-white">Admin
+                                            <p class="text-[13px] font-bold text-slate-900 dark:text-white">Admin
                                                 Settlement</p>
                                             <p
-                                                class="text-[8px] text-slate-400 dark:text-[#444] font-bold uppercase tracking-wider">
+                                                class="text-[9px] text-slate-400 dark:text-[#444] font-bold uppercase tracking-wider">
                                                 Manual Processing</p>
                                         </div>
                                     </div>
@@ -445,8 +448,8 @@
                         </div>
 
                         @error('payment-method')
-                            <p class="text-[9px] text-red-500 dark:text-red-400 mt-3 ml-1 flex items-center gap-1.5">
-                                <i class="fa-solid fa-circle-exclamation text-[8px]"></i>
+                            <p class="text-[10px] text-red-500 dark:text-red-400 mt-3 ml-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
                                 {{ $message }}
                             </p>
                         @enderror
@@ -454,18 +457,18 @@
 
                     <!-- ── Mobile: inline info ── -->
                     <div
-                        class="lg:hidden flex items-start gap-2.5 p-3.5 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                        class="xl:hidden flex items-start gap-2.5 p-3.5 rounded-xl bg-blue-500/5 border border-blue-500/10">
                         <i
-                            class="fa-solid fa-shield-halved text-blue-500 dark:text-blue-400 text-[10px] mt-0.5 shrink-0"></i>
-                        <p class="text-[9px] text-slate-500 dark:text-[#555] leading-relaxed">Funds are credited
+                            class="fa-solid fa-shield-halved text-blue-500 dark:text-blue-400 text-[11px] mt-0.5 shrink-0"></i>
+                        <p class="text-[10px] text-slate-500 dark:text-[#555] leading-relaxed">Funds are credited
                             instantly. Minimum top-up is ₱10. All transactions are encrypted.</p>
                     </div>
 
                     <!-- ── Actions ── -->
                     <div class="flex items-center justify-between pt-2">
                         <button type="submit"
-                            class="bg-blue-600 text-white px-8 py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-500 transition shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center gap-2.5">
-                            <i class="fa-solid fa-lock text-[9px]"></i>
+                            class="bg-blue-600 text-white w-full sm:w-auto px-6 sm:px-8 py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-blue-500 transition shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-2.5">
+                            <i class="fa-solid fa-lock text-[10px]"></i>
                             Confirm Payment
                         </button>
                     </div>

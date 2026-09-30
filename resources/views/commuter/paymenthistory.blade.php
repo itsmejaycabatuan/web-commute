@@ -62,7 +62,7 @@
         }
 
         .section-body.open {
-            max-height: 600px;
+            max-height: 2000px;
             opacity: 1;
         }
 
@@ -147,7 +147,9 @@
         /* ═══ PAGINATION ═══ */
         .pagination {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
+            justify-content: center;
             gap: 4px;
         }
 
@@ -220,117 +222,117 @@
 
     <!-- ══════════ HEADER ══════════ -->
     <header
-        class="fixed top-4 left-4 right-4 sm:top-5 sm:left-5 sm:right-5 z-50 flex items-center justify-between gap-3 pointer-events-none">
-        <div class="glass-panel p-3 sm:p-3.5 rounded-2xl pointer-events-auto flex items-center gap-3 min-w-0">
+        class="fixed top-3 left-3 right-3 sm:top-5 sm:left-5 sm:right-5 z-50 flex items-center justify-between gap-2 sm:gap-3 pointer-events-none">
+        <div class="glass-panel p-2.5 sm:p-3.5 rounded-2xl pointer-events-auto flex items-center gap-2 sm:gap-3 min-w-0">
             <a href="{{ route('map') }}"
-                class="header-btn w-11 h-11 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 border border-slate-200 dark:border-[#1e1e1e] bg-white dark:bg-[#111] hover:bg-slate-50 dark:hover:bg-[#1a1a1a] transition cursor-pointer">
-                <i class="fa-solid fa-arrow-left text-sm sm:text-[10px] text-slate-400 dark:text-[#666]"></i>
+                class="header-btn w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 border border-slate-200 dark:border-[#1e1e1e] bg-white dark:bg-[#111] hover:bg-slate-50 dark:hover:bg-[#1a1a1a] transition cursor-pointer">
+                <i class="fa-solid fa-arrow-left text-[13px] sm:text-[11px] text-slate-400 dark:text-[#666]"></i>
             </a>
             <div class="w-px h-6 bg-slate-200 dark:bg-[#222] mx-0.5 hidden sm:block"></div>
             <div
-                class="w-9 h-9 sm:w-9 sm:h-9 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
+                class="w-8 h-8 sm:w-9 sm:h-9 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
                 <i class="fa-solid fa-bus text-white text-sm sm:text-sm"></i>
             </div>
 
             <div class="w-px h-6 bg-slate-200 dark:bg-[#222] mx-0.5 hidden sm:block"></div>
             <span
-                class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555] hidden sm:inline">Payments</span>
+                class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555] hidden sm:inline">Payments</span>
         </div>
-        <div class="flex items-center gap-2.5 pointer-events-auto z-50 shrink-0">
+        <div class="flex items-center gap-1.5 sm:gap-2.5 pointer-events-auto z-50 shrink-0">
             <div class="hidden sm:flex items-center gap-3 glass-panel px-4 py-2 rounded-xl">
                 <div class="text-right">
-                    <p class="text-[7px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#444]">Total
+                    <p class="text-[8px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#444]">Total
                         Spent</p>
-                    <p class="text-[11px] font-bold text-blue-600 dark:text-blue-400 leading-tight">
+                    <p class="text-[12px] font-bold text-blue-600 dark:text-blue-400 leading-tight">
                         ₱{{ number_format($totalSpent, 2) }}</p>
                 </div>
                 <div class="w-px h-6 bg-slate-200 dark:bg-[#222]"></div>
                 <div class="text-right">
-                    <p class="text-[7px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#444]">Balance
+                    <p class="text-[8px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#444]">Balance
                     </p>
-                    <p class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 leading-tight">
+                    <p class="text-[12px] font-bold text-emerald-600 dark:text-emerald-400 leading-tight">
                         ₱{{ number_format($balance, 2) }}</p>
                 </div>
             </div>
             <a href="{{ route('profile') }}"
-                class="header-btn glass-panel w-11 h-11 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-white cursor-pointer">
-                <i class="fa-solid fa-circle-user text-sm sm:text-[10px] text-slate-400 dark:text-[#555]"></i>
+                class="header-btn glass-panel w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-white cursor-pointer">
+                <i class="fa-solid fa-circle-user text-[13px] sm:text-[11px] text-slate-400 dark:text-[#555]"></i>
             </a>
         </div>
     </header>
 
     <!-- ══════════ MAIN CONTENT ══════════ -->
-    <div class="pt-20 sm:pt-24 pb-8 sm:pb-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-5">
+    <div class="pt-[4.25rem] sm:pt-24 pb-8 sm:pb-10 max-w-6xl mx-auto px-3.5 sm:px-5 lg:px-6">
 
         <!-- Page Title -->
-        <div class="mb-8">
-            <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">Payment
+        <div class="mb-6 sm:mb-8">
+            <h1 class="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white">Payment
                 <span class="text-blue-500 dark:text-blue-400">History</span>
             </h1>
-            <p class="text-[11px] text-slate-400 dark:text-[#555] mt-1.5">View and search your complete transaction
+            <p class="text-[12px] text-slate-400 dark:text-[#555] mt-1.5">View and search your complete transaction
                 ledger.</p>
         </div>
 
         <!-- ── Mobile: Stats Cards ── -->
-        <div class="sm:hidden grid grid-cols-2 gap-3 mb-6">
-            <div class="glass-card p-4 rounded-[1.25rem]">
-                <p class="text-[8px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#444] mb-1">Total
+        <div class="sm:hidden grid grid-cols-2 gap-2.5 sm:gap-3 mb-5 sm:mb-6">
+            <div class="glass-card p-3.5 sm:p-4 rounded-[1.25rem] min-w-0">
+                <p class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#444] mb-1">Total
                     Spent</p>
-                <p class="text-lg font-black text-blue-600 dark:text-blue-400">₱{{ number_format($totalSpent, 2) }}</p>
+                <p class="text-[15px] sm:text-lg font-black break-words text-blue-600 dark:text-blue-400">₱{{ number_format($totalSpent, 2) }}</p>
             </div>
-            <div class="glass-card p-4 rounded-[1.25rem]">
-                <p class="text-[8px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#444] mb-1">Balance
+            <div class="glass-card p-3.5 sm:p-4 rounded-[1.25rem] min-w-0">
+                <p class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#444] mb-1">Balance
                 </p>
-                <p class="text-lg font-black text-emerald-600 dark:text-emerald-400">₱{{ number_format($balance, 2) }}
+                <p class="text-[15px] sm:text-lg font-black break-words text-emerald-600 dark:text-emerald-400">₱{{ number_format($balance, 2) }}
                 </p>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6 items-start">
 
             <!-- ══════════ LEFT SIDEBAR (desktop filters) ══════════ -->
-            <div class="hidden lg:block lg:col-span-4">
+            <div class="hidden xl:block xl:col-span-4">
                 <div class="glass-card p-6 rounded-[1.5rem] sticky top-24">
                     <div class="flex items-center gap-2.5 mb-5">
                         <div
                             class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] flex items-center justify-center">
-                            <i class="fa-solid fa-filter text-[10px] text-slate-400 dark:text-[#555]"></i>
+                            <i class="fa-solid fa-filter text-[11px] text-slate-400 dark:text-[#555]"></i>
                         </div>
                         <span
-                            class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Filters</span>
+                            class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Filters</span>
                     </div>
 
                     <form action="{{ route('payment.history') }}" method="GET" class="space-y-4">
                         <!-- Search -->
                         <div class="space-y-1.5">
                             <label
-                                class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-[#444] ml-1">Search</label>
+                                class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-[#444] ml-1">Search</label>
                             <div class="relative">
                                 <i
-                                    class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-[#444]"></i>
+                                    class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 dark:text-[#444]"></i>
                                 <input type="text" name="search" value="{{ request('search') }}"
                                     placeholder="Transaction ID or destination"
-                                    class="w-full bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] rounded-xl pl-10 pr-4 py-2.5 text-[12px] text-slate-900 dark:text-white outline-none transition">
+                                    class="w-full bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] rounded-xl pl-10 pr-4 py-2.5 text-[13px] text-slate-900 dark:text-white outline-none transition">
                             </div>
                         </div>
 
                         <!-- Date Range -->
                         <div class="space-y-1.5">
                             <label
-                                class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-[#444] ml-1">Date
+                                class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-[#444] ml-1">Date
                                 Range</label>
-                            <div class="grid grid-cols-2 gap-2">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                 <div class="relative">
                                     <i
-                                        class="fa-regular fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 dark:text-[#444]"></i>
+                                        class="fa-regular fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-[#444]"></i>
                                     <input type="date" name="from_date" value="{{ request('from_date') }}"
-                                        class="w-full bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] rounded-xl pl-9 pr-2 py-2.5 text-[11px] text-slate-900 dark:text-white outline-none transition">
+                                        class="w-full bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] rounded-xl pl-9 pr-2 py-2.5 text-[12px] text-slate-900 dark:text-white outline-none transition">
                                 </div>
                                 <div class="relative">
                                     <i
-                                        class="fa-regular fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 dark:text-[#444]"></i>
+                                        class="fa-regular fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-[#444]"></i>
                                     <input type="date" name="to_date" value="{{ request('to_date') }}"
-                                        class="w-full bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] rounded-xl pl-9 pr-2 py-2.5 text-[11px] text-slate-900 dark:text-white outline-none transition">
+                                        class="w-full bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] rounded-xl pl-9 pr-2 py-2.5 text-[12px] text-slate-900 dark:text-white outline-none transition">
                                 </div>
                             </div>
                         </div>
@@ -338,32 +340,32 @@
                         <!-- Quick Range Buttons -->
                         <div class="space-y-1.5">
                             <label
-                                class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-[#444] ml-1">Quick
+                                class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-[#444] ml-1">Quick
                                 Range</label>
                             <div class="grid grid-cols-3 gap-1.5">
                                 <button type="button" onclick="setQuickRange(7)"
-                                    class="py-2 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[9px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition">7
+                                    class="py-2 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[10px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition">7
                                     Days</button>
                                 <button type="button" onclick="setQuickRange(30)"
-                                    class="py-2 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[9px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition">30
+                                    class="py-2 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[10px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition">30
                                     Days</button>
                                 <button type="button" onclick="setQuickRange(90)"
-                                    class="py-2 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[9px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition">90
+                                    class="py-2 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[10px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition">90
                                     Days</button>
                             </div>
                         </div>
 
                         <!-- Actions -->
                         <button type="submit"
-                            class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider text-white transition shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-magnifying-glass text-[9px]"></i>
+                            class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl text-[11px] font-bold uppercase tracking-wider text-white transition shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
                             Apply Filters
                         </button>
 
                         @if (request()->hasAny(['from_date', 'to_date', 'search']))
                             <a href="{{ route('payment.history') }}"
-                                class="block text-center text-[9px] text-slate-400 dark:text-[#444] hover:text-slate-900 dark:hover:text-white font-bold uppercase tracking-wider transition py-1">
-                                <i class="fa-solid fa-xmark text-[8px] mr-1"></i> Clear Filters
+                                class="block text-center text-[10px] text-slate-400 dark:text-[#444] hover:text-slate-900 dark:hover:text-white font-bold uppercase tracking-wider transition py-1">
+                                <i class="fa-solid fa-xmark text-[9px] mr-1"></i> Clear Filters
                             </a>
                         @endif
                     </form>
@@ -371,28 +373,28 @@
             </div>
 
             <!-- ══════════ RIGHT CONTENT ══════════ -->
-            <div class="lg:col-span-8 flex flex-col gap-6">
+            <div class="xl:col-span-8 flex flex-col gap-5 sm:gap-6">
 
                 <!-- ── Mobile: Filter Panel (collapsible) ── -->
-                <div class="lg:hidden">
+                <div class="xl:hidden">
                     <button onclick="toggleSection('filters')"
                         class="w-full glass-card p-4 rounded-[1.25rem] flex items-center justify-between cursor-pointer hover:border-slate-300 dark:hover:border-[#333] transition">
                         <div class="flex items-center gap-3">
                             <div
                                 class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] flex items-center justify-center">
-                                <i class="fa-solid fa-filter text-[10px] text-slate-400 dark:text-[#555]"></i>
+                                <i class="fa-solid fa-filter text-[11px] text-slate-400 dark:text-[#555]"></i>
                             </div>
                             <div class="text-left">
                                 <span
-                                    class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Filters</span>
+                                    class="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Filters</span>
                                 @if (request()->hasAny(['from_date', 'to_date', 'search']))
                                     <span
-                                        class="ml-2 text-[8px] bg-blue-500/15 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded font-bold">Active</span>
+                                        class="ml-2 text-[9px] bg-blue-500/15 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded font-bold">Active</span>
                                 @endif
                             </div>
                         </div>
                         <i id="filters-icon"
-                            class="fa-solid fa-chevron-down text-[10px] text-slate-400 dark:text-[#555] section-toggle-icon"></i>
+                            class="fa-solid fa-chevron-down text-[11px] text-slate-400 dark:text-[#555] section-toggle-icon"></i>
                     </button>
                     <div id="filters-body" class="section-body">
                         <div class="glass-card border-t-0 rounded-t-none p-4 pt-3">
@@ -400,45 +402,45 @@
                                 <!-- Search -->
                                 <div class="relative">
                                     <i
-                                        class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-[#444]"></i>
+                                        class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 dark:text-[#444]"></i>
                                     <input type="text" name="search" value="{{ request('search') }}"
                                         placeholder="Transaction ID or destination"
-                                        class="w-full bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] rounded-xl pl-10 pr-4 py-2.5 text-[12px] text-slate-900 dark:text-white outline-none transition">
+                                        class="w-full bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] rounded-xl pl-10 pr-4 py-2.5 text-[13px] text-slate-900 dark:text-white outline-none transition">
                                 </div>
                                 <!-- Date Range -->
-                                <div class="grid grid-cols-2 gap-2">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <div class="relative">
                                         <i
-                                            class="fa-regular fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 dark:text-[#444]"></i>
+                                            class="fa-regular fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-[#444]"></i>
                                         <input type="date" name="from_date" value="{{ request('from_date') }}"
-                                            class="w-full bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] rounded-xl pl-9 pr-2 py-2.5 text-[11px] text-slate-900 dark:text-white outline-none transition">
+                                            class="w-full bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] rounded-xl pl-9 pr-2 py-2.5 text-[12px] text-slate-900 dark:text-white outline-none transition">
                                     </div>
                                     <div class="relative">
                                         <i
-                                            class="fa-regular fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 dark:text-[#444]"></i>
+                                            class="fa-regular fa-calendar absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 dark:text-[#444]"></i>
                                         <input type="date" name="to_date" value="{{ request('to_date') }}"
-                                            class="w-full bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] rounded-xl pl-9 pr-2 py-2.5 text-[11px] text-slate-900 dark:text-white outline-none transition">
+                                            class="w-full bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] rounded-xl pl-9 pr-2 py-2.5 text-[12px] text-slate-900 dark:text-white outline-none transition">
                                     </div>
                                 </div>
                                 <!-- Quick Range -->
                                 <div class="grid grid-cols-3 gap-1.5">
                                     <button type="button" onclick="setQuickRange(7)"
-                                        class="py-2 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[9px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition">7
+                                        class="py-2 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[10px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition">7
                                         Days</button>
                                     <button type="button" onclick="setQuickRange(30)"
-                                        class="py-2 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[9px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition">30
+                                        class="py-2 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[10px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition">30
                                         Days</button>
                                     <button type="button" onclick="setQuickRange(90)"
-                                        class="py-2 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[9px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition">90
+                                        class="py-2 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[10px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition">90
                                         Days</button>
                                 </div>
                                 <div class="flex gap-2">
                                     <button type="submit"
-                                        class="flex-1 bg-blue-600 hover:bg-blue-500 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider text-white transition active:scale-[0.98]">Apply</button>
+                                        class="flex-1 bg-blue-600 hover:bg-blue-500 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider text-white transition active:scale-[0.98]">Apply</button>
                                     @if (request()->hasAny(['from_date', 'to_date', 'search']))
                                         <a href="{{ route('payment.history') }}"
-                                            class="px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[10px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition flex items-center">
-                                            <i class="fa-solid fa-xmark text-[9px]"></i>
+                                            class="px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[11px] font-bold text-slate-400 dark:text-[#555] hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#333] transition flex items-center">
+                                            <i class="fa-solid fa-xmark text-[10px]"></i>
                                         </a>
                                     @endif
                                 </div>
@@ -448,92 +450,94 @@
                 </div>
 
                 <!-- ── Results Count ── -->
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2.5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5 min-w-0">
                         <div
                             class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] flex items-center justify-center">
-                            <i class="fa-solid fa-receipt text-[10px] text-slate-400 dark:text-[#555]"></i>
+                            <i class="fa-solid fa-receipt text-[11px] text-slate-400 dark:text-[#555]"></i>
                         </div>
                         <span
-                            class="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Recent
+                            class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-[#555]">Recent
                             Receipts</span>
                     </div>
-                    <span class="text-[9px] font-bold text-slate-300 dark:text-[#333]">{{ $recentReceipts->total() }}
+                    <span class="text-[10px] font-bold text-slate-300 dark:text-[#333]">{{ $recentReceipts->total() }}
                         results</span>
                 </div>
 
                 <!-- ── Desktop: Table View ── -->
-                <div class="hidden lg:block glass-card rounded-[1.5rem] overflow-hidden">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr
-                                class="text-[9px] uppercase tracking-[0.15em] text-slate-400 dark:text-[#444] border-b border-slate-100 dark:border-[#1e1e1e]">
-                                <th class="px-6 py-3.5 font-bold">Transaction</th>
-                                <th class="px-6 py-3.5 font-bold">Details</th>
-                                <th class="px-6 py-3.5 font-bold">Date</th>
-                                <th class="px-6 py-3.5 font-bold text-right">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-[#1a1a1a]">
-                            @forelse($recentReceipts as $receipt)
-                                <tr class="table-row cursor-pointer"
-                                    onclick="window.location.href='{{ route('payment.showReceipt', $receipt->id) }}'">
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center gap-3">
-                                            <div
-                                                class="w-9 h-9 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] flex items-center justify-center shrink-0">
-                                                <i
-                                                    class="fa-solid fa-receipt text-[10px] text-slate-400 dark:text-[#444]"></i>
+                <div class="hidden xl:block glass-card rounded-[1.5rem] overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[600px] text-left">
+                            <thead>
+                                <tr
+                                    class="text-[10px] uppercase tracking-[0.15em] text-slate-400 dark:text-[#444] border-b border-slate-100 dark:border-[#1e1e1e]">
+                                    <th class="px-4 2xl:px-6 py-3 font-bold sm:py-3.5">Transaction</th>
+                                    <th class="px-4 2xl:px-6 py-3 font-bold sm:py-3.5">Details</th>
+                                    <th class="px-4 2xl:px-6 py-3 font-bold sm:py-3.5">Date</th>
+                                    <th class="px-4 2xl:px-6 py-3 font-bold sm:py-3.5 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-[#1a1a1a]">
+                                @forelse($recentReceipts as $receipt)
+                                    <tr class="table-row cursor-pointer"
+                                        onclick="window.location.href='{{ route('payment.showReceipt', $receipt->id) }}'">
+                                        <td class="px-4 2xl:px-6 py-3.5 sm:py-4">
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="w-9 h-9 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] flex items-center justify-center shrink-0">
+                                                    <i
+                                                        class="fa-solid fa-receipt text-[11px] text-slate-400 dark:text-[#444]"></i>
+                                                </div>
+                                                <span
+                                                    class="text-[12px] font-bold text-slate-600 dark:text-[#ccc] font-mono">{{ $receipt->transaction_id }}</span>
                                             </div>
+                                        </td>
+                                        <td class="px-4 2xl:px-6 py-3.5 sm:py-4">
+                                            <p class="text-[12px] font-bold text-slate-500 dark:text-[#888]">Ride to
+                                                {{ $receipt->destination ?? 'Downtown' }}</p>
+                                            <p
+                                                class="text-[9px] text-slate-400 dark:text-[#444] font-bold uppercase tracking-wider mt-0.5">
+                                                Standard Regular Fare</p>
+                                        </td>
+                                        <td class="px-4 2xl:px-6 py-3.5 sm:py-4">
+                                            <p class="text-[12px] text-slate-400 dark:text-[#666]">{{ $receipt->paid_at }}
+                                            </p>
+                                        </td>
+                                        <td class="px-4 2xl:px-6 py-3.5 sm:py-4 text-right">
                                             <span
-                                                class="text-[11px] font-bold text-slate-600 dark:text-[#ccc] font-mono">{{ $receipt->transaction_id }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <p class="text-[11px] font-bold text-slate-500 dark:text-[#888]">Ride to
-                                            {{ $receipt->destination ?? 'Downtown' }}</p>
-                                        <p
-                                            class="text-[8px] text-slate-400 dark:text-[#444] font-bold uppercase tracking-wider mt-0.5">
-                                            Standard Regular Fare</p>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <p class="text-[11px] text-slate-400 dark:text-[#666]">{{ $receipt->paid_at }}
-                                        </p>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <span
-                                            class="text-[12px] font-bold text-slate-900 dark:text-white">-₱{{ number_format($receipt->price, 2) }}</span>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="py-16">
-                                        <div class="flex flex-col items-center justify-center">
-                                            <div
-                                                class="w-12 h-12 rounded-xl bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] flex items-center justify-center mb-3">
-                                                <i
-                                                    class="fa-solid fa-box-open text-lg text-slate-300 dark:text-[#333]"></i>
+                                                class="text-[13px] font-bold whitespace-nowrap text-slate-900 dark:text-white">-₱{{ number_format($receipt->price, 2) }}</span>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="py-16">
+                                            <div class="flex flex-col items-center justify-center">
+                                                <div
+                                                    class="w-12 h-12 rounded-xl bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] flex items-center justify-center mb-3">
+                                                    <i
+                                                        class="fa-solid fa-box-open text-lg text-slate-300 dark:text-[#333]"></i>
+                                                </div>
+                                                <p class="text-[12px] text-slate-400 dark:text-[#444] font-medium">No
+                                                    transactions found</p>
+                                                <p class="text-[10px] text-slate-300 dark:text-[#333] mt-1">Try adjusting
+                                                    your filters</p>
                                             </div>
-                                            <p class="text-[11px] text-slate-400 dark:text-[#444] font-medium">No
-                                                transactions found</p>
-                                            <p class="text-[9px] text-slate-300 dark:text-[#333] mt-1">Try adjusting
-                                                your filters</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
 
                     @if ($recentReceipts->hasPages())
-                        <div class="px-6 py-4 border-t border-slate-100 dark:border-[#1e1e1e]">
+                        <div class="px-4 2xl:px-6 py-3.5 sm:py-4 border-t border-slate-100 dark:border-[#1e1e1e]">
                             {{ $recentReceipts->appends(request()->query())->links('vendor.pagination.custom') }}
                         </div>
                     @endif
                 </div>
 
                 <!-- ── Mobile: Card View ── -->
-                <div class="lg:hidden space-y-2.5">
+                <div class="xl:hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-2.5">
                     @forelse($recentReceipts as $receipt)
                         <div class="glass-card p-4 rounded-[1.25rem] card-row cursor-pointer"
                             onclick="window.location.href='{{ route('payment.showReceipt', $receipt->id) }}'">
@@ -541,24 +545,24 @@
                                 <div class="flex items-start gap-3 min-w-0 flex-1">
                                     <div
                                         class="w-9 h-9 rounded-lg bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] flex items-center justify-center shrink-0 mt-0.5">
-                                        <i class="fa-solid fa-receipt text-[10px] text-slate-400 dark:text-[#444]"></i>
+                                        <i class="fa-solid fa-receipt text-[11px] text-slate-400 dark:text-[#444]"></i>
                                     </div>
                                     <div class="min-w-0">
                                         <p
-                                            class="text-[10px] font-bold text-slate-600 dark:text-[#ccc] font-mono truncate">
+                                            class="text-[11px] font-bold text-slate-600 dark:text-[#ccc] font-mono truncate">
                                             {{ $receipt->transaction_id }}</p>
                                         <p
-                                            class="text-[10px] font-bold text-slate-500 dark:text-[#888] mt-0.5 truncate">
+                                            class="text-[11px] font-bold text-slate-500 dark:text-[#888] mt-0.5 truncate">
                                             Ride to {{ $receipt->destination ?? 'Downtown' }}</p>
                                         <p
-                                            class="text-[8px] text-slate-400 dark:text-[#444] font-bold uppercase tracking-wider mt-0.5">
+                                            class="text-[9px] text-slate-400 dark:text-[#444] font-bold uppercase tracking-wider mt-0.5">
                                             Standard Regular Fare</p>
                                     </div>
                                 </div>
                                 <div class="text-right shrink-0">
-                                    <p class="text-[12px] font-bold text-slate-900 dark:text-white">
+                                    <p class="text-[13px] font-bold whitespace-nowrap text-slate-900 dark:text-white">
                                         -₱{{ number_format($receipt->price, 2) }}</p>
-                                    <p class="text-[8px] text-slate-400 dark:text-[#444] mt-0.5 whitespace-nowrap">
+                                    <p class="text-[9px] text-slate-400 dark:text-[#444] mt-0.5 whitespace-nowrap">
                                         {{ $receipt->paid_at }}</p>
                                 </div>
                             </div>
@@ -569,9 +573,9 @@
                                 class="w-12 h-12 rounded-xl bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] flex items-center justify-center mx-auto mb-3">
                                 <i class="fa-solid fa-box-open text-lg text-slate-300 dark:text-[#333]"></i>
                             </div>
-                            <p class="text-[11px] text-slate-400 dark:text-[#444] font-medium">No transactions found
+                            <p class="text-[12px] text-slate-400 dark:text-[#444] font-medium">No transactions found
                             </p>
-                            <p class="text-[9px] text-slate-300 dark:text-[#333] mt-1">Try adjusting your filters</p>
+                            <p class="text-[10px] text-slate-300 dark:text-[#333] mt-1">Try adjusting your filters</p>
                         </div>
                     @endforelse
 

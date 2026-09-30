@@ -254,11 +254,11 @@
 
     <!-- ══════════ HEADER ══════════ -->
     <header
-        class="fixed top-4 left-4 right-4 sm:top-5 sm:left-5 sm:right-5 z-50 flex items-center justify-between gap-3 pointer-events-none">
-        <div class="glass-panel p-3 sm:p-3.5 rounded-2xl pointer-events-auto flex items-center gap-3 min-w-0">
+        class="fixed top-3 left-3 right-3 sm:top-5 sm:left-5 sm:right-5 z-50 flex items-center justify-between gap-2 sm:gap-3 pointer-events-none">
+        <div class="glass-panel p-2.5 sm:p-3.5 rounded-2xl pointer-events-auto flex items-center gap-2 sm:gap-3 min-w-0">
             <a href="{{ route('profile') }}"
-                class="header-btn w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#1e1e1e] bg-white dark:bg-[#111] transition cursor-pointer">
-                <i class="fa-solid fa-arrow-left text-[10px] text-gray-500 dark:text-[#666]"></i>
+                class="header-btn w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#1e1e1e] bg-white dark:bg-[#111] transition cursor-pointer">
+                <i class="fa-solid fa-arrow-left text-[13px] sm:text-[11px] text-gray-500 dark:text-[#666]"></i>
             </a>
             <div class="w-px h-6 bg-gray-200 dark:bg-[#222] mx-0.5 hidden sm:block"></div>
             <div
@@ -268,54 +268,54 @@
 
             <div class="w-px h-6 bg-gray-200 dark:bg-[#222] mx-0.5 hidden sm:block"></div>
             <span
-                class="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555] hidden sm:inline">Settings</span>
+                class="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555] hidden sm:inline">Settings</span>
         </div>
     </header>
 
     <!-- ══════════ MAIN CONTENT ══════════ -->
-    <div class="pt-20 sm:pt-24 pb-8 sm:pb-10 max-w-5xl mx-auto px-4 sm:px-6">
+    <div class="pt-[4.25rem] sm:pt-24 pb-8 sm:pb-10 max-w-5xl mx-auto px-3.5 sm:px-5 lg:px-6">
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6 items-start">
 
             <!-- ══════════ LEFT NAV (desktop) ══════════ -->
-            <div class="hidden lg:block lg:col-span-4">
+            <div class="hidden xl:block xl:col-span-4">
                 <div class="glass-card p-4 rounded-[1.5rem] sticky top-28">
                     <div class="space-y-1">
                         <div class="nav-item active" data-section="profile" onclick="switchSection('profile', this)">
                             <div
                                 class="w-8 h-8 rounded-lg bg-blue-500/10 dark:bg-blue-500/15 flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-user text-[10px] text-blue-500 dark:text-blue-400"></i>
+                                <i class="fa-solid fa-user text-[11px] text-blue-500 dark:text-blue-400"></i>
                             </div>
                             <div>
-                                <p class="text-[11px] font-bold text-gray-900 dark:text-white">Profile</p>
-                                <p class="text-[8px] text-gray-400 dark:text-[#444]">Email & account info</p>
+                                <p class="text-[12px] font-bold text-gray-900 dark:text-white">Profile</p>
+                                <p class="text-[9px] text-gray-400 dark:text-[#444]">Email & account info</p>
                             </div>
                         </div>
                         <div class="nav-item" data-section="security" onclick="switchSection('security', this)">
                             <div class="w-8 h-8 rounded-lg inner-card flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-shield text-[10px] text-gray-400 dark:text-[#555]"></i>
+                                <i class="fa-solid fa-shield text-[11px] text-gray-400 dark:text-[#555]"></i>
                             </div>
                             <div>
-                                <p class="text-[11px] font-bold text-gray-700 dark:text-[#ccc]">Security</p>
-                                <p class="text-[8px] text-gray-400 dark:text-[#444]">Password & authentication</p>
+                                <p class="text-[12px] font-bold text-gray-700 dark:text-[#ccc]">Security</p>
+                                <p class="text-[9px] text-gray-400 dark:text-[#444]">Password & authentication</p>
                             </div>
                         </div>
                         <div class="nav-item" data-section="preferences" onclick="switchSection('preferences', this)">
                             <div class="w-8 h-8 rounded-lg inner-card flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-sliders text-[10px] text-gray-400 dark:text-[#555]"></i>
+                                <i class="fa-solid fa-sliders text-[11px] text-gray-400 dark:text-[#555]"></i>
                             </div>
                             <div>
-                                <p class="text-[11px] font-bold text-gray-700 dark:text-[#ccc]">Preferences</p>
-                                <p class="text-[8px] text-gray-400 dark:text-[#444]">Appearance</p>
+                                <p class="text-[12px] font-bold text-gray-700 dark:text-[#ccc]">Preferences</p>
+                                <p class="text-[9px] text-gray-400 dark:text-[#444]">Appearance</p>
                             </div>
                         </div>
                         <div class="nav-item" data-section="danger" onclick="switchSection('danger', this)">
                             <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-triangle-exclamation text-[10px] text-red-400"></i>
+                                <i class="fa-solid fa-triangle-exclamation text-[11px] text-red-400"></i>
                             </div>
                             <div>
-                                <p class="text-[11px] font-bold text-red-500 dark:text-red-400">Danger Zone</p>
-                                <p class="text-[8px] text-gray-400 dark:text-[#444]">Delete account</p>
+                                <p class="text-[12px] font-bold text-red-500 dark:text-red-400">Danger Zone</p>
+                                <p class="text-[9px] text-gray-400 dark:text-[#444]">Delete account</p>
                             </div>
                         </div>
                     </div>
@@ -323,25 +323,25 @@
             </div>
 
             <!-- ══════════ RIGHT CONTENT ══════════ -->
-            <div class="lg:col-span-8 flex flex-col gap-6">
+            <div class="xl:col-span-8 flex flex-col gap-5 sm:gap-6">
 
                 <!-- ── MOBILE SECTION TABS ── -->
-                <div class="lg:hidden flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                <div class="xl:hidden flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
                     <button onclick="switchSection('profile', this)"
-                        class="mobile-tab active shrink-0 px-3.5 py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider border transition flex items-center gap-2 bg-blue-500/10 dark:bg-blue-500/15 text-blue-500 dark:text-blue-400 border-blue-500/20">
-                        <i class="fa-solid fa-user text-[8px]"></i> Profile
+                        class="mobile-tab active shrink-0 px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition flex items-center gap-2 bg-blue-500/10 dark:bg-blue-500/15 text-blue-500 dark:text-blue-400 border-blue-500/20">
+                        <i class="fa-solid fa-user text-[9px]"></i> Profile
                     </button>
                     <button onclick="switchSection('security', this)"
-                        class="mobile-tab shrink-0 px-3.5 py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider border transition flex items-center gap-2 bg-white dark:bg-[#161616] text-gray-400 dark:text-[#555] border-gray-200 dark:border-[#222]">
-                        <i class="fa-solid fa-shield text-[8px]"></i> Security
+                        class="mobile-tab shrink-0 px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition flex items-center gap-2 bg-white dark:bg-[#161616] text-gray-400 dark:text-[#555] border-gray-200 dark:border-[#222]">
+                        <i class="fa-solid fa-shield text-[9px]"></i> Security
                     </button>
                     <button onclick="switchSection('preferences', this)"
-                        class="mobile-tab shrink-0 px-3.5 py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider border transition flex items-center gap-2 bg-white dark:bg-[#161616] text-gray-400 dark:text-[#555] border-gray-200 dark:border-[#222]">
-                        <i class="fa-solid fa-sliders text-[8px]"></i> Prefs
+                        class="mobile-tab shrink-0 px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition flex items-center gap-2 bg-white dark:bg-[#161616] text-gray-400 dark:text-[#555] border-gray-200 dark:border-[#222]">
+                        <i class="fa-solid fa-sliders text-[9px]"></i> Prefs
                     </button>
                     <button onclick="switchSection('danger', this)"
-                        class="mobile-tab shrink-0 px-3.5 py-2 rounded-xl text-[9px] font-bold uppercase tracking-wider border transition flex items-center gap-2 bg-white dark:bg-[#161616] text-gray-400 dark:text-[#555] border-gray-200 dark:border-[#222]">
-                        <i class="fa-solid fa-triangle-exclamation text-[8px]"></i> Danger
+                        class="mobile-tab shrink-0 px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider border transition flex items-center gap-2 bg-white dark:bg-[#161616] text-gray-400 dark:text-[#555] border-gray-200 dark:border-[#222]">
+                        <i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Danger
                     </button>
                 </div>
 
@@ -351,49 +351,49 @@
                         <div class="flex items-center gap-2.5 mb-5">
                             <div
                                 class="w-8 h-8 rounded-lg bg-blue-500/10 dark:bg-blue-500/15 flex items-center justify-center">
-                                <i class="fa-solid fa-user text-[10px] text-blue-500 dark:text-blue-400"></i>
+                                <i class="fa-solid fa-user text-[11px] text-blue-500 dark:text-blue-400"></i>
                             </div>
                             <div>
                                 <span
-                                    class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">Account
+                                    class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">Account
                                     Information</span>
-                                <p class="text-[8px] text-gray-300 dark:text-[#444]">View your account details</p>
+                                <p class="text-[9px] text-gray-300 dark:text-[#444]">View your account details</p>
                             </div>
                         </div>
 
                         <div class="space-y-4">
                             <div class="space-y-1.5">
                                 <label
-                                    class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">Email
+                                    class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">Email
                                     Address</label>
                                 <div class="relative">
                                     <i
-                                        class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-[11px] text-gray-300 dark:text-[#444]"></i>
+                                        class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-[12px] text-gray-300 dark:text-[#444]"></i>
                                     <input type="email" value="{{ Auth::user()->email }}" readonly
-                                        class="form-input-locked w-full rounded-xl pl-11 pr-24 py-3 text-[13px]">
+                                        class="form-input-locked w-full rounded-xl pl-11 pr-24 py-3 text-[14px]">
                                     <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-lock text-[8px] text-gray-300 dark:text-[#333]"></i>
+                                        <i class="fa-solid fa-lock text-[9px] text-gray-300 dark:text-[#333]"></i>
                                         <span
-                                            class="text-[8px] font-bold uppercase tracking-wider text-gray-300 dark:text-[#333]">Locked</span>
+                                            class="text-[9px] font-bold uppercase tracking-wider text-gray-300 dark:text-[#333]">Locked</span>
                                     </div>
                                 </div>
-                                <p class="text-[8px] text-gray-300 dark:text-[#333] ml-1">Email cannot be changed.
+                                <p class="text-[9px] text-gray-300 dark:text-[#333] ml-1">Email cannot be changed.
                                     Contact support if you need to update it.</p>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div class="space-y-1.5">
                                     <label
-                                        class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">Role</label>
-                                    <div class="form-input-locked w-full rounded-xl px-4 py-3 text-[13px] capitalize">
+                                        class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">Role</label>
+                                    <div class="form-input-locked w-full rounded-xl px-4 py-3 text-[14px] capitalize">
                                         {{ str_replace('_', ' ', Auth::user()->roles[0]->name ?? 'user') }}
                                     </div>
                                 </div>
                                 <div class="space-y-1.5">
                                     <label
-                                        class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">Member
+                                        class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">Member
                                         Since</label>
-                                    <div class="form-input-locked w-full rounded-xl px-4 py-3 text-[13px]">
+                                    <div class="form-input-locked w-full rounded-xl px-4 py-3 text-[14px]">
                                         {{ Auth::user()->created_at->format('M d, Y') }}
                                     </div>
                                 </div>
@@ -401,32 +401,32 @@
 
                             <div class="space-y-1.5">
                                 <label
-                                    class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">Email
+                                    class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">Email
                                     Verification</label>
                                 <div
-                                    class="setting-row flex items-center justify-between p-4 rounded-xl inner-card border">
+                                    class="setting-row flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl inner-card border">
                                     <div class="flex items-center gap-3">
                                         @if (Auth::user()->email_verified_at)
                                             <div
                                                 class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
                                                 <i
-                                                    class="fa-solid fa-circle-check text-[10px] text-emerald-500 dark:text-emerald-400"></i>
+                                                    class="fa-solid fa-circle-check text-[11px] text-emerald-500 dark:text-emerald-400"></i>
                                             </div>
                                             <div>
                                                 <p
-                                                    class="text-[11px] font-bold text-emerald-500 dark:text-emerald-400">
+                                                    class="text-[12px] font-bold text-emerald-500 dark:text-emerald-400">
                                                     Verified</p>
-                                                <p class="text-[8px] text-gray-400 dark:text-[#444]">Your email has
+                                                <p class="text-[9px] text-gray-400 dark:text-[#444]">Your email has
                                                     been verified</p>
                                             </div>
                                         @else
                                             <div
                                                 class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                                                <i class="fa-solid fa-clock text-[10px] text-amber-500"></i>
+                                                <i class="fa-solid fa-clock text-[11px] text-amber-500"></i>
                                             </div>
                                             <div>
-                                                <p class="text-[11px] font-bold text-amber-500">Pending</p>
-                                                <p class="text-[8px] text-gray-400 dark:text-[#444]">Check your inbox
+                                                <p class="text-[12px] font-bold text-amber-500">Pending</p>
+                                                <p class="text-[9px] text-gray-400 dark:text-[#444]">Check your inbox
                                                     for verification link</p>
                                             </div>
                                         @endif
@@ -446,13 +446,13 @@
                             <div class="flex items-center gap-2.5 mb-5">
                                 <div
                                     class="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/15 flex items-center justify-center">
-                                    <i class="fa-solid fa-key text-[10px] text-red-400"></i>
+                                    <i class="fa-solid fa-key text-[11px] text-red-400"></i>
                                 </div>
                                 <div>
                                     <span
-                                        class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">Change
+                                        class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">Change
                                         Password</span>
-                                    <p class="text-[8px] text-gray-300 dark:text-[#444]">Update your account password
+                                    <p class="text-[9px] text-gray-300 dark:text-[#444]">Update your account password
                                     </p>
                                 </div>
                             </div>
@@ -460,22 +460,22 @@
                             <div class="space-y-4">
                                 <div class="space-y-1.5">
                                     <label
-                                        class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">Current
+                                        class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">Current
                                         Password</label>
                                     <div class="relative">
                                         <i
-                                            class="fa-solid fa-shield absolute left-4 top-1/2 -translate-y-1/2 text-[11px] text-gray-300 dark:text-[#444]"></i>
+                                            class="fa-solid fa-shield absolute left-4 top-1/2 -translate-y-1/2 text-[12px] text-gray-300 dark:text-[#444]"></i>
                                         <input type="password" name="current_password"
                                             placeholder="Enter current password"
-                                            class="form-input w-full rounded-xl pl-11 pr-11 py-3 text-[13px]">
+                                            class="form-input w-full rounded-xl pl-11 pr-11 py-3 text-[14px]">
                                         <button type="button" onclick="togglePassword(this)"
                                             class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 dark:text-[#555] hover:text-gray-500 dark:hover:text-[#888] transition cursor-pointer bg-transparent border-none">
-                                            <i class="fa-solid fa-eye text-[11px]"></i>
+                                            <i class="fa-solid fa-eye text-[12px]"></i>
                                         </button>
                                     </div>
                                     @error('current_password')
-                                        <p class="text-[9px] text-red-400 mt-1 ml-1 flex items-center gap-1.5">
-                                            <i class="fa-solid fa-circle-exclamation text-[8px]"></i> {{ $message }}
+                                        <p class="text-[10px] text-red-400 mt-1 ml-1 flex items-center gap-1.5">
+                                            <i class="fa-solid fa-circle-exclamation text-[9px]"></i> {{ $message }}
                                         </p>
                                     @enderror
                                 </div>
@@ -483,38 +483,38 @@
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div class="space-y-1.5">
                                         <label
-                                            class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">New
+                                            class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">New
                                             Password</label>
                                         <div class="relative">
                                             <i
-                                                class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-[11px] text-gray-300 dark:text-[#444]"></i>
+                                                class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-[12px] text-gray-300 dark:text-[#444]"></i>
                                             <input type="password" name="password" placeholder="Min. 8 characters"
-                                                class="form-input w-full rounded-xl pl-11 pr-11 py-3 text-[13px]">
+                                                class="form-input w-full rounded-xl pl-11 pr-11 py-3 text-[14px]">
                                             <button type="button" onclick="togglePassword(this)"
                                                 class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 dark:text-[#555] hover:text-gray-500 dark:hover:text-[#888] transition cursor-pointer bg-transparent border-none">
-                                                <i class="fa-solid fa-eye text-[11px]"></i>
+                                                <i class="fa-solid fa-eye text-[12px]"></i>
                                             </button>
                                         </div>
                                         @error('password')
-                                            <p class="text-[9px] text-red-400 mt-1 ml-1 flex items-center gap-1.5">
-                                                <i class="fa-solid fa-circle-exclamation text-[8px]"></i>
+                                            <p class="text-[10px] text-red-400 mt-1 ml-1 flex items-center gap-1.5">
+                                                <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
                                                 {{ $message }}
                                             </p>
                                         @enderror
                                     </div>
                                     <div class="space-y-1.5">
                                         <label
-                                            class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">Confirm
+                                            class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">Confirm
                                             Password</label>
                                         <div class="relative">
                                             <i
-                                                class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-[11px] text-gray-300 dark:text-[#444]"></i>
+                                                class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-[12px] text-gray-300 dark:text-[#444]"></i>
                                             <input type="password" name="password_confirmation"
                                                 placeholder="Repeat password"
-                                                class="form-input w-full rounded-xl pl-11 pr-11 py-3 text-[13px]">
+                                                class="form-input w-full rounded-xl pl-11 pr-11 py-3 text-[14px]">
                                             <button type="button" onclick="togglePassword(this)"
                                                 class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 dark:text-[#555] hover:text-gray-500 dark:hover:text-[#888] transition cursor-pointer bg-transparent border-none">
-                                                <i class="fa-solid fa-eye text-[11px]"></i>
+                                                <i class="fa-solid fa-eye text-[12px]"></i>
                                             </button>
                                         </div>
                                     </div>
@@ -526,51 +526,51 @@
                         <div class="glass-card p-5 rounded-[1.5rem] mt-4">
                             <div class="flex items-center gap-2.5 mb-4">
                                 <div class="w-8 h-8 rounded-lg inner-card flex items-center justify-center">
-                                    <i class="fa-solid fa-list-check text-[10px] text-gray-400 dark:text-[#555]"></i>
+                                    <i class="fa-solid fa-list-check text-[11px] text-gray-400 dark:text-[#555]"></i>
                                 </div>
                                 <span
-                                    class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">Password
+                                    class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">Password
                                     Requirements</span>
                             </div>
-                            <div class="grid grid-cols-2 gap-2.5">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                 <div class="flex items-center gap-2.5">
                                     <div
                                         class="w-5 h-5 rounded-md bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center shrink-0">
                                         <i
-                                            class="fa-solid fa-check text-[7px] text-emerald-500 dark:text-emerald-400"></i>
+                                            class="fa-solid fa-check text-[8px] text-emerald-500 dark:text-emerald-400"></i>
                                     </div>
-                                    <span class="text-[10px] text-gray-500 dark:text-[#666]">8+ characters</span>
+                                    <span class="text-[11px] text-gray-500 dark:text-[#666]">8+ characters</span>
                                 </div>
                                 <div class="flex items-center gap-2.5">
                                     <div
                                         class="w-5 h-5 rounded-md bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center shrink-0">
                                         <i
-                                            class="fa-solid fa-check text-[7px] text-emerald-500 dark:text-emerald-400"></i>
+                                            class="fa-solid fa-check text-[8px] text-emerald-500 dark:text-emerald-400"></i>
                                     </div>
-                                    <span class="text-[10px] text-gray-500 dark:text-[#666]">One uppercase</span>
+                                    <span class="text-[11px] text-gray-500 dark:text-[#666]">One uppercase</span>
                                 </div>
                                 <div class="flex items-center gap-2.5">
                                     <div
                                         class="w-5 h-5 rounded-md bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center shrink-0">
                                         <i
-                                            class="fa-solid fa-check text-[7px] text-emerald-500 dark:text-emerald-400"></i>
+                                            class="fa-solid fa-check text-[8px] text-emerald-500 dark:text-emerald-400"></i>
                                     </div>
-                                    <span class="text-[10px] text-gray-500 dark:text-[#666]">One number</span>
+                                    <span class="text-[11px] text-gray-500 dark:text-[#666]">One number</span>
                                 </div>
                                 <div class="flex items-center gap-2.5">
                                     <div
                                         class="w-5 h-5 rounded-md inner-card flex items-center justify-center shrink-0">
-                                        <i class="fa-solid fa-circle text-[4px] text-gray-300 dark:text-[#444]"></i>
+                                        <i class="fa-solid fa-circle text-[5px] text-gray-300 dark:text-[#444]"></i>
                                     </div>
-                                    <span class="text-[10px] text-gray-400 dark:text-[#444]">Must match</span>
+                                    <span class="text-[11px] text-gray-400 dark:text-[#444]">Must match</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-end gap-3 mt-4">
+                        <div class="flex flex-wrap items-center justify-end gap-3 mt-4">
                             <button type="submit"
-                                class="bg-blue-600 text-white px-6 py-3 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-blue-500 transition shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center gap-2">
-                                <i class="fa-solid fa-check text-[9px]"></i> Update Password
+                                class="bg-blue-600 text-white w-full sm:w-auto px-6 py-3 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-blue-500 transition shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-check text-[10px]"></i> Update Password
                             </button>
                         </div>
                     </form>
@@ -582,12 +582,12 @@
                         <div class="flex items-center gap-2.5 mb-5">
                             <div
                                 class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/15 flex items-center justify-center">
-                                <i class="fa-solid fa-palette text-[10px] text-purple-500 dark:text-purple-400"></i>
+                                <i class="fa-solid fa-palette text-[11px] text-purple-500 dark:text-purple-400"></i>
                             </div>
                             <div>
                                 <span
-                                    class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">Appearance</span>
-                                <p class="text-[8px] text-gray-300 dark:text-[#444]">Customize how SmartCommute looks
+                                    class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">Appearance</span>
+                                <p class="text-[9px] text-gray-300 dark:text-[#444]">Customize how SmartCommute looks
                                 </p>
                             </div>
                         </div>
@@ -598,11 +598,11 @@
                                 <div class="flex items-center gap-3">
                                     <div class="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center"
                                         id="theme-icon-wrap">
-                                        <i class="fa-solid fa-sun text-[11px] text-amber-500" id="theme-icon"></i>
+                                        <i class="fa-solid fa-sun text-[12px] text-amber-500" id="theme-icon"></i>
                                     </div>
                                     <div>
-                                        <p class="text-[11px] font-bold text-gray-900 dark:text-white">Dark Mode</p>
-                                        <p class="text-[8px] text-gray-400 dark:text-[#444]">Switch between light and
+                                        <p class="text-[12px] font-bold text-gray-900 dark:text-white">Dark Mode</p>
+                                        <p class="text-[9px] text-gray-400 dark:text-[#444]">Switch between light and
                                             dark theme</p>
                                     </div>
                                 </div>
@@ -616,11 +616,11 @@
                                 <div class="flex items-center gap-3">
                                     <div class="w-9 h-9 rounded-lg inner-card flex items-center justify-center">
                                         <i
-                                            class="fa-solid fa-text-height text-[11px] text-gray-400 dark:text-[#555]"></i>
+                                            class="fa-solid fa-text-height text-[12px] text-gray-400 dark:text-[#555]"></i>
                                     </div>
                                     <div>
-                                        <p class="text-[11px] font-bold text-gray-900 dark:text-white">Font Size</p>
-                                        <p class="text-[8px] text-gray-400 dark:text-[#444]">Adjust text for
+                                        <p class="text-[12px] font-bold text-gray-900 dark:text-white">Font Size</p>
+                                        <p class="text-[9px] text-gray-400 dark:text-[#444]">Adjust text for
                                             readability</p>
                                     </div>
                                 </div>
@@ -628,22 +628,22 @@
                                     id="font-size-selector">
                                     <button onclick="changeFontSize('small', this)" data-size="small"
                                         class="font-size-btn px-2.5 py-1.5 rounded-md transition-all text-gray-400 dark:text-[#555] hover:text-gray-600 dark:hover:text-[#888]">
-                                        <span class="text-[9px] leading-none">A<small
-                                                class="text-[6px]">-</small></span>
+                                        <span class="text-[10px] leading-none">A<small
+                                                class="text-[7px]">-</small></span>
                                     </button>
                                     <button onclick="changeFontSize('medium', this)" data-size="medium"
                                         class="font-size-btn active px-2.5 py-1.5 rounded-md transition-all text-gray-400 dark:text-[#555] hover:text-gray-600 dark:hover:text-[#888]">
-                                        <span class="text-[11px] leading-none">A</span>
+                                        <span class="text-[12px] leading-none">A</span>
                                     </button>
                                     <button onclick="changeFontSize('large', this)" data-size="large"
                                         class="font-size-btn px-2.5 py-1.5 rounded-md transition-all text-gray-400 dark:text-[#555] hover:text-gray-600 dark:hover:text-[#888]">
-                                        <span class="text-[13px] leading-none">A<small
-                                                class="text-[8px]">+</small></span>
+                                        <span class="text-[14px] leading-none">A<small
+                                                class="text-[9px]">+</small></span>
                                     </button>
                                     <button onclick="changeFontSize('xlarge', this)" data-size="xlarge"
                                         class="font-size-btn px-2.5 py-1.5 rounded-md transition-all text-gray-400 dark:text-[#555] hover:text-gray-600 dark:hover:text-[#888]">
-                                        <span class="text-[15px] leading-none">A<small
-                                                class="text-[9px]">++</small></span>
+                                        <span class="text-[16px] leading-none">A<small
+                                                class="text-[10px]">++</small></span>
                                     </button>
                                 </div>
                             </div>
@@ -657,13 +657,13 @@
                         <div class="flex items-center gap-2.5 mb-5">
                             <div
                                 class="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/15 flex items-center justify-center">
-                                <i class="fa-solid fa-triangle-exclamation text-[10px] text-red-400"></i>
+                                <i class="fa-solid fa-triangle-exclamation text-[11px] text-red-400"></i>
                             </div>
                             <div>
                                 <span
-                                    class="text-[9px] font-bold uppercase tracking-[0.15em] text-red-500 dark:text-red-400">Danger
+                                    class="text-[10px] font-bold uppercase tracking-[0.15em] text-red-500 dark:text-red-400">Danger
                                     Zone</span>
-                                <p class="text-[8px] text-gray-400 dark:text-[#444]">Irreversible actions</p>
+                                <p class="text-[9px] text-gray-400 dark:text-[#444]">Irreversible actions</p>
                             </div>
                         </div>
 
@@ -671,17 +671,17 @@
                             <div class="p-4 rounded-xl border border-red-500/20 bg-red-500/5">
                                 <div class="flex items-start justify-between gap-4">
                                     <div>
-                                        <p class="text-[11px] font-bold text-gray-900 dark:text-white mb-1">Delete
+                                        <p class="text-[12px] font-bold text-gray-900 dark:text-white mb-1">Delete
                                             Account</p>
-                                        <p class="text-[9px] text-gray-400 dark:text-[#444] leading-relaxed">
+                                        <p class="text-[10px] text-gray-400 dark:text-[#444] leading-relaxed">
                                             Permanently delete your account and all associated data including travel
                                             history, wallet balance, and personal information. This action cannot be
                                             undone.</p>
                                     </div>
                                 </div>
                                 <button onclick="openDeleteModal()"
-                                    class="mt-4 px-4 py-2.5 rounded-xl border border-red-500/30 text-red-500 dark:text-red-400 text-[9px] font-bold uppercase tracking-wider hover:bg-red-500/10 transition flex items-center gap-2">
-                                    <i class="fa-solid fa-trash-can text-[8px]"></i> Delete My Account
+                                    class="mt-4 w-full sm:w-auto px-4 py-2.5 rounded-xl border border-red-500/30 text-red-500 dark:text-red-400 text-[10px] font-bold uppercase tracking-wider hover:bg-red-500/10 transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-trash-can text-[9px]"></i> Delete My Account
                                 </button>
                             </div>
                         </div>
@@ -691,15 +691,14 @@
             </div>
         </div>
     </div>
-    </div>
 
     <!-- ══════════ DELETE ACCOUNT MODAL ══════════ -->
     <div id="delete-modal"
         class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 dark:bg-black/70 opacity-0 pointer-events-none transition-opacity duration-300">
-        <div class="glass-panel p-7 sm:p-8 rounded-[2rem] w-full max-w-[400px] mx-4 text-center transform scale-95 opacity-0 transition-all duration-[350ms]"
+        <div class="glass-panel p-5 sm:p-7 lg:p-8 rounded-[1.5rem] sm:rounded-[2rem] w-full max-w-[400px] mx-3 sm:mx-4 text-center transform scale-95 opacity-0 transition-all duration-[350ms]"
             id="delete-modal-content">
             <div
-                class="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-red-500/20">
+                class="w-12 h-12 sm:w-14 sm:h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-5 border border-red-500/20">
                 <i class="fa-solid fa-triangle-exclamation text-red-400 text-lg"></i>
             </div>
             <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1.5">Delete Account?</h3>
@@ -707,17 +706,17 @@
                 your
                 account and all data.</p>
             <div class="bg-red-500/5 border border-red-500/15 rounded-xl p-3 mb-6">
-                <p class="text-[9px] text-red-500 dark:text-red-400 font-bold">• All travel history will be lost
+                <p class="text-[10px] text-red-500 dark:text-red-400 font-bold">• All travel history will be lost
                 </p>
-                <p class="text-[9px] text-red-500 dark:text-red-400 font-bold mt-1">• Wallet balance cannot be
+                <p class="text-[10px] text-red-500 dark:text-red-400 font-bold mt-1">• Wallet balance cannot be
                     recovered</p>
-                <p class="text-[9px] text-red-500 dark:text-red-400 font-bold mt-1">• This action is irreversible
+                <p class="text-[10px] text-red-500 dark:text-red-400 font-bold mt-1">• This action is irreversible
                 </p>
             </div>
             <div class="space-y-2">
                 <div class="relative">
                     <input type="text" id="delete-confirm-input" placeholder='Type "DELETE" to confirm'
-                        class="form-input w-full rounded-xl px-4 py-3 text-[12px] text-center font-mono uppercase tracking-widest">
+                        class="form-input w-full rounded-xl px-4 py-3 text-[13px] text-center font-mono uppercase tracking-widest">
                 </div>
                 <form method="POST" action="{{ route('users.delete-account') }}" id="delete-form">
                     <!-- This tells Laravel it's a DELETE request -->
@@ -727,13 +726,13 @@
                     @csrf
 
                     <button id="delete-confirm-btn" type="submit" disabled
-                        class="w-full px-5 py-3 rounded-xl bg-red-600/50 text-white/50 text-[10px] font-bold uppercase tracking-widest cursor-not-allowed transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-trash-can text-[9px]"></i> Delete My Account
+                        class="w-full px-5 py-3 rounded-xl bg-red-600/50 text-white/50 text-[11px] font-bold uppercase tracking-widest cursor-not-allowed transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-trash-can text-[10px]"></i> Delete My Account
                     </button>
                 </form>
             </div>
             <button onclick="closeDeleteModal()"
-                class="mt-3 text-[10px] font-bold text-gray-400 dark:text-[#555] hover:text-gray-900 dark:hover:text-white transition">
+                class="mt-3 text-[11px] font-bold text-gray-400 dark:text-[#555] hover:text-gray-900 dark:hover:text-white transition">
                 Cancel
             </button>
         </div>

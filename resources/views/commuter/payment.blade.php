@@ -149,56 +149,75 @@
         .dark .shield-pulse {
             opacity: 0.08;
         }
+
+        /* ═══ RESPONSIVE SAFETY NETS ═══ */
+        html,
+        body {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .method-box {
+            min-width: 0;
+        }
+
+        .break-anywhere {
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
     </style>
 </head>
 
-<body class="antialiased flex items-center justify-center p-4 sm:p-6">
+<body class="antialiased flex items-center justify-center p-3 sm:p-5 lg:p-6 overflow-x-hidden">
 
     <!-- Decorative orbs -->
-    <div class="fixed top-1/4 left-1/4 w-80 h-80 bg-blue-500/5 rounded-full blur-[120px] pointer-events-none"></div>
-    <div class="fixed bottom-1/3 right-1/4 w-60 h-60 bg-purple-500/5 rounded-full blur-[100px] pointer-events-none">
+    <div
+        class="fixed top-1/4 -left-16 w-48 h-48 sm:left-1/4 sm:w-80 sm:h-80 bg-blue-500/5 rounded-full blur-[70px] sm:blur-[120px] pointer-events-none">
+    </div>
+    <div
+        class="fixed bottom-1/3 -right-16 w-40 h-40 sm:right-1/4 sm:w-60 sm:h-60 bg-purple-500/5 rounded-full blur-[60px] sm:blur-[100px] pointer-events-none">
     </div>
 
     <div class="w-full max-w-[420px] relative z-10">
 
         <!-- Breadcrumb -->
         <div
-            class="fade-1 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] mb-8">
+            class="fade-1 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-[11px] font-bold uppercase tracking-[0.15em] mb-5 sm:mb-8">
             <a href="{{ route('map') }}"
                 class="text-gray-400 dark:text-[#555] hover:text-blue-500 dark:hover:text-blue-400 transition flex items-center gap-1.5">
-                <i class="fa-solid fa-map-location-dot text-[8px]"></i> Map
+                <i class="fa-solid fa-map-location-dot text-[9px]"></i> Map
             </a>
-            <i class="fa-solid fa-chevron-right text-[7px] text-gray-300 dark:text-[#333]"></i>
+            <i class="fa-solid fa-chevron-right text-[8px] text-gray-300 dark:text-[#333]"></i>
             <span class="text-blue-500 dark:text-blue-400 flex items-center gap-1.5">
-                <i class="fa-solid fa-lock text-[8px]"></i> Checkout
+                <i class="fa-solid fa-lock text-[9px]"></i> Checkout
             </span>
         </div>
 
         <!-- Main Card -->
         <div
-            class="card-animate bg-white dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] rounded-[2rem] p-6 sm:p-8 relative overflow-hidden shadow-lg dark:shadow-black/40">
+            class="card-animate bg-white dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 xl:p-8 relative overflow-hidden shadow-lg dark:shadow-black/40">
 
             <!-- Header -->
-            <div class="fade-1 text-center mb-8">
+            <div class="fade-1 text-center mb-6 sm:mb-8">
                 <div class="flex items-center justify-center gap-2 mb-3">
                     <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <i class="fa-solid fa-bus text-white text-[10px]"></i>
+                        <i class="fa-solid fa-bus text-white text-[11px]"></i>
                     </div>
                     <span class="text-sm font-bold tracking-tight text-gray-900 dark:text-white">Smart<span
                             class="text-blue-500 dark:text-blue-400">Commute</span></span>
                 </div>
                 <h2 class="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">Payment Details</h2>
                 <p
-                    class="text-[9px] text-gray-400 dark:text-[#555] font-bold mt-1.5 uppercase tracking-[0.2em] flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-shield-halved text-[8px] text-blue-500/50 dark:text-blue-500/40"></i>
+                    class="text-[10px] text-gray-400 dark:text-[#555] font-bold mt-1.5 uppercase tracking-[0.2em] flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-shield-halved text-[9px] text-blue-500/50 dark:text-blue-500/40"></i>
                     Secure Checkout
                 </p>
             </div>
 
             <!-- Trip Summary -->
             <div
-                class="fade-2 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl p-5 border border-gray-200 dark:border-[#1a1a1a] mb-6">
-                <div class="flex items-start gap-4 mb-5">
+                class="fade-2 bg-gray-50 dark:bg-[#0a0a0a] rounded-2xl p-4 sm:p-5 border border-gray-200 dark:border-[#1a1a1a] mb-5 sm:mb-6">
+                <div class="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-5">
                     <div class="flex flex-col items-center gap-0 pt-1">
                         <div class="w-3 h-3 rounded-full bg-blue-500 dark:bg-blue-500 border-2 border-blue-400/30">
                         </div>
@@ -208,16 +227,16 @@
                     <div class="flex-1 space-y-4">
                         <div>
                             <p
-                                class="text-[8px] uppercase text-gray-400 dark:text-[#444] font-bold tracking-[0.15em] mb-0.5">
+                                class="text-[9px] uppercase text-gray-400 dark:text-[#444] font-bold tracking-[0.15em] mb-0.5">
                                 Pick-up</p>
-                            <p class="text-xs font-semibold text-gray-700 dark:text-[#ccc] leading-tight">
+                            <p class="text-xs font-semibold break-anywhere text-gray-700 dark:text-[#ccc] leading-tight">
                                 {{ $pickup }}</p>
                         </div>
                         <div>
                             <p
-                                class="text-[8px] uppercase text-gray-400 dark:text-[#444] font-bold tracking-[0.15em] mb-0.5">
+                                class="text-[9px] uppercase text-gray-400 dark:text-[#444] font-bold tracking-[0.15em] mb-0.5">
                                 Destination</p>
-                            <p class="text-xs font-semibold text-gray-700 dark:text-[#ccc] leading-tight">
+                            <p class="text-xs font-semibold break-anywhere text-gray-700 dark:text-[#ccc] leading-tight">
                                 {{ $destination }}</p>
                         </div>
                     </div>
@@ -228,12 +247,12 @@
                 <div class="space-y-2.5">
                     <div class="flex justify-between items-center">
                         <span
-                            class="text-[10px] font-semibold text-gray-400 dark:text-[#555] uppercase tracking-wider">Distance</span>
+                            class="text-[11px] font-semibold text-gray-400 dark:text-[#555] uppercase tracking-wider">Distance</span>
                         <span class="text-xs font-bold text-gray-500 dark:text-[#aaa]">{{ $distance }} km</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span
-                            class="text-[10px] font-semibold text-gray-400 dark:text-[#555] uppercase tracking-wider">Fare</span>
+                            class="text-[11px] font-semibold text-gray-400 dark:text-[#555] uppercase tracking-wider">Fare</span>
                         <span
                             class="text-xs font-bold text-gray-500 dark:text-[#aaa]">₱{{ number_format($price, 2) }}</span>
                     </div>
@@ -241,7 +260,8 @@
             </div>
 
             <!-- Payment Form -->
-            <form action="{{ route('payment.process') }}" method="POST" id="payment-form" class="space-y-6">
+            <form action="{{ route('payment.process') }}" method="POST" id="payment-form"
+                class="space-y-5 sm:space-y-6">
                 @csrf
                 <input type="hidden" name="pickup" value="{{ $pickup }}">
                 <input type="hidden" name="destination" value="{{ $destination }}">
@@ -252,14 +272,14 @@
                 <!-- Payment Method -->
                 <div class="fade-3">
                     <h3
-                        class="text-[9px] font-bold mb-3 uppercase tracking-[0.2em] text-gray-400 dark:text-[#555] px-0.5 flex items-center gap-2">
-                        <i class="fa-solid fa-wallet text-[8px] text-blue-500/40"></i>
+                        class="text-[10px] font-bold mb-3 uppercase tracking-[0.2em] text-gray-400 dark:text-[#555] px-0.5 flex items-center gap-2">
+                        <i class="fa-solid fa-wallet text-[9px] text-blue-500/40"></i>
                         Payment Method
                     </h3>
-                    <div class="grid grid-cols-2 gap-3">
-                        <label class="relative cursor-pointer group">
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3">
+                        <label class="relative cursor-pointer group min-w-0">
                             <input type="radio" name="payment-method" value="GCash" class="sr-only" checked>
-                            <div class="method-box p-4 rounded-xl text-center">
+                            <div class="method-box p-3 sm:p-4 rounded-xl text-center h-full">
                                 <div class="flex items-center justify-center mb-2.5">
                                     <div
                                         class="w-10 h-10 rounded-xl bg-[#0a5c36]/20 dark:bg-[#0a5c36]/15 border border-[#0a5c36]/30 flex items-center justify-center">
@@ -267,7 +287,7 @@
                                     </div>
                                 </div>
                                 <p
-                                    class="text-[10px] text-gray-600 dark:text-[#ccc] font-bold uppercase tracking-widest">
+                                    class="text-[11px] text-gray-600 dark:text-[#ccc] font-bold uppercase tracking-widest">
                                     GCash</p>
                                 <div class="flex justify-center mt-2.5">
                                     <div
@@ -277,9 +297,9 @@
                             </div>
                         </label>
 
-                        <label class="relative cursor-pointer group">
+                        <label class="relative cursor-pointer group min-w-0">
                             <input type="radio" name="payment-method" value="Wallet" class="sr-only">
-                            <div class="method-box p-4 rounded-xl text-center">
+                            <div class="method-box p-3 sm:p-4 rounded-xl text-center h-full">
                                 <div class="flex items-center justify-center mb-2.5">
                                     <div
                                         class="w-10 h-10 rounded-xl bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
@@ -287,9 +307,9 @@
                                     </div>
                                 </div>
                                 <p
-                                    class="text-[10px] text-gray-600 dark:text-[#ccc] font-bold uppercase tracking-widest">
+                                    class="text-[11px] text-gray-600 dark:text-[#ccc] font-bold uppercase tracking-widest">
                                     Wallet</p>
-                                <p class="text-[9px] text-gray-400 dark:text-[#555] font-semibold mt-0.5">
+                                <p class="text-[10px] text-gray-400 dark:text-[#555] font-semibold mt-0.5">
                                     ₱{{ $balance }}</p>
                                 <div class="flex justify-center mt-2">
                                     <div
@@ -303,12 +323,12 @@
 
                 <!-- Total -->
                 <div
-                    class="fade-3 flex items-end justify-between px-1 pt-5 border-t border-gray-200 dark:border-[#1a1a1a]">
+                    class="fade-3 flex flex-wrap items-end justify-between gap-3 px-1 pt-4 sm:pt-5 border-t border-gray-200 dark:border-[#1a1a1a]">
                     <div>
-                        <p class="text-[9px] font-bold text-gray-400 dark:text-[#444] uppercase tracking-[0.2em] mb-1">
+                        <p class="text-[10px] font-bold text-gray-400 dark:text-[#444] uppercase tracking-[0.2em] mb-1">
                             Total</p>
                         <div
-                            class="text-3xl font-extrabold text-gray-900 dark:text-white flex items-baseline gap-1 tracking-tight">
+                            class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white flex items-baseline gap-1 tracking-tight">
                             <span class="text-sm font-medium text-gray-400 dark:text-[#555]">₱</span>
                             {{ number_format($price, 2) }}
                         </div>
@@ -321,27 +341,27 @@
                 <!-- Submit -->
                 <div class="fade-4">
                     <button type="submit"
-                        class="btn-primary w-full text-white font-bold py-4 px-6 rounded-xl text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2.5">
-                        <i class="fa-solid fa-lock text-[9px] opacity-60"></i>
+                        class="btn-primary w-full text-white font-bold py-4 px-6 rounded-xl text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-2.5">
+                        <i class="fa-solid fa-lock text-[10px] opacity-60"></i>
                         Confirm Payment
                     </button>
                 </div>
             </form>
 
             <!-- Cancel -->
-            <div class="fade-4 text-center mt-6">
+            <div class="fade-4 text-center mt-5 sm:mt-6">
                 <a href="{{ url()->previous() }}"
-                    class="inline-flex items-center gap-2 text-[10px] font-semibold text-gray-400 dark:text-[#444] hover:text-gray-900 dark:hover:text-white transition">
-                    <i class="fa-solid fa-arrow-left text-[8px]"></i>
+                    class="inline-flex items-center gap-2 text-[11px] font-semibold text-gray-400 dark:text-[#444] hover:text-gray-900 dark:hover:text-white transition">
+                    <i class="fa-solid fa-arrow-left text-[9px]"></i>
                     Cancel Transaction
                 </a>
             </div>
         </div>
 
         <!-- Footer -->
-        <div class="fade-4 flex items-center justify-center gap-2 mt-6">
-            <i class="fa-solid fa-lock text-[7px] text-gray-300 dark:text-[#333]"></i>
-            <p class="text-[8px] font-bold text-gray-300 dark:text-[#333] uppercase tracking-[0.15em]">
+        <div class="fade-4 flex items-center justify-center gap-2 mt-5 sm:mt-6 px-2 text-center">
+            <i class="fa-solid fa-lock text-[8px] text-gray-300 dark:text-[#333]"></i>
+            <p class="text-[9px] font-bold text-gray-300 dark:text-[#333] uppercase tracking-[0.15em]">
                 Encrypted by SmartCommute SecurePay
             </p>
         </div>
