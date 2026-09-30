@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -577,32 +578,38 @@ class UserController extends Controller
     public function register(Request $request)
     {
         activity()->event('Register')->log('Action performed: register');
-        // dd($request->all());
+
         $request->validate([
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'confirm-password' => 'required|same:password',
-            'terms' => 'required',
+            'terms' => 'accepted',
         ]);
 
-        $user = User::create([
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        if ($user) {
-            Auth::login($user);
-            event(new Registered($user));
-            $user->assignRole('commuter');
-
-            Wallet::create([
-                'user_id' => $user->id,
+        try {
+            $user = User::create([
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
             ]);
+        } catch (\Exception $e) {
+            activity()->event('Register')->log('Database error during registration.');
 
-            return redirect()->route('map')->with('success', 'User Successfully Registered!');
+            throw ValidationException::withMessages([
+                'email' => 'A system error occurred while creating your account. Please try again later.',
+            ]);
         }
 
-        return back()->with('error', 'User Failed to Register.');
+        $user->assignRole('commuter');
+
+        Wallet::create([
+            'user_id' => $user->id,
+        ]);
+
+        event(new Registered($user));
+
+        Auth::login($user);
+
+        return redirect()->route('verification.notice')->with('success', 'Account created, please verify your email!');
     }
 
     public function login(Request $request)
@@ -616,6 +623,11 @@ class UserController extends Controller
 
         if (Auth::attempt($validated, $request->has('remember'))) {
             $user = Auth::user();
+
+            if (! $user->hasVerifiedEmail()) {
+                return redirect()->route('verification.notice');
+            }
+
             $userId = Auth::user()->id;
             $role = $user->roles->first()->name;
 
@@ -628,7 +640,9 @@ class UserController extends Controller
 
         activity()->event('Log In')->log('User failed to login.');
 
-        return back()->with('error', 'Error logging in');
+        throw ValidationException::withMessages([
+            'credentials' => 'The provided credentials do not match our records.',
+        ]);
     }
 
     public function logout(Request $request)

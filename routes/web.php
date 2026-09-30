@@ -143,7 +143,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/settings/logout-others', [SettingsController::class, 'logoutOtherDevices'])->name('settings.logout-others');
     Route::patch('/settings/theme', [UserPreferenceController::class, 'updateTheme'])->name('settings.update.theme');
     Route::patch('/settings/font-size', [UserPreferenceController::class, 'updateFontSize'])->name('settings.update.fontsize');
-    
 
     Route::middleware('role:admin|driver_manager')->group(function () {
         Route::get('/drivers', [DriverApprovalController::class, 'index'])->name('drivers.index');
