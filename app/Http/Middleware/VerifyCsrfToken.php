@@ -14,5 +14,8 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         'track/*/update',  // This disables CSRF for all tracking update routes
         'api/*',           // Or disable for all API routes if you move them
+        // Driver GPS pings. Authorisation is enforced in the controller
+        // (driver role + vehicle assigned to that driver), not by the token.
+        'track/vehicle/broadcast',
     ];
 }

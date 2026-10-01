@@ -2998,7 +2998,7 @@ _updateBadges: function() {
                                 }
 
                                 // Speed buttons
-                                document.getElementById('sim-speed-btns').addEventListener('click', function(e) {
+                                document.getElementById('sim-speed-btns')?.addEventListener('click', function(e) {
                                     var btn = e.target.closest('.sim-speed-btn');
                                     if (!btn) return;
                                     sim.speed = parseFloat(btn.dataset.speed);
@@ -3394,8 +3394,15 @@ sim._lastEtaUpdate = null;
                             <div id="gps-status" class="tracking-controls-panel text-center">
                                 <div class="flex items-center justify-center gap-2 mb-3">
                                     <div class="w-2 h-2 bg-[#555] rounded-full dot-pulse" id="gps-indicator"></div>
-                                    <span class="text-[10px] text-[#555]" id="gps-status-text">GPS: Not active</span>
+                                    <span class="text-[10px] text-[#555]" id="gps-status-text">GPS: Standby</span>
                                 </div>
+                                @unless ($driverVehicleId ?? null)
+                                    <div
+                                        class="w-full h-9 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-400 text-[9px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 mb-3">
+                                        <i class="fa-solid fa-triangle-exclamation text-[9px]"></i>
+                                        No vehicle assigned
+                                    </div>
+                                @endunless
                                 <div id="live-location-info" class="text-[10px] text-[#555] space-y-1.5">
                                     <div class="flex justify-between"><span><i
                                                 class="fa-solid fa-location-dot text-green-400 mr-1 text-[8px]"></i>
@@ -3410,8 +3417,8 @@ sim._lastEtaUpdate = null;
                                 </div>
                             </div>
                             <p class="mt-4 text-[8px] text-[#333] text-center"><i
-                                    class="fa-solid fa-map-pin mr-0.5"></i> Tap the GPS button on the map to begin
-                                tracking</p>
+                                    class="fa-solid fa-satellite-dish mr-0.5"></i> Your location is shared with
+                                passengers automatically</p>
                         </div>
                     @endif
 
@@ -3628,7 +3635,8 @@ window.echoPopups = {};
             const userRole = @json(Auth::user())?.roles[0]?.name ?? 'guest';
             const userId = @json(Auth::user())?.id ?? null;
             const pusherKey = '{{ env('PUSHER_APP_KEY') }}';
-            const pusherCluster = '{{ env('PUSHER_APP_CLUSTER') }}'
+            const pusherCluster = '{{ env('PUSHER_APP_CLUSTER') }}';
+            const driverVehicleId = @json($driverVehicleId ?? null);
             const DAILY_LIMIT = 3;
 
             window.Pusher = Pusher;
@@ -3674,6 +3682,12 @@ window.echoPopups = {};
 
             // ── Feed GeolocateControl position into ETA ──
             geolocateCtrl.on('geolocate', function(e) {
+                // A driver tapping the map's own locate button should also start
+                // broadcasting (the auto-start may have been waiting on permission).
+                if (typeof window.startGPSTracking === 'function') {
+                    window.startGPSTracking();
+                }
+
                 if (window.ETA) {
                     window.ETA._receivePosition(
                         e.coords.latitude,
@@ -4306,7 +4320,13 @@ window.echoPopups = {};
             let pickupTimer = null;
             let destinationTimer = null;
 
-            document.getElementById('pickup').addEventListener('input', function() {
+            // The fare-calculator inputs only exist for guests/commuters. Never let a
+            // missing element throw here — that would abort the whole module (Echo
+            // subscriptions, GPS broadcasting, live vehicle markers) for other roles.
+            const pickupInput = document.getElementById('pickup');
+            const destinationInput = document.getElementById('destination');
+
+            pickupInput?.addEventListener('input', function() {
                 clearTimeout(pickupTimer);
                 const val = this.value.trim();
                 const dropdown = document.getElementById('pickup-dropdown');
@@ -4327,7 +4347,7 @@ window.echoPopups = {};
                 }, 300);
             });
 
-            document.getElementById('destination').addEventListener('input', function() {
+            destinationInput?.addEventListener('input', function() {
                 clearTimeout(destinationTimer);
                 const val = this.value.trim();
                 const dropdown = document.getElementById('destination-dropdown');
@@ -4405,9 +4425,10 @@ window.echoPopups = {};
             setupKeyboardNav('pickup', 'pickup-dropdown');
             setupKeyboardNav('destination', 'destination-dropdown');
 
-            // ═══════════════ VEHICLE MARKERS (HTML) ═══════════════
-            const vehicleMarkers = {};
-
+            // ═══════════════ LIVE VEHICLE MARKERS ═══════════════
+            // One renderer for BOTH sources (Echo event + REST poll) so a vehicle can
+            // never end up with two markers, and so a dropped websocket event heals
+            // itself on the next poll.
             function createVehicleElement() {
                 const el = document.createElement('div');
                 el.className = 'custom-vehicle-marker bus-pulse';
@@ -4415,103 +4436,102 @@ window.echoPopups = {};
                 return el;
             }
 
-            function updateVehicleMarkers(vehicles) {
-                Object.keys(vehicleMarkers).forEach(id => {
-                    if (!vehicles.find(v => v.id == id)) {
-                        vehicleMarkers[id].remove();
-                        delete vehicleMarkers[id];
+            function renderLiveVehicles(vehicles) {
+                if (!Array.isArray(vehicles)) return;
+
+                // Drop vehicles that are no longer reporting
+                const live = {};
+                vehicles.forEach(v => {
+                    const lat = parseFloat(v.lat ?? v.latitude);
+                    const lng = parseFloat(v.lng ?? v.longitude);
+                    if (v.id === undefined || v.id === null || !isFinite(lat) || !isFinite(lng)) return;
+                    live[v.id] = {
+                        id: v.id,
+                        lat: lat,
+                        lng: lng,
+                        plate_number: v.plate_number || ('Vehicle ' + v.id),
+                        route: v.route_name || v.route || 'Live',
+                        privacy_radius: v.privacy_radius || window.PRIVACY_RADIUS
+                    };
+                });
+
+                Object.keys(window.echoMarkers || {}).forEach(id => {
+                    if (!(id in live)) {
+                        window.echoMarkers[id].remove();
+                        delete window.echoMarkers[id];
+                        if (window.echoPopups && window.echoPopups[id]) delete window.echoPopups[id];
                     }
                 });
 
-                vehicles.forEach(v => {
-                    if (v.latitude && v.longitude) {
-                        if (vehicleMarkers[v.id]) {
-                            vehicleMarkers[v.id].setLngLat([v.longitude, v.latitude]);
-                        } else {
-                            const el = createVehicleElement();
-                            el.addEventListener('click', () => {
-                                new maplibregl.Popup({
-                                        offset: 20,
-                                        className: 'vehicle-popup'
-                                    })
-                                    .setLngLat([v.longitude, v.latitude])
-                                    .setHTML(
-                                        '<div style="background:#111;border:1px solid #222;border-radius:12px;padding:12px 16px;font-family:Inter,sans-serif;min-width:160px;">' +
-                                        '<p style="color:#fff;font-size:12px;font-weight:700;margin:0 0 4px;">Bus ' +
-                                        (v.plate_number || v.id) + '</p>' +
-                                        '<p style="color:#666;font-size:10px;margin:0;">Route: ' + (v
-                                            .route_name || 'N/A') + '</p>' +
-                                        '<p style="color:#555;font-size:9px;margin:4px 0 0;">Updated just now</p>' +
-                                        '</div>'
-                                    )
-                                    .addTo(map);
-                            });
-                            vehicleMarkers[v.id] = new maplibregl.Marker({
-                                    element: el,
-                                    anchor: 'center'
-                                })
-                                .setLngLat([v.longitude, v.latitude])
-                                .addTo(map);
+                Object.keys(live).forEach(id => {
+                    const v = live[id];
+
+                    if (window.echoMarkers[id]) {
+                        // Smooth move instead of teleporting
+                        const m = window.echoMarkers[id];
+                        m.setLngLat([v.lng, v.lat]);
+                        if (window.echoPopups[id]) {
+                            window.echoPopups[id].data = v;
+                            window.echoPopups[id].popup.setLngLat([v.lng, v.lat]);
                         }
+                    } else {
+                        const el = createVehicleElement();
+                        const popup = new maplibregl.Popup({
+                                offset: 20,
+                                closeButton: false,
+                                maxWidth: '220px'
+                            })
+                            .setHTML(window.createPrivacyPopup(v));
+
+                        window.echoPopups[id] = {
+                            popup: popup,
+                            data: v
+                        };
+                        window.echoMarkers[id] = new maplibregl.Marker({
+                                element: el,
+                                anchor: 'center'
+                            })
+                            .setLngLat([v.lng, v.lat])
+                            .setPopup(popup)
+                            .addTo(map);
                     }
+
+                    window.driverPrivacyZones[id] = {
+                        lat: v.lat,
+                        lng: v.lng,
+                        radius: v.privacy_radius
+                    };
                 });
+
+                // Zones for vehicles that vanished
+                Object.keys(window.driverPrivacyZones).forEach(id => {
+                    if (!(id in live)) delete window.driverPrivacyZones[id];
+                });
+
+                window.updatePrivacyZones();
+                if (window.ETA) window.ETA.refresh();
             }
+            window.renderLiveVehicles = renderLiveVehicles;
 
             // ═══════════════ REAL-TIME VEHICLE UPDATES (Echo) ═══════════════
-            if (window.Echo) {
+            // Drivers are broadcasters only — they never render the fleet on their map.
+            if (window.Echo && userRole !== 'driver') {
                 window.Echo.channel('vehicle-locations')
                     .listen('.vehicle-location-updated', (e) => {
                         if (window.userRole === 'driver') return;
                         if (!e.lat || !e.lng) return;
+                        if (window.noteLiveSignal) window.noteLiveSignal();
 
-                        var id = e.vehicleId;
-
-                        if (window.echoMarkers[id]) {
-                            window.echoMarkers[id].setLngLat([e.lng, e.lat]);
-if (window.echoPopups[id]) {           // ← ADD
-                                window.echoPopups[id].data.lat = e.lat;   // ← ADD
-                                window.echoPopups[id].data.lng = e.lng;   // ← ADD
-                            }
-                        } else {
-                            var el = document.createElement('div');
-                            el.className = 'custom-vehicle-marker bus-pulse';
-                            el.innerHTML = '<i class="fa-solid fa-bus"></i>';
-
-                            var popup = new maplibregl.Popup({
-                                    offset: 20,
-                                    closeButton: false,
-                                    maxWidth: '220px'
-                                })
-                                .setHTML(window.createPrivacyPopup({
-    id: id,
-    lat: e.lat,
-    lng: e.lng,
-    plate_number: 'Vehicle ' + id,
-    route: 'Live',
-    privacy_radius: e.privacy_radius
-}));
-
-window.echoPopups[id] = { popup: popup, data: echoData };
-
-                            window.echoMarkers[id] = new maplibregl.Marker({
-                                    element: el,
-                                    anchor: 'center'
-                                })
-                                .setLngLat([e.lng, e.lat])
-                                .setPopup(popup)
-                                .addTo(map);
-                        }
-
-                        window.driverPrivacyZones[id] = {
+                        renderLiveVehicles([{
+                            id: e.vehicleId,
                             lat: e.lat,
                             lng: e.lng,
-                            radius: e.privacy_radius || window.PRIVACY_RADIUS
-                        };
-                        window.updatePrivacyZones();
-                        if (window.ETA) window.ETA.refresh();
+                            plate_number: 'Vehicle ' + e.vehicleId,
+                            route_name: 'Live',
+                            privacy_radius: e.privacy_radius || window.PRIVACY_RADIUS
+                        }]);
                     });
             }
-
             // ═══════════════ DEV MARKERS REAL-TIME SYNC ═══════════════
             if (window.Echo) {
                 window.Echo.channel('dev-markers')
@@ -4524,93 +4544,227 @@ window.echoPopups[id] = { popup: popup, data: echoData };
                 });
             }
 
+            // ── Self-healing poll ──
+            // Echo delivers instantly, but a websocket hiccup (or a dropped publish)
+            // must never freeze the bus on the map, so we also poll the active
+            // vehicles endpoint. renderLiveVehicles() is shared, so this can't
+            // create duplicate markers. Fast (3s) while buses are on the air,
+            // slow (10s) when the map is idle.
+            let vehiclePollBusy = false;
+            let lastLiveSignalAt = 0;
+
+            window.noteLiveSignal = function() {
+                lastLiveSignalAt = Date.now();
+            };
+
             async function fetchVehicles() {
+                if (vehiclePollBusy) return;
+                vehiclePollBusy = true;
+
                 try {
-                    const res = await fetch('/api/vehicles');
+                    const res = await fetch('/track/vehicles/active', {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
                     if (res.ok) {
                         const data = await res.json();
-                        if (data.vehicles) updateVehicleMarkers(data.vehicles);
+                        if (data && data.vehicles) {
+                            renderLiveVehicles(data.vehicles);
+                            if (data.vehicles.length) window.noteLiveSignal();
+                        }
                     }
                 } catch (e) {
                     console.log('Vehicle fetch skipped:', e.message);
+                } finally {
+                    vehiclePollBusy = false;
                 }
             }
-            fetchVehicles();
+
+            function scheduleVehiclePoll() {
+                const active = Object.keys(window.echoMarkers || {}).length > 0;
+                const fresh = (Date.now() - lastLiveSignalAt) < 45000;
+                const delay = (active || fresh) ? 3000 : 10000;
+                setTimeout(async function() {
+                    await fetchVehicles();
+                    scheduleVehiclePoll();
+                }, delay);
+            }
+
+            // Drivers are broadcasters only, so they never poll the fleet.
+            if (userRole !== 'driver') {
+                fetchVehicles().then(scheduleVehiclePoll);
+
+                // Re-sync as soon as the tab becomes visible again
+                document.addEventListener('visibilitychange', function() {
+                    if (!document.hidden) fetchVehicles();
+                });
+            }
 
             // ═══════════════ DRIVER GPS TRACKING ═══════════════
             let gpsWatchId = null;
+            let hasLiveFix = false;
+            let gpsWatchToken = 0;
             const gpsIndicator = document.getElementById('gps-indicator');
             const gpsStatusText = document.getElementById('gps-status-text');
             const currentCoords = document.getElementById('current-coords');
             const currentAccuracy = document.getElementById('current-accuracy');
             const updateTime = document.getElementById('update-time');
 
-            window.toggleGPSTracking = function() {
-                if (gpsWatchId !== null) {
-                    navigator.geolocation.clearWatch(gpsWatchId);
-                    gpsWatchId = null;
-                    if (gpsIndicator) {
-                        gpsIndicator.className = 'w-2 h-2 bg-[#555] rounded-full dot-pulse';
-                    }
+            // Only the assigned driver ever broadcasts. Guests, commuters and
+            // managers may share their own position for the ETA feature, but that
+            // is never published to the vehicle-locations channel.
+            const isBroadcastingDriver = (userRole === 'driver' && !!userId && !!driverVehicleId);
+
+            // ── Broadcast driver GPS updates → LocationUpdated event ──
+            let lastBroadcastAt = 0;
+
+            function broadcastDriverLocation(coords) {
+                if (!isBroadcastingDriver) return;
+
+                var nowTs = Date.now();
+
+                // Throttle: one broadcast every 2 seconds
+                if (nowTs - lastBroadcastAt < 2000) return;
+                lastBroadcastAt = nowTs;
+
+                fetch('/track/vehicle/broadcast', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') || {}).content || ''
+                        },
+                        credentials: 'same-origin',
+                        keepalive: true,
+                        body: JSON.stringify({
+                            vehicle_id: String(driverVehicleId),
+                            user_id: userId,
+                            latitude: coords.latitude,
+                            longitude: coords.longitude,
+                            speed: coords.speed ?? null,
+                            accuracy: coords.accuracy ?? null,
+                            timestamp: nowTs
+                        })
+                    })
+                    .catch(function(err) {
+                        console.warn('Location broadcast failed:', err.message);
+                    });
+            }
+
+            function stopGPSTracking(silent) {
+                if (gpsWatchId === null) return;
+                gpsWatchToken++;
+                navigator.geolocation.clearWatch(gpsWatchId);
+                gpsWatchId = null;
+                lastBroadcastAt = 0;
+                hasLiveFix = false;
+                if (!silent) {
+                    if (gpsIndicator) gpsIndicator.className = 'w-2 h-2 bg-[#555] rounded-full dot-pulse';
                     if (gpsStatusText) {
-                        gpsStatusText.textContent = 'GPS: Not active';
+                        gpsStatusText.textContent = 'GPS: Off';
                         gpsStatusText.className = 'text-[10px] text-[#555]';
                     }
                     if (currentCoords) currentCoords.textContent = '--, --';
                     if (currentAccuracy) currentAccuracy.textContent = '-- m';
                     if (updateTime) updateTime.textContent = '--:--:--';
-                } else {
-                    if (!navigator.geolocation) {
-                        alert('Geolocation is not supported by your browser.');
-                        return;
-                    }
-                    if (gpsIndicator) {
-                        gpsIndicator.className = 'w-2 h-2 bg-green-500 rounded-full dot-pulse';
-                    }
-                    if (gpsStatusText) {
-                        gpsStatusText.textContent = 'GPS: Active';
-                        gpsStatusText.className = 'text-[10px] text-green-400 font-semibold';
-                    }
+                }
+            }
 
-                    gpsWatchId = navigator.geolocation.watchPosition(
-                        function(pos) {
-                            const lat = pos.coords.latitude.toFixed(6);
-                            const lon = pos.coords.longitude.toFixed(6);
-                            const acc = pos.coords.accuracy.toFixed(0);
-                            const now = new Date();
-                            const timeStr = now.toLocaleTimeString('en-US', {
-                                hour12: false
-                            });
+            // No button: the driver's own watch starts by itself as soon as the
+            // page is open (and is retried if the browser needs permission).
+            function startGPSTracking() {
+                if (!isBroadcastingDriver || gpsWatchId !== null) return;
+                if (!navigator.geolocation) return;
 
-                            if (currentCoords) currentCoords.textContent = lat + ', ' + lon;
-                            if (currentAccuracy) currentAccuracy.textContent = acc + ' m';
-                            if (updateTime) updateTime.textContent = timeStr;
+                // Guards against late callbacks from a watch we already replaced.
+                const watchToken = ++gpsWatchToken;
+                hasLiveFix = false;
 
-                            if (userId && userRole === 'driver') {
-                                navigator.sendBeacon('/api/driver/location', JSON.stringify({
-                                    latitude: pos.coords.latitude,
-                                    longitude: pos.coords.longitude,
-                                    accuracy: pos.coords.accuracy
-                                }));
-                            }
-                        },
-                        function(err) {
-                            console.error('GPS error:', err);
-                            if (gpsIndicator) {
-                                gpsIndicator.className = 'w-2 h-2 bg-red-500 rounded-full';
-                            }
+                if (gpsIndicator) gpsIndicator.className = 'w-2 h-2 bg-green-500 rounded-full dot-pulse';
+                if (gpsStatusText) {
+                    gpsStatusText.textContent = 'GPS: Live';
+                    gpsStatusText.className = 'text-[10px] text-green-400 font-semibold';
+                }
+
+                gpsWatchId = navigator.geolocation.watchPosition(
+                    function(pos) {
+                        if (watchToken !== gpsWatchToken) return;
+
+                        if (!hasLiveFix) {
+                            hasLiveFix = true;
+                            if (gpsIndicator) gpsIndicator.className = 'w-2 h-2 bg-green-500 rounded-full dot-pulse';
                             if (gpsStatusText) {
-                                gpsStatusText.textContent = 'GPS: Error';
-                                gpsStatusText.className = 'text-[10px] text-red-400';
+                                gpsStatusText.textContent = 'GPS: Live';
+                                gpsStatusText.className = 'text-[10px] text-green-400 font-semibold';
                             }
-                        }, {
-                            enableHighAccuracy: true,
-                            maximumAge: 5000,
-                            timeout: 10000
                         }
-                    );
+
+                        const lat = pos.coords.latitude.toFixed(6);
+                        const lon = pos.coords.longitude.toFixed(6);
+                        const acc = pos.coords.accuracy.toFixed(0);
+                        const timeStr = new Date().toLocaleTimeString('en-US', {
+                            hour12: false
+                        });
+
+                        if (currentCoords) currentCoords.textContent = lat + ', ' + lon;
+                        if (currentAccuracy) currentAccuracy.textContent = acc + ' m';
+                        if (updateTime) updateTime.textContent = timeStr;
+
+                        broadcastDriverLocation(pos.coords);
+                    },
+                    function(err) {
+                        if (watchToken !== gpsWatchToken) return;
+                        console.warn('GPS unavailable:', err.message);
+                        if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
+                        gpsWatchId = null;
+                        hasLiveFix = false;
+                        if (gpsIndicator) gpsIndicator.className = 'w-2 h-2 bg-amber-500 rounded-full dot-pulse';
+                        if (gpsStatusText) {
+                            gpsStatusText.textContent = 'GPS: Enable location';
+                            gpsStatusText.className = 'text-[10px] text-amber-400';
+                        }
+                    }, {
+                        enableHighAccuracy: true,
+                        maximumAge: 5000,
+                        // Long timeout: a backgrounded tab can be throttled and stop
+                        // receiving fixes. Killing the watch on a short timeout would
+                        // silently stop the broadcast.
+                        timeout: 60000
+                    }
+                );
+            }
+
+            // Kept for the map's own locate button / manual controls
+            window.toggleGPSTracking = function() {
+                if (gpsWatchId !== null) {
+                    stopGPSTracking(false);
+                } else {
+                    startGPSTracking();
                 }
             };
+            window.startGPSTracking = startGPSTracking;
+
+            if (isBroadcastingDriver) {
+                // Start immediately, then keep nudging while the browser is still
+                // waiting for (or has yet to grant) location permission.
+                startGPSTracking();
+                [1500, 5000, 15000, 45000].forEach(function(ms) {
+                    setTimeout(function() {
+                        if (gpsWatchId === null) startGPSTracking();
+                    }, ms);
+                });
+
+                // Safety net: if the watch ever dies (permission change, browser
+                // throttling the tab, device sleep) bring it straight back.
+                setInterval(function() {
+                    if (gpsWatchId === null) startGPSTracking();
+                }, 30000);
+
+                document.addEventListener('visibilitychange', function() {
+                    if (!document.hidden) startGPSTracking();
+                });
+            }
 
             // ═══════════════ TERRA DRAW ═══════════════
             let terradraw = null;

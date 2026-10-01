@@ -101,6 +101,7 @@ class UserController extends Controller
                 'recentReceipts' => $recentReceipts,
                 'todayRecord' => $todayRecord,
                 'driverStatus' => $driverStatus,
+                'driverVehicleId' => $driver->vehicle->first()?->id,
             ]);
         }
 
