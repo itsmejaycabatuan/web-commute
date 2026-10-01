@@ -60,8 +60,12 @@ Route::middleware('guest')->group(function () {
         return view('auth.login');
     })->name('login');
 
-    Route::post('/register', [UserController::class, 'register'])->name('users.register');
-    Route::post('/login', [UserController::class, 'login'])->name('users.login');
+    Route::post('/register', [UserController::class, 'register'])
+        ->middleware('throttle:6,1')
+        ->name('users.register');
+    Route::post('/login', [UserController::class, 'login'])
+        ->middleware('throttle:5,1')
+        ->name('users.login');
 
     Route::get('/register/driver', [DriverController::class, 'create'])->name('driver.register.page');
     Route::post('/register/driver', [DriverController::class, 'store'])->name('driver.register');
@@ -130,7 +134,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/payment/history', [PaymentController::class, 'history'])->name('payment.history');
     Route::get('/payment/receipt/{id}', [PaymentController::class, 'showReceipt'])->name('payment.showReceipt');
     Route::get('/payment/topup', [PaymentController::class, 'topup'])->name('payment.topup');
-    Route::post('/payment/topup/process', [PaymentController::class, 'topupProcess'])->name('payment.topup.process');
+    Route::post('/payment/topup/process', [PaymentController::class, 'topupProcess'])
+        ->middleware('throttle:5,1')
+        ->name('payment.topup.process');
     Route::get('/payment/topup/history', [PaymentController::class, 'topupHistory'])->name('payment.topup.history');
 
     Route::get('/topups', [PaymentController::class, 'showTopupsAdmin'])->name('admin.topups');

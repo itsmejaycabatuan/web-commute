@@ -154,33 +154,57 @@ class PaymentController extends Controller
         ]);
     }
 
+    /**
+     * Payment methods a commuter may self-select. Cash / "Admin Settlement" is
+     * NOT self-service: it must be recorded by an admin, never by the commuter.
+     */
+    public const SELF_SERVICE_TOPUP_METHODS = ['gcash', 'maya'];
+
     public function topupProcess(Request $request)
     {
         activity()->event('Topupprocess')->log('Action performed: topupProcess');
-        $user = Auth::user();
-        $userId = $user->id;
-        $wallet = Wallet::where('user_id', $userId)->first();
+        $userId = Auth::id();
+        $wallet = Wallet::where('user_id', $userId)->firstOrFail();
         $balance = $wallet->balance;
 
-        // dd($request);
-
         $request->validate([
-            'amount' => 'required',
-            'payment-method' => 'required',
+            // E5 - Invalid Custom Amount: numeric, at least 10, at most 100000
+            'amount' => ['required', 'numeric', 'min:10', 'max:100000'],
+            // E1 - Payment method unavailable: only self-service methods allowed
+            'payment-method' => ['required', 'in:' . implode(',', self::SELF_SERVICE_TOPUP_METHODS)],
         ]);
 
-        $amount = (float) $request->amount;
+        $amount = round((float) $request->amount, 2);
         $currentBalance = (float) $balance;
-        $newBalance = $currentBalance + $amount;
+        $newBalance = round($currentBalance + $amount, 2);
 
-        if ($wallet->update([
-            'balance' => $newBalance,
-        ])) {
+        // E3 - Already Paid / duplicate submission guard (idempotency window)
+        $duplicate = TopupHistory::where('user_id', $userId)
+            ->where('amount_added', $amount)
+            ->where('payment_method', $request->{'payment-method'})
+            ->where('created_at', '>=', now()->subMinutes(2))
+            ->exists();
+
+        if ($duplicate) {
+            return back()->with('error', 'This top-up was already processed. Please wait a moment before retrying.');
+        }
+
+        try {
+            $updated = $wallet->update([
+                'balance' => $newBalance,
+            ]);
+        } catch (\Exception $e) {
+            activity()->event('Topupprocess')->log('Database error during topup.');
+
+            return back()->with('error', 'Top-up failed. Please try again later.');
+        }
+
+        if ($updated) {
 
             TopupHistory::create([
                 'user_id' => $userId,
                 'wallet_id' => $wallet->id,
-                'amount_added' => $request->amount,
+                'amount_added' => $amount,
                 'payment_method' => $request->{'payment-method'},
             ]);
 

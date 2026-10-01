@@ -222,7 +222,7 @@
                     <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
                         <i class="fa-solid fa-envelope text-[10px] sm:text-xs text-white/20"></i>
                     </div>
-                    <input type="text" placeholder="you@example.com" name="email" value="{{ old('email') }}"
+                    <input type="email" placeholder="you@example.com" name="email" value="{{ old('email') }}"
                         class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
                 </div>
                 @if ($errors->has('email'))

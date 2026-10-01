@@ -619,31 +619,42 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'email' => 'required|email',
-            'password' => 'required|min:8',
+            'password' => 'required',
         ]);
 
-        if (Auth::attempt($validated, $request->has('remember'))) {
-            $user = Auth::user();
+        try {
+            $attempted = Auth::attempt($validated, $request->has('remember'));
+        } catch (\Exception $e) {
+            // E1 - Database / auth provider failure: cancel the login gracefully
+            activity()->event('Login')->log('System error during login.');
 
-            if (! $user->hasVerifiedEmail()) {
-                return redirect()->route('verification.notice');
-            }
-
-            $userId = Auth::user()->id;
-            $role = $user->roles->first()->name;
-
-            $request->session()->regenerate();
-
-            activity()->event('Log In')->log('User login success.');
-
-            return redirect()->route('map')->with('success', 'Logged in Successfully!');
+            throw ValidationException::withMessages([
+                'credentials' => 'Login is unavailable right now. Please try again later.',
+            ]);
         }
 
-        activity()->event('Log In')->log('User failed to login.');
+        if (! $attempted) {
+            activity()->event('Log In')->log('User failed to login.');
 
-        throw ValidationException::withMessages([
-            'credentials' => 'The provided credentials do not match our records.',
-        ]);
+            // E3/E4 - generic message on purpose: never reveal whether the email exists
+            throw ValidationException::withMessages([
+                'credentials' => 'The provided credentials do not match our records.',
+            ]);
+        }
+
+        // Regenerate the session id before anything else (session fixation guard),
+        // including the unverified-email path below.
+        $request->session()->regenerate();
+
+        $user = Auth::user();
+
+        if (! $user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
+        activity()->event('Log In')->log('User login success.');
+
+        return redirect()->route('map')->with('success', 'Logged in Successfully!');
     }
 
     public function logout(Request $request)

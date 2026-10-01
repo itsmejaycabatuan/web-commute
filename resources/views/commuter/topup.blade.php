@@ -345,7 +345,7 @@
                             @enderror
                         </div>
 
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                             @foreach ([50, 100, 200, 500] as $preset)
                                 <button type="button" onclick="setAmount({{ $preset }})"
                                     class="preset-btn py-3 rounded-xl bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] text-[12px] font-bold text-slate-400 dark:text-[#555]">
@@ -419,31 +419,7 @@
                                 </div>
                             </label>
 
-                            <!-- Admin Tab -->
-                            <label class="block">
-                                <input type="radio" name="payment-method" value="admin" class="hidden">
-                                <div
-                                    class="method-card bg-slate-50 dark:bg-[#111] p-3 sm:p-4 rounded-xl flex items-center justify-between gap-2"
-                                    onclick="selectMethod(this)">
-                                    <div class="flex items-center gap-3 min-w-0">
-                                        <div
-                                            class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/15 flex items-center justify-center shrink-0">
-                                            <i
-                                                class="fa-solid fa-user-tie text-amber-500 dark:text-amber-400 text-sm"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-[13px] font-bold text-slate-900 dark:text-white">Admin
-                                                Settlement</p>
-                                            <p
-                                                class="text-[9px] text-slate-400 dark:text-[#444] font-bold uppercase tracking-wider">
-                                                Manual Processing</p>
-                                        </div>
-                                    </div>
-                                    <div class="method-dot">
-                                        <div class="method-dot-inner"></div>
-                                    </div>
-                                </div>
-                            </label>
+                            
 
                         </div>
 

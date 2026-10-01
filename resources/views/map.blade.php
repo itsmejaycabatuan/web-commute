@@ -20,6 +20,21 @@
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/@watergis/maplibre-gl-terradraw@1.0.1/dist/maplibre-gl-terradraw.css" />
     @include('partials.commuter-head-scripts')
+    <script>
+        /* Shared map globals MUST exist before the first page script runs.
+           `window.userRole` used to be assigned ~900 lines further down the
+           body, so `window.ETA.start()` bailed out (userRole still undefined)
+           and nothing that depends on the ETA engine ever came alive: GPS
+           polling, ETA badges and the Nearest-PUJ indicator. */
+        window.userRole = '{{ Auth::check() ? Auth::user()->roles->first()->name : 'guest' }}';
+        window.PRIVACY_RADIUS = 200;
+        window.driverPrivacyZones = window.driverPrivacyZones || {};
+        window.echoMarkers = window.echoMarkers || {};
+        window.echoPopups = window.echoPopups || {};
+        window.liveVehicleCache = window.liveVehicleCache || {};
+        window.dummyMapMarkers = window.dummyMapMarkers || {};
+        window.dummyMapPopups = window.dummyMapPopups || {};
+    </script>
     <style>
         body,
         html {
@@ -30,6 +45,520 @@
             font-family: 'Inter', sans-serif;
             overflow: hidden;
             background: #f1f5f9;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+         * OVERLAY THEME TOKENS
+         * The status banner (#map-alert) and the floating Nearest-PUJ
+         * indicator both sit on top of the map, so they can't inherit the
+         * page panel colours - they use their own tokens, mirrored by a
+         * `.dark` block. Light is the default, exactly like the rest of the
+         * page (the `dark` class is set on <html>).
+         * ══════════════════════════════════════════════════════════════ */
+        #map-alert,
+        #nearest-vehicle-indicator {
+            --ov-bg: rgba(255, 255, 255, 0.94);
+            --ov-bg-hover: rgba(255, 255, 255, 0.99);
+            --ov-border: #e2e8f0;
+            --ov-border-hover: #cbd5e1;
+            --ov-shadow: 0 8px 32px rgba(15, 23, 42, 0.16);
+            --ov-shadow-hover: 0 12px 40px rgba(15, 23, 42, 0.22);
+            --ov-title: #0f172a;
+            --ov-text: #475569;
+            --ov-dim: #94a3b8;
+            --ov-accent: #60a5fa;
+        }
+
+        .dark #map-alert,
+        .dark #nearest-vehicle-indicator {
+            --ov-bg: rgba(17, 17, 17, 0.92);
+            --ov-bg-hover: rgba(17, 17, 17, 0.97);
+            --ov-border: #222222;
+            --ov-border-hover: #333333;
+            --ov-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --ov-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.5);
+            --ov-title: #eeeeee;
+            --ov-text: #888888;
+            --ov-dim: #555555;
+            --ov-accent: #60a5fa;
+        }
+
+        /* ═══ MAP STATUS BANNER (E1 no PUJ / E2 permission / E3 map / E4 offline) ═══ */
+        #map-alert {
+            position: absolute;
+            /* Sits just under the fixed header, which is taller on mobile. */
+            top: 104px;
+            left: 50%;
+            transform: translateX(-50%);
+            /* Above the canvas, but never over a marker popup (z-index 25). */
+            z-index: 18;
+            max-width: min(400px, calc(100vw - 24px));
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 11px 15px;
+            border-radius: 14px;
+            background: var(--ov-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--ov-border);
+            box-shadow: var(--ov-shadow);
+            font-family: Inter, sans-serif;
+            /* Purely informational: never swallow map drags / marker clicks. */
+            pointer-events: none;
+            animation: mapAlertIn 0.25s ease;
+        }
+
+        @media (max-width: 640px) {
+            #map-alert {
+                top: 132px;
+                padding: 10px 13px;
+            }
+        }
+
+        @keyframes mapAlertIn {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        #map-alert.hidden {
+            display: none;
+        }
+
+        #map-alert .ma-icon {
+            font-size: 13px;
+            line-height: 1.4;
+            flex-shrink: 0;
+        }
+
+        #map-alert .ma-title {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--ov-title);
+            margin: 0 0 3px;
+        }
+
+        #map-alert .ma-msg {
+            font-size: 10px;
+            line-height: 1.5;
+            color: var(--ov-text);
+            margin: 0;
+        }
+
+        #map-alert[data-type="warning"] {
+            border-color: rgba(251, 191, 36, 0.45);
+        }
+
+        #map-alert[data-type="warning"] .ma-icon {
+            color: #d97706;
+        }
+
+        .dark #map-alert[data-type="warning"] .ma-icon {
+            color: #fbbf24;
+        }
+
+        #map-alert[data-type="error"] {
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        #map-alert[data-type="error"] .ma-icon {
+            color: #dc2626;
+        }
+
+        .dark #map-alert[data-type="error"] .ma-icon {
+            color: #ef4444;
+        }
+
+        #map-alert[data-type="info"] {
+            border-color: rgba(96, 165, 250, 0.4);
+        }
+
+        #map-alert[data-type="info"] .ma-icon {
+            color: var(--ov-accent);
+        }
+
+        /* ═══ NEAREST PUJ FLOATING INDICATOR ═══ */
+        #nearest-vehicle-indicator {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            max-width: calc(100vw - 24px);
+            background: var(--ov-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--ov-border);
+            border-radius: 14px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+            box-shadow: var(--ov-shadow);
+            min-width: 200px;
+        }
+
+        #nearest-vehicle-indicator:hover {
+            border-color: var(--ov-border-hover);
+            background: var(--ov-bg-hover);
+            transform: translateX(-50%) translateY(-1px);
+            box-shadow: var(--ov-shadow-hover);
+        }
+
+        #nearest-vehicle-indicator:active {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #nearest-vehicle-indicator.hidden {
+            display: none;
+        }
+
+        .nv-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            transition: background 0.3s ease;
+        }
+
+        .nv-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            min-width: 0;
+        }
+
+        .nv-label {
+            font-size: 8px;
+            color: var(--ov-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .nv-time {
+            font-size: 14px;
+            font-weight: 800;
+            color: #34d399;
+            transition: color 0.3s ease;
+            line-height: 1.3;
+            white-space: nowrap;
+        }
+
+        .nv-distance {
+            font-size: 10px;
+            color: var(--ov-text);
+            font-weight: 500;
+            margin-left: auto;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            white-space: nowrap;
+        }
+
+        .nv-arrow {
+            color: var(--ov-dim);
+            font-size: 10px;
+            margin-left: 4px;
+            transition: color 0.2s;
+            flex-shrink: 0;
+        }
+
+        #nearest-vehicle-indicator:hover .nv-arrow {
+            color: var(--ov-text);
+        }
+
+        /* ═══════════════ PUJ MARKER POPUP ═══════════════
+           Themed via CSS variables so the popup follows the user's theme
+           preference (the `dark` class on <html>), exactly like the rest of
+           the map UI. Light is the default; .dark overrides the tokens. */
+        .maplibregl-popup.puj-popup {
+            --pp-bg: #ffffff;
+            --pp-border: #e2e8f0;
+            --pp-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+            --pp-text: #0f172a;
+            --pp-muted: #64748b;
+            --pp-dim: #94a3b8;
+            --pp-divider: #e2e8f0;
+            --pp-chip: rgba(59, 130, 246, 0.06);
+            --pp-chip-border: rgba(59, 130, 246, 0.18);
+            --pp-eta-chip: rgba(16, 185, 129, 0.08);
+            --pp-eta-border: rgba(16, 185, 129, 0.2);
+            z-index: 25;
+        }
+
+        .dark .maplibregl-popup.puj-popup {
+            --pp-bg: rgba(17, 17, 17, 0.96);
+            --pp-border: #262626;
+            --pp-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+            --pp-text: #ffffff;
+            --pp-muted: #9ca3af;
+            --pp-dim: #6b7280;
+            --pp-divider: #1e1e1e;
+            --pp-chip: rgba(59, 130, 246, 0.06);
+            --pp-chip-border: rgba(59, 130, 246, 0.12);
+            --pp-eta-chip: rgba(16, 185, 129, 0.08);
+            --pp-eta-border: rgba(16, 185, 129, 0.14);
+        }
+
+        .maplibregl-popup.puj-popup .maplibregl-popup-content {
+            background: var(--pp-bg);
+            border: 1px solid var(--pp-border);
+            border-radius: 14px;
+            box-shadow: var(--pp-shadow);
+            padding: 12px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* Keep the tip the same colour as the panel for every anchor */
+        .maplibregl-popup.puj-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+        .maplibregl-popup.puj-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+        .maplibregl-popup.puj-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+            border-bottom-color: var(--pp-bg);
+        }
+
+        .maplibregl-popup.puj-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+        .maplibregl-popup.puj-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+        .maplibregl-popup.puj-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+            border-top-color: var(--pp-bg);
+        }
+
+        .maplibregl-popup.puj-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+            border-right-color: var(--pp-bg);
+        }
+
+        .maplibregl-popup.puj-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+            border-left-color: var(--pp-bg);
+        }
+
+        .puj-popup .pp {
+            font-family: Inter, sans-serif;
+            width: 216px;
+            max-width: 100%;
+            box-sizing: border-box;
+            color: var(--pp-text);
+        }
+
+        .puj-popup .pp-head {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 9px;
+            min-width: 0;
+        }
+
+        .puj-popup .pp-head-icon {
+            width: 30px;
+            height: 30px;
+            flex: 0 0 30px;
+            border-radius: 9px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--pp-chip-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* min-width:0 lets long names shrink + ellipsis instead of overflowing */
+        .puj-popup .pp-head-text {
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        .puj-popup .pp-title {
+            margin: 0;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--pp-text);
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .puj-popup .pp-sub {
+            margin: 2px 0 0;
+            font-size: 8.5px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--pp-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .puj-popup .pp-note {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 9px;
+            border-radius: 8px;
+            background: var(--pp-chip);
+            border: 1px solid var(--pp-chip-border);
+            font-size: 8.5px;
+            font-weight: 600;
+            color: var(--pp-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .puj-popup .pp-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            font-size: 8.5px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .puj-popup .pp-status .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex: 0 0 6px;
+        }
+
+        .puj-popup .pp-status .lbl {
+            color: var(--pp-dim);
+            margin-left: auto;
+            font-size: 7.5px;
+            letter-spacing: 0.1em;
+        }
+
+        .puj-popup .pp-divider {
+            height: 1px;
+            background: var(--pp-divider);
+            margin: 9px 0;
+        }
+
+        .puj-popup .pp-eta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            background: var(--pp-eta-chip);
+            border: 1px solid var(--pp-eta-border);
+        }
+
+        .puj-popup .pp-eta-icon {
+            width: 26px;
+            height: 26px;
+            flex: 0 0 26px;
+            border-radius: 8px;
+            background: var(--pp-eta-chip);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .puj-popup .pp-eta-text {
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        .puj-popup .pp-eta-main {
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .puj-popup .pp-eta-sub {
+            margin-top: 2px;
+            font-size: 8px;
+            color: var(--pp-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .puj-popup .pp-eta-label {
+            flex: 0 0 auto;
+            font-size: 7px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+
+        .puj-popup .pp-accuracy {
+            margin-top: 6px;
+            text-align: center;
+            font-size: 7px;
+            color: var(--pp-dim);
+        }
+
+        /* Driver rows (plate / type / route) */
+        .puj-popup .pp-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 0 2px;
+        }
+
+        .puj-popup .pp-row + .pp-row {
+            margin-top: 4px;
+        }
+
+        .puj-popup .pp-row .k {
+            flex: 0 0 auto;
+            font-size: 7.5px;
+            color: var(--pp-dim);
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .puj-popup .pp-row .v {
+            min-width: 0;
+            font-size: 9.5px;
+            color: var(--pp-muted);
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: right;
+        }
+
+        .puj-popup .pp-row .v.mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        .puj-popup .pp-driver-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .puj-popup .pp-driver-status .lbl {
+            margin-left: auto;
+            font-size: 7px;
+            color: var(--pp-dim);
         }
 
         /* ── ETA Marker Badge ── */
@@ -81,88 +610,7 @@
             display: none;
         }
 
-        /* ── Nearest Vehicle Floating Indicator ── */
-        #nearest-vehicle-indicator {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 20;
-            background: rgba(17, 17, 17, 0.92);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid #222;
-            border-radius: 14px;
-            padding: 10px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            min-width: 200px;
-        }
-
-        #nearest-vehicle-indicator:hover {
-            border-color: #333;
-            background: rgba(17, 17, 17, 0.96);
-            transform: translateX(-50%) translateY(-1px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-        }
-
-        #nearest-vehicle-indicator:active {
-            transform: translateX(-50%) translateY(0);
-        }
-
-        .nv-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            transition: background 0.3s ease;
-        }
-
-        .nv-info {
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-        }
-
-        .nv-label {
-            font-size: 8px;
-            color: #555;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-        }
-
-        .nv-time {
-            font-size: 14px;
-            font-weight: 800;
-            color: #34d399;
-            transition: color 0.3s ease;
-            line-height: 1.3;
-        }
-
-        .nv-distance {
-            font-size: 10px;
-            color: #666;
-            font-weight: 500;
-            margin-left: auto;
-            font-family: 'SF Mono', 'Fira Code', monospace;
-        }
-
-        .nv-arrow {
-            color: #444;
-            font-size: 10px;
-            margin-left: 4px;
-            transition: color 0.2s;
-        }
-
-        #nearest-vehicle-indicator:hover .nv-arrow {
-            color: #888;
-        }
-
+        /* ── Map Status Banner (E1 No PUJ / E2 Permission / E3 Map Service / E4 Offline) ── */
         /* ═══ SIMULATOR ═══ */
         .sim-waypoint-dot {
             width: 12px;
@@ -1777,7 +2225,8 @@
                     @if ((Auth::check() && Auth::user()->roles[0]->name === 'commuter') || Auth::guest())
                         <div id="left-sidebar-form"
                             class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)] overflow-y-auto custom-scroll p-3 pb-6">
-                            <form action="{{ route('payment.index') }}" method="GET">
+                            <form action="{{ route('payment.index') }}" method="GET"
+                                data-guest-register="{{ Auth::guest() ? route('register') : '' }}">
                                 <div class="glass-card p-6 rounded-[1.5rem]">
                                     <div class="flex items-center gap-2.5 mb-5">
                                         <div
@@ -2064,6 +2513,7 @@
 
                                     if (!markers || !markers.length) {
                                         if (window.updatePrivacyZones) window.updatePrivacyZones();
+                                        if (window.updatePujEmptyState) window.updatePujEmptyState();
                                         return;
                                     }
 
@@ -2083,51 +2533,20 @@
 
                                         var popup;
                                         if (isDriver) {
-                                            var isDriverActive = d.driver_status === 'active';
-                                            var statusBg = isDriverActive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
-                                            var statusBorder = isDriverActive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
-                                            var statusColor = isDriverActive ? '#34d399' : '#ef4444';
-                                            var statusLabel = isDriverActive ? 'Available' : 'Unavailable';
-                                            var statusIcon = isDriverActive ? 'fa-circle-check' : 'fa-circle-xmark';
-
                                             popup = new maplibregl.Popup({
-                                                offset: 20,
+                                                className: 'puj-popup',
+                                                offset: 18,
                                                 closeButton: false,
-                                                maxWidth: '220px'
-                                            }).setHTML(
-                                                '<div style="background:#111;border:1px solid #222;border-radius:16px;padding:16px;font-family:Inter,sans-serif;">' +
-                                                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
-                                                '<div style="width:36px;height:36px;border-radius:12px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
-                                                '<i class="fa-solid fa-bus" style="font-size:13px;color:#60a5fa;"></i></div>' +
-                                                '<div style="min-width:0;"><p style="font-size:12px;font-weight:700;color:#eee;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
-                                                d.name + '</p>' +
-                                                '<p style="font-size:9px;color:#555;margin:2px 0 0;">Driver</p></div></div>' +
-                                                '<div style="height:1px;background:#1e1e1e;margin:0 0 12px;"></div>' +
-                                                '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:' +
-                                                statusBg + ';border:1px solid ' + statusBorder + ';margin-bottom:8px;">' +
-                                                '<div style="display:flex;align-items:center;gap:6px;"><i class="fa-solid ' +
-                                                statusIcon + '" style="font-size:10px;color:' + statusColor + ';"></i>' +
-                                                '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:' +
-                                                statusColor + ';">' + statusLabel + '</span></div>' +
-                                                '<span style="font-size:7px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">Driver Status</span></div>' +
-                                                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
-                                                '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Plate</span>' +
-                                                '<span style="font-size:10px;color:#888;font-weight:600;font-family:monospace;">' + d
-                                                .plate_number + '</span></div>' +
-                                                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
-                                                '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Type</span>' +
-                                                '<span style="font-size:10px;color:#888;font-weight:600;">' + d.vehicle_type +
-                                                '</span></div>' +
-                                                '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;">' +
-                                                '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Route</span>' +
-                                                '<span style="font-size:10px;color:#888;font-weight:600;">' + d.route +
-                                                '</span></div></div>'
-                                            );
+                                                focusAfterOpen: false,
+                                                maxWidth: '260px'
+                                            }).setHTML(window.createDriverPopup(d));
                                         } else {
                                             popup = new maplibregl.Popup({
-                                                    offset: 20,
+                                                    className: 'puj-popup',
+                                                    offset: 18,
                                                     closeButton: false,
-                                                    maxWidth: '220px'
+                                                    focusAfterOpen: false,
+                                                    maxWidth: '260px'
                                                 })
                                                 .setHTML(window.createPrivacyPopup(d));
                                         }
@@ -2153,6 +2572,7 @@
                                     if (!isDriver && window.updatePrivacyZones) {
                                         window.updatePrivacyZones();
                                     }
+                                    if (window.updatePujEmptyState) window.updatePujEmptyState();
                                     // Refresh ETA badges after markers are (re)rendered
                                     if (window.ETA && window.userRole !== 'driver') {
                                         setTimeout(function() {
@@ -2168,17 +2588,30 @@
                                         return;
                                     }
                                     console.log('[DEV] Map ready, fetching markers...');
+                                    if (!navigator.onLine) {
+                                        if (window.showMapAlert) window.showMapAlert('offline');
+                                        return;
+                                    }
                                     fetch('/api/markers?t=' + Date.now())
                                         .then(function(r) {
                                             return r.json();
                                         })
                                         .then(function(markers) {
+                                            if (window.clearMapAlert) window.clearMapAlert('offline');
                                             renderDummyMarkers(markers);
+                                            if (window.markPujSourceLoaded) window.markPujSourceLoaded('dummy');
                                         })
                                         .catch(function(err) {
                                             console.log('[DEV] Fetch error:', err);
+                                            // E4 - cannot reach the API (offline / server unreachable)
+                                            if (!navigator.onLine) {
+                                                if (window.showMapAlert) window.showMapAlert('offline');
+                                            } else if (window.showMapAlert) {
+                                                window.showMapAlert('map-service');
+                                            }
                                         });
                                 }
+                                window.loadDummyMarkers = loadDummyMarkers;
 
                                 loadDummyMarkers();
 
@@ -2301,16 +2734,35 @@
         self.refresh();
     }, this.PERIODIC_MS);
 
-    // Single attempt — works if permission was previously granted.
-    // Silent fail is fine: GeolocateControl (📍) handles first-time guests.
+    // A single attempt is enough to discover that permission was already
+    // granted; on success the first fix turns the locate control on (see
+    // _receivePosition). If it is denied/unavailable we surface E2.
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             function(pos) {
                 self._receivePosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
             },
-            function() {},
+            function(err) {
+                // E2 - location unavailable/denied: tell the guest why ETAs are missing
+                if (err && (err.code === 1 || err.code === 2)) {
+                    if (window.showMapAlert) window.showMapAlert('location-denied');
+                }
+            },
             { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 }
         );
+    }
+
+    // The 📍 control may already be tracking (the guest tapped it earlier in
+    // the session, or permission was granted in another tab). Re-arm the ETA
+    // side of the feed from the control's last fix, without moving the camera.
+    try {
+        var ctrlRef = window.geolocateCtrlRef;
+        var lastPos = ctrlRef && ctrlRef._lastKnownPosition;
+        if (lastPos && window.ETA) {
+            window.ETA._receivePosition(lastPos.coords.latitude, lastPos.coords.longitude, lastPos.coords.accuracy);
+        }
+    } catch (e) {
+        console.warn('[ETA] Could not read the last known position:', e);
     }
 },
 
@@ -2322,6 +2774,16 @@
                                         this.userAccuracy = accuracy;
                                         if (changed) {
                                             this._scheduleUpdate();
+                                        }
+                                        // E2 no longer applies once a fix arrives
+                                        if (window.clearMapAlert) window.clearMapAlert('location-denied');
+                                        // The first fix may arrive BEFORE the map exists
+                                        // (getCurrentPosition resolves in ~50ms, while the
+                                        // map is built in a deferred module script), so the
+                                        // centring/auto-enable is retried by
+                                        // window.applyInitialPosition() once the map is ready.
+                                        if (typeof window.applyInitialPosition === 'function') {
+                                            window.applyInitialPosition();
                                         }
                                     },
 
@@ -2340,11 +2802,24 @@
                                     },
 
                                     // ── Main refresh ──
+                                    // The Nearest-PUJ indicator runs FIRST and every
+                                    // stage is isolated: a single throw in badge or
+                                    // popup rendering must never leave the indicator
+                                    // stuck hidden.
                                     refresh: function() {
+                                        var self = this;
+                                        this._safe('_updateNearestIndicator', this._updateNearestIndicator);
                                         if (this.userLat === null) return;
-                                        this._updateBadges();
-                                        this._updatePopups();
-                                        this._updateNearestIndicator();
+                                        this._safe('_updateBadges', this._updateBadges);
+                                        this._safe('_updatePopups', this._updatePopups);
+                                    },
+
+                                    _safe: function(name, fn) {
+                                        try {
+                                            fn.call(this);
+                                        } catch (err) {
+                                            console.error('[ETA] ' + name + ' failed:', err);
+                                        }
                                     },
 
                                     // ── Collect all vehicle markers ──
@@ -2401,11 +2876,17 @@ _updateBadges: function() {
         entry.popup.setHTML(window.createPrivacyPopup(data));
     });
 
-    // Echo markers
+    // Live (websocket) markers - always recompute from the marker's CURRENT
+    // position so the popup never shows a stale/wrong location or ETA.
     Object.keys(window.echoPopups || {}).forEach(function(id) {
         var entry = window.echoPopups[id];
         if (!entry || !entry.popup) return;
-        entry.popup.setHTML(window.createPrivacyPopup(entry.data));
+        var marker = window.echoMarkers && window.echoMarkers[id];
+        if (!marker) return;
+        var ll = marker.getLngLat();
+        var data = Object.assign({}, entry.data, { lat: ll.lat, lng: ll.lng });
+        entry.popup.setLngLat([ll.lng, ll.lat]);
+        entry.popup.setHTML(window.createPrivacyPopup(data));
     });
 },
                                     // ── Update the floating nearest-vehicle indicator ──
@@ -3538,13 +4019,171 @@ sim._lastEtaUpdate = null;
 
         <!-- ═══════════════ MAP SCRIPT ═══════════════ -->
         <script>
-            window.userRole = '{{ Auth::check() ? Auth::user()->roles->first()->name : 'guest' }}';
-            window.PRIVACY_RADIUS = 200;
-            window.driverPrivacyZones = {};
-            window.echoMarkers = {};
-            window.dummyMapMarkers = {};
-window.dummyMapPopups = {};
-window.echoPopups = {};
+            /* userRole / PRIVACY_RADIUS / marker registries are bootstrapped in
+               <head> (see the note there) - don't clobber them here. */
+            if (!window.userRole) {
+                window.userRole = '{{ Auth::check() ? Auth::user()->roles->first()->name : 'guest' }}';
+                window.PRIVACY_RADIUS = 200;
+            }
+
+            /* ══════════════════════════════════════════════
+             * MAP STATUS BANNER  (UCN_SC_E003 exceptions)
+             *  E1 - no PUJ markers            -> 'no-puj'
+             *  E2 - location permission denied -> 'location-denied'
+             *  E3 - map/tile service failure  -> 'map-service'
+             *  E4 - device offline            -> 'offline'
+             *  E4/E004 - routing service down -> 'routing-service'
+             *  E4/E004 - no place found      -> 'location-not-found'
+             * Priorities: offline > map-service > routing-service > location-denied > no-puj
+             * ══════════════════════════════════════════════ */
+            window.mapAlerts = {};
+            var MAP_ALERT_META = {
+                'offline': {
+                    type: 'error',
+                    icon: 'fa-wifi',
+                    title: 'No internet connection',
+                    msg: 'You are offline. The map and PUJ locations cannot be refreshed until the connection returns.'
+                },
+                'map-service': {
+                    type: 'error',
+                    icon: 'fa-triangle-exclamation',
+                    title: 'Map service unavailable',
+                    msg: 'The mapping service failed to load. Please refresh the page or try again later.'
+                },
+                'location-denied': {
+                    type: 'warning',
+                    icon: 'fa-location-crosshairs',
+                    title: 'Location access needed',
+                    msg: 'Enable location access to see the map centred on you and to get PUJ ETAs.'
+                },
+                'routing-service': {
+                    type: 'error',
+                    icon: 'fa-route',
+                    title: 'Route unavailable',
+                    msg: 'The routing service failed to respond, so the distance and fare could not be calculated. Please try again.'
+                },
+                'location-not-found': {
+                    type: 'warning',
+                    icon: 'fa-magnifying-glass',
+                    title: 'Location not found',
+                    msg: 'That place could not be found. Try a different name, or tap a point directly on the map.'
+                },
+                'no-puj': {
+                    type: 'info',
+                    icon: 'fa-bus',
+                    title: 'No PUJs available',
+                    msg: 'No PUJ drivers are clocked in right now, so there are no markers on the map.'
+                }
+            };
+            var MAP_ALERT_PRIORITY = ['offline', 'map-service', 'routing-service', 'location-denied', 'no-puj'];
+
+            window.showMapAlert = function(key) {
+                window.mapAlerts[key] = true;
+                window.renderMapAlert();
+            };
+
+            window.clearMapAlert = function(key) {
+                delete window.mapAlerts[key];
+                window.renderMapAlert();
+            };
+
+            window.renderMapAlert = function() {
+                var el = document.getElementById('map-alert');
+                if (!el) return;
+                var active = MAP_ALERT_PRIORITY.filter(function(k) {
+                    return window.mapAlerts[k];
+                });
+                if (!active.length) {
+                    if (el.dataset.active) delete el.dataset.active;
+                    el.classList.add('hidden');
+                    el.setAttribute('aria-hidden', 'true');
+                    return;
+                }
+                var key = active[0];
+                var meta = MAP_ALERT_META[key];
+                // Skip DOM work when the same alert is already on screen, so a
+                // repeated event can't restart the entry animation/flicker.
+                if (el.dataset.active === key) return;
+                el.dataset.type = meta.type;
+                el.classList.remove('hidden');
+                el.setAttribute('aria-hidden', 'false');
+                el.querySelector('.ma-icon').className = 'fa-solid ' + meta.icon + ' ma-icon';
+                document.getElementById('map-alert-title').textContent = meta.title;
+                document.getElementById('map-alert-msg').textContent = meta.msg;
+            };
+
+            /* ── E1: show/hide the "no PUJ" banner from marker state ── */
+            window.updatePujEmptyState = function() {
+                // Markers live in the DOM (not the style), so this works even
+                // while the basemap style is still loading - it used to bail out
+                // on isStyleLoaded() and the "no PUJ" banner never appeared.
+                var count = Object.keys(window.dummyMapMarkers || {}).length +
+                    Object.keys(window.echoMarkers || {}).length;
+                window.hasPuj = count > 0;
+                if (count > 0) {
+                    window.clearMapAlert('no-puj');
+                } else {
+                    window.showMapAlert('no-puj');
+                }
+            };
+
+            /* Don't announce "no PUJs" until BOTH marker sources have been asked,
+             * otherwise production (where /api/markers is empty by design) flashes
+             * the banner before the live poll arrives. A timer guarantees we still
+             * resolve if an endpoint never answers. */
+            window.pujSources = {
+                dummy: false,
+                live: false
+            };
+
+            window.markPujSourceLoaded = function(source) {
+                window.pujSources[source] = true;
+                clearTimeout(window.pujFallbackTimer);
+                if (window.pujSources.dummy && window.pujSources.live) {
+                    window.updatePujEmptyState();
+                } else {
+                    window.pujFallbackTimer = setTimeout(window.updatePujEmptyState, 4000);
+                }
+            };
+
+            /* ── E4: offline / online listeners ── */
+            window.addEventListener('offline', function() {
+                window.showMapAlert('offline');
+            });
+
+            // A device that is *already* offline when the page loads never
+            // fires an 'offline' event, so seed the state explicitly.
+            if (navigator.onLine === false) {
+                window.showMapAlert('offline');
+            }
+            window.addEventListener('online', function() {
+                window.clearMapAlert('offline');
+                if (typeof window.loadDummyMarkers === 'function') window.loadDummyMarkers();
+            });
+
+            /* ── A1 (UCN_SC_E002): guests buying a ride are sent to REGISTER,
+             *    not login. Commuters fall through to the normal payment flow. ── */
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('form[data-guest-register]').forEach(function(form) {
+                    var target = form.getAttribute('data-guest-register');
+                    if (!target) return;
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        // Preserve the chosen points so they survive registration
+                        try {
+                            var pickup = form.querySelector('[name="pickup"]');
+                            var dropoff = form.querySelector('[name="dropoff"]');
+                            if (pickup && pickup.value) {
+                                sessionStorage.setItem('pendingPickup', pickup.value);
+                            }
+                            if (dropoff && dropoff.value) {
+                                sessionStorage.setItem('pendingDropoff', dropoff.value);
+                            }
+                        } catch (err) {}
+                        window.location.href = target;
+                    });
+                });
+            });
             window.initialDrivers = @json($obfuscatedMarkers ?? []);
 
             window.updatePrivacyZones = function() {
@@ -3572,63 +4211,129 @@ window.echoPopups = {};
             };
 
             window.createPrivacyPopup = function(d) {
-    var etaSection = '';
-    if (window.userRole !== 'driver') {
-        var pr = d.privacy_radius || window.PRIVACY_RADIUS || 200;
-        var etaText = 'Locating you…';
-        var etaDist = 'Tap 📍 to see ETA';
-        var etaColor = '#555';
-        var etaLabel = 'ETA';
+                // Vehicle status: derived when the payload carries it, otherwise 'Active'
+                var statusText = 'Active';
+                var statusColor = '#34d399';
+                if (d.driver_status === 'active') {
+                    statusText = 'Available';
+                } else if (d.driver_status === 'inactive' || d.driver_status === 'unavailable') {
+                    statusText = 'Unavailable';
+                    statusColor = '#ef4444';
+                } else if (d.marker_status && d.marker_status !== 'active') {
+                    statusText = 'Inactive';
+                    statusColor = 'var(--pp-muted)';
+                }
+                if (d.last_update) {
+                    var mins = (Date.now() - new Date(d.last_update).getTime()) / 60000;
+                    if (mins > 5) {
+                        statusText = 'Signal lost';
+                        statusColor = 'var(--pp-muted)';
+                    }
+                }
 
-        if (window.ETA && window.ETA.userLat !== null && d.lat && d.lng) {
-            var e = window.ETA.calc(d.lat, d.lng, pr);
-            if (e) {
-                var f = window.ETA.fmt(e);
-                etaText = f.text;
-                etaDist = window.ETA.fmtDist(e.distKm);
-                etaColor = window.ETA.colorFor(f.cls);
-                etaLabel = e.here ? 'NOW' : 'ETA';
-            }
-        }
+                var esc = function(v) {
+                    if (v === undefined || v === null) return '';
+                    return String(v)
+                        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;');
+                };
 
-        etaSection =
-            '<div class="eta-popup-section" data-marker-id="' + d.id + '">' +
-            '<div style="height:1px;background:#1e1e1e;margin:10px 0;"></div>' +
-            '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.10);">' +
-            '<div style="display:flex;align-items:center;gap:8px;">' +
-            '<div style="width:28px;height:28px;border-radius:8px;background:rgba(16,185,129,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
-            '<i class="fa-solid fa-route" style="font-size:10px;color:#34d399;opacity:0.7;"></i></div>' +
-            '<div>' +
-            '<div style="font-size:11px;font-weight:700;color:' + etaColor + ';line-height:1.3;">' + etaText + '</div>' +
-            '<div style="font-size:8px;color:#555;margin-top:2px;">' + etaDist + '</div>' +
-            '</div></div>' +
-            '<div style="font-size:7px;color:' + etaColor + ';text-transform:uppercase;letter-spacing:0.12em;font-weight:600;line-height:1;">' + etaLabel + '</div>' +
-            '</div>' +
-            '<div style="margin-top:6px;text-align:center;">' +
-            '<span style="font-size:7px;color:#2a2a2a;">≈ ' + pr + 'm accuracy zone</span>' +
-            '</div></div>';
-    }
+                var pr = d.privacy_radius || window.PRIVACY_RADIUS || 200;
 
-    return '<div style="font-family:Inter,sans-serif;padding:6px 4px;min-width:190px;">' +
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">' +
-        '<div style="width:32px;height:32px;border-radius:10px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;">' +
-        '<i class="fa-solid fa-bus" style="color:#60a5fa;font-size:12px;"></i>' +
-        '</div>' +
-        '<div>' +
-        '<div style="font-size:12px;font-weight:700;color:#fff;">' + (d.plate_number || d.name || 'Vehicle') + '</div>' +
-        '<div style="font-size:9px;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;">' + (d.route || 'Route') + '</div>' +
-        '</div></div>' +
-        '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.1);margin-bottom:8px;">' +
-        '<i class="fa-solid fa-shield-halved" style="color:rgba(59,130,246,0.5);font-size:9px;"></i>' +
-        '<span style="font-size:9px;color:rgba(59,130,246,0.7);font-weight:600;">Approximate location · ~' + pr + 'm radius</span>' +
-        '</div>' +
-        '<div style="display:flex;align-items:center;gap:6px;">' +
-        '<div style="width:6px;height:6px;border-radius:50%;background:#34d399;"></div>' +
-        '<span style="font-size:9px;color:#34d399;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;">Active</span>' +
-        '</div>' +
-        etaSection +
-        '</div>';
-};
+                var etaSection = '';
+                if (window.userRole !== 'driver') {
+                    var etaText = 'Locating you\u2026';
+                    var etaDist = 'Tap \ud83d\udccd to see ETA';
+                    var etaColor = 'var(--pp-muted)';
+                    var etaLabel = 'ETA';
+
+                    if (window.ETA && window.ETA.userLat !== null && d.lat && d.lng) {
+                        var e = window.ETA.calc(d.lat, d.lng, pr);
+                        if (e) {
+                            var f = window.ETA.fmt(e);
+                            etaText = f.text;
+                            etaDist = window.ETA.fmtDist(e.distKm);
+                            etaColor = window.ETA.colorFor(f.cls);
+                            etaLabel = e.here ? 'NOW' : 'ETA';
+                        }
+                    }
+
+                    etaSection =
+                        '<div class="pp-divider"></div>' +
+                        '<div class="pp-eta">' +
+                        '<div class="pp-eta-icon"><i class="fa-solid fa-route" style="font-size:10px;color:' + etaColor + ';opacity:0.85;"></i></div>' +
+                        '<div class="pp-eta-text">' +
+                        '<div class="pp-eta-main" style="color:' + etaColor + ';">' + esc(etaText) + '</div>' +
+                        '<div class="pp-eta-sub">' + esc(etaDist) + '</div>' +
+                        '</div>' +
+                        '<div class="pp-eta-label" style="color:' + etaColor + ';">' + etaLabel + '</div>' +
+                        '</div>' +
+                        '<div class="pp-accuracy">\u2248 ' + pr + 'm accuracy zone</div>';
+                }
+
+                return '<div class="pp">' +
+                    '<div class="pp-head">' +
+                    '<div class="pp-head-icon"><i class="fa-solid fa-bus" style="color:#60a5fa;font-size:12px;"></i></div>' +
+                    '<div class="pp-head-text">' +
+                    '<p class="pp-title">' + esc(d.plate_number || d.name || 'Vehicle') + '</p>' +
+                    '<p class="pp-sub">' + esc(d.route || 'Route') + '</p>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="pp-note">' +
+                    '<i class="fa-solid fa-shield-halved" style="color:rgba(59,130,246,0.55);font-size:9px;flex:0 0 auto;"></i>' +
+                    '<span style="overflow:hidden;text-overflow:ellipsis;">Approximate location \u00b7 ~' + pr + 'm radius</span>' +
+                    '</div>' +
+                    '<div class="pp-status">' +
+                    '<span class="dot" style="background:' + statusColor + ';"></span>' +
+                    '<span style="color:' + statusColor + ';">' + esc(statusText) + '</span>' +
+                    '<span class="lbl">Vehicle status</span>' +
+                    '</div>' +
+                    etaSection +
+                    '</div>';
+            };
+
+            /* Driver-facing popup: exact plate / type / route + driver availability */
+            window.createDriverPopup = function(d) {
+                var esc = function(v) {
+                    if (v === undefined || v === null) return '';
+                    return String(v)
+                        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;');
+                };
+
+                var isActive = d.driver_status === 'active';
+                var statusBg = isActive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+                var statusBorder = isActive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
+                var statusColor = isActive ? '#34d399' : '#ef4444';
+                var statusLabel = isActive ? 'Available' : 'Unavailable';
+                var statusIcon = isActive ? 'fa-circle-check' : 'fa-circle-xmark';
+
+                var rows = [
+                    ['Plate', d.plate_number || 'N/A', true],
+                    ['Type', d.vehicle_type || 'N/A', false],
+                    ['Route', d.route || 'N/A', false]
+                ].map(function(r) {
+                    return '<div class="pp-row"><span class="k">' + r[0] +
+                        '</span><span class="v' + (r[2] ? ' mono' : '') + '">' + esc(r[1]) + '</span></div>';
+                }).join('');
+
+                return '<div class="pp">' +
+                    '<div class="pp-head">' +
+                    '<div class="pp-head-icon"><i class="fa-solid fa-bus" style="color:#60a5fa;font-size:12px;"></i></div>' +
+                    '<div class="pp-head-text">' +
+                    '<p class="pp-title">' + esc(d.name || 'Driver') + '</p>' +
+                    '<p class="pp-sub">Driver</p>' +
+                    '</div>' +
+                    '</div>' +
+                    '<div class="pp-divider"></div>' +
+                    '<div class="pp-driver-status" style="background:' + statusBg + ';border:1px solid ' + statusBorder + ';">' +
+                    '<i class="fa-solid ' + statusIcon + '" style="font-size:9px;color:' + statusColor + ';"></i>' +
+                    '<span style="color:' + statusColor + ';">' + statusLabel + '</span>' +
+                    '<span class="lbl">Driver status</span>' +
+                    '</div>' +
+                    rows +
+                    '</div>';
+            };
         </script>
 
         <script type="module">
@@ -3654,9 +4359,16 @@ window.echoPopups = {};
                 [123.91768276426876, 10.332535160307074]
             ];
 
+            // Basemap follows the theme that was applied in <head>
+            const MAP_STYLE_FALLBACK = 'https://tiles.openfreemap.org/styles/bright';
+            const prefersDark = document.documentElement.classList.contains('dark');
+            window.currentMapStyleUrl = prefersDark ?
+                'https://tiles.openfreemap.org/styles/liberty' :
+                'https://tiles.openfreemap.org/styles/bright';
+
             const map = new maplibregl.Map({
                 container: 'map',
-                style: 'https://tiles.openfreemap.org/styles/bright',
+                style: window.currentMapStyleUrl,
                 center: [123.79, 10.24],
                 zoom: 13,
                 rollEnabled: true,
@@ -3664,6 +4376,12 @@ window.echoPopups = {};
             });
 
             window.map = map;
+
+            // A permission fix may already be waiting (resolved before this
+            // module ran) - apply it now.
+            if (typeof window.applyInitialPosition === 'function') {
+                window.applyInitialPosition();
+            }
 
             // ═══════════════ NAV CONTROLS ═══════════════
             map.addControl(new maplibregl.NavigationControl({
@@ -3679,6 +4397,74 @@ window.echoPopups = {};
                 showUserHeading: true
             });
             map.addControl(geolocateCtrl, 'bottom-right');
+
+            // Expose the control so the ETA engine can reuse its last fix
+            window.geolocateCtrlRef = geolocateCtrl;
+
+            /* ── Auto-enable the locate control once permission is granted ──
+               GeolocateControl only shows its active (blue) state after the
+               user taps it, so a previously-granted permission left the button
+               looking "off" even though we already had a fix. `trigger()` is a
+               toggle (OFF <-> ACTIVE_LOCK), so it must only ever be called
+               while the state is OFF - otherwise we would switch tracking
+               back off again. */
+            window.locationTrackingState = function() {
+                return geolocateCtrl && geolocateCtrl._watchState ? geolocateCtrl._watchState : 'NONE';
+            };
+
+            window.enableLocationTracking = function() {
+                try {
+                    if (!geolocateCtrl || !geolocateCtrl._setup) return false; // not on the map yet
+                    if (window.locationTrackingState() !== 'OFF') return true; // already tracking/waiting
+                    geolocateCtrl.trigger(); // OFF -> WAITING_ACTIVE -> ACTIVE_LOCK
+                    return true;
+                } catch (e) {
+                    console.warn('[Geo] Could not enable location tracking:', e);
+                    return false;
+                }
+            };
+
+            /* UCN_SC_E003 step 3 - centre the map on the Guest's location, and
+               switch the locate control on the moment permission is granted
+               (so the 📍 button is lit up, not just after a manual tap).
+               Safe to call repeatedly: it only acts once. */
+            window.applyInitialPosition = function() {
+                try {
+                    if (!window.map || !window.map.flyTo) return false;
+                    if (window.userRole === 'driver') return false;
+                    if (!window.ETA || window.ETA.userLat === null) return false;
+                    if (window.ETA._centeredOnce) return true;
+
+                    window.ETA._centeredOnce = true;
+
+                    // Prefer the control: activating it lights up the button,
+                    // draws the blue user dot + accuracy circle, and centres
+                    // the map itself.
+                    if (window.enableLocationTracking()) return true;
+
+                    window.map.flyTo({
+                        center: [window.ETA.userLng, window.ETA.userLat],
+                        zoom: 15,
+                        duration: 1500
+                    });
+                    return true;
+                } catch (e) {
+                    console.warn('[Geo] Could not apply the initial position:', e);
+                    return false;
+                }
+            };
+
+            window.disableLocationTracking = function() {
+                try {
+                    const state = window.locationTrackingState();
+                    if (state === 'OFF' || state === 'NONE') return false;
+                    // WAITING_ACTIVE/ACTIVE_LOCK/BACKGROUND(_ERROR) all toggle off
+                    geolocateCtrl.trigger();
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            };
 
             // ── Feed GeolocateControl position into ETA ──
             geolocateCtrl.on('geolocate', function(e) {
@@ -3697,9 +4483,73 @@ window.echoPopups = {};
                 }
             });
             geolocateCtrl.on('error', function(e) {
-                if (e.error.code !== 1) { // ignore PERMISSION_DENIED (user chose not to share)
-                    console.log('[ETA] Geolocate error:', e.error.message);
+                // E2 - PERMISSION_DENIED: the map cannot centre or compute ETAs.
+                if (e.error.code === 1) {
+                    if (window.showMapAlert) window.showMapAlert('location-denied');
+                    return;
                 }
+                console.log('[ETA] Geolocate error:', e.error.message);
+                if (window.showMapAlert) window.showMapAlert('location-denied');
+            });
+
+            /* ── E3 - external mapping service (tiles / style) failure ── */
+            /* ── E3: detect a genuinely broken basemap, not noisy tile 404s ──
+               MapLibre fires `error` for a single missing tile, an aborted
+               request or a sprite miss, so counting errors and showing
+               "Map service unavailable" produced false alarms. We only alert
+               when the STYLE ITSELF never finishes loading (watchdog), or when
+               the style fetch fails during a theme swap. */
+            // Watchdog: if the style still isn't loaded after this long, it is
+            // genuinely unavailable (bad network, blocked CDN, wrong URL).
+            var styleWatchdog = setTimeout(function() {
+                if (window.map && window.map.isStyleLoaded && !window.map.isStyleLoaded()) {
+                    if (window.showMapAlert) window.showMapAlert('map-service');
+                }
+            }, 12000);
+
+            map.on('load', function() {
+                clearTimeout(styleWatchdog);
+                if (window.clearMapAlert) window.clearMapAlert('map-service');
+                // Marker overlays depend on a loaded map; re-evaluate them.
+                if (window.applyInitialPosition) window.applyInitialPosition();
+                if (window.ETA) window.ETA.refresh();
+            });
+
+            map.on('error', function(e) {
+                var err = (e && e.error) || {};
+
+                // Ignore benign, expected noise.
+                if (err.name === 'AbortError') return;
+                if (err.status === 404 || err.status === 204) return;
+
+                // Only a failure while the style is still pending means the
+                // basemap service itself is unreachable.
+                var stylePending = !map.isStyleLoaded();
+
+                // Theme swap failed -> fall back once, then stop trying.
+                if (window.previousMapStyleUrl && stylePending) {
+                    var previous = window.previousMapStyleUrl;
+                    window.previousMapStyleUrl = null;
+                    window.currentMapStyleUrl = previous;
+                    console.warn('[Theme] Basemap style failed to load, reverting to', previous);
+                    map.setStyle(previous);
+                    return;
+                }
+
+                if (!stylePending) return; // per-tile noise on a live map
+
+                clearTimeout(styleWatchdog);
+                styleWatchdog = setTimeout(function() {
+                    if (!map.isStyleLoaded()) {
+                        if (window.showMapAlert) window.showMapAlert('map-service');
+                    }
+                }, 6000);
+            });
+
+            // E3 - style could not be loaded at all
+            map.on('styledata', function() {
+                if (window.clearMapAlert) window.clearMapAlert('map-service');
+                if (typeof window.updatePujEmptyState === 'function') window.updatePujEmptyState();
             });
 
             // ═══════════════ MAP STATE ═══════════════
@@ -3859,17 +4709,19 @@ window.echoPopups = {};
             };
 
             // ═══════════════ MAP LAYERS ═══════════════
-            map.on('load', function() {
+            // Named + idempotent so it can be re-run after a style swap
+            // (setStyle() destroys every source/layer with the old style).
+            window.initMapLayers = function() {
 
                 // ── Privacy zone source + layers ──
-                map.addSource('driver-privacy-zones', {
+                if (!map.getSource('driver-privacy-zones')) map.addSource('driver-privacy-zones', {
                     type: 'geojson',
                     data: {
                         type: 'FeatureCollection',
                         features: []
                     }
                 });
-                map.addLayer({
+                if (!map.getLayer('driver-privacy-glow')) map.addLayer({
                     id: 'driver-privacy-glow',
                     type: 'circle',
                     source: 'driver-privacy-zones',
@@ -3909,14 +4761,14 @@ window.echoPopups = {};
                     }
                 });
 
-                map.addSource('route', {
+                if (!map.getSource('route')) map.addSource('route', {
                     type: 'geojson',
                     data: {
                         type: 'FeatureCollection',
                         features: []
                     }
                 });
-                map.addLayer({
+                if (!map.getLayer('route-line')) map.addLayer({
                     id: 'route-line',
                     type: 'line',
                     source: 'route',
@@ -3930,7 +4782,7 @@ window.echoPopups = {};
                         'line-opacity': 0.85
                     }
                 });
-                map.addLayer({
+                if (!map.getLayer('route-line-glow')) map.addLayer({
                     id: 'route-line-glow',
                     type: 'line',
                     source: 'route',
@@ -3946,7 +4798,7 @@ window.echoPopups = {};
                     }
                 });
 
-                map.addSource('pickup-point', {
+                if (!map.getSource('pickup-point')) map.addSource('pickup-point', {
                     type: 'geojson',
                     data: {
                         type: 'FeatureCollection',
@@ -3965,7 +4817,7 @@ window.echoPopups = {};
                     }
                 });
 
-                map.addSource('destination-point', {
+                if (!map.getSource('destination-point')) map.addSource('destination-point', {
                     type: 'geojson',
                     data: {
                         type: 'FeatureCollection',
@@ -3984,7 +4836,7 @@ window.echoPopups = {};
                     }
                 });
 
-                map.addSource('vehicles', {
+                if (!map.getSource('vehicles')) map.addSource('vehicles', {
                     type: 'geojson',
                     data: {
                         type: 'FeatureCollection',
@@ -4002,6 +4854,17 @@ window.echoPopups = {};
                         'circle-stroke-color': '#ffffff'
                     }
                 });
+                        };
+
+            map.on('load', window.initMapLayers);
+            map.on('style.load', function() {
+                window.previousMapStyleUrl = null;
+                window.initMapLayers();
+                if (window.updatePrivacyZones) window.updatePrivacyZones();
+                if (window.updatePujEmptyState) window.updatePujEmptyState();
+                // ETA badges + the Nearest-PUJ indicator depend on marker DOM,
+                // so re-evaluate them after every style (re)load.
+                if (window.ETA) window.ETA.refresh();
             });
 
             // ═══════════════ MAP CLICK → SET LOCATION ═══════════════
@@ -4116,8 +4979,19 @@ window.echoPopups = {};
                     userLng + ',' + userLat + ';' + vehicleLng + ',' + vehicleLat +
                     '?overview=full&geometries=geojson';
 
+                // Guard against a stale/failed calculation
+                document.getElementById('distance').value = '';
+                document.getElementById('price-regular').value = '';
+                document.getElementById('price-discount').value = '';
+
                 try {
+                    if (!navigator.onLine) {
+                        if (window.showMapAlert) window.showMapAlert('offline');
+                        return;
+                    }
+
                     const res = await fetch(url);
+                    if (!res.ok) throw new Error('Routing HTTP ' + res.status);
                     const data = await res.json();
 
                     if (data.code === 'Ok' && data.routes.length > 0) {
@@ -4153,9 +5027,18 @@ window.echoPopups = {};
                                 }
                             );
                         }
+
+                        // Routing succeeded - drop any stale routing warning
+                        if (window.clearMapAlert) window.clearMapAlert('routing-service');
+                    } else if (data.code && data.code !== 'Ok') {
+                        // OSRM returned NoRoute / InvalidInput / etc.
+                        console.warn('[ETA] Routing failed:', data.code);
+                        if (window.showMapAlert) window.showMapAlert('routing-service');
                     }
                 } catch (e) {
+                    // E3 (UCN_SC_E004) - Routing API timeout or failure
                     console.error('Route error:', e);
+                    if (window.showMapAlert) window.showMapAlert('routing-service');
                 }
             };
 
@@ -4252,6 +5135,11 @@ window.echoPopups = {};
                 if (!dropdown) return;
 
                 if (results.length === 0) {
+                    // E2 (UCN_SC_E004) - location/place not found
+                    if (window.showMapAlert) window.showMapAlert('location-not-found');
+                    setTimeout(function() {
+                        if (window.clearMapAlert) window.clearMapAlert('location-not-found');
+                    }, 6000);
                     dropdown.innerHTML = '<div class="search-no-results">No results found</div>';
                     dropdown.classList.add('active');
                     return;
@@ -4436,23 +5324,63 @@ window.echoPopups = {};
                 return el;
             }
 
-            function renderLiveVehicles(vehicles) {
-                if (!Array.isArray(vehicles)) return;
+            function renderLiveVehicles(vehicles, opts) {
+                // `partial: true` = a single-vehicle update (websocket push).
+                // Anything else = authoritative snapshot (REST poll).
+                const partial = !!(opts && opts.partial);
+                if (!partial && !Array.isArray(vehicles)) return;
+                if (partial && !Array.isArray(vehicles)) return;
 
-                // Drop vehicles that are no longer reporting
-                const live = {};
-                vehicles.forEach(v => {
+                const cache = window.liveVehicleCache = window.liveVehicleCache || {};
+
+                // Normalise one payload entry; null when it is unusable.
+                const normalize = function(v) {
                     const lat = parseFloat(v.lat ?? v.latitude);
                     const lng = parseFloat(v.lng ?? v.longitude);
-                    if (v.id === undefined || v.id === null || !isFinite(lat) || !isFinite(lng)) return;
-                    live[v.id] = {
-                        id: v.id,
-                        lat: lat,
-                        lng: lng,
-                        plate_number: v.plate_number || ('Vehicle ' + v.id),
-                        route: v.route_name || v.route || 'Live',
-                        privacy_radius: v.privacy_radius || window.PRIVACY_RADIUS
-                    };
+                    if (v.id === undefined || v.id === null) return null;
+                    if (!isFinite(lat) || !isFinite(lng)) return null;
+                    if (lat === 0 && lng === 0) return null; // null island = bad GPS fix
+                    const out = { id: v.id, lat: lat, lng: lng };
+                    // Only overwrite fields the source actually provided, so a
+                    // websocket push never downgrades plate/route to a placeholder.
+                    if (v.plate_number) out.plate_number = v.plate_number;
+                    if (v.route_name || v.route) out.route = v.route_name || v.route;
+                    if (v.privacy_radius) out.privacy_radius = v.privacy_radius;
+                    if (v.last_update) out.last_update = v.last_update;
+                    return out;
+                };
+
+                if (partial) {
+                    // Merge: keep the cached plate/route, refresh position + freshness.
+                    vehicles.forEach(v => {
+                        const n = normalize(v);
+                        if (!n) return;
+                        cache[n.id] = Object.assign({}, cache[n.id] || {}, n);
+                    });
+                } else {
+                    // Authoritative: vehicles absent from the snapshot have stopped
+                    // reporting, so they leave the cache (and therefore the map).
+                    const seen = {};
+                    vehicles.forEach(v => {
+                        const n = normalize(v);
+                        if (!n) return;
+                        seen[n.id] = Object.assign({}, cache[n.id] || {}, n);
+                    });
+                    Object.keys(cache).forEach(id => {
+                        if (!(id in seen)) delete cache[id];
+                    });
+                    Object.assign(cache, seen);
+                }
+
+                // Fill in display defaults AFTER merging
+                const live = {};
+                Object.keys(cache).forEach(id => {
+                    const c = cache[id];
+                    live[id] = Object.assign({}, c, {
+                        plate_number: c.plate_number || ('Vehicle ' + id),
+                        route: c.route || 'Live',
+                        privacy_radius: c.privacy_radius || window.PRIVACY_RADIUS
+                    });
                 });
 
                 Object.keys(window.echoMarkers || {}).forEach(id => {
@@ -4477,9 +5405,11 @@ window.echoPopups = {};
                     } else {
                         const el = createVehicleElement();
                         const popup = new maplibregl.Popup({
-                                offset: 20,
+                                className: 'puj-popup',
+                                offset: 18,
                                 closeButton: false,
-                                maxWidth: '220px'
+                                focusAfterOpen: false,
+                                maxWidth: '260px'
                             })
                             .setHTML(window.createPrivacyPopup(v));
 
@@ -4521,15 +5451,17 @@ window.echoPopups = {};
                         if (window.userRole === 'driver') return;
                         if (!e.lat || !e.lng) return;
                         if (window.noteLiveSignal) window.noteLiveSignal();
+                        if (window.markPujSourceLoaded) window.markPujSourceLoaded('live');
 
+                        // Partial (single-vehicle) update - merges into the cache so
+                        // the real plate/route from the last poll are preserved.
                         renderLiveVehicles([{
                             id: e.vehicleId,
                             lat: e.lat,
                             lng: e.lng,
-                            plate_number: 'Vehicle ' + e.vehicleId,
-                            route_name: 'Live',
-                            privacy_radius: e.privacy_radius || window.PRIVACY_RADIUS
-                        }]);
+                            privacy_radius: e.privacy_radius || window.PRIVACY_RADIUS,
+                            last_update: e.timestamp || new Date().toISOString()
+                        }], { partial: true });
                     });
             }
             // ═══════════════ DEV MARKERS REAL-TIME SYNC ═══════════════
@@ -4573,9 +5505,14 @@ window.echoPopups = {};
                             renderLiveVehicles(data.vehicles);
                             if (data.vehicles.length) window.noteLiveSignal();
                         }
+                        if (window.markPujSourceLoaded) window.markPujSourceLoaded('live');
                     }
                 } catch (e) {
                     console.log('Vehicle fetch skipped:', e.message);
+                    // E4 - device offline: PUJ positions cannot be refreshed
+                    if (!navigator.onLine && window.showMapAlert) {
+                        window.showMapAlert('offline');
+                    }
                 } finally {
                     vehiclePollBusy = false;
                 }
@@ -4888,63 +5825,22 @@ window.echoPopups = {};
 
                     var popup;
                     if (isDriver) {
-                        // ── Driver: keep original detailed popup ──
-                        var isDriverActive = d.driver_status === 'active';
-                        var statusBg = isDriverActive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
-                        var statusBorder = isDriverActive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
-                        var statusColor = isDriverActive ? '#34d399' : '#ef4444';
-                        var statusLabel = isDriverActive ? 'Available' : 'Unavailable';
-                        var statusIcon = isDriverActive ? 'fa-circle-check' : 'fa-circle-xmark';
-
+                        // ── Driver: detailed popup ──
                         popup = new maplibregl.Popup({
-                            offset: 20,
+                            className: 'puj-popup',
+                            offset: 18,
                             closeButton: false,
-                            maxWidth: '220px'
-                        }).setHTML(
-                            '<div style="background:#111;border:1px solid #222;border-radius:16px;padding:16px;font-family:Inter,sans-serif;">' +
-                            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">' +
-                            '<div style="width:36px;height:36px;border-radius:12px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
-                            '<i class="fa-solid fa-bus" style="font-size:13px;color:#60a5fa;"></i>' +
-                            '</div>' +
-                            '<div style="min-width:0;">' +
-                            '<p style="font-size:12px;font-weight:700;color:#eee;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
-                            d.name + '</p>' +
-                            '<p style="font-size:9px;color:#555;margin:2px 0 0;">Driver</p>' +
-                            '</div>' +
-                            '</div>' +
-                            '<div style="height:1px;background:#1e1e1e;margin:0 0 12px;"></div>' +
-                            '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:' +
-                            statusBg + ';border:1px solid ' + statusBorder + ';margin-bottom:8px;">' +
-                            '<div style="display:flex;align-items:center;gap:6px;">' +
-                            '<i class="fa-solid ' + statusIcon + '" style="font-size:10px;color:' + statusColor +
-                            ';"></i>' +
-                            '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:' +
-                            statusColor + ';">' + statusLabel + '</span>' +
-                            '</div>' +
-                            '<span style="font-size:7px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;">Driver Status</span>' +
-                            '</div>' +
-                            '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
-                            '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Plate</span>' +
-                            '<span style="font-size:10px;color:#888;font-weight:600;font-family:monospace;">' + d
-                            .plate_number + '</span>' +
-                            '</div>' +
-                            '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;margin-bottom:4px;">' +
-                            '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Type</span>' +
-                            '<span style="font-size:10px;color:#888;font-weight:600;">' + d.vehicle_type +
-                            '</span>' +
-                            '</div>' +
-                            '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 2px;">' +
-                            '<span style="font-size:8px;color:#444;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Route</span>' +
-                            '<span style="font-size:10px;color:#888;font-weight:600;">' + d.route + '</span>' +
-                            '</div>' +
-                            '</div>'
-                        );
+                            focusAfterOpen: false,
+                            maxWidth: '260px'
+                        }).setHTML(window.createDriverPopup(d));
                     } else {
                         // ── Commuter/Guest: privacy popup ──
                         popup = new maplibregl.Popup({
-                                offset: 20,
+                                className: 'puj-popup',
+                                offset: 18,
                                 closeButton: false,
-                                maxWidth: '220px'
+                                focusAfterOpen: false,
+                                maxWidth: '260px'
                             })
                             .setHTML(window.createPrivacyPopup(d));
 window.dummyMapPopups[d.id] = { popup: popup, data: d };
@@ -4972,6 +5868,7 @@ window.dummyMapPopups[d.id] = { popup: popup, data: d };
                 if (!isDriver) {
                     window.updatePrivacyZones();
                 }
+                if (window.updatePujEmptyState) window.updatePujEmptyState();
             }
 
             function loadDummyMarkers() {
@@ -4981,6 +5878,10 @@ window.dummyMapPopups[d.id] = { popup: popup, data: d };
                     return;
                 }
                 console.log('[DEV] Map ready, fetching markers...');
+                if (!navigator.onLine) {
+                    if (window.showMapAlert) window.showMapAlert('offline');
+                    return;
+                }
                 fetch('/api/markers?t=' + Date.now())
                     .then(function(r) {
                         console.log('[DEV] Fetch response status:', r.status);
@@ -4988,15 +5889,32 @@ window.dummyMapPopups[d.id] = { popup: popup, data: d };
                     })
                     .then(function(markers) {
                         console.log('[DEV] Parsed markers:', JSON.stringify(markers, null, 2));
+                        if (window.clearMapAlert) window.clearMapAlert('offline');
                         renderDummyMarkers(markers);
+                        if (window.markPujSourceLoaded) window.markPujSourceLoaded('dummy');
                     })
                     .catch(function(err) {
                         console.log('[DEV] Fetch error:', err);
+                        if (!navigator.onLine) {
+                            if (window.showMapAlert) window.showMapAlert('offline');
+                        } else if (window.showMapAlert) {
+                            window.showMapAlert('map-service');
+                        }
                     });
             }
+            window.loadDummyMarkers = loadDummyMarkers;
 
             loadDummyMarkers();
         </script>
+
+        <!-- Map Status Banner: E1 no PUJ / E2 location denied / E3 map service down / E4 offline -->
+        <div id="map-alert" class="hidden" data-type="info" role="status" aria-live="polite">
+            <i class="fa-solid fa-circle-info ma-icon"></i>
+            <div>
+                <p class="ma-title" id="map-alert-title">Notice</p>
+                <p class="ma-msg" id="map-alert-msg"></p>
+            </div>
+        </div>
 
         <!-- Nearest Vehicle ETA Indicator -->
         <div id="nearest-vehicle-indicator" class="hidden">
@@ -5011,32 +5929,83 @@ window.dummyMapPopups[d.id] = { popup: popup, data: d };
     </div>
 
     <script>
-        function toggleMapTheme() {
-            const isDark = document.documentElement.classList.toggle('dark');
-            const theme = isDark ? 'dark' : 'light';
+        /* ══════════════════════════════════════════════════════════
+         * THEME
+         * - `dark` class on <html> drives every CSS token (including the
+         *   marker popup), so the class flip alone re-themes the page.
+         * - The basemap style is swapped to match (see updateMapStyle).
+         * - Preference is persisted in localStorage for everyone, and in the
+         *   database for signed-in users. Guests keep their choice on reload.
+         * ══════════════════════════════════════════════════════════ */
+        const MAP_STYLES = {
+            light: 'https://tiles.openfreemap.org/styles/bright',
+            dark: 'https://tiles.openfreemap.org/styles/liberty'
+        };
+        const THEME_URL = '{{ route('settings.update.theme') }}';
+        const IS_AUTHENTICATED = {{ Auth::check() ? 'true' : 'false' }};
+
+        window.currentMapTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+
+        window.updateMapStyle = function(isDark) {
+            if (!window.map) return;
+            const next = isDark ? MAP_STYLES.dark : MAP_STYLES.light;
+            if (!next || window.currentMapStyleUrl === next) return;
+
+            window.previousMapStyleUrl = window.currentMapStyleUrl;
+            window.currentMapStyleUrl = next;
+            try {
+                // Sources/layers are restored by the map's style.load handler.
+                window.map.setStyle(next);
+            } catch (e) {
+                console.warn('[Theme] Could not switch basemap style:', e);
+                window.map.setStyle(window.previousMapStyleUrl);
+                window.previousMapStyleUrl = null;
+                window.currentMapStyleUrl = window.previousMapStyleUrl;
+            }
+        };
+
+        function applyTheme(theme) {
+            const isDark = theme === 'dark';
+            document.documentElement.classList.toggle('dark', isDark);
             localStorage.setItem('color-theme', theme);
+            window.currentMapTheme = theme;
+            window.updateMapStyle(isDark);
+            // The popup / banner / nearest-indicator colours come from CSS
+            // variables (so the class flip alone re-themes them), but the
+            // popup markup is cached, so re-render what is on screen.
+            if (window.ETA) window.ETA.refresh();
+            if (window.renderMapAlert) window.renderMapAlert();
+        }
 
-            // Update map style if needed
-            if (typeof updateMapStyle === 'function') updateMapStyle(isDark);
+        function toggleMapTheme() {
+            const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+            applyTheme(next);
 
-            // Persist to database
-            fetch('{{ route('settings.update.theme') }}', {
+            // Signed-in users persist to their profile; guests keep it locally.
+            if (!IS_AUTHENTICATED) return;
+
+            fetch(THEME_URL, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
                 },
                 body: JSON.stringify({
-                    theme
+                    theme: next
                 })
             }).catch(() => {
-                // Revert on failure
-                document.documentElement.classList.toggle('dark');
-                localStorage.setItem('color-theme', isDark ? 'light' : 'dark');
+                // Keep the local preference rather than yanking the UI back.
+                console.warn('[Theme] Could not save preference to the profile.');
             });
         }
 
-
+        window.addEventListener('load', function() {
+            // Keep the basemap in step if the theme changed before load finished.
+            const wanted = MAP_STYLES[window.currentMapTheme];
+            if (wanted && window.currentMapStyleUrl !== wanted) window.updateMapStyle(
+                window.currentMapTheme === 'dark'
+            );
+        });
     </script>
 
 </body>
