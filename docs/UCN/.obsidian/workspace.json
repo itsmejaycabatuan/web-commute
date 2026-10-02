@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "UCN_SC_E006_Pay_Fare.md",
+                "file": "UCN_SC_E005_Topup_Balance.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "UCN_SC_E006_Pay_Fare"
+              "title": "UCN_SC_E005_Topup_Balance"
             }
           }
         ]
@@ -188,6 +188,11 @@
   },
   "active": "21772c1d8fb61d11",
   "lastOpenFiles": [
+    "UCN_SC_E010_Clock_Out.md",
+    "UCN_SC_E009_Clock_In.md",
+    "UCN_SC_E008_Change_Password.md",
+    "UCN_SC_E007_View_Payment_History.md",
+    "UCN_SC_E006_Pay_Fare.md",
     "UCN_SC_E005_Topup_Balance.md",
     "UCN_SC_E004_Plan_Trip.md",
     "UCN_SC_E003_Track_PUJ.md",
