@@ -1,15 +1,15 @@
 # UCN_SC_E005 — Topup Balance
 
-| Field | Value |
-|---|---|
-| **Use_Case_ID** | UCN SC E005 |
-| **Use Case Name** | Topup Balance |
-| **Primary Actor** | Commuter |
-| **Secondary Actor** | System / Admin |
-| **Goal** | Allow commuters to have digital currency for easier commuting payments. |
-| **Trigger** | Commuter presses the "+" button on the payment page and selects an amount and payment method. |
-| **Preconditions** | 1. Commuter is successfully authenticated and logged in.<br>2. The digital wallet exists for the commuter (created at registration).<br>3. The System is operational. |
-| **Supporting Actors** | Wallet, Top-up history ledger |
+| Field                 | Value                                                                                                                                                                 |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Use_Case_ID**       | UCN SC E005                                                                                                                                                           |
+| **Use Case Name**     | Topup Balance                                                                                                                                                         |
+| **Primary Actor**     | Commuter                                                                                                                                                              |
+| **Secondary Actor**   | System / Admin                                                                                                                                                        |
+| **Goal**              | Allow commuters to have digital currency for easier commuting payments.                                                                                               |
+| **Trigger**           | Commuter presses the "+" button on the payment page and selects an amount and payment method.                                                                         |
+| **Preconditions**     | 1. Commuter is successfully authenticated and logged in.<br>2. The digital wallet exists for the commuter (created at registration).<br>3. The System is operational. |
+| **Supporting Actors** | Wallet, Top-up history ledger                                                                                                                                         |
 
 > **Scope note:** the current implementation **does not integrate an external payment gateway**. The top-up is credited directly by the System after the commuter confirms the method. Steps relating to gateway redirects, callback signature validation and gateway cancellation are therefore **not implemented** — see *Known Gaps*.
 
@@ -17,14 +17,14 @@
 
 ## MAIN FLOW
 
-| # | Actor's Action | System Response |
-|---|---|---|
-| 1 | Commuter clicks the "+" button. | System displays the Topup page with the current wallet balance, a custom-amount input, and predefined amount options. |
-| 2 | Commuter selects a predefined amount (₱50 / ₱100 / ₱200 / ₱500) **or** types a custom amount. | System highlights the selected preset (and clears the highlight when a non-preset value is typed). |
-| 3 | Commuter selects a payment method (**GCash** or **Maya**) and clicks **"Proceed"**. | System validates the request server-side: `amount` required, numeric, **min ₱10**, max ₱100,000; `payment-method` required and restricted to the self-service methods. |
-| 4 | | System adds the amount to the commuter's wallet balance. |
-| 5 | | System creates a **top-up history record** (user, wallet, amount added, payment method) for auditing. |
-| 6 | | System displays the success message *"Successfully topped up!"* and returns to the top-up page showing the new balance. |
+| #   | Actor's Action                                                                                | System Response                                                                                                                                                        |
+| --- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Commuter clicks the "+" button.                                                               | System displays the Topup page with the current wallet balance, a custom-amount input, and predefined amount options.                                                  |
+| 2   | Commuter selects a predefined amount (₱50 / ₱100 / ₱200 / ₱500) **or** types a custom amount. | System highlights the selected preset (and clears the highlight when a non-preset value is typed).                                                                     |
+| 3   | Commuter selects a payment method (**GCash** or **Maya**) and clicks **"Proceed"**.           | System validates the request server-side: `amount` required, numeric, **min ₱10**, max ₱100,000; `payment-method` required and restricted to the self-service methods. |
+| 4   |                                                                                               | System adds the amount to the commuter's wallet balance.                                                                                                               |
+| 5   |                                                                                               | System creates a **top-up history record** (user, wallet, amount added, payment method) for auditing.                                                                  |
+| 6   |                                                                                               | System displays the success message *"Successfully topped up!"* and returns to the top-up page showing the new balance.                                                |
 
 ---
 

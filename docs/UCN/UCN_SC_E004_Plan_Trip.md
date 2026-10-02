@@ -1,26 +1,26 @@
 # UCN_SC_E004 — Plan Trip
 
-| Field | Value |
-|---|---|
-| **Use_Case_ID** | UCN SC E004 |
-| **Use Case Name** | Plan Trip |
-| **Primary Actor** | Guest / Commuter |
-| **Secondary Actor** | System |
-| **Goal** | Allow Guest to see the distance and fare prices for their commute. |
-| **Trigger** | Guest opens the sidebar on the map. |
-| **Preconditions** | 1. System routing engine is operational.<br>2. User has an active internet connection.<br>3. Both a start point and a destination have been selected (by map click or by search). |
-| **Supporting Actors** | External Geocoding Service (Photon), External Routing Service (OSRM), Fare rate table (`FareRate`) |
+| Field                 | Value                                                                                                                                                                             |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Use_Case_ID**       | UCN SC E004                                                                                                                                                                       |
+| **Use Case Name**     | Plan Trip                                                                                                                                                                         |
+| **Primary Actor**     | Guest / Commuter                                                                                                                                                                  |
+| **Secondary Actor**   | System                                                                                                                                                                            |
+| **Goal**              | Allow Guest to see the distance and fare prices for their commute.                                                                                                                |
+| **Trigger**           | Guest opens the sidebar on the map.                                                                                                                                               |
+| **Preconditions**     | 1. System routing engine is operational.<br>2. User has an active internet connection.<br>3. Both a start point and a destination have been selected (by map click or by search). |
+| **Supporting Actors** | External Geocoding Service (Photon), External Routing Service (OSRM), Fare rate table (`FareRate`)                                                                                |
 
 ---
 
 ## MAIN FLOW
 
-| # | Actor's Action | System Response |
-|---|---|---|
-| 1 | User opens the sidebar on the map page. | System displays a fare calculator with input fields for origin and destination, plus distance and fare output fields. |
-| 2 | User selects Origin and destination (via map or text). | System places **Point A** and **Point B** markers on the map. Text entries are resolved by the geocoding service (Photon), restricted to the service-area bounding box; a tap on the map places the point directly. |
-| 3 | | System requests a driving route from the routing service (OSRM) and draws the recommended route path on the map, then fits the map bounds to it. |
-| 4 | | System displays the total **distance (km)** and the **fare costs** (regular and discounted), looked up from the active fare-rate table by distance tier. |
+| #   | Actor's Action                                         | System Response                                                                                                                                                                                                     |
+| --- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | User opens the sidebar on the map page.                | System displays a fare calculator with input fields for origin and destination, plus distance and fare output fields.                                                                                               |
+| 2   | User selects Origin and destination (via map or text). | System places **Point A** and **Point B** markers on the map. Text entries are resolved by the geocoding service (Photon), restricted to the service-area bounding box; a tap on the map places the point directly. |
+| 3   |                                                        | System requests a driving route from the routing service (OSRM) and draws the recommended route path on the map, then fits the map bounds to it.                                                                    |
+| 4   |                                                        | System displays the total **distance (km)** and the **fare costs** (regular and discounted), looked up from the active fare-rate table by distance tier.                                                            |
 
 **Fare calculation detail**
 - Fare is looked up by finding the **highest distance tier ≤ the calculated distance** (`getFareFromDB()`); values are rounded up to whole pesos.

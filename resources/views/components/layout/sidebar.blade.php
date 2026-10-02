@@ -14,32 +14,34 @@
 <div x-data x-cloak>
 
     <!-- ══════════ MOBILE BOTTOM BAR ══════════ -->
-    <div class="fixed bottom-0 left-0 right-0 z-[55] md:hidden">
+    {{-- `bar-*` hooks are styled by partials/landscape-styles.blade.php so the
+         nav collapses into a compact strip when the device is held sideways. --}}
+    <div id="mobile-bottom-bar" class="fixed bottom-0 left-0 right-0 z-[55] md:hidden">
         <div
             class="bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-xl border-t border-gray-200 dark:border-gray-800 pb-[env(safe-area-inset-bottom)]">
-            <div class="flex items-center justify-between px-4 py-1.5">
+            <div class="bar-inner flex items-center justify-between px-4 py-1.5">
 
                 {{-- LEFT: Settings --}}
                 <a href="{{ route($settingsRoute) }}"
-                    class="flex flex-col items-center gap-0.5 py-2 px-4 rounded-2xl transition-all active:scale-90 {{ request()->routeIs($settingsRoute) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500' }}">
-                    <i class="fa-solid {{ $settingsIcon }} text-[16px]"></i>
-                    <span class="text-[7px] font-bold uppercase tracking-wider">Settings</span>
+                    class="bar-link flex flex-col items-center gap-0.5 py-2 px-4 rounded-2xl transition-all active:scale-90 {{ request()->routeIs($settingsRoute) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500' }}">
+                    <i class="bar-link-icon fa-solid {{ $settingsIcon }} text-[16px]"></i>
+                    <span class="bar-link-label text-[7px] font-bold uppercase tracking-wider">Settings</span>
                 </a>
 
                 {{-- CENTER: Dashboard (elevated primary) --}}
                 <a href="{{ route($dashboardRoute) }}"
-                    class="flex flex-col items-center gap-0.5 py-1 px-5 rounded-2xl transition-all active:scale-90 -mt-4 {{ request()->routeIs($dashboardRoute) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500' }}">
+                    class="bar-link bar-primary flex flex-col items-center gap-0.5 py-1 px-5 rounded-2xl transition-all active:scale-90 -mt-4 {{ request()->routeIs($dashboardRoute) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500' }}">
                     <div
-                        class="w-12 h-12 rounded-2xl {{ request()->routeIs($dashboardRoute) ? 'bg-blue-500 shadow-lg shadow-blue-500/30' : 'bg-gray-100 dark:bg-gray-800 shadow-md shadow-black/5 dark:shadow-black/30' }} flex items-center justify-center mb-0.5 transition-all">
+                        class="bar-primary-icon w-12 h-12 rounded-2xl {{ request()->routeIs($dashboardRoute) ? 'bg-blue-500 shadow-lg shadow-blue-500/30' : 'bg-gray-100 dark:bg-gray-800 shadow-md shadow-black/5 dark:shadow-black/30' }} flex items-center justify-center mb-0.5 transition-all">
                         <i
-                            class="fa-solid {{ $dashboardIcon }} text-[17px] {{ request()->routeIs($dashboardRoute) ? 'text-white' : '' }}"></i>
+                            class="bar-link-icon fa-solid {{ $dashboardIcon }} text-[17px] {{ request()->routeIs($dashboardRoute) ? 'text-white' : '' }}"></i>
                     </div>
-                    <span class="text-[7px] font-bold uppercase tracking-wider">Dashboard</span>
+                    <span class="bar-link-label text-[7px] font-bold uppercase tracking-wider">Dashboard</span>
                 </a>
 
                 {{-- RIGHT: More --}}
                 <button type="button" @click="openMobileDrawer()"
-                    class="flex flex-col items-center gap-0.5 py-2 px-4 rounded-2xl text-gray-400 dark:text-gray-500 transition-all active:scale-90">
+                    class="bar-link flex flex-col items-center gap-0.5 py-2 px-4 rounded-2xl text-gray-400 dark:text-gray-500 transition-all active:scale-90">
                     <div class="w-[16px] h-[16px] grid grid-cols-3 grid-rows-3 gap-[2.5px]">
                         <span class="rounded-full bg-current"></span>
                         <span class="rounded-full bg-current"></span>
@@ -51,7 +53,7 @@
                         <span class="rounded-full bg-current"></span>
                         <span class="rounded-full bg-current"></span>
                     </div>
-                    <span class="text-[7px] font-bold uppercase tracking-wider">More</span>
+                    <span class="bar-link-label text-[7px] font-bold uppercase tracking-wider">More</span>
                 </button>
 
             </div>
@@ -105,7 +107,7 @@
                     @continue
                 @endif
                 <a href="{{ route($item['route']) }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs($item['route']) ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' : 'text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200' }}">
+                    class="drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs($item['route']) ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' : 'text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200' }}">
                     <div
                         class="w-7 h-7 rounded-lg {{ request()->routeIs($item['route']) ? 'bg-blue-100 dark:bg-blue-500/20' : 'bg-gray-100 dark:bg-gray-800' }} flex items-center justify-center shrink-0">
                         <i class="fa-solid {{ $item['icon'] }} text-[10px]"></i>

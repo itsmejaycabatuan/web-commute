@@ -174,7 +174,8 @@
 
             </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6">
+            <!-- `landscape-split`: 8/4 on xl, but 50/50 when the device is held sideways --}}
+            <div class="landscape-split grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6">
 
                 <!-- ══════════ LEFT COLUMN ══════════ -->
                 <div class="xl:col-span-8 flex flex-col gap-5 sm:gap-6">

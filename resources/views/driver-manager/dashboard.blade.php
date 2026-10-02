@@ -626,7 +626,8 @@
                 </div>
 
                 <!-- ══════════ SPLIT VIEW: TIME SHEET & VIOLATIONS ══════════ -->
-                <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6" x-data="dashboardData()">
+                <!-- `landscape-split`: 7/5 on xl, but 50/50 when the device is held sideways -->
+                <div class="landscape-split grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6" x-data="dashboardData()">
 
                     <!-- ── Time Sheet ── -->
                     <div class="xl:col-span-7 glass-card rounded-[1.25rem] sm:rounded-[1.5rem] overflow-hidden">

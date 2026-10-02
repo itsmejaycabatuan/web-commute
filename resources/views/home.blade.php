@@ -635,32 +635,6 @@
                             alt="System Analytics"
                             class="rounded-lg sm:rounded-[1.5rem] md:rounded-[2.5rem] w-full grayscale hover:grayscale-0 transition-all duration-700 hover:scale-[1.02]">
                     </div>
-
-                    <!-- Floating stat card -->
-                    <div
-                        class="absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-4 md:bottom-6 md:right-6 glass-card glow-blue p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl animate-float">
-                        <div class="flex items-center gap-2 sm:gap-3">
-                            <div
-                                class="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500/20 rounded-lg sm:rounded-xl flex items-center justify-center">
-                                <i class="fa-solid fa-chart-line text-blue-400 text-xs sm:text-base"></i>
-                            </div>
-                            <div>
-                                <p class="text-[8px] sm:text-[10px] text-gray-500 uppercase tracking-widest">Efficiency
-                                </p>
-                                <p class="text-base sm:text-xl font-bold stat-counter">+34.8%</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Floating badge -->
-                    <div class="absolute -top-2 -left-2 sm:-top-3 sm:-left-3 md:top-6 md:left-6 glass-card p-2 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl animate-float"
-                        style="animation-delay: 1.5s;">
-                        <div class="flex items-center gap-1.5 sm:gap-2">
-                            <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full animate-pulse"></div>
-                            <span class="text-[8px] sm:text-[10px] font-semibold uppercase tracking-wider">System
-                                Online</span>
-                        </div>
-                    </div>
                 </div>
             </div>
 

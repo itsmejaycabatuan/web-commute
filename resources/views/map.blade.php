@@ -1301,6 +1301,51 @@
             color: white;
         }
 
+        /* ═══ LANDSCAPE / SHORT VIEWPORT ═══
+           Sideways on a phone there is width to spare but almost no height,
+           so the two stacked FABs (136px + 72px above the bottom) would eat
+           a third of the screen. Put them side by side on the bottom-left
+           and let the sheets use the full height. `is-landscape` is toggled
+           by partials/landscape-styles.blade.php. */
+        html.is-landscape .mobile-fab-wrap {
+            bottom: 1rem !important;
+            left: auto !important;
+        }
+
+        html.is-landscape .mobile-fab-wrap-left {
+            left: 1rem !important;
+        }
+
+        html.is-landscape .mobile-fab-wrap-right {
+            left: 5.25rem !important;
+        }
+
+        html.is-landscape .mobile-fab {
+            width: 48px;
+            height: 48px;
+            border-radius: 15px;
+        }
+
+        html.is-landscape .mobile-sheet {
+            /* Full height, with the grab handle kept visible. */
+            max-height: calc(100vh - 0.5rem);
+            border-radius: 1.25rem 1.25rem 0 0;
+        }
+
+        html.is-landscape .mobile-sheet-handle {
+            padding: 8px 0 2px;
+        }
+
+        html.is-landscape .mobile-sheet-body {
+            padding-bottom: 20px;
+        }
+
+        /* The floating header would otherwise cover the top of the map. */
+        html.is-landscape #map-alert,
+        html.is-landscape #nearest-vehicle-indicator {
+            max-width: min(22rem, 45vw);
+        }
+
         /* ═══ TUTORIAL MODAL ═══ */
         .tutorial-backdrop {
             position: fixed;
@@ -2150,19 +2195,32 @@
         </div>
     </div>
 
-    <!-- ══════════ MOBILE FAB BUTTONS (stacked on bottom-right) ══════════ -->
-    <!-- NEW -->
-    @if (Auth::guest() || Auth::check() && Auth::user()->roles[0]->name === 'commuter')
-        <div class="fixed bottom-[8.5rem] left-5 z-50 md:hidden">
-            <button onclick="openMobileSidebar('left')" class="mobile-fab mobile-fab-left">
-                <i
-                    class="fa-solid fa-{{ Auth::check() && Auth::user()->roles[0]->name === 'driver' ? 'clock' : 'route' }} text-white text-base"></i>
+    <!-- ══════════ MOBILE FAB BUTTONS (stacked on bottom-left) ══════════ -->
+    {{-- The LEFT FAB opens the mobile sheet that holds #left-sidebar-form.
+         That panel exists for guests, commuters AND drivers (driver duty
+         status toggle + timekeeping), but the button used to be limited to
+         guests/commuters — so on a phone the driver simply had no way to
+         reach the left sidebar, while the right FAB (rendered for every
+         non-admin role) kept working. That's the "right sidebar only" bug. --}}
+    @php
+        $mapRole = Auth::check() ? (Auth::user()->roles->first()->name ?? 'default') : 'guest';
+        $hasMobileLeftSidebar = in_array($mapRole, ['guest', 'commuter', 'driver'], true);
+        $hasMobileRightSidebar = $mapRole !== 'admin';
+    @endphp
+
+    @if ($hasMobileLeftSidebar)
+        <div class="mobile-fab-wrap mobile-fab-wrap-left fixed bottom-[8.5rem] left-5 z-50 md:hidden">
+            <button type="button" onclick="openMobileSidebar('left')" aria-label="Open sidebar"
+                class="mobile-fab mobile-fab-left">
+                <i class="fa-solid fa-{{ $mapRole === 'driver' ? 'clock' : 'route' }} text-white text-base"></i>
             </button>
         </div>
     @endif
-    @if ((Auth::check() && Auth::user()->roles[0]->name !== 'admin') || !Auth::check())
-        <div class="fixed bottom-[4.5rem] left-5 z-50 md:hidden">
-            <button onclick="openMobileSidebar('right')" class="mobile-fab mobile-fab-right">
+
+    @if ($hasMobileRightSidebar)
+        <div class="mobile-fab-wrap mobile-fab-wrap-right fixed bottom-[4.5rem] left-5 z-50 md:hidden">
+            <button type="button" onclick="openMobileSidebar('right')" aria-label="Open details"
+                class="mobile-fab mobile-fab-right">
                 <i class="fa-solid fa-ellipsis-vertical text-base"></i>
             </button>
         </div>
@@ -3678,7 +3736,7 @@ sim._lastEtaUpdate = null;
             <div class="sidebar-content flex-center">
                 <div id="right-sidebar-anchor"></div>
                 <div id="right-sidebar-content"
-                    class="fixed top-24 right-4 sm:right-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]">
+                    class="fixed top-24 right-4 sm:right-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)] overflow-y-auto overscroll-contain custom-scroll pr-1 pb-6">
 
                     @if (Auth::check() && Auth::user()->roles[0]->name === 'commuter')
                         <button onclick="openTutorialModal()"
@@ -3921,17 +3979,32 @@ sim._lastEtaUpdate = null;
             window._leftMobileOpen = false;
             window._rightMobileOpen = false;
 
-            var LEFT_DESKTOP_CLASSES =
-    'absolute top-24 left-[368px] w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]';
             var LEFT_MOBILE_CLASSES = 'flex flex-col gap-3 w-full';
-            var RIGHT_DESKTOP_CLASSES =
-                'fixed top-24 right-4 sm:right-5 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)]';
             var RIGHT_MOBILE_CLASSES = 'flex flex-col gap-3 w-full';
+
+            /* Remember the panel's server-rendered class list before it is
+               moved into the sheet. Restoring a hardcoded string broke the
+               driver/commuter panels (they are `fixed top-24 left-4`, not the
+               `absolute left-[368px]` of the local dev-tools panel) once the
+               sheet closed or the phone was rotated. */
+            function stashDesktopClasses(el, key) {
+                if (!el.dataset[key]) {
+                    el.dataset[key] = el.className;
+                }
+            }
+
+            function restoreDesktopClasses(el, key) {
+                if (el && el.dataset[key]) {
+                    el.className = el.dataset[key];
+                    delete el.dataset[key];
+                }
+            }
 
             function openMobileSidebar(type) {
                 if (type === 'left') {
                     var el = document.getElementById('left-sidebar-form');
                     if (!el) return;
+                    stashDesktopClasses(el, 'desktopClasses');
                     document.getElementById('mobile-left-body').appendChild(el);
                     el.className = LEFT_MOBILE_CLASSES;
                     window._leftMobileOpen = true;
@@ -3946,6 +4019,7 @@ sim._lastEtaUpdate = null;
                 } else if (type === 'right') {
                     var el = document.getElementById('right-sidebar-content');
                     if (!el) return;
+                    stashDesktopClasses(el, 'desktopClasses');
                     document.getElementById('mobile-right-body').appendChild(el);
                     el.className = RIGHT_MOBILE_CLASSES;
                     window._rightMobileOpen = true;
@@ -3965,7 +4039,7 @@ sim._lastEtaUpdate = null;
                     var el = document.getElementById('left-sidebar-form');
                     if (el && window._leftMobileOpen) {
                         document.getElementById('left-sidebar-anchor').after(el);
-                        el.className = LEFT_DESKTOP_CLASSES;
+                        restoreDesktopClasses(el, 'desktopClasses');
                         window._leftMobileOpen = false;
                     }
 
@@ -3980,7 +4054,7 @@ sim._lastEtaUpdate = null;
                     var el = document.getElementById('right-sidebar-content');
                     if (el && window._rightMobileOpen) {
                         document.getElementById('right-sidebar-anchor').after(el);
-                        el.className = RIGHT_DESKTOP_CLASSES;
+                        restoreDesktopClasses(el, 'desktopClasses');
                         window._rightMobileOpen = false;
                     }
 

@@ -50,3 +50,6 @@
         }
     }
 </script>
+
+{{-- Short/landscape viewport support (phones & small tablets held sideways) --}}
+@include('partials.landscape-styles')
