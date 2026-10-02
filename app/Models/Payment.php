@@ -52,14 +52,33 @@ class Payment extends Model
         'payment_method',
         'price',
         'transaction_id',
+        'status',
+        'paymongo_payment_intent_id',
+        'paymongo_checkout_session_id',
+        'paymongo_reference_id',
         'paid_at',
+        'failed_at',
+        'failure_message',
         'created_at',
         'updated_at',
     ];
 
     protected $casts = [
         'paid_at' => 'datetime',
+        'failed_at' => 'datetime',
+        'is_discounted' => 'boolean',
     ];
+
+    /** Payment lifecycle states. */
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_PAID = 'paid';
+    public const STATUS_FAILED = 'failed';
+    public const STATUS_CANCELLED = 'cancelled';
+
+    public function isSettled(): bool
+    {
+        return $this->status === self::STATUS_PAID;
+    }
 
     public function user()
     {

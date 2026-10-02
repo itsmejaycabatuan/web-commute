@@ -500,8 +500,13 @@
                                                 Standard Regular Fare</p>
                                         </td>
                                         <td class="px-4 2xl:px-6 py-3.5 sm:py-4">
-                                            <p class="text-[12px] text-slate-400 dark:text-[#666]">{{ $receipt->paid_at }}
-                                            </p>
+                                            @if ($receipt->status === 'paid')
+                                                <p
+                                                    class="text-[12px] text-slate-400 dark:text-[#666]">{{ $receipt->paid_at }}
+                                                </p>
+                                            @else
+                                                @include('commuter.partials.status-badge', ['payment' => $receipt])
+                                            @endif
                                         </td>
                                         <td class="px-4 2xl:px-6 py-3.5 sm:py-4 text-right">
                                             <span
@@ -563,7 +568,12 @@
                                     <p class="text-[13px] font-bold whitespace-nowrap text-slate-900 dark:text-white">
                                         -₱{{ number_format($receipt->price, 2) }}</p>
                                     <p class="text-[9px] text-slate-400 dark:text-[#444] mt-0.5 whitespace-nowrap">
-                                        {{ $receipt->paid_at }}</p>
+                                        {{ $receipt->status === 'paid' ? $receipt->paid_at : '' }}</p>
+                                    @if ($receipt->status !== 'paid')
+                                        <div class="mt-1 flex justify-end">
+                                            @include('commuter.partials.status-badge', ['payment' => $receipt])
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>

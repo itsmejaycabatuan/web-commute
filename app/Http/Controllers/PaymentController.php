@@ -5,11 +5,30 @@ namespace App\Http\Controllers;
 use App\Models\Payment;
 use App\Models\TopupHistory;
 use App\Models\Wallet;
+use App\Services\FareCalculator;
+use App\Services\PayMongoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use RuntimeException;
 
 class PaymentController extends Controller
 {
+    /**
+     * Payment methods a commuter may self-select for a FARE payment.
+     *
+     * 'GCash' and 'Maya' are settled through PayMongo when the gateway is
+     * enabled (see config/paymongo.php); with the gateway disabled they fall
+     * back to being recorded as a declared method only. 'Wallet' is always
+     * settled internally from the commuter's balance.
+     */
+    public const SELF_SERVICE_FARE_METHODS = ['GCash', 'Maya', 'Wallet'];
+
+    public function __construct(
+        protected PayMongoService $paymongo,
+        protected FareCalculator $fares
+    ) {}
+
     public function index(Request $request)
     {
         activity()->event('Index')->log('Action performed: index');
@@ -21,69 +40,339 @@ class PaymentController extends Controller
         $validated = $request->validate([
             'pickup' => 'required',
             'destination' => 'required',
-            'distance' => 'required',
+            'distance' => 'required|numeric|min:0',
             'price-regular' => 'required',
         ]);
 
-        if ($validated) {
-            return view('commuter.payment', [
-                'pickup' => $request->pickup,
-                'destination' => $request->destination,
-                'distance' => $request->distance,
-                'price' => $request->{'price-regular'},
-                'balance' => $balance,
-            ]);
+        // Display the SERVER-priced fare; the calculator's figure is only a hint.
+        $price = (float) $validated['price-regular'];
+        try {
+            $price = $this->fares->regularFare((float) $validated['distance']);
+        } catch (RuntimeException $e) {
+            activity()->event('Index')->log('Fare pricing unavailable, using submitted figure.');
         }
 
-        return back()->with('error', 'Pick-up point and destination is required');
+        return view('commuter.payment', [
+            'pickup' => $request->pickup,
+            'destination' => $request->destination,
+            'distance' => $request->distance,
+            'price' => $price,
+            'balance' => $balance,
+        ]);
     }
 
     public function process(Request $request)
     {
         activity()->event('Process')->log('Action performed: process');
         $userId = Auth::user()->id;
-        $wallet = Wallet::where('user_id', $userId)->first();
-        $balance = $wallet->balance;
-        $currentBalance = (float) $balance;
+        $wallet = Wallet::where('user_id', $userId)->firstOrFail();
+
+        // E1 - Payment method unavailable / E2 - malformed fare payload
+        $validated = $request->validate([
+            'pickup' => 'required',
+            'destination' => 'required',
+            'distance' => 'required|numeric|min:0',
+            'amount' => 'required|numeric|min:0',
+            'payment-method' => 'required|in:' . implode(',', self::SELF_SERVICE_FARE_METHODS),
+            'transaction-id' => 'required',
+        ]);
+
+        $transactionId = $validated['transaction-id'];
+        $method = $validated['payment-method'];
+
+        // E3 - Already Paid / duplicate submission guard.
+        // The transaction id is minted server-side when the checkout page is
+        // rendered, so a double-click or refresh replays the same id.
+        if (Payment::where('paid_by', $userId)->where('transaction_id', $transactionId)->exists()) {
+            return back()->with('error', 'This fare has already been paid. Please wait a moment before retrying.');
+        }
+
+        // The fare is RE-PRICED server-side from the published rate table; the
+        // amount posted by the browser is never trusted.
+        try {
+            $amount = $this->fares->regularFare((float) $validated['distance']);
+        } catch (RuntimeException $e) {
+            activity()->event('Process')->log('Could not price fare: '.$e->getMessage());
+
+            return back()->with('error', 'Fares are unavailable right now. Please try again later.');
+        }
+
+        // ── Gateway method (GCash / Maya) ────────────────────────────────
+        if ($this->paymongo->isGatewayMethod($method) && $this->paymongo->enabled()) {
+            return $this->startGatewayPayment($userId, $validated, $method, $transactionId, $amount);
+        }
+
+        // ── Wallet (or gateway method with the gateway disabled) ─────────
+        $currentBalance = (float) $wallet->balance;
         $newBalance = $currentBalance;
 
-        if ($request->{'payment-method'} === 'Wallet') {
-            $price = (float) $request->amount;
-            $newBalance = $currentBalance - $price;
+        if ($method === 'Wallet') {
+            $newBalance = $currentBalance - $amount;
         }
 
         if ($newBalance < 0) {
             return back()->with('error', "You don't have enough balance");
         }
 
-        $payment = Payment::create([
-            'paid_by' => $userId,
-            'starting_point' => $request->pickup,
-            'destination' => $request->destination,
-            'total_distance' => $request->distance,
-            'payment_method' => $request->{'payment-method'},
-            'transaction_id' => $request->{'transaction-id'},
-            'price' => $request->amount,
-            'paid_at' => now(), // Add this if your table has this column
-        ]);
+        try {
+            $payment = Payment::create([
+                'paid_by' => $userId,
+                'starting_point' => $validated['pickup'],
+                'destination' => $validated['destination'],
+                'total_distance' => $validated['distance'],
+                'payment_method' => $method,
+                'transaction_id' => $transactionId,
+                'price' => $amount,
+                'status' => 'paid',
+                'paid_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            activity()->event('Process')->log('Database error during fare payment.');
+
+            return back()->with('error', 'There was a problem trying to process the payment');
+        }
 
         if ($payment) {
             $wallet->update([
                 'balance' => $newBalance,
             ]);
 
-            return view('commuter.receipt', [
-                'pickup' => $request->pickup,
-                'destination' => $request->destination,
-                'distance' => $request->distance,
-                'paymentMethod' => $request->{'payment-method'},
-                'transactionId' => $request->{'transaction-id'},
-                'price' => $request->amount,
-                'paidAt' => $payment->paid_at->format('M d, Y h:i A'), // ✅ Added this
-            ])->with('success', 'Payment successful');
+            // POST/redirect/GET: the receipt is re-read from the stored payment,
+            // so refreshing the page can never re-charge the commuter.
+            return redirect()
+                ->route('payment.showReceipt', $payment->id)
+                ->with('success', 'Payment successful');
         }
 
         return back()->with('error', 'There was a problem trying to process the payment');
+    }
+
+    /**
+     * Create a PayMongo payment intent + checkout session and redirect the
+     * commuter to the hosted checkout page. The payment row is written as
+     * `pending` and only settles via the webhook or the return URL.
+     */
+    protected function startGatewayPayment(int $userId, array $validated, string $method, string $transactionId, float $amount): \Illuminate\Http\RedirectResponse
+    {
+        try {
+            // One call: PayMongo creates the payment intent as part of the
+            // checkout session.
+            //
+            // The return URLs carry OUR transaction id, not a gateway field:
+            // PayMongo payment intents expose no reference_id, and the lookup
+            // must not depend on a gateway-specific shape.
+            $session = $this->paymongo->createCheckoutSession(
+                $amount,
+                'SmartCommute fare '.$transactionId,
+                route('payment.returned', ['ref' => $transactionId]),
+                route('payment.cancelled', ['ref' => $transactionId]),
+                PayMongoService::channelFor($method),
+                ['transaction_id' => $transactionId, 'user_id' => (string) $userId]
+            );
+        } catch (RuntimeException $e) {
+            activity()->event('Process')->log('PayMongo error: '.$e->getMessage());
+
+            return back()->with('error', 'The payment service is unavailable right now. Please try again.');
+        }
+
+        if (empty($session['checkout_url']) || empty($session['payment_intent_id'])) {
+            return back()->with('error', 'The payment service is unavailable right now. Please try again.');
+        }
+
+        try {
+            Payment::create([
+                'paid_by' => $userId,
+                'starting_point' => $validated['pickup'],
+                'destination' => $validated['destination'],
+                'total_distance' => $validated['distance'],
+                'payment_method' => $method,
+                'transaction_id' => $transactionId,
+                'price' => $amount,
+                'status' => 'pending',
+                'paymongo_payment_intent_id' => $session['payment_intent_id'],
+                'paymongo_checkout_session_id' => $session['id'],
+            ]);
+        } catch (\Exception $e) {
+            activity()->event('Process')->log('Database error while opening gateway payment.');
+
+            return back()->with('error', 'There was a problem starting the payment');
+        }
+
+        // The commuter leaves for PayMongo's hosted checkout.
+        return redirect()->away($session['checkout_url']);
+    }
+
+    /**
+     * Gateway success return URL. Also acts as the reconciliation path for a
+     * webhook that never arrived.
+     */
+    public function returned(Request $request)
+    {
+        $payment = Payment::where('paid_by', Auth::id())
+            ->where('transaction_id', (string) $request->query('ref'))
+            ->first();
+
+        if (! $payment) {
+            return redirect()->route('payment.history')->with('error', 'We could not find that payment.');
+        }
+
+        if ($payment->status === 'paid') {
+            return redirect()->route('payment.showReceipt', $payment->id)->with('success', 'Payment successful');
+        }
+
+        if ($payment->status === 'failed' || $payment->status === 'cancelled') {
+            return redirect()->route('payment.history')->with('error', 'That payment was not completed.');
+        }
+
+        // Still pending at the gateway — ask PayMongo directly.
+        //
+        // The pending screen reloads every few seconds, so the lookup is
+        // throttled to avoid hammering the API on every poll.
+        $lastPolled = (int) $request->session()->get('paymongo_polled_at', 0);
+
+        if ($payment->paymongo_payment_intent_id && (time() - $lastPolled) >= 4) {
+            $request->session()->put('paymongo_polled_at', time());
+
+            try {
+                $intent = $this->paymongo->retrievePaymentIntent($payment->paymongo_payment_intent_id);
+            } catch (RuntimeException $e) {
+                activity()->event('Returned')->log('PayMongo lookup failed: '.$e->getMessage());
+            }
+
+            if (isset($intent)) {
+                if ($this->paymongo->isSettled($intent['status'] ?? null)) {
+                    $this->settle($payment);
+
+                    return redirect()->route('payment.showReceipt', $payment->id)
+                        ->with('success', 'Payment successful');
+                }
+
+                // The gateway gave up on this payment — stop showing a spinner.
+                if ($this->paymongo->isFailed($intent['status'] ?? null)) {
+                    $payment->update([
+                        'status' => 'failed',
+                        'failed_at' => now(),
+                        'failure_message' => 'The payment was not completed at the gateway.',
+                    ]);
+
+                    return redirect()->route('payment.history')
+                        ->with('error', 'That payment could not be completed. Nothing was charged.');
+                }
+            }
+        }
+
+        // Settling (webhook pending) — show an honest "processing" state rather
+        // than claiming success.
+        return view('commuter.paymentpending', ['payment' => $payment]);
+    }
+
+    /**
+     * Gateway cancel return URL.
+     */
+    public function cancelled(Request $request)
+    {
+        $payment = Payment::where('paid_by', Auth::id())
+            ->where('transaction_id', (string) $request->query('ref'))
+            ->where('status', 'pending')
+            ->first();
+
+        if ($payment) {
+            $payment->update([
+                'status' => 'cancelled',
+                'failed_at' => now(),
+                'failure_message' => 'Cancelled at checkout.',
+            ]);
+        }
+
+        return redirect()->route('payment.history')->with('error', 'Payment cancelled. Nothing was charged.');
+    }
+
+    /**
+     * PayMongo webhook. Signature-verified, unauthenticated (PayMongo signs the
+     * call), CSRF-exempt, and idempotent.
+     */
+    public function webhook(Request $request)
+    {
+        $rawBody = $request->getContent();
+
+        $signature = $request->header('paymongo-signature');
+        $teSignature = $request->header('paymongo-te-signature');
+        $timestamp = $request->header('paymongo-timestamp');
+
+        if (! $this->paymongo->verifySignature($rawBody, $teSignature, $signature, $timestamp)) {
+            Log::warning('PAYMONGO webhook rejected: bad signature');
+
+            return response('Invalid signature', 401);
+        }
+
+        $event = $this->paymongo->parseWebhook($rawBody);
+
+        // Match in order of reliability. Never build this as a single OR-chain:
+        // where('col', null) becomes whereNull() and would match an unrelated
+        // pending payment.
+        $payment = null;
+
+        if (! empty($event['payment_intent_id'])) {
+            $payment = Payment::where('paymongo_payment_intent_id', $event['payment_intent_id'])->first();
+        }
+
+        if (! $payment && ! empty($event['transaction_id'])) {
+            $payment = Payment::where('transaction_id', $event['transaction_id'])->first();
+        }
+
+        if (! $payment && ! empty($event['reference_id'])) {
+            $payment = Payment::where('paymongo_reference_id', $event['reference_id'])->first();
+        }
+
+        if (! $payment) {
+            Log::warning('PAYMONGO webhook: no matching payment', $event);
+
+            return response('OK', 200);
+        }
+
+        $type = (string) $event['event_type'];
+
+        // PayMongo has used both `payment.paid` and `payment.succeeded` naming;
+        // accept either rather than dropping a real settlement on the floor.
+        if (str_contains($type, 'paid') || str_contains($type, 'succeeded') || str_contains($type, 'success')) {
+            $this->settle($payment);
+        } elseif (str_contains($type, 'failed') || str_contains($type, 'declined')) {
+            if ($payment->status === 'pending') {
+                $payment->update([
+                    'status' => 'failed',
+                    'failed_at' => now(),
+                    'failure_message' => 'The payment was declined by the gateway.',
+                ]);
+            }
+        } elseif (str_contains($type, 'expired') || str_contains($type, 'cancel')) {
+            if ($payment->status === 'pending') {
+                $payment->update([
+                    'status' => 'cancelled',
+                    'failed_at' => now(),
+                    'failure_message' => 'The checkout session expired.',
+                ]);
+            }
+        }
+
+        return response('OK', 200);
+    }
+
+    /**
+     * Mark a payment settled. Idempotent: only a `pending` payment transitions,
+     * so a replayed webhook cannot re-apply anything.
+     */
+    protected function settle(Payment $payment): Payment
+    {
+        if ($payment->status === 'paid') {
+            return $payment;
+        }
+
+        $payment->update([
+            'status' => 'paid',
+            'paid_at' => $payment->paid_at ?? now(),
+        ]);
+
+        return $payment;
     }
 
     public function history(Request $request)
@@ -128,7 +417,11 @@ class PaymentController extends Controller
     public function showReceipt(string $id)
     {
         activity()->event('Showreceipt')->log('Action performed: showReceipt');
-        $payment = Payment::where('id', $id)->first();
+        // Scoped to the authenticated commuter: a receipt must never be
+        // readable by another user who guesses/guesses the id.
+        $payment = Payment::where('id', $id)
+            ->where('paid_by', Auth::id())
+            ->firstOrFail();
 
         return view('commuter.viewreceipt', [
             'pickup' => $payment->starting_point,
@@ -137,7 +430,7 @@ class PaymentController extends Controller
             'paymentMethod' => $payment->payment_method,
             'transactionId' => $payment->transaction_id,
             'price' => $payment->price,
-            'paidAt' => $payment->paid_at,
+            'paidAt' => $payment->paid_at->format('M d, Y h:i A'),
         ]);
     }
 

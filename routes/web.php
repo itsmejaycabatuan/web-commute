@@ -117,6 +117,20 @@ Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $requ
 
 Route::post('/logout', [UserController::class, 'logout'])->name('users.logout')->middleware('auth');
 
+/*
+|--------------------------------------------------------------------------
+| PayMongo Webhook
+|--------------------------------------------------------------------------
+|
+| Called server-to-server by PayMongo. Unauthenticated by design (the request is
+| HMAC-signed with the secret key) and exempt from CSRF verification — it is
+| registered outside the auth/CSRF-protected groups below.
+|
+*/
+
+Route::post('/webhooks/paymongo', [PaymentController::class, 'webhook'])
+    ->name('paymongo.webhook');
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
@@ -133,6 +147,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/payment/process', [PaymentController::class, 'process'])->name('payment.process');
     Route::get('/payment/history', [PaymentController::class, 'history'])->name('payment.history');
     Route::get('/payment/receipt/{id}', [PaymentController::class, 'showReceipt'])->name('payment.showReceipt');
+    Route::get('/payment/returned', [PaymentController::class, 'returned'])->name('payment.returned');
+    Route::get('/payment/cancelled', [PaymentController::class, 'cancelled'])->name('payment.cancelled');
     Route::get('/payment/topup', [PaymentController::class, 'topup'])->name('payment.topup');
     Route::post('/payment/topup/process', [PaymentController::class, 'topupProcess'])
         ->middleware('throttle:5,1')

@@ -298,6 +298,26 @@
                         </label>
 
                         <label class="relative cursor-pointer group min-w-0">
+                            <input type="radio" name="payment-method" value="Maya" class="sr-only">
+                            <div class="method-box p-3 sm:p-4 rounded-xl text-center h-full">
+                                <div class="flex items-center justify-center mb-2.5">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-[#2b1a4a]/20 dark:bg-[#2b1a4a]/30 border border-[#5b3fa8]/30 flex items-center justify-center">
+                                        <span class="text-sm font-black text-[#a06bff]">M</span>
+                                    </div>
+                                </div>
+                                <p
+                                    class="text-[11px] text-gray-600 dark:text-[#ccc] font-bold uppercase tracking-widest">
+                                    Maya</p>
+                                <div class="flex justify-center mt-2.5">
+                                    <div
+                                        class="method-dot w-3 h-3 rounded-full bg-gray-300 dark:bg-[#333] transition-all duration-300">
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+
+                        <label class="relative cursor-pointer group min-w-0">
                             <input type="radio" name="payment-method" value="Wallet" class="sr-only">
                             <div class="method-box p-3 sm:p-4 rounded-xl text-center h-full">
                                 <div class="flex items-center justify-center mb-2.5">

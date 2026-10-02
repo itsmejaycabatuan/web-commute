@@ -42,9 +42,24 @@ class SettingsController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
-        Auth::user()->update([
-            'password' => Hash::make($request->password),
-        ]);
+        try {
+            Auth::user()->update([
+                'password' => Hash::make($request->password),
+            ]);
+
+            // A password change invalidates every other active session/token, so
+            // a hijacked session cannot outlive the credentials it was opened
+            // with. The current device keeps its session.
+            //
+            // NOTE: logoutOtherDevices() *re-saves* the password it is given, so
+            // it must be handed the NEW plaintext — passing the old one would
+            // throw (the record has already changed) or revert the change.
+            Auth::logoutOtherDevices($request->password);
+        } catch (\Exception $e) {
+            activity()->event('Updatepassword')->log('Database error during password change.');
+
+            return back()->with('error', 'Password could not be changed. Please try again later.');
+        }
 
         return back()->with('success', 'Password changed successfully.');
     }

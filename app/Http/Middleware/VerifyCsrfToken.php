@@ -17,5 +17,8 @@ class VerifyCsrfToken extends Middleware
         // Driver GPS pings. Authorisation is enforced in the controller
         // (driver role + vehicle assigned to that driver), not by the token.
         'track/vehicle/broadcast',
+        // PayMongo calls this server-to-server with an HMAC-signed payload and
+        // no session cookie, so CSRF verification can never apply.
+        'webhooks/paymongo',
     ];
 }

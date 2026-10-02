@@ -136,6 +136,10 @@ class DriverController extends Controller
         activity()->event('Clockin')->log('Action performed: clockIn');
         $driver = Driver::where('user_id', Auth::id())->first();
 
+        if (! $driver) {
+            return back()->with('error', 'Driver profile not found.');
+        }
+
         $exists = TimeKeeping::where('driver_id', $driver->id)
             ->whereDate('date', today())
             ->exists();
@@ -144,11 +148,17 @@ class DriverController extends Controller
             return back()->with('error', 'You have already clocked in today.');
         }
 
-        TimeKeeping::create([
-            'driver_id' => $driver->id,
-            'date' => today()->toDateString(),
-            'time_in' => now()->timezone('Asia/Manila')->format('h:i A'),
-        ]);
+        try {
+            TimeKeeping::create([
+                'driver_id' => $driver->id,
+                'date' => today()->toDateString(),
+                'time_in' => now()->timezone('Asia/Manila')->format('h:i A'),
+            ]);
+        } catch (\Exception $e) {
+            activity()->event('Clockin')->log('Database error during clock-in.');
+
+            return back()->with('error', 'Clock-in failed. Please try again later.');
+        }
 
         $driver->update(['status' => 'active']);
 
@@ -159,6 +169,10 @@ class DriverController extends Controller
     {
         activity()->event('Clockout')->log('Action performed: clockOut');
         $driver = Driver::where('user_id', Auth::id())->first();
+
+        if (! $driver) {
+            return back()->with('error', 'Driver profile not found.');
+        }
 
         $record = TimeKeeping::where('driver_id', $driver->id)
             ->whereDate('date', today())
@@ -177,11 +191,21 @@ class DriverController extends Controller
         $regularHours = min($hoursWorked, 8);
         $overtimeHours = $hoursWorked > 8 ? round($hoursWorked - 8, 2) : 0;
 
-        $record->update([
-            'time_out' => $timeOut->timezone('Asia/Manila')->format('h:i A'),
-            'hours_worked' => $hoursWorked,
-            'overtime_hours' => $overtimeHours,
-        ]);
+        try {
+            $record->update([
+                'time_out' => $timeOut->timezone('Asia/Manila')->format('h:i A'),
+                'hours_worked' => $hoursWorked,
+                'overtime_hours' => $overtimeHours,
+            ]);
+        } catch (\Exception $e) {
+            activity()->event('Clockout')->log('Database error during clock-out.');
+
+            return back()->with('error', 'Clock-out failed. Please try again later.');
+        }
+
+        // Ending the shift also takes the driver offline, so they are no longer
+        // advertised as available to commuters once they clock out.
+        $driver->update(['status' => 'inactive']);
 
         return back()->with('success', 'Clocked out at ' . $timeOut->timezone('Asia/Manila')->format('h:i A') . '. Total: ' . $hoursWorked . ' hrs.');
     }
