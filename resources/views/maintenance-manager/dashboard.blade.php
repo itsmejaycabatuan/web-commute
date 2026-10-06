@@ -266,6 +266,7 @@
                         </option>
                     @endforeach
                 </select>
+                </div>
             </div>
 
             <!-- ── Mobile Vehicle Selector ── -->

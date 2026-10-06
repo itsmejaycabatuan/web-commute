@@ -8,15 +8,82 @@ use App\Models\PreventiveMaintenance;
 use App\Models\TopupHistory;
 use App\Models\VehicleMaintenanceLog;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Throwable;
 
 class ReportController extends Controller
 {
+    /**
+     * Report types the admin may generate.
+     */
+    private const REPORT_TYPES = ['financial', 'driver', 'maintenance'];
+
     public function generate(Request $request)
     {
         $type = $request->get('type', 'financial');
         $start = $request->get('start_date');
         $end = $request->get('end_date');
 
+        try {
+            if (! in_array($type, self::REPORT_TYPES, true)) {
+                $type = 'financial';
+            }
+
+            $this->assertValidRange($start, $end);
+
+            $data = $this->buildReport($type, $start, $end);
+
+            // E3 — No Data Found: the report still renders, but says plainly that
+            // the selected type and date range hold nothing.
+            $data['reportType'] = $type;
+            $data['reportEmpty'] = $this->reportIsEmpty($type, $start, $end);
+
+            // E4 — Data Sync Delay
+            $data['syncLagMinutes'] = $this->syncLagMinutes();
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            // E2 — Data Aggregation Timeout (and any other aggregation failure):
+            // the run is cancelled and the admin is told to narrow the range.
+            report($e);
+
+            return back()->with(
+                'error',
+                'The database is taking too long to generate this report. Please try a shorter date range.'
+            );
+        }
+
+        return view('admin.reports', $data);
+    }
+
+    /**
+     * Guard for the aggregation window before any query is run.
+     */
+    private function assertValidRange(?string $start, ?string $end): void
+    {
+        if (! $start || ! $end) {
+            return;
+        }
+
+        try {
+            $from = \Carbon\Carbon::parse($start);
+            $to = \Carbon\Carbon::parse($end);
+        } catch (Throwable $e) {
+            throw ValidationException::withMessages([
+                'start_date' => 'The selected date range is not valid.',
+            ]);
+        }
+
+        if ($to->lessThan($from)) {
+            throw ValidationException::withMessages([
+                'start_date' => 'The start date must be before the end date.',
+            ]);
+        }
+    }
+
+    private function buildReport(string $type, ?string $start, ?string $end): array
+    {
         // Default return structure
         $data = [];
 
@@ -133,7 +200,38 @@ class ReportController extends Controller
             $data['upcomingSchedule'] = $upcomingSchedule;
         }
 
-        return view('admin.reports', $data);
+        return $data;
+    }
+
+    /**
+     * E3 — No Data Found: true when the report holds nothing worth showing for
+     * the selected type and date range.
+     */
+    private function reportIsEmpty(string $type, ?string $start, ?string $end): bool
+    {
+        return match ($type) {
+            'financial' => Payment::whereBetween('paid_at', [$start, $end])->count() === 0
+                && TopupHistory::whereBetween('created_at', [$start, $end])->count() === 0,
+            'driver' => Driver::count() === 0,
+            'maintenance' => PreventiveMaintenance::count() === 0
+                && VehicleMaintenanceLog::whereBetween('created_at', [$start, $end])->count() === 0,
+            default => true,
+        };
+    }
+
+    /**
+     * E4 — Data Sync Delay: how far behind the newest ledger row is, in minutes.
+     * A large value means the analytics are working off stale data.
+     */
+    private function syncLagMinutes(): ?int
+    {
+        $newest = Payment::max('paid_at');
+
+        if (! $newest) {
+            return null;
+        }
+
+        return (int) \Carbon\Carbon::parse($newest)->diffInMinutes(now());
     }
 
     public function export(Request $request)

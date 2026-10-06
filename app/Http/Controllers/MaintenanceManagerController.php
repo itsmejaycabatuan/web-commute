@@ -10,6 +10,7 @@ use App\Models\Vehicle;
 use App\Models\VehicleMaintenanceLog;
 use Auth;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class MaintenanceManagerController extends Controller
 {
@@ -58,6 +59,20 @@ class MaintenanceManagerController extends Controller
             'comments' => 'nullable|string|max:500',
         ]);
 
+        // E2 — Invalid odometer reading: a reading may never be lower than the
+        // last one recorded for this vehicle (across every scheduled service).
+        $lastOdo = (int) PreventiveMaintenance::where('vehicle_id', $validated['vehicle_id'])
+            ->max('last_service_odo');
+
+        $highest = $lastOdo;
+
+        if ((int) $validated['last_service_odo'] < $highest) {
+            throw ValidationException::withMessages([
+                'last_service_odo' => 'The odometer reading cannot be lower than the last recorded reading of '.
+                    number_format($highest).' km.',
+            ]);
+        }
+
         $maintenance = PreventiveMaintenance::updateOrCreate(
             [
                 'vehicle_id' => $validated['vehicle_id'],
@@ -66,8 +81,17 @@ class MaintenanceManagerController extends Controller
             $validated
         );
 
+        // Logging a scheduled service also writes the service-log record the
+        // fleet cost/kilometre analytics read.
         VehicleMaintenanceLog::create([
             'maintenance_id' => $maintenance->id,
+            'vehicle_id' => $validated['vehicle_id'],
+            'maintenance_task_id' => $validated['task_id'],
+            'service_date' => $validated['last_service_date'],
+            'mileage_at_service' => (int) $validated['last_service_odo'],
+            'performed_by' => 'Preventive Maintenance',
+            'cost' => $validated['last_service_cost'],
+            'remarks' => $validated['comments'] ?? null,
         ]);
 
         return back()->with('success', 'Preventive maintenance logged successfully!');
@@ -83,11 +107,10 @@ class MaintenanceManagerController extends Controller
             ])
             ->toArray();
 
-        $logs = VehicleMaintenanceLog::with(['preventiveMaintenance.vehicle', 'preventiveMaintenance.maintenanceTask'])
-            ->when(request('vehicle'), function ($q, $vehicle) {
-                $q->whereHas('preventiveMaintenance', fn($pq) => $pq->where('vehicle_id', $vehicle));
-            })
-            ->orderByDesc('created_at')
+        $logs = VehicleMaintenanceLog::with(['vehicle', 'maintenanceTask'])
+            ->when(request('vehicle'), fn ($q, $vehicle) => $q->where('vehicle_id', $vehicle))
+            ->orderByDesc('service_date')
+            ->orderByDesc('id')
             ->paginate(10)
             ->withQueryString();
 
@@ -250,157 +273,10 @@ class MaintenanceManagerController extends Controller
         return back()->with('success', 'Maintenance log deleted.');
     }
 
-    public function fleetLog(Request $request)
-    {
-        activity()->event('Fleetlog')->log('Action performed: fleetLog');
-        $vehicles = Vehicle::with('driver')
-            ->orderBy('plate_number')
-            ->get();
-
-        $drivers = Driver::orderBy('name')->get();
-
-        if ($vehicles->isEmpty()) {
-            return view('maintenance-manager.fleet-maintenance-log', [
-                'vehicles' => collect(),
-                'drivers' => $drivers,
-                'monthlyKm' => array_fill(1, 12, 0),
-                'monthlyStartOdo' => array_fill(1, 12, null),
-                'monthlyEndOdo' => array_fill(1, 12, null),
-                'yearStartOdo' => null,
-                'yearEndOdo' => 0,
-                'vehicle' => null,
-                'costSummary' => collect(),
-                'monthlyTotals' => array_fill(1, 12, 0),
-                'ytdTotal' => 0,
-                'allLogs' => collect(),
-                'totalServiceCost' => 0,
-                'costPerKm' => 0,
-                'annualKm' => 0,
-                'year' => now()->year,
-                'monthlyCpk' => array_fill(1, 12, null),
-            ]);
-        }
-
-        $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
-        $vehicle = Vehicle::with('driver')->find($selectedId) ?? $vehicles->first();
-
-        $year = now()->year;
-
-        $yearLogs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
-            ->with('maintenanceTask')
-            ->whereYear('service_date', $year)
-            ->whereNotNull('service_date')
-            ->orderBy('service_date')
-            ->get();
-
-        $costSummary = [];
-        $monthlyTotals = array_fill(1, 12, 0);
-        $ytdTotal = 0;
-
-        foreach ($yearLogs as $log) {
-            $taskName = $log->maintenanceTask?->tasks_performed ?? 'Unknown Task';
-            $month = $log->service_date->month;
-            $cost = (float) $log->cost;
-
-            if (! isset($costSummary[$taskName])) {
-                $costSummary[$taskName] = array_fill(1, 12, 0);
-            }
-
-            $costSummary[$taskName][$month] += $cost;
-            $monthlyTotals[$month] += $cost;
-            $ytdTotal += $cost;
-        }
-
-        ksort($costSummary);
-        $costSummary = collect($costSummary);
-
-        $allLogs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
-            ->with('maintenanceTask')
-            ->orderByDesc('service_date')
-            ->get()
-            ->map(function ($log) {
-                return [
-                    'id' => $log->id,
-                    'task_name' => $log->maintenanceTask?->tasks_performed ?? 'Unknown Task',
-                    'service_date' => $log->service_date?->format('M d, Y'),
-                    'mileage' => $log->mileage_at_service,
-                    'cost' => $log->cost,
-                    'performed_by' => $log->performed_by,
-                    'invoice_number' => $log->invoice_number,
-                    'remarks' => $log->remarks,
-                ];
-            });
-
-        $totalServiceCost = $ytdTotal;
-
-        $allOrderedLogs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
-            ->whereNotNull('mileage_at_service')
-            ->whereNotNull('service_date')
-            ->orderBy('service_date')
-            ->get();
-
-        $monthlyKm = array_fill(1, 12, 0);
-        $monthlyStartOdo = array_fill(1, 12, null);
-        $monthlyEndOdo = array_fill(1, 12, null);
-        $monthlyCpk = array_fill(1, 12, null);
-        $runningOdo = null;
-
-        $firstLogOfYear = $allOrderedLogs->first(fn($l) => $l->service_date && $l->service_date->year === $year);
-        $annualStartingOdo = 0;
-        if ($firstLogOfYear) {
-            $prevLog = $allOrderedLogs->where('id', '<', $firstLogOfYear->id)->last();
-            $annualStartingOdo = $prevLog ? $prevLog->mileage_at_service : 0;
-        }
-
-        foreach ($allOrderedLogs as $log) {
-            $m = $log->service_date->month;
-            $monthlyStartOdo[$m] ??= $runningOdo;
-            $monthlyEndOdo[$m] = $log->mileage_at_service;
-
-            $baseline = $monthlyStartOdo[$m] ?? $annualStartingOdo;
-
-            if ($baseline !== null) {
-                $delta = $log->mileage_at_service - $baseline;
-                if ($delta > 0) {
-                    $monthlyKm[$m] += $delta;
-                }
-            }
-            $runningOdo = $log->mileage_at_service;
-        }
-
-        $yearStartOdo = $monthlyStartOdo[1];
-        $yearEndOdo = $runningOdo;
-        $annualKm = array_sum($monthlyKm);
-
-        for ($m = 1; $m <= 12; $m++) {
-            if ($monthlyKm[$m] > 0) {
-                $monthlyCpk[$m] = round($monthlyTotals[$m] / $monthlyKm[$m], 2);
-            }
-        }
-
-        $costPerKm = $annualKm > 0 ? round($totalServiceCost / $annualKm, 2) : 0;
-
-        return view('maintenance-manager.fleet-maintenance-log', compact(
-            'vehicles',
-            'drivers',
-            'vehicle',
-            'costSummary',
-            'monthlyTotals',
-            'ytdTotal',
-            'allLogs',
-            'totalServiceCost',
-            'costPerKm',
-            'annualKm',
-            'year',
-            'monthlyKm',
-            'monthlyStartOdo',
-            'monthlyEndOdo',
-            'yearStartOdo',
-            'yearEndOdo',
-            'monthlyCpk',
-        ));
-    }
-
+    /**
+     * The full-page fleet maintenance log: the same summary the maintenance
+     * manager dashboard shows, on its own page (UCN_SC_E016 A4).
+     */
     public function profile()
     {
         activity()->event('Profile')->log('Action performed: profile');

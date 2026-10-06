@@ -28,6 +28,10 @@ class DriverApprovalController extends Controller
                 'drivers.license_status',
                 'drivers.is_approved',
                 'drivers.is_rejected',
+                'drivers.is_suspended',
+                'drivers.suspended_at',
+                'drivers.suspension_reason',
+                'drivers.status',
                 'drivers.expiration_date',
                 'drivers.contact_info',
                 'drivers.created_at',
@@ -59,7 +63,7 @@ class DriverApprovalController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'license_number' => 'required|string|max:255',
+            'license_number' => 'required|string|max:255|unique:drivers,license_number',
             'license_code' => 'required|string|max:255',
             'expiration_date' => 'required|string|max:255',
             'contact_info' => 'required|string|max:255',
@@ -115,7 +119,7 @@ class DriverApprovalController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'license_number' => 'required|string|max:255',
+            'license_number' => 'required|string|max:255|unique:drivers,license_number,'.$driver->id,
             'license_code' => 'required|string|max:255',
             'expiration_date' => 'required|date',
             'contact_info' => 'required|string|max:255',
@@ -146,9 +150,20 @@ class DriverApprovalController extends Controller
     public function destroy(string $id)
     {
         $driver = Driver::find($id);
+
+        if (! $driver) {
+            return back()->with('error', 'Driver not found.');
+        }
+
+        // E8 — a driver holding a vehicle cannot be removed: release the vehicle
+        // first so it does not vanish from the fleet along with the account.
+        if ($driver->vehicle()->exists()) {
+            return back()->with('error', 'This driver is still assigned to a vehicle. Unassign the vehicle first.');
+        }
+
         $user = User::find($driver->user_id);
 
-        $user->delete();
+        $user?->delete();
         $driver->delete();
 
         return redirect()
@@ -156,17 +171,61 @@ class DriverApprovalController extends Controller
             ->with('success', 'Driver removed.');
     }
 
-    public function approve(Request $request, string $user)
+    /**
+     * Alternate flow — suspend / reactivate a driver. A suspended driver cannot
+     * sign in, clock in or broadcast a position, and is detached from any vehicle
+     * they were assigned.
+     */
+    public function toggleSuspension(string $id, Request $request)
     {
+        activity()->event('Toggledriversuspension')->log('Action performed: toggleSuspension');
+
+        $driver = Driver::find($id);
+
+        if (! $driver) {
+            return back()->with('error', 'Driver not found.');
+        }
 
         $validated = $request->validate([
-            'license_number' => 'required|string|max:255',
+            'suspension_reason' => 'nullable|string|max:255',
+        ]);
+
+        if ($driver->isSuspended()) {
+            $driver->unsuspend();
+
+            return redirect()
+                ->route('drivers.index')
+                ->with('success', 'Driver reactivated.');
+        }
+
+        $driver->suspend($validated['suspension_reason'] ?? null);
+
+        activity()->causedBy(auth()->user())
+            ->event('Suspend Driver')
+            ->log('Suspended driver: '.($driver->user?->email ?? $driver->id));
+
+        return redirect()
+            ->route('drivers.index')
+            ->with('success', 'Driver suspended. They can no longer sign in.');
+    }
+
+    public function approve(Request $request, string $user)
+    {
+        $driver = Driver::find($user);
+
+        if (! $driver) {
+            return redirect()
+                ->route('drivers.index')
+                ->with('error', 'Driver not found.');
+        }
+
+        // E2 — the license number must be unique across drivers.
+        $validated = $request->validate([
+            'license_number' => 'required|string|max:255|unique:drivers,license_number,'.$driver->id,
             'license_code' => 'required|string|max:255',
             'expiration_date' => 'required|date',
             'driver_code' => 'required|string|max:255',
         ]);
-
-        $driver = Driver::find($user);
 
         if ($driver->is_approved) {
             return redirect()

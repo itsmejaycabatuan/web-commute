@@ -409,6 +409,31 @@
             <!-- ══════════ TABLE CARD ══════════ -->
             <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] overflow-hidden">
                 <div class="p-4 sm:p-5 border-b border-[#1e1e1e]">
+                    <!-- A7 — Search Log: filter by driver name or date range -->
+                    <form method="GET" action="{{ route('driver-manager.violations-log') }}"
+                        class="flex flex-col sm:flex-row gap-2.5 mb-3.5">
+                        <div class="relative flex-1">
+                            <i
+                                class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[9px] text-[#444]"></i>
+                            <input type="text" name="search" value="{{ $search ?? '' }}"
+                                placeholder="Search by driver name or license no..."
+                                class="w-full pl-10 pr-3 py-2.5 bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl text-[10px] text-[#ccc] placeholder-[#333] focus:outline-none focus:border-[#333] transition">
+                        </div>
+                        <input type="date" name="from" value="{{ $from ?? '' }}"
+                            class="px-3 py-2.5 bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl text-[10px] text-[#888] focus:outline-none focus:border-[#333] transition">
+                        <input type="date" name="to" value="{{ $to ?? '' }}"
+                            class="px-3 py-2.5 bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl text-[10px] text-[#888] focus:outline-none focus:border-[#333] transition">
+                        <button type="submit"
+                            class="px-4 py-2.5 rounded-xl bg-[#111] hover:bg-[#1a1a1a] border border-[#1e1e1e] hover:border-[#333] text-[#888] hover:text-[#ccc] text-[9px] font-bold uppercase tracking-widest transition">
+                            Filter
+                        </button>
+                        @if (($search ?? '') !== '' || ! empty($from) || ! empty($to))
+                            <a href="{{ route('driver-manager.violations-log') }}"
+                                class="px-4 py-2.5 rounded-xl border border-[#1e1e1e] text-[#555] hover:text-[#ccc] text-[9px] font-bold uppercase tracking-widest transition flex items-center">
+                                Clear
+                            </a>
+                        @endif
+                    </form>
                     <div class="flex items-center justify-between">
                         <span
                             class="text-[8px] font-bold text-[#333] uppercase tracking-widest">{{ count($violations) }}
@@ -770,6 +795,7 @@
                                     <span class="text-red-400">*</span></label>
                                 <input type="date" name="date_of_violation" x-model="form.date"
                                     value="{{ old('date_of_violation') }}"
+                                    max="{{ now()->toDateString() }}"
                                     class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition">
                                 @error('date_of_violation')
                                     <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
@@ -993,6 +1019,7 @@
                                                 <input type="date"
                                                     :name="'violations[' + index + '][date_of_violation]'"
                                                     x-model="row.date"
+                                                    max="{{ now()->toDateString() }}"
                                                     class="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[10px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition">
                                             </div>
                                             <div>

@@ -138,10 +138,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [UserController::class, 'profile'])->name('profile');
     Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
 
-    Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
-    Route::post('/vehicles', [VehicleController::class, 'store'])->name('vehicles.store');
-    Route::patch('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
-    Route::delete('/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
+    // UCN_SC_E015 — vehicle administration belongs to the Maintenance Manager.
+    Route::middleware('role:maintenance_manager')->group(function () {
+        Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
+        Route::post('/vehicles', [VehicleController::class, 'store'])->name('vehicles.store');
+        Route::patch('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
+        Route::delete('/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
+    });
 
     Route::get('/payment', [PaymentController::class, 'index'])->name('payment.index');
     Route::post('/payment/process', [PaymentController::class, 'process'])->name('payment.process');
@@ -176,6 +179,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Route::get('/drivers/{user}/license', [DriverApprovalController::class, 'showLicense'])->name('drivers.license');
         Route::post('/drivers/{user}/approve', [DriverApprovalController::class, 'approve'])->name('drivers.approve');
         Route::post('/drivers/{user}/reject', [DriverApprovalController::class, 'reject'])->name('drivers.reject');
+        Route::patch('/drivers/{driver}/suspension', [DriverApprovalController::class, 'toggleSuspension'])->name('drivers.suspension');
     });
 
     Route::middleware('role:admin')->group(function () {
@@ -183,6 +187,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/commuters', [CommuterController::class, 'store'])->name('commuters.store');
         Route::get('/commuters/{user}/edit', [CommuterController::class, 'edit'])->name('commuters.edit');
         Route::put('/commuters/{user}', [CommuterController::class, 'update'])->name('commuters.update');
+        Route::patch('/commuters/{user}/suspension', [CommuterController::class, 'toggleSuspension'])->name('commuters.suspension');
+        Route::get('/commuters/{user}', [CommuterController::class, 'show'])->name('commuters.show');
         Route::delete('/commuters/{user}', [CommuterController::class, 'destroy'])->name('commuters.destroy');
         Route::get('/commuters', [CommuterController::class, 'index'])->name('commuters.index');
 
@@ -190,7 +196,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/fares', [FareController::class, 'index'])->name('fares.index');
         Route::put('/fare/upload', [FareController::class, 'upload'])->name('fares.upload');
         Route::put('/fare/update', [FareController::class, 'bulkUpdate'])->name('fares.bulk-update');
-        Route::delete('/fare/{id}/delete', [FareController::class, 'delete'])->name('fares.destroy');
 
         Route::get('/reports', [ReportController::class, 'generate'])->name('reports.generate');
         Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
@@ -222,11 +227,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/vehicle-maintenance-log', [MaintenanceManagerController::class, 'vehicleLogStore'])->name('maintenance-manager.vehicle-maintenance-log.store');
         Route::patch('/vehicle-maintenance-log/{log}', [MaintenanceManagerController::class, 'vehicleLogUpdate'])->name('maintenance-manager.vehicle-maintenance-log.update');
         Route::delete('/vehicle-maintenance-log/{log}', [MaintenanceManagerController::class, 'vehicleLogDelete'])->name('maintenance-manager.vehicle-maintenance-log.destroy');
-        Route::get('/fleet-maintenance-log', [MaintenanceManagerController::class, 'fleetLog'])->name('maintenance-manager.fleet-maintenance-log');
-        Route::get('/fleet-inventory', [MaintenanceManagerController::class, 'fleetInventory'])->name('maintenance-manager.fleet-inventory');
-        Route::post('/fleet-inventory', [MaintenanceManagerController::class, 'fleetInventoryStore'])->name('maintenance-manager.fleet-inventory.store');
-        Route::delete('/fleet-inventory/{id}/delete', [MaintenanceManagerController::class, 'fleetInventoryDelete'])->name('maintenance-manager.fleet-inventory.destroy');
-        Route::patch('/fleet-inventory/{id}/update', [MaintenanceManagerController::class, 'fleetInventoryUpdate'])->name('maintenance-manager.fleet-inventory.update');
+        
     });
 
     Route::middleware('role:driver')->group(function () {

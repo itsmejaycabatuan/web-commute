@@ -60,6 +60,14 @@ class VehicleTrackingController extends Controller
             ], 403);
         }
 
+        // UCN_SC_E012 — a suspended driver stops broadcasting immediately.
+        if ($user->driver->isSuspended()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your account is suspended.',
+            ], 403);
+        }
+
         $vehicle = Vehicle::find($validated['vehicle_id']);
 
         if (! $vehicle || $vehicle->driver_id !== $user->driver->id) {
@@ -172,8 +180,14 @@ class VehicleTrackingController extends Controller
         }
         activity()->event('Getactivevehicles')->log('Action performed: getActiveVehicles');
 
-        // Newest update per vehicle, active in the last 5 minutes
+        // Newest update per vehicle, active in the last 5 minutes.
+        // UCN_SC_E015 postcondition: a unit that is under maintenance or already
+        // disposed drops off the live map immediately, regardless of when it last
+        // reported a position.
+        $trackableIds = Vehicle::whereIn('status', ['active', 'inactive'])->pluck('id');
+
         $locations = VehicleLocation::where('last_update', '>=', now()->subMinutes(5))
+            ->whereIn('vehicle_id', $trackableIds)
             ->orderBy('last_update', 'desc')
             ->get()
             ->unique('vehicle_id');

@@ -62,7 +62,7 @@ class FareController extends Controller
         // }
 
         // dd($rates);
-        return view('fares.view', [
+        return view('admin.fares.view', [
             'rates' => $rates,
         ]);
     }
@@ -139,29 +139,36 @@ class FareController extends Controller
         return back()->with('success', 'File uploaded successfully!');
     }
 
-    public function delete($id)
-    {
-        activity()->event('Delete')->log('Action performed: delete');
-        $fare = Fare::find($id);
-
-        if (! $fare) {
-            return back()->with('error', 'File delete failed.');
-        }
-
-        Fare::destroy($id);
-
-        return back()->with('success', 'File deleted successfully!');
-    }
-
     public function bulkUpdate(Request $request)
     {
         activity()->event('Bulkupdate')->log('Action performed: bulkUpdate');
-        foreach ($request->rates as $id => $data) {
-            FareRate::where('id', $id)->update([
-                'regular' => $data['regular'],
-                'discount' => $data['discount'],
-            ]);
+
+        // E2 — Rates Empty: nothing was submitted to save.
+        if (! $request->has('rates') || ! is_array($request->input('rates')) || $request->input('rates') === []) {
+            return back()
+                ->withInput()
+                ->withErrors(['rates' => 'There are no rates to save.']);
         }
+
+        // E4 — Rate Cannot be Zero or Negative.
+        $validated = $request->validate([
+            'rates' => ['required', 'array', 'min:1'],
+            'rates.*.id' => ['nullable', 'integer'],
+            'rates.*.regular' => ['required', 'numeric', 'min:0.01'],
+            'rates.*.discount' => ['required', 'numeric', 'min:0.01'],
+        ], [
+            'rates.*.regular.min' => 'A fare rate must be greater than zero.',
+            'rates.*.discount.min' => 'A discount rate must be greater than zero.',
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            foreach ($validated['rates'] as $id => $data) {
+                FareRate::where('id', $data['id'] ?? $id)->update([
+                    'regular' => $data['regular'],
+                    'discount' => $data['discount'],
+                ]);
+            }
+        });
 
         return back()->with('success', 'Rates updated successfully');
     }

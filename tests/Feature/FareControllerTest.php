@@ -45,16 +45,6 @@ class FareControllerTest extends TestCase
         $this->assertTrue($response->getStatusCode() > 0);
     }
 
-    public function test_fare_delete_route_responds()
-    {
-        $response = $this->withoutMiddleware([VerifyCsrfToken::class])
-            ->delete(route('fares.destroy', ['id' => 1]));
-        $this->assertTrue($response->getStatusCode() > 0);
-    }
-
-    /**
-     * Fare CRUD Tests
-     */
     public function test_admin_can_create_fare()
     {
         $admin = User::factory()->create()->assignRole('admin');
@@ -96,18 +86,6 @@ class FareControllerTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('fares', ['id' => $fare->id, 'route_name' => 'New Route', 'fare_amount' => 30.00]);
-    }
-
-    public function test_admin_can_delete_fare()
-    {
-        $fare = Fare::factory()->create(['route_name' => 'To Delete']);
-        $admin = User::factory()->create()->assignRole('admin');
-
-        $response = $this->actingAs($admin)
-            ->withoutMiddleware(VerifyCsrfToken::class)
-            ->delete(route('fares.destroy', ['id' => $fare->id]));
-
-        $this->assertDatabaseMissing('fares', ['id' => $fare->id]);
     }
 
     public function test_fare_bulk_update_with_valid_data()

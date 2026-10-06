@@ -89,7 +89,7 @@ Guest's device is offline. System cannot fetch the map or PUJ coordinates. Syste
 | Vehicle tracking helper | `resources/js/map-tracker.js` |
 | Marker data API | `routes/api.php` → `GET /api/markers` |
 | Live vehicle data API | `routes/web.php` → `GET /track/vehicles/active` |
-| Location broadcast | `routes/web.php` → `POST /track/vehicle/broadcast` |
+| Location broadcast | `routes/web.php` → `POST /track/vehicle/broadcast` — the **write** side of live tracking is documented separately in UCN_SC_E021 |
 | Live channel | Pusher/Echo channel `vehicle-locations`, event `.vehicle-location-updated` |
 | Coordinate obfuscation | `app/Helpers/LocationPrivacy.php` |
 | Active-vehicle rule | `app/Http/Controllers/VehicleTrackingController.php::getActiveVehicles()` |

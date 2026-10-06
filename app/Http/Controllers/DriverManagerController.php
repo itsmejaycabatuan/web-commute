@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\ViolationCode;
 use App\Models\ViolationLog;
 use Auth;
+use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -36,32 +37,97 @@ class DriverManagerController extends Controller
         $validated = $request->validate([
             'driver_id' => 'required|exists:drivers,id',
             'date' => 'required|date',
+            'time_in' => 'nullable|date_format:H:i',
+            'time_out' => 'nullable|date_format:H:i',
+            'sick' => 'nullable|boolean',
+            'vacation' => 'nullable|boolean',
         ]);
 
-        $timeIn = Carbon::parse($validated['date'] . ' ' . $request->time_in);
-        $timeOut = Carbon::parse($validated['date'] . ' ' . $request->time_out);
+        $isLeave = $request->boolean('sick') || $request->boolean('vacation');
+        $timeIn = $validated['time_in'] ?? null;
+        $timeOut = $validated['time_out'] ?? null;
 
-        $totalHours = $timeIn->diffInMinutes($timeOut) / 60;
+        if (! $isLeave && (! $timeIn || ! $timeOut)) {
+            throw ValidationException::withMessages([
+                'time_in' => 'The time in and time out are required.',
+            ]);
+        }
+
+        if ($isLeave) {
+            TimeKeeping::create([
+                'driver_id' => $validated['driver_id'],
+                'date' => $validated['date'],
+                'time_in' => null,
+                'time_out' => null,
+                'hours_worked' => 0,
+                'overtime_hours' => 0,
+                'sick' => $request->boolean('sick'),
+                'vacation' => $request->boolean('vacation'),
+            ]);
+
+            return back()->with('success', 'Time entry saved successfully.');
+        }
+
+        $in = Carbon::parse($validated['date'].' '.$timeIn);
+        $out = Carbon::parse($validated['date'].' '.$timeOut);
+
+        // E4 — Clock out is before clock in.
+        if ($out->lessThanOrEqualTo($in)) {
+            throw ValidationException::withMessages([
+                'time_out' => 'The clock-out time must be later than the clock-in time.',
+            ]);
+        }
+
+        // E5 — Overlapping shifts. time_in/time_out are free-form strings
+        // ("08:00" from this form, "08:00 AM" from the driver's own clock-in), so
+        // the comparison is done on parsed values rather than in SQL.
+        $conflicting = TimeKeeping::where('driver_id', $validated['driver_id'])
+            ->whereDate('date', $validated['date'])
+            ->get()
+            ->filter(fn ($entry) => $entry->time_in && $entry->time_out
+                && $this->shiftOverlaps($entry, $in, $out))
+            ->first();
+
+        if ($conflicting) {
+            throw ValidationException::withMessages([
+                'time_in' => 'This shift overlaps an existing time entry for the driver on that date.',
+            ]);
+        }
+
+        $totalHours = $in->diffInMinutes($out) / 60;
         $overtime = max(0, $totalHours - 8);
 
         TimeKeeping::create([
             'driver_id' => $validated['driver_id'],
             'date' => $validated['date'],
-            'time_in' => $request->time_in,
-            'time_out' => $request->time_out,
+            'time_in' => $timeIn,
+            'time_out' => $timeOut,
             'hours_worked' => round($totalHours, 2),
             'overtime_hours' => round($overtime, 2),
-            'sick' => $request->sick,
-            'vacation' => $request->vacation,
+            'sick' => false,
+            'vacation' => false,
         ]);
 
         return back()
             ->with('success', 'Time entry saved successfully.');
-
-        return back();
     }
 
-    public function violationsLog()
+    /**
+     * True when an existing entry and the candidate shift share any part of the day.
+     */
+    private function shiftOverlaps(TimeKeeping $entry, Carbon $in, Carbon $out): bool
+    {
+        try {
+            $existingIn = Carbon::parse($entry->date.' '.$entry->time_in);
+            $existingOut = Carbon::parse($entry->date.' '.$entry->time_out);
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        return $existingIn->lessThan($out) && $in->lessThan($existingOut);
+    }
+
+    public function violationsLog(Request $request)
     {
         activity()->event('Violationslog')->log('Action performed: violationsLog');
         // Fetch drivers through User -> Driver relationship
@@ -95,8 +161,22 @@ class DriverManagerController extends Controller
             ]);
 
         // Violation logs — pull driver info through user->driver
-        $violations = ViolationLog::with(['user.driver', 'violationCode'])
-            ->latest()
+        // A7 — the log can be narrowed by driver name and/or date range.
+        $search = trim((string) $request->query('search', ''));
+        $from = $request->query('from');
+        $to = $request->query('to');
+
+        $violationQuery = ViolationLog::with(['user.driver', 'violationCode'])
+            ->when($from, fn ($q) => $q->whereDate('date_of_violation', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('date_of_violation', '<=', $to))
+            ->when($search, fn ($q) => $q->whereHas(
+                'user.driver',
+                fn ($dq) => $dq->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('license_number', 'like', '%'.$search.'%')
+            ))
+            ->latest();
+
+        $violations = $violationQuery
             ->get()
             ->map(function ($v) {
                 $driver = $v->user?->driver;
@@ -123,7 +203,14 @@ class DriverManagerController extends Controller
                 ];
             });
 
-        return view('driver-manager.violations-log', compact('drivers', 'violationCodes', 'violations'));
+        return view('driver-manager.violations-log', compact(
+            'drivers',
+            'violationCodes',
+            'violations',
+            'search',
+            'from',
+            'to'
+        ));
     }
 
     public function storeViolationLog(Request $request)
@@ -135,7 +222,7 @@ class DriverManagerController extends Controller
             'violation_instance' => 'required|integer|min:1',
             'violation_fine' => 'required|numeric|min:0',
             'place_of_violation' => 'required|string|max:255',
-            'date_of_violation' => 'required|date',
+            'date_of_violation' => 'required|date|before_or_equal:today',
             'time_of_violation' => 'required',
             'remarks' => 'required|string|max:500',
         ]);
@@ -155,7 +242,7 @@ class DriverManagerController extends Controller
             'violations.*.violation_instance' => 'required|in:1,2,3,4',
             'violations.*.violation_fine' => 'required|numeric|min:0',
             'violations.*.place_of_violation' => 'required|string|max:255',
-            'violations.*.date_of_violation' => 'required|date',
+            'violations.*.date_of_violation' => 'required|date|before_or_equal:today',
             'violations.*.time_of_violation' => 'required',
             'violations.*.remarks' => 'nullable|string|max:500',
         ]);
@@ -214,7 +301,7 @@ class DriverManagerController extends Controller
     {
         activity()->event('Storeviolationcode')->log('Action performed: storeViolationCode');
         $request->validate([
-            'code' => 'required|string|max:255',
+            'code' => 'required|string|max:255|unique:violation_codes,code',
             'name' => 'required|string|max:255',
             'first' => 'required',
             'second' => 'required',
@@ -276,6 +363,12 @@ class DriverManagerController extends Controller
     public function destroyViolationCode(string $id)
     {
         activity()->event('Destroyviolationcode')->log('Action performed: destroyViolationCode');
+
+        // E5 — Cannot delete in-use code: the code is referenced by violation logs.
+        if (ViolationLog::where('vc_id', $id)->exists()) {
+            return back()->with('error', 'This violation code is in use by existing violation logs and cannot be deleted.');
+        }
+
         $violationCode = ViolationCode::destroy($id);
 
         if (! $violationCode) {

@@ -140,6 +140,11 @@ class DriverController extends Controller
             return back()->with('error', 'Driver profile not found.');
         }
 
+        // UCN_SC_E012 — a suspended driver may not start a shift.
+        if ($driver->isSuspended()) {
+            return back()->with('error', 'Your account is suspended. Please contact the administrator.');
+        }
+
         $exists = TimeKeeping::where('driver_id', $driver->id)
             ->whereDate('date', today())
             ->exists();

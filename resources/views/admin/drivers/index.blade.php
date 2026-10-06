@@ -30,6 +30,14 @@
                     deleteModal: false,
                     reviewModal: false,
                     rejectConfirmModal: false,
+                    suspendModal: false,
+
+                    suspendId: '',
+                    suspendEmail: '',
+                    suspendName: '',
+                    suspendUrl: '',
+                    suspendIsSuspended: false,
+                    suspendReason: '',
 
                     viewDriverId: '',
                     viewEmail: '',
@@ -83,15 +91,31 @@
                             const matchSearch = !q ||
                                 d.email.toLowerCase().includes(q) ||
                                 (d.name && d.name.toLowerCase().includes(q));
-                            const matchFilter = this.filter === 'all' || d.status === this
-                                .filter;
+                            const matchFilter = this.filter === 'all'
+                                ? true
+                                : this.filter === 'suspended'
+                                    ? d.is_suspended
+                                    : d.status === this.filter;
                             return matchSearch && matchFilter;
                         });
                     },
 
                     closeAllModals() {
                         this.addModal = this.viewModal = this.editModal =
-                            this.deleteModal = this.reviewModal = false;
+                            this.deleteModal = this.reviewModal = this.suspendModal = false;
+                    },
+
+                    openSuspend(d) {
+                        this.closeAllModals();
+                        Object.assign(this, {
+                            suspendModal: true,
+                            suspendId: d.id,
+                            suspendEmail: d.email,
+                            suspendName: d.name || '',
+                            suspendUrl: d.suspension_url || '',
+                            suspendIsSuspended: !!d.is_suspended,
+                            suspendReason: '',
+                        });
                     },
 
                     openView(d) {
@@ -289,6 +313,8 @@
                 'driver_code' => $d->driver_code ?? '',
                 'is_approved' => $d->is_approved,
                 'is_rejected' => $d->is_rejected,
+                'is_suspended' => (bool) $d->is_suspended,
+                'suspension_reason' => $d->suspension_reason ?? '',
                 'status' => $status,
                 'has_license' => $hasLicense,
                 'license_url' => $licenseUrl,
@@ -297,6 +323,7 @@
                 'reject_url' => route('drivers.reject', $d->id),
                 'update_url' => route('drivers.update', $d->id),
                 'delete_url' => route('drivers.destroy', $d->id),
+                'suspension_url' => route('drivers.suspension', $d->id),
             ];
         })
         ->values();
@@ -427,6 +454,13 @@
                                 class="px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest border transition">
                                 Rejected
                             </button>
+                            <button @click="filter = 'suspended'"
+                                :class="filter === 'suspended' ?
+                                    'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20' :
+                                    'bg-gray-50 dark:bg-[#111] text-gray-500 dark:text-[#555] border-gray-200 dark:border-[#1e1e1e] hover:border-gray-300 dark:hover:border-[#333] hover:text-gray-700 dark:hover:text-[#888]'"
+                                class="px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest border transition">
+                                Suspended
+                            </button>
                         </div>
                         <span class="text-[8px] font-bold text-gray-400 dark:text-[#333] uppercase tracking-widest"
                             x-text="filteredDrivers.length + ' of ' + drivers.length"></span>
@@ -470,15 +504,19 @@
                                         </div>
                                     </td>
                                     <td class="px-4 sm:px-6 py-3">
-                                        <template x-if="driver.status === 'approved'">
+                                        <template x-if="driver.is_suspended">
+                                            <span
+                                                class="text-[7px] sm:text-[8px] bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/15 px-1.5 py-0.5 rounded-md font-bold uppercase">Suspended</span>
+                                        </template>
+                                        <template x-if="driver.status === 'approved' && !driver.is_suspended">
                                             <span
                                                 class="text-[7px] sm:text-[8px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/15 px-1.5 py-0.5 rounded-md font-bold uppercase">Approved</span>
                                         </template>
-                                        <template x-if="driver.status === 'rejected'">
+                                        <template x-if="driver.status === 'rejected' && !driver.is_suspended">
                                             <span
                                                 class="text-[7px] sm:text-[8px] bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/15 px-1.5 py-0.5 rounded-md font-bold uppercase">Rejected</span>
                                         </template>
-                                        <template x-if="driver.status === 'pending'">
+                                        <template x-if="driver.status === 'pending' && !driver.is_suspended">
                                             <span
                                                 class="text-[7px] sm:text-[8px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/15 px-1.5 py-0.5 rounded-md font-bold uppercase">Pending</span>
                                         </template>
@@ -505,6 +543,15 @@
                                                         class="fa-solid fa-id-card text-[8px] text-purple-500/40 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition"></i>
                                                 </button>
                                             </template>
+
+                                            <button @click="openSuspend(driver)"
+                                                class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-200 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] flex items-center justify-center transition group"
+                                                :title="driver.is_suspended ? 'Reactivate' : 'Suspend'">
+                                                <i class="fa-solid text-[8px] transition"
+                                                    :class="driver.is_suspended
+                                                        ? 'fa-play text-emerald-500/60 group-hover:text-emerald-500 dark:group-hover:text-emerald-400'
+                                                        : 'fa-ban text-orange-500/60 group-hover:text-orange-500 dark:group-hover:text-orange-400'"></i>
+                                            </button>
 
                                             <button @click="openEdit(driver)"
                                                 class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-200 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] flex items-center justify-center transition group"
@@ -1434,6 +1481,75 @@
                         Yes, Reject
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- ==================== SUSPEND / REACTIVATE DRIVER MODAL ==================== -->
+        <div x-show="suspendModal" x-cloak
+            class="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 dark:bg-black/90 backdrop-blur-sm"
+            @click.self="suspendModal = false" x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0">
+
+            <div class="glass-panel w-full max-w-sm rounded-[2rem] overflow-hidden text-center p-6 sm:p-8" @click.stop
+                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full mb-4"
+                    :class="suspendIsSuspended ? 'bg-emerald-100 dark:bg-emerald-900/20' :
+                        'bg-orange-100 dark:bg-orange-900/20'">
+                    <i class="fa-solid text-2xl" :class="suspendIsSuspended
+                        ? 'fa-play text-emerald-600 dark:text-emerald-400'
+                        : 'fa-ban text-orange-600 dark:text-orange-400'"></i>
+                </div>
+
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2"
+                    x-text="suspendIsSuspended ? 'Reactivate Driver?' : 'Suspend Driver?'"></h3>
+
+                <p class="text-sm text-gray-500 dark:text-[#888] mb-5 leading-relaxed">
+                    <template x-if="!suspendIsSuspended">
+                        <span>
+                            <span class="font-bold text-gray-900 dark:text-white" x-text="suspendName || suspendEmail"></span>
+                            will not be able to sign in, clock in or broadcast a location, and is detached from any
+                            assigned vehicle.
+                        </span>
+                    </template>
+                    <template x-if="suspendIsSuspended">
+                        <span>This account will be able to sign in again.</span>
+                    </template>
+                </p>
+
+                <form :action="suspendUrl" method="POST" class="text-left">
+                    @csrf
+                    @method('PATCH')
+
+                    <template x-if="!suspendIsSuspended">
+                        <div class="mb-4">
+                            <label
+                                class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Reason
+                                (optional)</label>
+                            <input type="text" name="suspension_reason" x-model="suspendReason"
+                                placeholder="e.g. Licence under investigation"
+                                maxlength="255"
+                                class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
+                        </div>
+                    </template>
+
+                    <div class="flex gap-3 w-full">
+                        <button type="button" @click="suspendModal = false"
+                            class="flex-1 py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-900 dark:text-white text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                            class="flex-1 py-2.5 rounded-xl text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98] shadow-lg"
+                            :class="suspendIsSuspended
+                                ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20'
+                                : 'bg-orange-600 hover:bg-orange-500 shadow-orange-500/20'"
+                            x-text="suspendIsSuspended ? 'Reactivate' : 'Suspend'"></button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

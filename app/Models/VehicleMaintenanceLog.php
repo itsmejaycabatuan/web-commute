@@ -53,41 +53,39 @@ class VehicleMaintenanceLog extends Model
 
     protected $fillable = [
         'maintenance_id',
+        'vehicle_id',
+        'maintenance_task_id',
+        'service_date',
+        'mileage_at_service',
+        'performed_by',
+        'cost',
+        'invoice_number',
+        'remarks',
     ];
 
+    protected $casts = [
+        'service_date' => 'date',
+        'mileage_at_service' => 'integer',
+        'cost' => 'decimal:2',
+    ];
+
+    /**
+     * The service log is its own record; `maintenance_id` only records which
+     * preventive-maintenance entry it was logged from (nullable — the log
+     * outlives the schedule entry).
+     */
     public function preventiveMaintenance()
     {
         return $this->belongsTo(PreventiveMaintenance::class, 'maintenance_id');
     }
 
-    // ── Proxy accessors ──
-    public function getVehicleAttribute()
+    public function vehicle()
     {
-        return $this->preventiveMaintenance?->vehicle;
+        return $this->belongsTo(Vehicle::class);
     }
 
-    public function getMaintenanceTaskAttribute()
+    public function maintenanceTask()
     {
-        return $this->preventiveMaintenance?->maintenanceTask;
-    }
-
-    public function getLastServiceDateAttribute()
-    {
-        return $this->preventiveMaintenance?->last_service_date;
-    }
-
-    public function getLastServiceOdoAttribute()
-    {
-        return $this->preventiveMaintenance?->last_service_odo;
-    }
-
-    public function getLastServiceCostAttribute()
-    {
-        return $this->preventiveMaintenance?->last_service_cost;
-    }
-
-    public function getCommentsAttribute()
-    {
-        return $this->preventiveMaintenance?->comments;
+        return $this->belongsTo(MaintenanceTask::class, 'maintenance_task_id');
     }
 }

@@ -37,6 +37,10 @@
                 'email' => $c->email,
                 'email_verified_at' => $c->email_verified_at,
                 'created_at' => $c->created_at->format('M j, Y g:i A'),
+                'is_suspended' => (bool) $c->is_suspended,
+                'suspended_at' => $c->suspended_at?->format('M j, Y g:i A'),
+                'balance' => number_format((float) ($balances[$c->id] ?? 0), 2),
+                'fares_paid' => (int) $c->fares_paid,
             ],
         )
         ->values();
@@ -53,6 +57,8 @@
         showAddModal: false,
         showEditModal: false,
         showDeleteModal: false,
+        showViewModal: false,
+        showSuspendModal: false,
         selectedUser: null,
         commuters: [],
 
@@ -79,6 +85,8 @@
                 if (this.filter === 'all') return matchSearch;
                 if (this.filter === 'verified') return matchSearch && c.email_verified_at;
                 if (this.filter === 'pending') return matchSearch && !c.email_verified_at;
+                if (this.filter === 'suspended') return matchSearch && c.is_suspended;
+                if (this.filter === 'active') return matchSearch && !c.is_suspended;
                 return matchSearch;
             });
         },
@@ -86,6 +94,16 @@
         openEdit(user) {
             this.selectedUser = { ...user };
             this.showEditModal = true;
+        },
+
+        openView(user) {
+            this.selectedUser = { ...user };
+            this.showViewModal = true;
+        },
+
+        openSuspend(user) {
+            this.selectedUser = { ...user };
+            this.showSuspendModal = true;
         },
 
         openDelete(user) {
@@ -202,6 +220,20 @@
                                 class="px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest border transition">
                                 Pending
                             </button>
+                            <button @click="filter = 'active'"
+                                :class="filter === 'active' ?
+                                    'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' :
+                                    'bg-gray-50 dark:bg-[#111] text-gray-500 dark:text-[#555] border-gray-200 dark:border-[#1e1e1e] hover:border-gray-300 dark:hover:border-[#333] hover:text-gray-700 dark:hover:text-[#888]'"
+                                class="px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest border transition">
+                                Active
+                            </button>
+                            <button @click="filter = 'suspended'"
+                                :class="filter === 'suspended' ?
+                                    'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20' :
+                                    'bg-gray-50 dark:bg-[#111] text-gray-500 dark:text-[#555] border-gray-200 dark:border-[#1e1e1e] hover:border-gray-300 dark:hover:border-[#333] hover:text-gray-700 dark:hover:text-[#888]'"
+                                class="px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest border transition">
+                                Suspended
+                            </button>
                         </div>
                         <span class="text-[8px] font-bold text-gray-400 dark:text-[#333] uppercase tracking-widest"
                             x-text="filteredCommuters.length + ' of ' + commuters.length"></span>
@@ -218,6 +250,7 @@
                                 <th class="px-4 sm:px-6 py-3 font-bold">Commuter</th>
                                 <th class="px-4 sm:px-6 py-3 font-bold">Status</th>
                                 <th class="px-4 sm:px-6 py-3 font-bold">Registered</th>
+                                <th class="px-4 sm:px-6 py-3 font-bold text-right">Balance</th>
                                 <th class="px-4 sm:px-6 py-3 font-bold text-right">Actions</th>
                             </tr>
                         </thead>
@@ -242,11 +275,15 @@
                                         </div>
                                     </td>
                                     <td class="px-4 sm:px-6 py-3">
-                                        <template x-if="commuter.email_verified_at">
+                                        <template x-if="commuter.is_suspended">
+                                            <span
+                                                class="text-[7px] sm:text-[8px] bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/15 px-1.5 py-0.5 rounded-md font-bold uppercase">Suspended</span>
+                                        </template>
+                                        <template x-if="!commuter.is_suspended && commuter.email_verified_at">
                                             <span
                                                 class="text-[7px] sm:text-[8px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/15 px-1.5 py-0.5 rounded-md font-bold uppercase">Verified</span>
                                         </template>
-                                        <template x-if="!commuter.email_verified_at">
+                                        <template x-if="!commuter.is_suspended && !commuter.email_verified_at">
                                             <span
                                                 class="text-[7px] sm:text-[8px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/15 px-1.5 py-0.5 rounded-md font-bold uppercase">Pending</span>
                                         </template>
@@ -255,13 +292,36 @@
                                         <span class="text-[10px] font-bold text-gray-500 dark:text-[#555]"
                                             x-text="commuter.created_at"></span>
                                     </td>
+                                    <td class="px-4 sm:px-6 py-3 text-right">
+                                        <span
+                                            class="text-[11px] font-bold font-mono"
+                                            :class="parseFloat(commuter.balance) > 0
+                                                ? 'text-emerald-500 dark:text-emerald-400'
+                                                : 'text-gray-400 dark:text-[#444]'"
+                                            x-text="'₱' + commuter.balance"></span>
+                                    </td>
                                     <td class="px-4 sm:px-6 py-3">
                                         <div class="flex items-center gap-1.5 justify-end">
+                                            <a :href="'/commuters/' + commuter.id"
+                                                class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-200 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] flex items-center justify-center transition group"
+                                                title="View Details">
+                                                <i
+                                                    class="fa-solid fa-eye text-[8px] text-gray-400 dark:text-[#444] group-hover:text-gray-900 dark:group-hover:text-white transition"></i>
+                                            </a>
                                             <button @click="openEdit(commuter)"
                                                 class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-200 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] flex items-center justify-center transition group"
                                                 title="Edit">
                                                 <i
                                                     class="fa-solid fa-pen text-[8px] text-gray-400 dark:text-[#444] group-hover:text-gray-900 dark:group-hover:text-white transition"></i>
+                                            </button>
+                                            <button @click="openSuspend(commuter)"
+                                                class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-200 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] flex items-center justify-center transition group"
+                                                :title="commuter.is_suspended ? 'Reactivate' : 'Suspend'">
+                                                <i
+                                                    class="fa-solid text-[8px] transition"
+                                                    :class="commuter.is_suspended
+                                                        ? 'fa-play text-emerald-500/60 group-hover:text-emerald-500 dark:group-hover:text-emerald-400'
+                                                        : 'fa-ban text-amber-500/60 group-hover:text-amber-500 dark:group-hover:text-amber-400'"></i>
                                             </button>
                                             <button @click="openDelete(commuter)"
                                                 class="w-8 h-8 rounded-lg bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 hover:border-red-500/20 flex items-center justify-center transition group"
@@ -277,7 +337,7 @@
                             <!-- Empty: no commuters at all -->
                             <template x-if="commuters.length === 0">
                                 <tr>
-                                    <td colspan="5" class="py-12 sm:py-16">
+                                    <td colspan="6" class="py-12 sm:py-16">
                                         <div class="flex flex-col items-center justify-center">
                                             <div
                                                 class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center mb-3">
@@ -299,7 +359,7 @@
                             <!-- Empty: no search results -->
                             <template x-if="commuters.length > 0 && filteredCommuters.length === 0">
                                 <tr>
-                                    <td colspan="5" class="py-12 sm:py-16">
+                                    <td colspan="6" class="py-12 sm:py-16">
                                         <div class="flex flex-col items-center justify-center">
                                             <div
                                                 class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center mb-3">
@@ -506,6 +566,64 @@
             </div>
         </div>
 
+
+        <!-- ══════════ SUSPEND / REACTIVATE COMMUTER MODAL (A4) ══════════ -->
+        <div x-show="showSuspendModal" x-cloak
+            class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
+            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" style="display:none;">
+
+            <div @click.away="showSuspendModal = false" class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-sm w-full">
+
+                <div class="text-center">
+                    <div
+                        class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5 border"
+                        :class="selectedUser?.is_suspended
+                            ? 'bg-emerald-500/10 border-emerald-500/20'
+                            : 'bg-amber-500/10 border-amber-500/20'">
+                        <i class="fa-solid text-lg"
+                            :class="selectedUser?.is_suspended
+                                ? 'fa-play text-emerald-500 dark:text-emerald-400'
+                                : 'fa-ban text-amber-500 dark:text-amber-400'"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1.5"
+                        x-text="selectedUser?.is_suspended ? 'Reactivate Commuter?' : 'Suspend Commuter?'"></h3>
+                    <p class="text-[11px] text-gray-500 dark:text-[#555] mb-1"
+                        x-text="selectedUser?.is_suspended
+                            ? 'This account will be able to sign in again.'
+                            : 'This account will not be able to sign in. Its wallet and receipts are kept for auditing.'"></p>
+                    <div
+                        class="inline-flex items-center gap-2 mt-2.5 mb-7 px-3.5 py-2 rounded-xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]">
+                        <div
+                            class="w-6 h-6 rounded-md bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-user text-[7px] text-gray-400 dark:text-[#444]"></i>
+                        </div>
+                        <span class="text-[10px] font-bold text-gray-700 dark:text-[#888] truncate max-w-[220px]"
+                            x-text="selectedUser?.email"></span>
+                    </div>
+
+                    <div class="flex gap-2.5">
+                        <button @click="showSuspendModal = false"
+                            class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-900 dark:text-white text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">
+                            Cancel
+                        </button>
+                        <form method="POST" :action="'/commuters/' + (selectedUser?.id || '') + '/suspension'"
+                            class="flex-1">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit"
+                                class="w-full py-3 rounded-xl text-white text-[10px] font-bold uppercase tracking-widest transition active:scale-[0.98]"
+                                :class="selectedUser?.is_suspended
+                                    ? 'bg-emerald-600 hover:bg-emerald-500'
+                                    : 'bg-amber-600 hover:bg-amber-500'">
+                                Confirm
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- ══════════ DELETE COMMUTER MODAL ══════════ -->
         <div x-show="showDeleteModal" x-cloak

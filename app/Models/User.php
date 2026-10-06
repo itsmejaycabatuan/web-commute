@@ -106,6 +106,8 @@ class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
         'license_image_mime',
         'driver_approval_status',
         'email_verified_at',
+        'is_suspended',
+        'suspended_at',
     ];
 
     /**
@@ -126,6 +128,8 @@ class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'is_suspended' => 'boolean',
+        'suspended_at' => 'datetime',
     ];
 
     public function payment()
@@ -151,5 +155,36 @@ class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
     public function preference()
     {
         return $this->hasOne(UserPreference::class);
+    }
+
+    /**
+     * UCN_SC_E018 (commuters) A4 and UCN_SC_E012 (drivers) — an account is
+     * suspended either on the user record (commuter) or on the driver profile.
+     */
+    public function isSuspended(): bool
+    {
+        if ($this->is_suspended) {
+            return true;
+        }
+
+        $driver = $this->relationLoaded('driver') ? $this->driver : $this->driver()->first();
+
+        return (bool) $driver?->is_suspended;
+    }
+
+    public function suspend(): void
+    {
+        $this->forceFill([
+            'is_suspended' => true,
+            'suspended_at' => now(),
+        ])->save();
+    }
+
+    public function unsuspend(): void
+    {
+        $this->forceFill([
+            'is_suspended' => false,
+            'suspended_at' => null,
+        ])->save();
     }
 }

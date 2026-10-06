@@ -140,6 +140,22 @@
                 </div>
             @endif
 
+            @if ($errors->any())
+                <div
+                    class="mb-5 px-4 py-3 rounded-xl border border-red-500/15 bg-red-500/5 flex items-start gap-3">
+                    <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-xmark text-[8px] text-red-500 dark:text-red-400"></i>
+                    </div>
+                    <div class="text-[11px] text-red-600 dark:text-red-400 font-medium space-y-1">
+                        @foreach ($errors->all() as $message)
+                            <p class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
+                            </p>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             <!-- ══════════ QUICK STATS ══════════ -->
             @php
                 $minRegular = $rates->min('regular') ?? 0;

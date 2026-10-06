@@ -176,7 +176,7 @@
     }
 }" :class="(showModal || showEditModal) ? 'overflow-hidden' : ''">
     @include('components.flash');
-    @include('maintenance-manager.layout.sidebar');
+    <x-layout.sidebar />
 
     <main :class="open ? 'ml-72' : 'ml-20'" x-data="{ editing: false, search: '' }" class="sidebar-transition p-8 md:p-12 min-h-screen">
 
@@ -192,9 +192,9 @@
                 <div class="flex gap-3 self-start">
                     <select id="fleet-selector"
                         class="bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-1 focus:ring-blue-500/50 outline-none appearance-none cursor-pointer pr-10">
-                        @foreach ($fleets as $f)
-                            <option value="{{ $f->id }}" {{ $fleet->id === $f->id ? 'selected' : '' }}>
-                                {{ $f->vehicle?->plate_number }} ({{ $f->vehicle?->brand }} {{ $f->vehicle?->model }})
+                        @foreach ($vehicles as $v)
+                            <option value="{{ $v->id }}" {{ $vehicle->id === $v->id ? 'selected' : '' }}>
+                                {{ $v->plate_number }} ({{ $v->brand }} {{ $v->model }})
                             </option>
                         @endforeach
                     </select>
@@ -216,22 +216,22 @@
                                     <span class="text-[10px] uppercase font-bold text-white/30 block">Plate
                                         Number</span>
                                     <span
-                                        class="text-white/80 font-medium font-mono">{{ $fleet?->vehicle?->plate_number ?? '—' }}</span>
+                                        class="text-white/80 font-medium font-mono">{{ $vehicle?->plate_number ?? '—' }}</span>
                                 </div>
                                 <div>
                                     <span class="text-[10px] uppercase font-bold text-white/30 block">Year</span>
-                                    <span class="text-white/80 font-medium">{{ $fleet?->vehicle?->year ?? '—' }}</span>
+                                    <span class="text-white/80 font-medium">{{ $vehicle?->year ?? '—' }}</span>
                                 </div>
                                 <div>
                                     <span class="text-[10px] uppercase font-bold text-white/30 block">Brand /
                                         Model</span>
-                                    <span class="text-white/80 font-medium">{{ $fleet?->vehicle?->brand }}
-                                        {{ $fleet?->vehicle?->model }}</span>
+                                    <span class="text-white/80 font-medium">{{ $vehicle?->brand }}
+                                        {{ $vehicle?->model }}</span>
                                 </div>
                                 <div>
                                     <span class="text-[10px] uppercase font-bold text-white/30 block">Driver</span>
                                     <span
-                                        class="text-white/80 font-medium">{{ $fleet?->vehicle?->driver?->name ?? 'Unassigned' }}</span>
+                                        class="text-white/80 font-medium">{{ $vehicle?->driver?->name ?? 'Unassigned' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -433,7 +433,7 @@
 
                 @csrf
 
-                <input type="hidden" name="vm_id" value="{{ $fleet->id }}">
+                <input type="hidden" name="vm_id" value="{{ $vehicle->id }}">
 
                 <!-- Header -->
                 <div class="flex items-center justify-between px-8 pt-7 pb-5 border-b border-white/5 shrink-0">
@@ -444,9 +444,9 @@
                         </div>
                         <div>
                             <h3 id="modal-title" class="text-lg font-black tracking-tight">Log New Service</h3>
-                            <p class="text-xs text-white/30 mt-0.5">{{ $fleet?->vehicle?->plate_number }} &middot;
-                                {{ $fleet?->vehicle?->brand }} {{ $fleet?->vehicle?->model }}
-                                ({{ $fleet?->vehicle?->year }})</p>
+                            <p class="text-xs text-white/30 mt-0.5">{{ $vehicle?->plate_number }} &middot;
+                                {{ $vehicle?->brand }} {{ $vehicle?->model }}
+                                ({{ $vehicle?->year }})</p>
                         </div>
                     </div>
                     <button type="button" @click="showModal = false"
@@ -632,8 +632,8 @@
                         <div>
                             <h3 class="text-lg font-black tracking-tight">Edit Service Log</h3>
                             <p class="text-xs text-white/30 mt-0.5">
-                                {{ $fleet?->vehicle?->plate_number }} &middot; {{ $fleet?->vehicle?->brand }}
-                                {{ $fleet?->vehicle?->model }} ({{ $fleet?->vehicle?->year }})
+                                {{ $vehicle?->plate_number }} &middot; {{ $vehicle?->brand }}
+                                {{ $vehicle?->model }} ({{ $vehicle?->year }})
                             </p>
                         </div>
                     </div>

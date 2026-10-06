@@ -69,8 +69,18 @@ class Driver extends Model
         'is_approved',
         'is_rejected',
         'status',
+        'is_suspended',
+        'suspended_at',
+        'suspension_reason',
         'license_image_data',
         'license_image_mime',
+    ];
+
+    protected $casts = [
+        'is_approved' => 'boolean',
+        'is_rejected' => 'boolean',
+        'is_suspended' => 'boolean',
+        'suspended_at' => 'datetime',
     ];
 
     public function user()
@@ -86,5 +96,39 @@ class Driver extends Model
     public function vehicle()
     {
         return $this->hasMany(Vehicle::class);
+    }
+
+    /**
+     * UCN_SC_E012 — a suspended driver is refused at sign-in and may not clock in.
+     */
+    public function isSuspended(): bool
+    {
+        return (bool) $this->is_suspended;
+    }
+
+    /**
+     * Suspending also takes the driver off shift and frees any vehicle they hold,
+     * so a suspended driver never shows as active on the map or in reports.
+     */
+    public function suspend(?string $reason = null): void
+    {
+        $this->forceFill([
+            'is_suspended' => true,
+            'suspended_at' => now(),
+            'suspension_reason' => $reason,
+            'status' => 'suspended',
+        ])->save();
+
+        $this->vehicle()->update(['driver_id' => null]);
+    }
+
+    public function unsuspend(): void
+    {
+        $this->forceFill([
+            'is_suspended' => false,
+            'suspended_at' => null,
+            'suspension_reason' => null,
+            'status' => 'inactive',
+        ])->save();
     }
 }

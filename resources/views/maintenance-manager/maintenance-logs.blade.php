@@ -229,14 +229,13 @@
         class="sidebar-transition pt-8 pr-4 sm:pr-8 pb-8 pl-4 sm:pl-8 min-h-screen mb-12">
 
         @php
-            $totalCost = $logs->sum(fn($log) => (float) ($log->preventiveMaintenance?->last_service_cost ?? 0));
-            $uniqueVehicles = $logs->pluck('preventiveMaintenance.vehicle_id')->filter()->unique()->count();
+            $totalCost = $logs->sum(fn($log) => (float) $log->cost);
+            $uniqueVehicles = $logs->pluck('vehicle_id')->filter()->unique()->count();
 
             // Prepare logs data for Alpine
             $logsData = $logs
                 ->map(function ($log) {
-                    $pm = $log->preventiveMaintenance;
-                    $plate = $pm?->vehicle?->plate_number ?? 'N/A';
+                    $plate = $log->vehicle?->plate_number ?? 'N/A';
 
                     $badgeColors = [
                         ['bg' => 'rgba(59,130,246,0.08)', 'text' => '#3b82f6', 'border' => 'rgba(59,130,246,0.2)'],
@@ -251,17 +250,19 @@
 
                     return [
                         'id' => $log->id,
-                        'date' => $pm?->last_service_date?->format('M d, Y') ?? '—',
-                        'day' => $pm?->last_service_date?->format('l') ?? '',
-                        'date_raw' => $pm?->last_service_date?->format('Y-m-d') ?? null,
+                        'date' => $log->service_date?->format('M d, Y') ?? '—',
+                        'day' => $log->service_date?->format('l') ?? '',
+                        'date_raw' => $log->service_date?->format('Y-m-d') ?? null,
                         'plate' => $plate,
-                        'vehicle_name' => ($pm?->vehicle?->brand ?? '') . ' ' . ($pm?->vehicle?->model ?? ''),
-                        'service' => $pm?->maintenanceTask?->tasks_performed ?? '—',
-                        'mileage' => $pm?->last_service_odo ? number_format($pm->last_service_odo) . ' km' : '—',
-                        'mileage_raw' => $pm?->last_service_odo ?? null,
-                        'cost' => $pm?->last_service_cost ? number_format($pm->last_service_cost, 2) : '0.00',
-                        'cost_raw' => (float) ($pm?->last_service_cost ?? 0),
-                        'comments' => $pm?->comments ?? '—',
+                        'vehicle_name' => ($log->vehicle?->brand ?? '') . ' ' . ($log->vehicle?->model ?? ''),
+                        'service' => $log->maintenanceTask?->tasks_performed ?? '—',
+                        'performed_by' => $log->performed_by ?? '—',
+                        'invoice_number' => $log->invoice_number ?? '—',
+                        'mileage' => $log->mileage_at_service ? number_format($log->mileage_at_service) . ' km' : '—',
+                        'mileage_raw' => $log->mileage_at_service ?? null,
+                        'cost' => number_format((float) $log->cost, 2),
+                        'cost_raw' => (float) $log->cost,
+                        'comments' => $log->remarks ?? '—',
                         'color' => $color,
                     ];
                 })

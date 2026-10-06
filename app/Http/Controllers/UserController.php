@@ -17,6 +17,7 @@ use App\Models\Vehicle;
 use App\Models\VehicleLocationHistory;
 use App\Models\ViolationLog;
 use App\Models\Wallet;
+use App\Services\FleetMaintenanceService;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
@@ -138,7 +139,7 @@ class UserController extends Controller
         }
     }
 
-    public function dashboard(Request $request)
+    public function dashboard(Request $request, FleetMaintenanceService $fleet)
     {
         activity()->event('Dashboard')->log('Action performed: dashboard');
         $user = Auth::user();
@@ -291,6 +292,8 @@ class UserController extends Controller
         }
 
         if ($role == 'maintenance_manager') {
+            // The dashboard shows the same fleet maintenance summary as the full
+            // page (/fleet-maintenance-log) so the two can never disagree.
             $vehicles = Vehicle::with('driver')
                 ->orderBy('plate_number')
                 ->get();
@@ -298,157 +301,22 @@ class UserController extends Controller
             $drivers = Driver::orderBy('name')->get();
 
             if ($vehicles->isEmpty()) {
-                return view('maintenance-manager.dashboard', [
-                    'vehicles' => collect(),
-                    'drivers' => $drivers,
-                    'monthlyKm' => array_fill(1, 12, 0),
-                    'monthlyStartOdo' => array_fill(1, 12, null),
-                    'monthlyEndOdo' => array_fill(1, 12, null),
-                    'yearStartOdo' => null,
-                    'yearEndOdo' => 0,
-                    'vehicle' => null,
-                    'costSummary' => collect(),
-                    'monthlyTotals' => array_fill(1, 12, 0),
-                    'ytdTotal' => 0,
-                    'allLogs' => collect(),
-                    'totalServiceCost' => 0,
-                    'costPerKm' => 0,
-                    'annualKm' => 0,
-                    'year' => now()->year,
-                    'monthlyCpk' => array_fill(1, 12, null),
-                ]);
+                return view('maintenance-manager.dashboard', array_merge(
+                    ['vehicles' => collect(), 'drivers' => $drivers, 'vehicle' => null],
+                    $fleet->emptySummary(),
+                ));
             }
 
             $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
             $vehicle = Vehicle::with('driver')->find($selectedId) ?? $vehicles->first();
 
-            $year = now()->year;
-
-            // ── Cost Summary ──
-
-            $yearLogs = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
-                ->with('maintenanceTask')
-                ->whereYear('last_service_date', $year)
-                ->whereNotNull('last_service_date')
-                ->orderBy('last_service_date')
-                ->get();
-
-            $costSummary = [];
-            $monthlyTotals = array_fill(1, 12, 0);
-            $ytdTotal = 0;
-
-            foreach ($yearLogs as $log) {
-                $taskName = $log->maintenanceTask?->tasks_performed ?? 'Unknown Task';
-                $month = $log->last_service_date->month;
-                $cost = (float) ($log->last_service_cost ?? 0);
-
-                if (! isset($costSummary[$taskName])) {
-                    $costSummary[$taskName] = array_fill(1, 12, 0);
-                }
-
-                $costSummary[$taskName][$month] += $cost;
-                $monthlyTotals[$month] += $cost;
-                $ytdTotal += $cost;
-            }
-
-            ksort($costSummary);
-            $costSummary = collect($costSummary);
-
-            // ── All Logs (for recent activity table) ──
-
-            $allLogs = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
-                ->with('maintenanceTask')
-                ->orderByDesc('last_service_date')
-                ->get()
-                ->map(function ($log) {
-                    return [
-                        'id' => $log->id,
-                        'task_name' => $log->maintenanceTask?->tasks_performed ?? 'Unknown Task',
-                        'service_date' => $log->last_service_date?->format('M d, Y'),
-                        'mileage' => $log->last_service_odo,
-                        'cost' => $log->last_service_cost,
-                        'remarks' => $log->comments,
-                    ];
-                });
-
-            $totalServiceCost = $ytdTotal;
-
-            // ── Odometer & KM Calculation (year-scoped) ──
-
-            $yearLogsOrdered = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
-                ->whereYear('last_service_date', $year)
-                ->whereNotNull('last_service_odo')
-                ->whereNotNull('last_service_date')
-                ->orderBy('last_service_date')
-                ->get();
-
-            $prevYearLog = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
-                ->whereNotNull('last_service_odo')
-                ->where('last_service_date', '<', "{$year}-01-01")
-                ->orderByDesc('last_service_date')
-                ->first();
-
-            $annualStartingOdo = $prevYearLog?->last_service_odo;
-
-            $monthlyKm = array_fill(1, 12, 0);
-            $monthlyStartOdo = array_fill(1, 12, null);
-            $monthlyEndOdo = array_fill(1, 12, null);
-            $monthlyCpk = array_fill(1, 12, null);
-
-            $boundaryOdo = $annualStartingOdo;
-
-            foreach ($yearLogsOrdered as $log) {
-                $m = $log->last_service_date->month;
-
-                if ($monthlyStartOdo[$m] === null) {
-                    $monthlyStartOdo[$m] = $boundaryOdo;
-                }
-
-                $monthlyEndOdo[$m] = $log->last_service_odo;
-                $boundaryOdo = $log->last_service_odo;
-            }
-
-            for ($m = 1; $m <= 12; $m++) {
-                if ($monthlyStartOdo[$m] !== null && $monthlyEndOdo[$m] !== null) {
-                    $km = $monthlyEndOdo[$m] - $monthlyStartOdo[$m];
-                    if ($km > 0) {
-                        $monthlyKm[$m] = $km;
-                    }
-                }
-            }
-
-            $yearStartOdo = $annualStartingOdo;
-            $yearEndOdo = $boundaryOdo;
-            $annualKm = ($annualStartingOdo !== null && $boundaryOdo !== null)
-                                ? $boundaryOdo - $annualStartingOdo
-                                : 0;
-
-            for ($m = 1; $m <= 12; $m++) {
-                if ($monthlyKm[$m] > 0) {
-                    $monthlyCpk[$m] = round($monthlyTotals[$m] / $monthlyKm[$m], 2);
-                }
-            }
-
-            $costPerKm = $annualKm > 0 ? round($totalServiceCost / $annualKm, 2) : 0;
-
-            return view('maintenance-manager.dashboard', compact(
-                'vehicles',
-                'drivers',
-                'vehicle',
-                'costSummary',
-                'monthlyTotals',
-                'ytdTotal',
-                'allLogs',
-                'totalServiceCost',
-                'costPerKm',
-                'annualKm',
-                'year',
-                'monthlyKm',
-                'monthlyStartOdo',
-                'monthlyEndOdo',
-                'yearStartOdo',
-                'yearEndOdo',
-                'monthlyCpk',
+            return view('maintenance-manager.dashboard', array_merge(
+                [
+                    'vehicles' => $vehicles,
+                    'drivers' => $drivers,
+                    'vehicle' => $vehicle,
+                ],
+                $fleet->summaryFor($vehicle),
             ));
         }
     }
@@ -647,6 +515,21 @@ class UserController extends Controller
         $request->session()->regenerate();
 
         $user = Auth::user();
+
+        // UCN_SC_E018 A4 / UCN_SC_E012 — a suspended account is refused here, before
+        // the session becomes usable, so a suspended commuter or driver is never
+        // signed in.
+        if ($user->isSuspended()) {
+            activity()->event('Login')->log('Suspended user attempted to log in.');
+
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'credentials' => 'This account has been suspended. Please contact the administrator.',
+            ]);
+        }
 
         if (! $user->hasVerifiedEmail()) {
             return redirect()->route('verification.notice');

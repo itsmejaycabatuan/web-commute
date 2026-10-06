@@ -69,6 +69,6 @@ class PreventiveMaintenance extends Model
 
     public function vehicleMaintenanceLog()
     {
-        return $this->hasMany(VehicleMaintenanceLog::class);
+        return $this->hasMany(VehicleMaintenanceLog::class, 'maintenance_id');
     }
 }
