@@ -65,8 +65,9 @@ The mapping API fails to load or repeated tile/style errors occur. System displa
 **E4 – No Internet Connection**
 Guest's device is offline. System cannot fetch the map or PUJ coordinates. System displays a status banner: **"No internet connection — You are offline. The map and PUJ locations cannot be refreshed until the connection returns."** Marker and vehicle polling are suspended; they resume automatically when the connection returns.
 
+- `routing-service` added to banner priority stack.
 **Status banner priority** (only the highest-priority banner is shown):
-`offline` → `map-service` → `location-denied` → `no-puj`
+`offline` → `map-service` → `routing-service` → `location-denied` → `no-puj`
 
 ---
 

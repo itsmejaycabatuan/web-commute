@@ -27,11 +27,6 @@ class CommuterController extends Controller
         return view('admin.commuters.index', compact('commuters', 'balances'));
     }
 
-    public function create()
-    {
-        return view('admin.commuters.create');
-    }
-
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -50,13 +45,6 @@ class CommuterController extends Controller
         return redirect()
             ->route('commuters.index')
             ->with('success', 'Commuter account created.');
-    }
-
-    public function edit(User $user)
-    {
-        $this->assertCommuter($user);
-
-        return view('admin.commuters.edit', compact('user'));
     }
 
     public function update(Request $request, User $user)

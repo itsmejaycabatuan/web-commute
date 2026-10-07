@@ -39,18 +39,17 @@ class AdminControllerTest extends TestCase
         $user = User::factory()->create()->assignRole('admin');
         $driver = Driver::factory()->create(['is_approved' => 1]);
         Vehicle::factory()->create(['driver_id' => $driver->id]);
-        Payment::factory()->count(3)->create(['amount' => 100]);
+        Payment::factory()->count(3)->create(['price' => 100]);
 
         $response = $this->actingAs($user)->get(route('dashboard'));
 
         $response->assertOk()
             ->assertViewIs('admin.dashboard')
-            ->assertViewHas('totalRevenue')
-            ->assertViewHas('totalDrivers')
-            ->assertViewHas('totalVehicles')
-            ->assertViewHas('totalCommuters');
-    }
 
+            ->assertViewHas('totalFundsAdded')
+            ->assertViewHas('recentFares')
+            ->assertViewHas('recentTopups');
+    }
     public function test_non_admin_cannot_access_dashboard()
     {
         $user = User::factory()->create();

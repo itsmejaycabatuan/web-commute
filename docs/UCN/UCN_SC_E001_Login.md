@@ -50,6 +50,9 @@
 
 ## Exceptions
 
+**E7 – Account Suspended**
+The user account is suspended. System cancels the login and displays *"This account has been suspended. Please contact the administrator."*
+
 **E1 – Database / Auth Service Error**
 System fails to query or authenticate against the database. System cancels the login and displays *"Login is unavailable right now. Please try again later."* No partial session is created.
 

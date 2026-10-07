@@ -1068,6 +1068,26 @@
                                             placeholder="e.g. Main Garage"
                                             class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold">
                                     </div>
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1.5">Acquisition
+                                            Date <span class="text-rose-400">*</span></label>
+                                        <input type="date" x-model="editForm.acquisition_date"
+                                            class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold font-mono"
+                                            :class="editErrors.acquisition_date ? 'border-rose-400 dark:border-rose-500/50' : ''">
+                                        <p x-show="editErrors.acquisition_date" x-text="editErrors.acquisition_date"
+                                            class="text-[8px] text-rose-500 mt-1 font-medium"></p>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1.5">Expected
+                                            Disposal Date</label>
+                                        <input type="date" x-model="editForm.exp_disposal_date"
+                                            class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold font-mono"
+                                            :class="editErrors.exp_disposal_date ? 'border-rose-400 dark:border-rose-500/50' : ''">
+                                        <p x-show="editErrors.exp_disposal_date" x-text="editErrors.exp_disposal_date"
+                                            class="text-[8px] text-rose-500 mt-1 font-medium"></p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1439,6 +1459,8 @@
                         location: '',
                         driver_id: '',
                         status: 'active',
+                        acquisition_date: '',
+                        exp_disposal_date: '',
                     };
                     this.editErrors = {};
                     this.showEditModal = true;
@@ -1458,6 +1480,8 @@
                         location: v.location || '',
                         driver_id: v.driver_id ? String(v.driver_id) : '',
                         status: v.status || 'active',
+                        acquisition_date: v.acquisition_date_raw || '',
+                        exp_disposal_date: v.exp_disposal_date_raw || '',
                     };
                     this.editErrors = {};
                     this.showEditModal = true;
@@ -1478,7 +1502,7 @@
                             '{{ route('vehicles.store') }}' :
                             '{{ route('vehicles.update', ':id') }}'.replace(':id', this.editId);
 
-                        const method = this.editMode === 'add' ? 'POST' : 'PUT';
+                        const method = this.editMode === 'add' ? 'POST' : 'PATCH';
 
                         const response = await fetch(url, {
                             method: method,

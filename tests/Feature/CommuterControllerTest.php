@@ -24,12 +24,6 @@ class CommuterControllerTest extends TestCase
         $this->assertTrue($response->getStatusCode() > 0);
     }
 
-    public function test_commuters_create_route_responds()
-    {
-        $response = $this->get(route('commuters.create'));
-        $this->assertTrue($response->getStatusCode() > 0);
-    }
-
     public function test_commuters_store_route_responds()
     {
         $response = $this->withoutMiddleware([VerifyCsrfToken::class])
@@ -38,12 +32,6 @@ class CommuterControllerTest extends TestCase
                 'email' => 'commuter@test.com',
                 'contact_info' => '09171234567',
             ]);
-        $this->assertTrue($response->getStatusCode() > 0);
-    }
-
-    public function test_commuters_edit_route_responds()
-    {
-        $response = $this->get(route('commuters.edit', ['user' => 99999]));
         $this->assertTrue($response->getStatusCode() > 0);
     }
 

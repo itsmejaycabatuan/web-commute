@@ -158,9 +158,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('payment.topup.process');
     Route::get('/payment/topup/history', [PaymentController::class, 'topupHistory'])->name('payment.topup.history');
 
-    Route::get('/topups', [PaymentController::class, 'showTopupsAdmin'])->name('admin.topups');
-    Route::get('/transactions', [PaymentController::class, 'showTransactions'])->name('faretransactions');
-    Route::get('/transactions/receipt/{id}', [PaymentController::class, 'showReceiptAdmin'])->name('admin.receipt.show');
+    Route::get('/topups', [PaymentController::class, 'showTopupsAdmin'])->name('admin.topups')->middleware('role:admin');
+    Route::get('/transactions', [PaymentController::class, 'showTransactions'])->name('faretransactions')->middleware('role:admin');
+    Route::get('/transactions/receipt/{id}', [PaymentController::class, 'showReceiptAdmin'])->name('admin.receipt.show')->middleware('role:admin');
 
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
@@ -183,9 +183,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::middleware('role:admin')->group(function () {
-        Route::get('/commuters/create', [CommuterController::class, 'create'])->name('commuters.create');
         Route::post('/commuters', [CommuterController::class, 'store'])->name('commuters.store');
-        Route::get('/commuters/{user}/edit', [CommuterController::class, 'edit'])->name('commuters.edit');
         Route::put('/commuters/{user}', [CommuterController::class, 'update'])->name('commuters.update');
         Route::patch('/commuters/{user}/suspension', [CommuterController::class, 'toggleSuspension'])->name('commuters.suspension');
         Route::get('/commuters/{user}', [CommuterController::class, 'show'])->name('commuters.show');

@@ -84,6 +84,8 @@
 <body
     class="antialiased flex flex-col items-center justify-center p-3 sm:p-5 lg:p-6 text-slate-900 dark:text-white">
 
+    @include('components.flash')
+
     <div class="w-full max-w-md mb-5 sm:mb-8 flex items-center justify-between">
         <a href="{{ route('payment.history') }}"
             class="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/40 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-2 py-1">

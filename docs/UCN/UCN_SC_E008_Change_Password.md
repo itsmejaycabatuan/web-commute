@@ -11,7 +11,7 @@
 | **Preconditions**     | 1. User is authenticated and logged in.<br>2. User knows their current password.<br>3. The user has a `Driver` profile **only if** they are a driver (unrelated to this use case). |
 | **Supporting Actors**   | User records, Session store                                                                                                                                           |
 
-> The use case is identical for every role. The only difference is the **view**: `SettingsController::edit()` serves `commuter/settings` to commuters and `settings` to all staff roles (see A1).
+> The use case diverges by role: commuters use the `/profile` endpoint (`UserController::updateProfile`) which updates the password **without** invalidating other sessions, while staff (driver, driver manager, maintenance manager, admin) use the `/settings/password` endpoint (`SettingsController::updatePassword`) which **does** call `Auth::logoutOtherDevices()` to invalidate all other active sessions. The views also differ: commuters see `commuter/settings`; staff see `settings`.
 
 ---
 
@@ -24,7 +24,7 @@
 | 3   | User enters the new password and confirms it.              | *(no system response — client-side field masking only)*                                                                                                           |
 | 4   | User clicks **"Update Password"**.                         | System validates the request server-side: `current_password` **required** and must match the stored hash (`current_password` rule); `password` **required, string, min 8, confirmed**. |
 | 5   |                                                                | System **hashes** the new password (`Hash::make`) and updates the user record.                                                                                     |
-| 6   |                                                                | System **invalidates all other active sessions/tokens** for that user (`Auth::logoutOtherDevices`), keeping only the current device signed in.                  |
+| 6   |                                                                | For staff roles, System **invalidates all other active sessions/tokens** (`Auth::logoutOtherDevices`), keeping only the current device signed in. (Commuters do not invalidate other sessions.) |
 | 7   |                                                                | System displays the success message *"Password changed successfully."*                                                                                             |
 
 > Steps 2–3 have no system response by design; those cells are intentionally left blank rather than filled with "makes the input".
@@ -96,3 +96,4 @@ A guest reaching `/settings` is redirected to the login page by the `auth` + `ve
 | Views | `resources/views/commuter/settings.blade.php` (Security tab), `resources/views/settings.blade.php` |
 | Middleware | `auth`, `verified` |
 | Related | UCN_SC_E001 (Login), UCN_SC_E002 (Create Account — initial password) |
+**Divergence Note:** Commuter vs staff password change paths diverge at the view layer (`commuter/settings` vs `settings`) but share the same endpoint (`PUT /settings/password`) and validation rules. No divergence in logic.

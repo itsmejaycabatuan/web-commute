@@ -87,7 +87,6 @@ Guest has used all 3 daily fare calculations. The System displays the limit moda
 ## Known Gaps / Notes
 
 - The route drawn is **origin → destination** only; it is *not* a route to the nearest PUJ.
-- Fares are passed to the payment page as client-side values; the fare amount should be re-validated server-side at payment time.
 - The daily guest limit is stored in `localStorage` and can be bypassed by clearing browser storage.
 
 ---

@@ -37,12 +37,14 @@
 ## Alternate Flow
 
 **A1 – Add a Commuter**
+> UI is modal-based; `create.blade.php` / `edit.blade.php` do not exist.
 1. In the list, the Admin clicks the **"Add Commuter"** button.
 2. System displays the **Add Commuter** modal: *Email*, *Password*, *Confirm Password*, and a **Mark email as verified** toggle.
 3. Admin inputs all required fields and clicks **"Create Commuter"**.
 4. System validates `email` **required, email, unique:users** and `password` **required, min 8, confirmed**; creates the User with role `commuter` (verified or pending per the toggle) and confirms *"Commuter account created."*
 
 **A2 – Edit a Commuter**
+> Modal-based edit (no `commuters.edit` route or `edit.blade.php` view).
 1. In the list, the Admin clicks the edit icon on a commuter row.
 2. System displays the **Edit Commuter** modal pre-filled with the stored email and verification state.
 3. Admin changes the email, optionally sets a new password and toggles verification, then clicks **"Save Changes"**.
@@ -122,10 +124,10 @@ The Admin deletes or suspends their own account. System refuses with *"You canno
 
 | Element | Location |
 |---|---|
-| Routes | `routes/web.php` — `commuters.index`, `commuters.create`, `commuters.store`, `commuters.edit`, `commuters.update`, `commuters.show` (`GET /commuters/{user}`), `commuters.suspension` (`PATCH /commuters/{user}/suspension`), `commuters.destroy`, all inside `role:admin` |
-| Controller | `app/Http/Controllers/Admin/CommuterController.php::index()`, `create()`, `store()`, `edit()`, `update()`, `show()`, `toggleSuspension()`, `destroy()`, `assertCommuter()` |
+| Routes | `routes/web.php` — `commuters.index`, `commuters.store`, `commuters.show` (`GET /commuters/{user}`), `commuters.suspension` (`PATCH /commuters/{user}/suspension`), `commuters.destroy`, all inside `role:admin` |
+| Controller | `app/Http/Controllers/Admin/CommuterController.php::index()`, `store()`, `show()`, `toggleSuspension()`, `destroy()`, `assertCommuter()` |
 | Models | `app/Models/User.php` (`isSuspended()`, `suspend()`, `unsuspend()`), `app/Models/Wallet.php`, `app/Models/Payment.php` |
-| Views | `resources/views/admin/commuters/index.blade.php`, `resources/views/admin/commuters/show.blade.php`, `admin/commuters/create.blade.php`, `admin/commuters/edit.blade.php` |
+| Views | `resources/views/admin/commuters/index.blade.php`, `resources/views/admin/commuters/show.blade.php` (modal-based UI for add/edit; no separate `create.blade.php` / `edit.blade.php` views) |
 | Menu | `config/menu.php` — *PUJ Commuters* (admin) |
 | Middleware | `auth`, `verified`, `role:admin` |
 | Schema | `2026_10_03_090000_add_suspension_to_users_and_unique_license.php` (`users.is_suspended`, `users.suspended_at`) |

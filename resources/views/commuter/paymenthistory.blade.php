@@ -220,6 +220,8 @@
 
 <body class="antialiased text-slate-900 dark:text-white">
 
+    @include('components.flash')
+
     <!-- ══════════ HEADER ══════════ -->
     <header
         class="fixed top-3 left-3 right-3 sm:top-5 sm:left-5 sm:right-5 z-50 flex items-center justify-between gap-2 sm:gap-3 pointer-events-none">

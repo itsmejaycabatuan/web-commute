@@ -37,7 +37,7 @@
 1. On the page, the Admin selects a file with **"Select File"** — an official **LFTFRB fare guide (PDF)** — then presses **"Upload"**.
 2. System validates the upload: `fare` **required, file, mimes:pdf**.
 3. System stores the file and runs the extraction script (`resources/scripts/extractPdf.py`) inside the project virtualenv, then parses the returned JSON.
-4. Inside a transaction, System creates the **Fare** record and inserts the parsed tiers (`fare_rates`: km, regular, discount) for the 1–25 km and 27–52 km bands, then confirms *"File uploaded successfully!"*
+4. Inside a transaction, System creates the **Fare** record and inserts the parsed tiers (`fare_rates`: km, regular, discount) for the 1–25 km and 27–51 km bands, then confirms *"File uploaded successfully!"*
 
 **A2 – Edit One or More Fare Rates**
 1. On the page, the Admin clicks **"Edit Rates"**.
@@ -77,7 +77,7 @@ No file was selected, or the selected file is not a PDF. System rejects the uplo
 
 ## Known Gaps / Notes
 
-- **The extracted tiers are hard-coded to two bands** (rows 1–25 and 27–52 of the parser output). A fare guide with a different layout is rejected at parse time rather than supported.
+- **The extracted tiers are hard-coded to two bands** (rows 1–25 and 27–51 of the parser output). A fare guide with a different layout is rejected at parse time rather than supported.
 - **Validation is all-or-nothing**: one invalid row blocks the entire save, and the admin must re-enter every value.
 - **The extraction script runs synchronously** and shells out to the project virtualenv; a slow or missing interpreter fails the whole upload.
 - Rates are decimals without rounding rules, and there is no per-tier effective date — uploading a new guide replaces the active rate set wholesale.
@@ -89,8 +89,7 @@ No file was selected, or the selected file is not a PDF. System rejects the uplo
 
 | Element | Location |
 |---|---|
-| Routes | `routes/web.php` — `fares.index` (`GET /fares`), `fares.view` (`GET /fare/{id}`), `fares.upload` (`PUT /fare/upload`), `fares.bulk-update` (`PUT /fare/update`), `fares.destroy` (`DELETE /fare/{id}/delete`), all inside `role:admin` |
-| Controller | `app/Http/Controllers/FareController.php::index()`, `view()`, `upload()`, `bulkUpdate()`, `delete()` |
+| Controller | `app/Http/Controllers/FareController.php::index()`, `view()`, `upload()`, `bulkUpdate()` |
 | Models | `app/Models/Fare.php`, `app/Models/FareRate.php` |
 | Parser | `resources/scripts/extractPdf.py`, run via `venv/bin/python3` |
 | View | `resources/views/admin/fares/index.blade.php` (validation banner added for E2/E4) |

@@ -1124,6 +1124,19 @@
                                 placeholder="Full name">
                         </div>
 
+                        <div>
+                            <label
+                                class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Contact
+                                Info <span class="text-red-500 dark:text-red-400">*</span></label>
+                            <input type="text" name="contact_info" :value="editContactInfo"
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
+                                placeholder="Phone number or email">
+                            @error('contact_info')
+                                <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5"><i
+                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label

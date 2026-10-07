@@ -119,3 +119,5 @@ The vehicle already has maintenance or preventive-maintenance records. System re
 | Middleware | `auth`, `verified`, `role:maintenance_manager` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_a_driver_cannot_be_assigned_to_a_vehicle_under_maintenance`, `test_a_vehicle_with_a_clocked_in_driver_cannot_be_disposed`, `test_setting_a_vehicle_to_maintenance_detaches_its_driver`, `test_a_vehicle_under_maintenance_is_not_shown_as_active`, `test_a_commuter_cannot_reach_the_vehicle_management_page`, `test_a_vehicle_with_maintenance_records_cannot_be_deleted`) |
 | Related | UCN_SC_E016 (Maintenance Schedule), UCN_SC_E017 (Maintenance Tasks), UCN_SC_E009/E010 (clock in / out), UCN_SC_E003 (Track PUJ) |
+--- Update Note ---
+Vehicle issues (E3/E4 map removal, driver detachment, disposal guards) are now enforced and working; document reflects current working state.

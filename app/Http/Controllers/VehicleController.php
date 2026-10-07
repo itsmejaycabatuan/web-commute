@@ -19,30 +19,39 @@ class VehicleController extends Controller
     public function index()
     {
         activity()->event('Index')->log('Action performed: index');
-        $vehicles = Vehicle::with('driver')->latest()->get()->map(function ($vehicle) {
-            return [
-                'id' => $vehicle->id,
-                'driver_id' => $vehicle->driver_id,
-                'year' => $vehicle->year,
-                'brand' => $vehicle->brand,
-                'model' => $vehicle->model,
-                'plate_number' => $vehicle->plate_number,
-                'status' => $vehicle->status,
-                'fuel_type' => $vehicle->fuel_type,
-                'tank_capacity' => $vehicle->tank_capacity,
-                'vin' => $vehicle->vin,
-                'location' => $vehicle->location,
-                'acquisition_date' => $vehicle->acquisition_date?->format('M d, Y'),
-                'exp_disposal_date' => $vehicle->exp_disposal_date?->format('M d, Y'),
-                'driver_name' => $vehicle->driver?->name,
-                'created_at' => $vehicle->created_at?->format('M d, Y'),
-                'updated_at' => $vehicle->updated_at?->format('M d, Y'),
-            ];
-        });
+        $vehicles = Vehicle::with('driver')->latest()->get()->map(fn ($vehicle) => $this->formatVehicle($vehicle));
 
         $drivers = Driver::orderBy('name')->get();
 
         return view('maintenance-manager.vehicles', compact('vehicles', 'drivers'));
+    }
+
+    /**
+     * The vehicle payload shared by the page and the JSON responses the
+     * page's fetch() calls read (add / edit / delete from the modal).
+     */
+    private function formatVehicle(Vehicle $vehicle): array
+    {
+        return [
+            'id' => $vehicle->id,
+            'driver_id' => $vehicle->driver_id,
+            'year' => $vehicle->year,
+            'brand' => $vehicle->brand,
+            'model' => $vehicle->model,
+            'plate_number' => $vehicle->plate_number,
+            'status' => $vehicle->status,
+            'fuel_type' => $vehicle->fuel_type,
+            'tank_capacity' => $vehicle->tank_capacity,
+            'vin' => $vehicle->vin,
+            'location' => $vehicle->location,
+            'acquisition_date' => $vehicle->acquisition_date?->format('M d, Y'),
+            'acquisition_date_raw' => $vehicle->acquisition_date?->toDateString(),
+            'exp_disposal_date' => $vehicle->exp_disposal_date?->format('M d, Y'),
+            'exp_disposal_date_raw' => $vehicle->exp_disposal_date?->toDateString(),
+            'driver_name' => $vehicle->driver?->name,
+            'created_at' => $vehicle->created_at?->format('M d, Y'),
+            'updated_at' => $vehicle->updated_at?->format('M d, Y'),
+        ];
     }
 
     public function store(Request $request)
@@ -70,7 +79,14 @@ class VehicleController extends Controller
             $validated['driver_id'] = null;
         }
 
-        Vehicle::create($validated);
+        $vehicle = Vehicle::create($validated);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Vehicle successfully added.',
+                'vehicle' => $this->formatVehicle($vehicle->load('driver')),
+            ], 201);
+        }
 
         return back()->with('success', 'Vehicle successfully added.');
     }
@@ -103,16 +119,29 @@ class VehicleController extends Controller
 
         $vehicle->update($validated);
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Vehicle successfully updated.',
+                'vehicle' => $this->formatVehicle($vehicle->load('driver')),
+            ]);
+        }
+
         return back()->with('success', 'Vehicle successfully updated.');
     }
 
-    public function destroy(Vehicle $vehicle)
+    public function destroy(Request $request, Vehicle $vehicle)
     {
         activity()->event('Destroy')->log('Action performed: destroy');
 
         // Postcondition: a unit that has a service history is marked Disposed
         // instead of being erased, so trip and maintenance logs stay auditable.
         if ($vehicle->maintenanceLogs()->exists() || $vehicle->preventiveMaintenances()->exists()) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'This vehicle has maintenance records and cannot be deleted. Mark its status as Disposed instead.',
+                ], 409);
+            }
+
             return back()->with(
                 'error',
                 'This vehicle has maintenance records and cannot be deleted. Mark its status as Disposed instead.'
@@ -120,6 +149,10 @@ class VehicleController extends Controller
         }
 
         $vehicle->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Vehicle successfully deleted.']);
+        }
 
         return back()->with('success', 'Vehicle successfully deleted.');
     }

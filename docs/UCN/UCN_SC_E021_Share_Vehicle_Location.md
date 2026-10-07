@@ -40,7 +40,7 @@
 
 **A2 – Temporary Failure (Retry Queued)**
 1. The database write throws.
-2. System logs the failure, dispatches `RetryBroadcastLocation` with a 5-second delay and answers `500 { success: false, retry: true, retry_after: 5, message: "Temporary failure – retrying in 5 seconds." }`.
+2. System logs the failure, dispatches `RetryBroadcastLocation` with a 5-second delay and answers `409 { success: false, retry: true, retry_after: 5, message: "Temporary failure – retrying in 5 seconds." }` and includes a `Retry-After` header.
 3. The queued job re-publishes the `LocationUpdated` event **once** and then stops, so the driver's last known position still reaches the map.
 
 **A3 – No Vehicle Assigned**

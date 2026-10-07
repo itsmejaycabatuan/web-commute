@@ -35,7 +35,7 @@ class PaymentController extends Controller
         // dd($request);
         $user = Auth::user();
         $userId = $user->id;
-        $balance = Wallet::where('user_id', $userId)->first()->balance;
+        $balance = $this->walletFor($userId)->balance;
 
         $validated = $request->validate([
             'pickup' => 'required',
@@ -380,8 +380,7 @@ class PaymentController extends Controller
         activity()->event('History')->log('Action performed: history');
         $userId = Auth::user()->id;
         $query = Payment::where('paid_by', $userId);
-        $wallet = Wallet::where('user_id', $userId)->first();
-        $balance = $wallet->balance;
+        $balance = $this->walletFor($userId)->balance;
 
         // Search by transaction ID or destination
         $query->when($request->search, function ($q) use ($request) {
@@ -439,12 +438,20 @@ class PaymentController extends Controller
         activity()->event('Topup')->log('Action performed: topup');
         $user = Auth::user();
         $userId = $user->id;
-        $wallet = Wallet::where('user_id', $userId)->first();
-        $balance = $wallet->balance;
+        $balance = $this->walletFor($userId)->balance;
 
         return view('commuter.topup', [
             'balance' => $balance,
         ]);
+    }
+
+    /**
+     * The signed-in user's wallet, created on the fly if the registration-time
+     * row is missing — the checkout, history and top-up pages must not 500.
+     */
+    private function walletFor(int $userId): Wallet
+    {
+        return Wallet::firstOrCreate(['user_id' => $userId]);
     }
 
     /**
@@ -594,7 +601,7 @@ class PaymentController extends Controller
         $total = TopupHistory::sum('amount_added');
 
         if ($request->filled('search')) {
-            $query->whereHas('usadmin/er', function ($q) use ($request) {
+            $query->whereHas('user', function ($q) use ($request) {
                 $q->where('email', 'like', "%{$request->search}%");
             })->orWhere('id', 'like', "%{$request->search}%");
         }

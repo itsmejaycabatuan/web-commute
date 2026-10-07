@@ -170,6 +170,8 @@
 
 <body class="antialiased flex items-center justify-center p-3 sm:p-5 lg:p-6 overflow-x-hidden">
 
+    @include('components.flash')
+
     <!-- Decorative orbs -->
     <div
         class="fixed top-1/4 -left-16 w-48 h-48 sm:left-1/4 sm:w-80 sm:h-80 bg-blue-500/5 rounded-full blur-[70px] sm:blur-[120px] pointer-events-none">

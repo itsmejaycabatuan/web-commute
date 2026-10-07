@@ -48,7 +48,7 @@
 
 **A3 – Log a Service for a Different Vehicle**
 1. The Maintenance Manager uses the **vehicle picker** at the top of the page.
-2. System reloads the schedule for the newly selected vehicle, keeping the same task cards and picking that vehicle's own logged values.
+2. System reloads the schedule for the newly selected vehicle, keeping the same table rows and picking that vehicle's own logged values.
 3. Steps 4–6 of A1 then apply to the newly selected vehicle.
 
 ---

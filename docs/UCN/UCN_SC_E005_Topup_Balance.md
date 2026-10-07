@@ -21,7 +21,7 @@
 | --- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Commuter clicks the "+" button.                                                               | System displays the Topup page with the current wallet balance, a custom-amount input, and predefined amount options.                                                  |
 | 2   | Commuter selects a predefined amount (₱50 / ₱100 / ₱200 / ₱500) **or** types a custom amount. | System highlights the selected preset (and clears the highlight when a non-preset value is typed).                                                                     |
-| 3   | Commuter selects a payment method (**GCash** or **Maya**) and clicks **"Proceed"**.           | System validates the request server-side: `amount` required, numeric, **min ₱10**, max ₱100,000; `payment-method` required and restricted to the self-service methods. |
+| 3   | Commuter selects a payment method (**GCash** or **Maya**) and clicks **"Confirm Payment"**.           | System validates the request server-side: `amount` required, numeric, **min ₱10**, max ₱100,000; `payment-method` required and restricted to the self-service methods. |
 | 4   |                                                                                               | System adds the amount to the commuter's wallet balance.                                                                                                               |
 | 5   |                                                                                               | System creates a **top-up history record** (user, wallet, amount added, payment method) for auditing.                                                                  |
 | 6   |                                                                                               | System displays the success message *"Successfully topped up!"* and returns to the top-up page showing the new balance.                                                |
@@ -35,7 +35,7 @@
 2. System validates the amount (must be a number between ₱10 and ₱100,000) and proceeds with the top-up.
 
 **A2 – Commuter changes the payment method**
-1. Commuter selects a different payment method card before pressing "Proceed".
+1. Commuter selects a different payment method card before pressing "Confirm Payment".
 2. System uses the newly selected method for the transaction record.
 
 **A3 – Commuter reviews past top-ups**
