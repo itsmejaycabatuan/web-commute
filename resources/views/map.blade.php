@@ -2575,7 +2575,7 @@
                                         return;
                                     }
 
-                                    var isDriver = window.userRole === 'driver';
+                                    var canSeeFullInfo = ['driver', 'admin', 'driver_manager', 'maintenance_manager'].includes(window.userRole);
 
                                     markers.forEach(function(d) {
                                         var isMarkerActive = d.marker_status === 'active';
@@ -2590,7 +2590,7 @@
                                         el.innerHTML = '<i class="fa-solid fa-bus"></i>';
 
                                         var popup;
-                                        if (isDriver) {
+                                        if (canSeeFullInfo) {
                                             popup = new maplibregl.Popup({
                                                 className: 'puj-popup',
                                                 offset: 18,
@@ -2618,7 +2618,7 @@
 
                                         window.dummyMapMarkers[d.id] = mapMarker;
 
-                                        if (!isDriver && d.privacy_radius) {
+                                        if (!canSeeFullInfo && d.privacy_radius) {
                                             window.driverPrivacyZones[d.id] = {
                                                 lat: d.lat,
                                                 lng: d.lng,
@@ -2627,7 +2627,7 @@
                                         }
                                     });
 
-                                    if (!isDriver && window.updatePrivacyZones) {
+                                    if (!canSeeFullInfo && window.updatePrivacyZones) {
                                         window.updatePrivacyZones();
                                     }
                                     if (window.updatePujEmptyState) window.updatePujEmptyState();
@@ -5406,6 +5406,8 @@ sim._lastEtaUpdate = null;
                 if (partial && !Array.isArray(vehicles)) return;
 
                 const cache = window.liveVehicleCache = window.liveVehicleCache || {};
+                // Determine if user can see full vehicle info (drivers, admins, managers)
+                const canSeeFullInfo = ['driver', 'admin', 'driver_manager', 'maintenance_manager'].includes(window.userRole);
 
                 // Normalise one payload entry; null when it is unusable.
                 const normalize = function(v) {
@@ -5485,7 +5487,7 @@ sim._lastEtaUpdate = null;
                                 focusAfterOpen: false,
                                 maxWidth: '260px'
                             })
-                            .setHTML(window.createPrivacyPopup(v));
+                            .setHTML(canSeeFullInfo ? window.createDriverPopup(v) : window.createPrivacyPopup(v));
 
                         window.echoPopups[id] = {
                             popup: popup,
@@ -5883,7 +5885,7 @@ sim._lastEtaUpdate = null;
                     return;
                 }
 
-                var isDriver = window.userRole === 'driver';
+                var canSeeFullInfo = ['driver', 'admin', 'driver_manager', 'maintenance_manager'].includes(window.userRole);
 
                 markers.forEach(function(d) {
                     var isMarkerActive = d.marker_status === 'active';
@@ -5898,8 +5900,8 @@ sim._lastEtaUpdate = null;
                     el.innerHTML = '<i class="fa-solid fa-bus"></i>';
 
                     var popup;
-                    if (isDriver) {
-                        // ── Driver: detailed popup ──
+                    if (canSeeFullInfo) {
+                        // ── Driver, Admin, Driver Manager, Maintenance Manager: detailed popup ──
                         popup = new maplibregl.Popup({
                             className: 'puj-popup',
                             offset: 18,
@@ -5930,7 +5932,7 @@ window.dummyMapPopups[d.id] = { popup: popup, data: d };
                     window.dummyMapMarkers[d.id] = mapMarker;
 
                     // Track privacy zone for non-drivers
-                    if (!isDriver && d.privacy_radius) {
+                    if (!canSeeFullInfo && d.privacy_radius) {
                         window.driverPrivacyZones[d.id] = {
                             lat: d.lat,
                             lng: d.lng,
@@ -5939,7 +5941,7 @@ window.dummyMapPopups[d.id] = { popup: popup, data: d };
                     }
                 });
 
-                if (!isDriver) {
+                if (!canSeeFullInfo) {
                     window.updatePrivacyZones();
                 }
                 if (window.updatePujEmptyState) window.updatePujEmptyState();
