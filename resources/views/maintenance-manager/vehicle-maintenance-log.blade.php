@@ -135,6 +135,7 @@
             box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08) !important;
         }
     </style>
+    @include('partials.global-loading')
 </head>
 
 <script>

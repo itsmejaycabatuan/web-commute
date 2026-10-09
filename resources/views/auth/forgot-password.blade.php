@@ -92,6 +92,7 @@
             transform: scale(0.98) translateY(0);
         }
     </style>
+    @include('partials.global-loading')
 </head>
 
 <body

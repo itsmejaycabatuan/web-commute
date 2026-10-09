@@ -533,3 +533,6 @@
 
 {{-- Short/landscape viewport support (phones & small tablets held sideways) --}}
 @include('partials.landscape-styles')
+
+{{-- Global loading indicators (form submits & AJAX requests) --}}
+@include('partials.global-loading')

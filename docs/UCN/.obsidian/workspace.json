@@ -11,14 +11,10 @@
             "id": "df60e77af4e1c3a0",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "UCN_SC_E027_Account_Deletion.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "UCN_SC_E027_Account_Deletion"
+              "title": "New tab"
             }
           }
         ]
@@ -187,6 +183,7 @@
   },
   "active": "df60e77af4e1c3a0",
   "lastOpenFiles": [
+    "UCN_SC_E027_Account_Deletion.md",
     "UCN_SC_E026_Profile_and_Dashboard.md",
     "UCN_SC_E025_Vehicle_Maintenance_Log_CRUD.md",
     "UCN_SC_E024_Admin_Violation_Code_Management.md",
@@ -194,7 +191,6 @@
     "UCN_SC_E022_Driver_Registration.md",
     "UCN_SC_E020_View_System_Reports.md",
     "UCN_SC_E007_View_Payment_History.md",
-    "UCN_SC_E027_Account_Deletion.md",
     "UCN_SC_E001_Login.md",
     "UCN_SC_E002_Create_Account.md",
     "UCN_SC_E016_Manage_Maintenance_Schedule.md",

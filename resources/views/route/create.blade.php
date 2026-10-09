@@ -76,6 +76,7 @@
             }
         }
     </style>
+    @include('partials.global-loading')
 </head>
 
 

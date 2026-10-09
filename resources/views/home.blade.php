@@ -324,6 +324,7 @@
             pointer-events: auto;
         }
     </style>
+    @include('partials.global-loading')
 </head>
 
 <body class="font-sans text-white bg-[#050505] overflow-x-hidden">

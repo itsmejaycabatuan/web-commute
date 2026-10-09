@@ -131,6 +131,7 @@
             transform: scale(0.98);
         }
     </style>
+    @include('partials.global-loading')
 </head>
 
 <body

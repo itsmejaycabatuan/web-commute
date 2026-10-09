@@ -181,6 +181,7 @@
             -moz-appearance: textfield;
         }
     </style>
+    @include('partials.global-loading')
 </head>
 
 <body

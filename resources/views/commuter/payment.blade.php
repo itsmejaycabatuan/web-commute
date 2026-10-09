@@ -231,14 +231,16 @@
                             <p
                                 class="text-[9px] uppercase text-gray-400 dark:text-[#444] font-bold tracking-[0.15em] mb-0.5">
                                 Pick-up</p>
-                            <p class="text-xs font-semibold break-anywhere text-gray-700 dark:text-[#ccc] leading-tight">
+                            <p
+                                class="text-xs font-semibold break-anywhere text-gray-700 dark:text-[#ccc] leading-tight">
                                 {{ $pickup }}</p>
                         </div>
                         <div>
                             <p
                                 class="text-[9px] uppercase text-gray-400 dark:text-[#444] font-bold tracking-[0.15em] mb-0.5">
                                 Destination</p>
-                            <p class="text-xs font-semibold break-anywhere text-gray-700 dark:text-[#ccc] leading-tight">
+                            <p
+                                class="text-xs font-semibold break-anywhere text-gray-700 dark:text-[#ccc] leading-tight">
                                 {{ $destination }}</p>
                         </div>
                     </div>
@@ -347,7 +349,8 @@
                 <div
                     class="fade-3 flex flex-wrap items-end justify-between gap-3 px-1 pt-4 sm:pt-5 border-t border-gray-200 dark:border-[#1a1a1a]">
                     <div>
-                        <p class="text-[10px] font-bold text-gray-400 dark:text-[#444] uppercase tracking-[0.2em] mb-1">
+                        <p
+                            class="text-[10px] font-bold text-gray-400 dark:text-[#444] uppercase tracking-[0.2em] mb-1">
                             Total</p>
                         <div
                             class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white flex items-baseline gap-1 tracking-tight">
@@ -372,7 +375,7 @@
 
             <!-- Cancel -->
             <div class="fade-4 text-center mt-5 sm:mt-6">
-                <a href="{{ url()->previous() }}"
+                <a href="{{ route('map') }}"
                     class="inline-flex items-center gap-2 text-[11px] font-semibold text-gray-400 dark:text-[#444] hover:text-gray-900 dark:hover:text-white transition">
                     <i class="fa-solid fa-arrow-left text-[9px]"></i>
                     Cancel Transaction
