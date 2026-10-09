@@ -140,6 +140,11 @@ class CommuterController extends Controller
             'balance' => (float) ($user->wallet?->balance ?? 0),
             'lastFare' => Payment::where('paid_by', $user->id)->latest('paid_at')->first(),
             'totalFareSpent' => (float) Payment::where('paid_by', $user->id)->sum('price'),
+            // Trip History — every fare this commuter has paid, newest first.
+            'trips' => $user->payment()->latest('paid_at')->get(),
+            // Payment History — wallet top-ups/reloads made by this commuter.
+            'topups' => $user->topupHistories()->latest()->get(),
+            'totalToppedUp' => (float) $user->topupHistories()->sum('amount_added'),
         ]);
     }
 
