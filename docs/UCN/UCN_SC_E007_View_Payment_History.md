@@ -81,7 +81,7 @@ The requested receipt id does not exist, or belongs to another commuter. System 
 - **No sorting or column options** — the order is fixed to `paid_at DESC`.
 - **Pagination size is 4** per page, which is small for a commuter with many trips.
 - **The list markup is duplicated** for the desktop and mobile layouts; the paginator is therefore rendered twice on the page (hidden by breakpoint).
-- The page renders the balance via `Wallet::first()` (HTTP 404 if the wallet row is missing).
+- The page creates the wallet on the fly if the row is missing (`PaymentController::walletFor()` → `Wallet::firstOrCreate`), so it no longer 404s for a commuter who has never topped up.
 
 ---
 

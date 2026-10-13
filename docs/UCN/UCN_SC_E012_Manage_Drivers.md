@@ -109,7 +109,7 @@ The uploaded file is not an image or exceeds 2 MB (`image, max:2048`).
 The driver is still assigned to a vehicle. System refuses the deletion with *"This driver is still assigned to a vehicle. Unassign the vehicle first."* so the vehicle is not orphaned.
 
 **E9 – Already Approved / Already Rejected**
-The driver is already in that state. System refuses with *"This driver is already approved."* / *"This driver is already rejected."*
+The driver is already in that state. System refuses with *"This driver is already approved."* / *"This driver is already rejected."* On approve, the licence fields are validated first, so a missing or duplicate field is reported (**E2** / **E3**) before the already-approved check.
 
 ---
 

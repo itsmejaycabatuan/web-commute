@@ -35,7 +35,7 @@
 **A2 – Guest navigates directly to a protected page**
 1. Guest opens any protected page (e.g. `/dashboard`, `/payment`).
 2. System redirects the Guest to the login page.
-3. After successful login the Guest continues to the originally requested page.
+3. After successful login the System always redirects to the map (`/map`) — it does **not** resume the originally requested page, so the Guest must navigate back manually.
 
 ---
 

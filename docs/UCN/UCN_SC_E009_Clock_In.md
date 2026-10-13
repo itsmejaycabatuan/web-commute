@@ -47,7 +47,7 @@
 ---
 
 ## Exceptions
-- Suspension exceptions apply to suspended accounts (see E015).
+- Suspension exceptions apply to suspended accounts (see UCN_SC_E012 A5).
 
 **E1 – Database / System Error**
 The timekeeping record cannot be created. System responds with *"Clock-in failed. Please try again later."*, performs **no** write and does **not** change the driver status.

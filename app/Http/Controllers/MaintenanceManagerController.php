@@ -9,7 +9,9 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleMaintenanceLog;
 use Auth;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class MaintenanceManagerController extends Controller
@@ -73,28 +75,49 @@ class MaintenanceManagerController extends Controller
             ]);
         }
 
-        $maintenance = PreventiveMaintenance::updateOrCreate(
-            [
-                'vehicle_id' => $validated['vehicle_id'],
-                'task_id' => $validated['task_id'],
-            ],
-            $validated
-        );
+        // E4 — Database error: the schedule row and its service-log record are
+        // written together or not at all, and the Maintenance Manager is told.
+        try {
+            DB::transaction(function () use ($validated) {
+                $maintenance = PreventiveMaintenance::updateOrCreate(
+                    [
+                        'vehicle_id' => $validated['vehicle_id'],
+                        'task_id' => $validated['task_id'],
+                    ],
+                    $validated
+                );
 
-        // Logging a scheduled service also writes the service-log record the
-        // fleet cost/kilometre analytics read.
-        VehicleMaintenanceLog::create([
-            'maintenance_id' => $maintenance->id,
-            'vehicle_id' => $validated['vehicle_id'],
-            'maintenance_task_id' => $validated['task_id'],
-            'service_date' => $validated['last_service_date'],
-            'mileage_at_service' => (int) $validated['last_service_odo'],
-            'performed_by' => 'Preventive Maintenance',
-            'cost' => $validated['last_service_cost'],
-            'remarks' => $validated['comments'] ?? null,
-        ]);
+                // Logging a scheduled service also writes the service-log record the
+                // fleet cost/kilometre analytics read.
+                VehicleMaintenanceLog::create([
+                    'maintenance_id' => $maintenance->id,
+                    'vehicle_id' => $validated['vehicle_id'],
+                    'maintenance_task_id' => $validated['task_id'],
+                    'service_date' => $validated['last_service_date'],
+                    'mileage_at_service' => (int) $validated['last_service_odo'],
+                    'performed_by' => 'Preventive Maintenance',
+                    'cost' => $validated['last_service_cost'],
+                    'remarks' => $validated['comments'] ?? null,
+                ]);
+            });
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The scheduled service was not saved.');
+        }
 
         return back()->with('success', 'Preventive maintenance logged successfully!');
+    }
+
+    /**
+     * UCN_SC_E016 E4 / E017 E3 / E025 E4 — a failed write is logged, cancelled
+     * and reported back to the Maintenance Manager instead of a raw 500 page.
+     */
+    private function writeFailed(QueryException $e, string $detail)
+    {
+        report($e);
+
+        return back()
+            ->withInput()
+            ->with('error', 'A database error occurred. '.$detail);
     }
 
     public function maintenanceLogs()
@@ -134,11 +157,16 @@ class MaintenanceManagerController extends Controller
             'months_between_service' => 'nullable|integer',
         ]);
 
-        $task = MaintenanceTask::create([
-            'tasks_performed' => $request->tasks_performed,
-            'miles_between_service' => $request->miles_between_service,
-            'months_between_service' => $request->months_between_service,
-        ]);
+        // E3 — Database error: nothing is stored and the Maintenance Manager is told.
+        try {
+            $task = MaintenanceTask::create([
+                'tasks_performed' => $request->tasks_performed,
+                'miles_between_service' => $request->miles_between_service,
+                'months_between_service' => $request->months_between_service,
+            ]);
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The task was not added.');
+        }
 
         if (! $task) {
             return back()->with('error', 'Failed to add task');
@@ -156,11 +184,15 @@ class MaintenanceManagerController extends Controller
             'months_between_service' => 'nullable|integer',
         ]);
 
-        $task->update([
-            'tasks_performed' => $request->tasks_performed,
-            'miles_between_service' => $request->miles_between_service,
-            'months_between_service' => $request->months_between_service,
-        ]);
+        try {
+            $task->update([
+                'tasks_performed' => $request->tasks_performed,
+                'miles_between_service' => $request->miles_between_service,
+                'months_between_service' => $request->months_between_service,
+            ]);
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The task was not updated.');
+        }
 
         return back()->with('success', 'Task successfully updated!');
     }
@@ -168,7 +200,11 @@ class MaintenanceManagerController extends Controller
     public function maintenanceTasksDestroy(MaintenanceTask $task)
     {
         activity()->event('Maintenancetasksdestroy')->log('Action performed: maintenanceTasksDestroy');
-        $task->delete();
+        try {
+            $task->delete();
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The task was not deleted.');
+        }
 
         return back()->with('success', 'Task successfully deleted!');
     }
@@ -241,7 +277,11 @@ class MaintenanceManagerController extends Controller
             'remarks' => 'nullable|string|max:500',
         ]);
 
-        VehicleMaintenanceLog::create($validated);
+        try {
+            VehicleMaintenanceLog::create($validated);
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The maintenance log was not saved.');
+        }
 
         return back()->with('success', 'Maintenance info logged!');
     }
@@ -260,7 +300,11 @@ class MaintenanceManagerController extends Controller
             'remarks' => 'nullable|string|max:500',
         ]);
 
-        $log->update($validated);
+        try {
+            $log->update($validated);
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The maintenance log was not updated.');
+        }
 
         return back()->with('success', 'Maintenance log updated!');
     }
@@ -268,7 +312,11 @@ class MaintenanceManagerController extends Controller
     public function vehicleLogDelete(VehicleMaintenanceLog $log)
     {
         activity()->event('Vehiclelogdelete')->log('Action performed: vehicleLogDelete');
-        $log->delete();
+        try {
+            $log->delete();
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The maintenance log was not deleted.');
+        }
 
         return back()->with('success', 'Maintenance log deleted.');
     }

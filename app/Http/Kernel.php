@@ -94,5 +94,6 @@ class Kernel extends HttpKernel
         'permission' => PermissionMiddleware::class,
         'role_or_permission' => RoleOrPermissionMiddleware::class,
         'env.local' => LocalEnvOnly::class,
+        'driver.approved' => \App\Http\Middleware\EnsureDriverApproved::class,
     ];
 }

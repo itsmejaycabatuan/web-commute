@@ -49,7 +49,7 @@ class VehicleTrackingController extends Controller
         if (! $user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Sign in as a driver to broadcast your location.',
+                'message' => 'Sign in as a driver to broadcast your vehicle location.',
             ], 403);
         }
 
@@ -57,6 +57,14 @@ class VehicleTrackingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Only drivers can broadcast a vehicle location.',
+            ], 403);
+        }
+
+        // UCN_SC_E022 — a pending or rejected driver may not broadcast.
+        if (! $user->driver->is_approved || $user->driver->is_rejected) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your driver account is not approved.',
             ], 403);
         }
 

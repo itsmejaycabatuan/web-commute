@@ -72,7 +72,7 @@
 ## Postconditions
 
 1. A commuter account has been added, edited, suspended, reactivated or removed.
-2. The commuter record in the database has been updated (`users`, plus `wallets` on create).
+2. The commuter record in the database has been updated (`users`).
 3. The system notifies the Admin with a success message.
 4. A **suspended** commuter cannot sign in; their wallet balance and receipts remain intact and auditable.
 5. A commuter whose wallet still holds a balance is **never deleted** by this flow.
@@ -100,10 +100,10 @@ The address is missing `@` or a valid domain. System displays the framework mess
 The password is under **8 characters**. System displays *"Password must be at least 8 characters."* and performs no write.
 
 **E7 – Passwords Do Not Match**
-The two fields differ. System displays *"The password confirmation does not match."* (rendered under the confirm field) and performs no write.
+The two fields differ. System displays *"The password confirmation does not match."* (rendered under the password field) and performs no write.
 
 **E8 – Cannot Delete a Commuter With a Balance**
-The commuter's wallet holds more than ₱0. System refuses the deletion with *"Cannot delete commuter with a balance of ₱N. Settle the wallet first."*
+The commuter's wallet holds more than ₱0. System refuses the deletion with *"Cannot delete commuter with a balance of PHP N. Settle the wallet first."*
 
 **E9 – Self-Referential Action**
 The Admin deletes or suspends their own account. System refuses with *"You cannot delete/suspend your own account."*
@@ -124,8 +124,8 @@ The Admin deletes or suspends their own account. System refuses with *"You canno
 
 | Element | Location |
 |---|---|
-| Routes | `routes/web.php` — `commuters.index`, `commuters.store`, `commuters.show` (`GET /commuters/{user}`), `commuters.suspension` (`PATCH /commuters/{user}/suspension`), `commuters.destroy`, all inside `role:admin` |
-| Controller | `app/Http/Controllers/Admin/CommuterController.php::index()`, `store()`, `show()`, `toggleSuspension()`, `destroy()`, `assertCommuter()` |
+| Routes | `routes/web.php` — `commuters.index`, `commuters.store`, `commuters.update` (`PUT /commuters/{user}`), `commuters.show` (`GET /commuters/{user}`), `commuters.suspension` (`PATCH /commuters/{user}/suspension`), `commuters.destroy`, all inside `role:admin` |
+| Controller | `app/Http/Controllers/Admin/CommuterController.php::index()`, `store()`, `update()`, `show()`, `toggleSuspension()`, `destroy()`, `assertCommuter()` |
 | Models | `app/Models/User.php` (`isSuspended()`, `suspend()`, `unsuspend()`), `app/Models/Wallet.php`, `app/Models/Payment.php` |
 | Views | `resources/views/admin/commuters/index.blade.php`, `resources/views/admin/commuters/show.blade.php` (modal-based UI for add/edit; no separate `create.blade.php` / `edit.blade.php` views) |
 | Menu | `config/menu.php` — *PUJ Commuters* (admin) |

@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\Wallet;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -32,15 +34,23 @@ class CommuterController extends Controller
         $validated = $request->validate([
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-        ]);
+        ], $this->passwordMessages());
 
-        $user = User::create([
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'email_verified_at' => $request->boolean('mark_verified') ? now() : null,
-        ]);
+        // E3 — the account and its role are written together or not at all; the
+        // Admin is told when the database refuses.
+        try {
+            DB::transaction(function () use ($validated, $request) {
+                $user = User::create([
+                    'email' => $validated['email'],
+                    'password' => Hash::make($validated['password']),
+                    'email_verified_at' => $request->boolean('mark_verified') ? now() : null,
+                ]);
 
-        $user->syncRoles(['commuter']);
+                $user->syncRoles(['commuter']);
+            });
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The commuter account was not created.');
+        }
 
         return redirect()
             ->route('commuters.index')
@@ -54,14 +64,18 @@ class CommuterController extends Controller
         $validated = $request->validate([
             'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => 'nullable|string|min:8|confirmed',
-        ]);
+        ], $this->passwordMessages());
 
-        $user->email = $validated['email'];
-        if (! empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
+        try {
+            $user->email = $validated['email'];
+            if (! empty($validated['password'])) {
+                $user->password = Hash::make($validated['password']);
+            }
+            $user->email_verified_at = $request->boolean('mark_verified') ? now() : null;
+            $user->save();
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The commuter was not updated.');
         }
-        $user->email_verified_at = $request->boolean('mark_verified') ? now() : null;
-        $user->save();
 
         return redirect()
             ->route('commuters.index')
@@ -88,7 +102,11 @@ class CommuterController extends Controller
                 ->with('error', 'Cannot delete commuter with a balance of PHP '.number_format($balance, 2).'. Settle the wallet first.');
         }
 
-        $user->delete();
+        try {
+            $user->delete();
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The commuter was not removed.');
+        }
 
         return redirect()
             ->route('commuters.index')
@@ -109,15 +127,19 @@ class CommuterController extends Controller
                 ->with('error', 'You cannot suspend your own account.');
         }
 
-        if ($user->isSuspended()) {
-            $user->unsuspend();
+        try {
+            if ($user->isSuspended()) {
+                $user->unsuspend();
 
-            return redirect()
-                ->route('commuters.index')
-                ->with('success', $user->email.' has been reactivated.');
+                return redirect()
+                    ->route('commuters.index')
+                    ->with('success', $user->email.' has been reactivated.');
+            }
+
+            $user->suspend();
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The commuter account was not changed.');
         }
-
-        $user->suspend();
 
         activity()->causedBy(auth()->user())
             ->event('Suspend Commuter')
@@ -146,6 +168,29 @@ class CommuterController extends Controller
             'topups' => $user->topupHistories()->latest()->get(),
             'totalToppedUp' => (float) $user->topupHistories()->sum('amount_added'),
         ]);
+    }
+
+    /**
+     * UCN_SC_E018 E6 — the minimum-length message is worded without "field".
+     */
+    private function passwordMessages(): array
+    {
+        return [
+            'password.min' => 'Password must be at least 8 characters.',
+        ];
+    }
+
+    /**
+     * UCN_SC_E018 E3 — a failed write is logged, cancelled and reported to the Admin.
+     */
+    private function writeFailed(QueryException $e, string $detail)
+    {
+        report($e);
+
+        return redirect()
+            ->route('commuters.index')
+            ->withInput()
+            ->with('error', 'A database error occurred. '.$detail);
     }
 
     private function assertCommuter(User $user): void

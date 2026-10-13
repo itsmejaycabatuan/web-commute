@@ -105,7 +105,7 @@ The log is empty (or the active filter matches nothing). System renders an empty
 At least one violation log references the code. System refuses the deletion with *"This violation code is in use by existing violation logs and cannot be deleted."*
 
 **E6 – Future Incident Date**
-`date_of_violation` is in the future. System rejects the request with *"The date of violation must be a date before or equal to today."* (the date inputs are also capped at today in the browser). Nothing is stored — not in the single-entry flow and not in the bulk flow.
+`date_of_violation` is in the future. System rejects the request with *"The date of violation must be a date before or equal to today."* (the date inputs are also capped at today in the browser). In the bulk flow the same rule names the row, e.g. *"The violations.0.date_of_violation must be a date before or equal to today."* Nothing is stored — not in the single-entry flow and not in the bulk flow.
 
 ---
 

@@ -285,10 +285,10 @@
                 $licenseUrl = '';
             }
 
-            if ($d->is_approved === 1) {
-                $status = 'approved';
-            } elseif ($d->is_rejected === 1) {
+            if ($d->is_rejected) {
                 $status = 'rejected';
+            } elseif ($d->is_approved) {
+                $status = 'approved';
             } else {
                 $status = 'pending';
             }

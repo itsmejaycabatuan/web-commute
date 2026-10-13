@@ -17,7 +17,7 @@
 
 | #   | Actor's Action                                                                    | System Response                                                                                                                                                                                           |
 | --- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | User opens the sidebar and selects **Vehicle Maintenance Log** (or navigates to `/maintenance-manager/vehicle-maintenance-log`). | System authenticates the user, verifies the `maintenance_manager` role, fetches the list of vehicles (with driver) and the selected vehicle (via query param `vehicle_id` or the first vehicle), loads the maintenance logs for that vehicle (with eager‑loaded `maintenanceTask`), calculates summary statistics (total cost, total services, latest odometer, cost per km), and returns the `maintenance-manager.vehicle-maintenance-log` view. |
+| 1   | User navigates to `/maintenance-manager/vehicle-maintenance-log` (the page is not exposed in the sidebar menu; it is reached by URL). | System authenticates the user, verifies the `maintenance_manager` role, fetches the list of vehicles (with driver) and the selected vehicle (via query param `vehicle_id` or the first vehicle), loads the maintenance logs for that vehicle (with eager‑loaded `maintenanceTask`), calculates summary statistics (total cost, total services, latest odometer, cost per km), and returns the `maintenance-manager.vehicle-maintenance-log` view. |
 | 2   |                                                                                   | The view renders three main sections: **Fleet Information & Cost Summary** (vehicle details, total costs, cost/km summary), **Maintenance Guide & Log Button** (external guide link and a “Log New Service” button), and the **Log Table** (listing all maintenance logs for the selected vehicle). |
 | 3   | To add a new log, the user clicks the **Log New Service** button (or the “Log first service” placeholder when the table is empty). A modal appears. | The modal contains a form with fields: Vehicle (dropdown, pre‑selected), Maintenance Task (dropdown), Service Date (date picker), Mileage at Service (number), Performed By (text), Cost (number), Invoice Number (optional text), Remarks (optional text). The user fills in the required fields and clicks **Log New Service** (or **Create Code** in the modal). |
 | 4   |                                                                                   | System validates the input: `vehicle_id` required, exists; `maintenance_task_id` required, exists; `service_date` required, date; `mileage_at_service` required, integer, min 0; `performed_by` required, string, max 255; `cost` required, numeric, min 0; `invoice_number` nullable, string, max 100; `remarks` nullable, string, max 500. On success, a new `VehicleMaintenanceLog` record is created and the modal closes; the table updates (via page reload) to show the new log. A success flash is shown: *“Maintenance info logged!”*. |
@@ -34,8 +34,8 @@
 2. The `auth` middleware redirects the user to the login page (`/login`).
 
 **A2 – Invalid role**
-1. An authenticated user lacking the `maintenance_manager` role attempts to access the URL.
-2. The route is not explicitly role‑protected; however the controller does not check the role, so the user could see data. In practice, the UI is only linked in the sidebar for maintenance managers; relying on obscurity is not ideal. (Note: this is a known gap – the endpoint should be middleware‑protected.)
+1. An authenticated user lacking the `maintenance_manager` role attempts to access the URL or submit to the store/update/delete endpoints.
+2. The `role:maintenance_manager` middleware returns a 403 error (“Unauthorized.”).
 
 **A3 – Validation failure (store/update)**
 1. The user submits a form with missing required fields, invalid date, negative mileage or cost, etc.
@@ -69,7 +69,7 @@
 ## Exceptions
 
 **E1 – Validation error**
-One or more input fields fail the rules defined in `vehicleLogStore` or `vehicleLogUpdate`. System returns HTTP 422 with field‑specific messages.
+One or more input fields fail the rules defined in `vehicleLogStore` or `vehicleLogUpdate`. System redirects back to the form (HTTP 422 only for JSON requests) with field‑specific messages.
 
 **E2 – Related model not found**
 The submitted `vehicle_id` or `maintenance_task_id` does not exist in the respective tables. System returns a validation error (`exists` rule fails).
@@ -87,10 +87,10 @@ Any other unhandled exception results in a 500 error page.
 
 ## Known Gaps / Notes
 
-- The endpoint `/maintenance-manager/vehicle-maintenance-log` is **not** explicitly protected by a `role:maintenance_manager` middleware; reliance on UI hiding is a security gap. In a production deployment, the route should be wrapped in the appropriate middleware.
+- The page is **not linked from the maintenance-manager sidebar**; it is reachable only by entering `/maintenance-manager/vehicle-maintenance-log` directly. The sidebar exposes *Preventive Maintenance*, *Maintenance Tasks* and *Maintenance Logs* instead.
+- The per-vehicle summary on this page is computed **inline** in `MaintenanceManagerController::vehicleLog()` (total cost, total services, latest odometer, cost per km). The maintenance-manager **dashboard** uses `App\Services\FleetMaintenanceService` (`summaryFor()` / `emptySummary()`) instead, so the two summaries are calculated by different code paths.
 - The `mileage_at_service` and `cost` fields are stored as plain numbers; the view formats mileage as an integer and cost with two decimal places and the “₱” prefix.
 - The `maintenance_task_id` foreign key links to the `maintenance_tasks` table (managed via UCN_SC_E017). If a task is deleted, existing logs will retain a dangling foreign key unless the database is set to `ON DELETE SET NULL` or cascades are applied.
-- The summary block (total cost, total services, latest odometer, cost/km) is computed by the `FleetMaintenanceService` service methods (`emptySummary()` and `summaryFor($vehicle)`), ensuring consistency with the full `/fleet-maintenance-log` page (UCN_SC_E016).
 - The UI uses Alpine.js for modal interactions and table row highlighting, but all persistence is performed via standard POST/PUT/DELETE requests to the Laravel backend.
 - No pagination is applied; the table assumes a modest number of logs per vehicle (typically under a few dozen). For fleets with extensive history, pagination would be needed.
 - The `remarks` field is optional and can contain free‑form text; the UI highlights if the remark contains the word “warranty” (case‑insensitive) with a badge.
@@ -102,7 +102,7 @@ Any other unhandled exception results in a 500 error page.
 
 | Element | Location |
 |---|---|
-| Routes | `routes/web.php` — `GET /maintenance-manager/vehicle-maintenance-log` (`maintenance-manager.vehicle-maintenance-log`), `POST /maintenance-manager/vehicle-maintenance-log` (`vehicleLogStore`), `PATCH /maintenance-manager/vehicle-maintenance-log/{log}` (`vehicleLogUpdate`), `DELETE /maintenance-manager/vehicle-maintenance-log/{log}` (`vehicleLogDelete`) (all currently **without** explicit role middleware; should be added) |
+| Routes | `routes/web.php` — `GET /maintenance-manager/vehicle-maintenance-log` (`maintenance-manager.vehicle-maintenance-log`), `POST /maintenance-manager/vehicle-maintenance-log` (`maintenance-manager.vehicle-maintenance-log.store`), `PATCH /maintenance-manager/vehicle-maintenance-log/{log}` (`maintenance-manager.vehicle-maintenance-log.update`), `DELETE /maintenance-manager/vehicle-maintenance-log/{log}` (`maintenance-manager.vehicle-maintenance-log.destroy`) (all inside `role:maintenance_manager`) |
 | Controller | `app/Http/Controllers/MaintenanceManagerController.php::vehicleLog()`, `vehicleLogStore()`, `vehicleLogUpdate()`, `vehicleLogDelete()` |
 | View | `resources/views/maintenance-manager/vehicle-maintenance-log.blade.php` |
 | Models | `App\Models\VehicleMaintenanceLog`, `App\Models\Vehicle`, `App\Models\MaintenanceTask` |

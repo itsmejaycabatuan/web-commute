@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -72,26 +74,37 @@ class DriverApprovalController extends Controller
 
         $path = $request->file('license_image')->store('licenses', 'public');
 
-        $user = User::create([
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'email_verified_at' => now(),
-        ]);
+        // E4 — the user, driver record and role are written together or not at
+        // all; the stored licence image is removed again when that fails.
+        try {
+            DB::transaction(function () use ($request, $validated, $path) {
+                $user = User::create([
+                    'email' => $request->email,
+                    'password' => Hash::make($request->password),
+                    'email_verified_at' => now(),
+                ]);
 
-        $driver = $user->driver()->create([
-            'name' => $request->name,
-            'license_code' => $request->license_code,
-            'contact_info' => $request->contact_info,
-            'license_image_path' => $path,
-            'license_image_data' => null,
-            'license_image_mime' => null,
-            'driver_code' => $validated['driver_code'],
-            'expiration_date' => $validated['expiration_date'],
-            'license_number' => $validated['license_number'],
-            'is_approved' => true,
-        ]);
+                $user->driver()->create([
+                    'name' => $request->name,
+                    'license_code' => $request->license_code,
+                    'contact_info' => $request->contact_info,
+                    'license_image_path' => $path,
+                    'license_image_data' => null,
+                    'license_image_mime' => null,
+                    'driver_code' => $validated['driver_code'],
+                    'expiration_date' => $validated['expiration_date'],
+                    'license_number' => $validated['license_number'],
+                    'is_approved' => true,
+                ]);
 
-        $user->syncRoles(['driver']);
+                $user->syncRoles(['driver']);
+            });
+        } catch (QueryException $e) {
+            Storage::disk('public')->delete($path);
+            report($e);
+
+            return back()->withInput()->with('error', 'A database error occurred. The driver account was not created.');
+        }
 
         return redirect()
             ->route('drivers.index')
@@ -126,21 +139,37 @@ class DriverApprovalController extends Controller
             'driver_code' => 'required|string|max:255',
             'is_approved' => 'in:0,1',
             'is_rejected' => 'in:0,1',
+            // E7 — the replacement licence image must be an image of at most 2 MB.
+            'license_image' => 'nullable|image|max:2048',
         ]);
 
-        // Handle license image upload if provided
-        if ($request->hasFile('license_image')) {
-            // Delete old image if stored on disk
-            if ($driver->license_image_path) {
-                Storage::disk('public')->delete($driver->license_image_path);
+        $oldPath = $driver->license_image_path;
+        $newPath = null;
+
+        try {
+            // Handle license image upload if provided
+            if ($request->hasFile('license_image')) {
+                $newPath = $request->file('license_image')->store('licenses', 'public');
+                $driver->license_image_path = $newPath;
+                $driver->license_image_data = null;
+                $driver->license_image_mime = null;
             }
 
-            $driver->license_image_path = $request->file('license_image')->store('licenses', 'public');
-            $driver->license_image_data = null;
-            $driver->license_image_mime = null;
+            $driver->update(Arr::except($validated, ['license_image']));
+        } catch (QueryException $e) {
+            // E4 — nothing is written; the freshly stored image is discarded.
+            if ($newPath) {
+                Storage::disk('public')->delete($newPath);
+            }
+            report($e);
+
+            return back()->withInput()->with('error', 'A database error occurred. The driver was not updated.');
         }
 
-        $driver->update($validated);
+        // The old image is only removed once the new one is safely saved.
+        if ($newPath && $oldPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
 
         return redirect()
             ->route('drivers.index')
@@ -163,8 +192,17 @@ class DriverApprovalController extends Controller
 
         $user = User::find($driver->user_id);
 
-        $user?->delete();
-        $driver->delete();
+        // E4 — both rows go together or neither does.
+        try {
+            DB::transaction(function () use ($user, $driver) {
+                $user?->delete();
+                $driver->delete();
+            });
+        } catch (QueryException $e) {
+            report($e);
+
+            return back()->with('error', 'A database error occurred. The driver was not removed.');
+        }
 
         return redirect()
             ->route('drivers.index')
@@ -233,13 +271,22 @@ class DriverApprovalController extends Controller
                 ->with('error', 'This driver is already approved.');
         }
 
-        $driver->update([
-            'is_approved' => 1,
-            'license_number' => $validated['license_number'],
-            'license_code' => $validated['license_code'],
-            'expiration_date' => $validated['expiration_date'],
-            'driver_code' => $validated['driver_code'],
-        ]);
+        try {
+            $driver->update([
+                'is_approved' => 1,
+                'is_rejected' => 0,
+                'license_number' => $validated['license_number'],
+                'license_code' => $validated['license_code'],
+                'expiration_date' => $validated['expiration_date'],
+                'driver_code' => $validated['driver_code'],
+            ]);
+        } catch (QueryException $e) {
+            report($e);
+
+            return redirect()
+                ->route('drivers.index')
+                ->with('error', 'A database error occurred. The driver was not approved.');
+        }
 
         return redirect()
             ->route('drivers.index')
@@ -273,13 +320,18 @@ class DriverApprovalController extends Controller
             return back()->with('error', 'Driver not found.');
         }
 
-        if ($driver->is_rejected === 1) {
+        if ((bool) $driver->is_rejected) {
             return redirect()
                 ->route('drivers.index')
                 ->with('error', 'This driver is already rejected.');
         }
 
-        $isRejected = $driver->update(['is_rejected' => 1]);
+        try {
+            $isRejected = $driver->update(['is_rejected' => 1, 'is_approved' => 0]);
+        } catch (QueryException $e) {
+            report($e);
+            $isRejected = false;
+        }
 
         if (! $isRejected) {
             return back()->with('error', 'Error rejecting driver');

@@ -21,7 +21,7 @@
 | 2   | Guest enters their full name, email address, contact information, and creates a password. | System masks both password inputs (eye toggle available for each).                                                                                                                                        |
 | 3   | Guest uploads a clear image of their driver's license (JPG, JPEG, PNG, max 2 MB).  | System validates the file type and size client‑side; the image is stored temporarily for upload.                                                                                                        |
 | 4   | Guest checks the "I agree to Terms & Conditions" box and clicks "Submit Registration". | System validates all inputs **server-side** (`required`, `email`, `unique`, `string`, `max:255` for name/contact, `min:8` for password, `same` for password confirmation, `accepted` for terms, `image|mimes:jpg,jpeg,png|max:2048` for license). |
-| 5   |                                                                                   | System stores the uploaded license image in the public `licenses` disk, generating a stored path.                                                                                                        |
+| 5   |                                                                                   | System stores the uploaded license image on the `public` disk under `licenses/` (i.e. `storage/app/public/licenses`), generating a stored path.                                                        |
 | 6   |                                                                                   | System creates a **User** record with the supplied email, a bcrypt‑hashed password, and sets `email_verified_at` to the current timestamp (email considered verified).                               |
 | 7   |                                                                                   | System creates a linked **Driver** record associated with the new user, persisting the name, contact information, and the stored license‑image path.                                                   |
 | 8   |                                                                                   | If both User and Driver records are created successfully, the System assigns the **driver** role to the user and fires a `Registered` event.                                                       |
@@ -36,11 +36,15 @@
 2. System redirects the guest to the login page.
 3. Guest follows the "Register as Driver" link from the login/registration page and proceeds with the main flow.
 
-**A2 – Resend Verification Email (not applicable)**
-Because the driver registration marks the email as verified immediately (`email_verified_at = now`), no separate verification email is sent. The flow does not include a resend‑verification step.
+**A2 – Email Verification Skipped (no resend step)**
+1. At step 6, the System creates the User record with `email_verified_at` set to the current timestamp.
+2. System treats the email as already verified and sends no verification email.
+3. System continues with step 7. Since no verification email exists, no resend‑verification step is offered.
 
 **A3 – Duplicate License Image**
-If the guest re‑uploads the same license image (or a different one) during registration, the system treats each submission as a new file and stores it under a unique name; no deduplication is performed.
+1. At step 3, the guest uploads a license image that is identical to one already uploaded (or re‑uploads the same or a different image).
+2. At step 5, the System treats the submission as a new file and stores it under a unique name; no deduplication is performed.
+3. System continues with step 6.
 
 ---
 
@@ -84,10 +88,10 @@ The guest submits without checking the agreement box. System displays *"The term
 The uploaded file is not an image, or its MIME type is not JPG/JPEG/PNG, or its size exceeds 2 MB. System displays the corresponding validation message (e.g., *"The license image must be an image of type jpg, jpeg, png."*).
 
 **E7 – Database Error**
-The System fails to insert the user and/or driver record (e.g., due to a unique‑constraint violation on email after a race condition, or a general PDO exception). System displays *"A system error occurred while creating your driver account. Please try again later."* and cancels the registration (no partial records are left; the transaction is rolled back implicitly by Laravel’s model creation).
+The System fails to insert the user and/or driver record (e.g., due to a unique‑constraint violation on email after a race condition, or a general PDO exception). System displays *"A system error occurred while creating your driver account. Please try again later."* and cancels the registration (no partial records are left; the user, driver record and role are written inside an explicit `DB::transaction()`, which is rolled back, and the stored licence image is deleted).
 
 **E8 – File‑Storage Error**
-The license image cannot be written to the `licenses` disk (e.g., insufficient permissions, disk quota). System treats this as a database error and shows the generic message from **E7**.
+The license image cannot be written to the `public` disk (e.g., insufficient permissions, disk quota). System treats this as a database error and shows the generic message from **E7**.
 
 **E9 – Too Many Attempts (Rate Limiting)**
 The guest submits more than **6 registration attempts per minute** (same throttle as commuter registration). System blocks the request (HTTP 429).
@@ -109,10 +113,10 @@ The guest submits more than **6 registration attempts per minute** (same throttl
 
 | Element | Location |
 |---|---|
-| Routes | `routes/web.php` — `GET /register/driver` (`driver.register.page`), `POST /register/driver` (`driver.register`) (both inside `guest` middleware with `throttle:6,1`) |
+| Routes | `routes/web.php` — `GET /register/driver` (`driver.register.page`), `POST /register/driver` (`driver.register`) (both inside `guest` middleware; the `POST` carries `throttle:6,1`) |
 | Controller | `app/Http/Controllers/DriverController.php::create()`, `store()` |
 | View | `resources/views/auth/driver/register.blade.php` |
-| File storage | `public/disks/licenses/` (configured in `config/filesystems.php` as the `licenses` disk) |
+| File storage | `storage/app/public/licenses/` (the `public` disk, `licenses/` prefix — there is no separate `licenses` disk in `config/filesystems.php`) |
 | Role assignment | `$user->assignRole('driver')` (uses Laravel‑permission/Spatie package) |
 | Events | `Illuminate\Auth\Events\Registered` fired after successful creation |
 | Redirect target | `route('login')` → `/login` |

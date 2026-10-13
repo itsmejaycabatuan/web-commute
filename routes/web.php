@@ -68,7 +68,9 @@ Route::middleware('guest')->group(function () {
         ->name('users.login');
 
     Route::get('/register/driver', [DriverController::class, 'create'])->name('driver.register.page');
-    Route::post('/register/driver', [DriverController::class, 'store'])->name('driver.register');
+    Route::post('/register/driver', [DriverController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('driver.register');
 
     Route::get('/forgot-password', [UserController::class, 'forgotPassword'])->name('password.request');
     Route::post('/forgot-password', [UserController::class, 'requestPassword'])->name('password.email');
@@ -228,7 +230,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
     });
 
-    Route::middleware('role:driver')->group(function () {
+    Route::middleware(['role:driver', 'driver.approved'])->group(function () {
         Route::get('/timekeeping', [DriverController::class, 'timekeeping'])->name('driver.timekeeping');
         Route::get('/violations', [DriverController::class, 'violations'])->name('driver.violations');
         Route::post('/timekeeping/clock-in', [DriverController::class, 'clockIn'])->name('driver.timekeeping.clock-in');

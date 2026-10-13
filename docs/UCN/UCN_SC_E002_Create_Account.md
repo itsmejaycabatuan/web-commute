@@ -44,7 +44,9 @@
 3. User presses "Resend verification email"; System re-sends the verification link (throttled to 6 requests/minute).
 
 **A3 – Driver Account**
-Driver registration is a **separate flow** at `/register/driver`. This use case covers **commuter accounts only**; the registration page links to the driver flow via the "OR" divider.
+1. On the registration page, the user clicks the driver registration link below the "OR" divider.
+2. System redirects the user to the driver registration page (`/register/driver`).
+3. User completes driver registration as described in UCN_SC_E022. No commuter account is created, so this use case ends here.
 
 ---
 

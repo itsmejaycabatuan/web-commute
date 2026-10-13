@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\ViolationCode;
 use App\Models\ViolationLog;
 use Auth;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -54,16 +56,21 @@ class DriverManagerController extends Controller
         }
 
         if ($isLeave) {
-            TimeKeeping::create([
-                'driver_id' => $validated['driver_id'],
-                'date' => $validated['date'],
-                'time_in' => null,
-                'time_out' => null,
-                'hours_worked' => 0,
-                'overtime_hours' => 0,
-                'sick' => $request->boolean('sick'),
-                'vacation' => $request->boolean('vacation'),
-            ]);
+            // E3 — Database error: nothing is stored and the Driver Manager is told.
+            try {
+                TimeKeeping::create([
+                    'driver_id' => $validated['driver_id'],
+                    'date' => $validated['date'],
+                    'time_in' => null,
+                    'time_out' => null,
+                    'hours_worked' => 0,
+                    'overtime_hours' => 0,
+                    'sick' => $request->boolean('sick'),
+                    'vacation' => $request->boolean('vacation'),
+                ]);
+            } catch (QueryException $e) {
+                return $this->writeFailed($e, 'The time entry was not saved.');
+            }
 
             return back()->with('success', 'Time entry saved successfully.');
         }
@@ -97,19 +104,37 @@ class DriverManagerController extends Controller
         $totalHours = $in->diffInMinutes($out) / 60;
         $overtime = max(0, $totalHours - 8);
 
-        TimeKeeping::create([
-            'driver_id' => $validated['driver_id'],
-            'date' => $validated['date'],
-            'time_in' => $timeIn,
-            'time_out' => $timeOut,
-            'hours_worked' => round($totalHours, 2),
-            'overtime_hours' => round($overtime, 2),
-            'sick' => false,
-            'vacation' => false,
-        ]);
+        // E3 — Database error: nothing is stored and the Driver Manager is told.
+        try {
+            TimeKeeping::create([
+                'driver_id' => $validated['driver_id'],
+                'date' => $validated['date'],
+                'time_in' => $timeIn,
+                'time_out' => $timeOut,
+                'hours_worked' => round($totalHours, 2),
+                'overtime_hours' => round($overtime, 2),
+                'sick' => false,
+                'vacation' => false,
+            ]);
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The time entry was not saved.');
+        }
 
         return back()
             ->with('success', 'Time entry saved successfully.');
+    }
+
+    /**
+     * UCN_SC_E013 E3 / E014 E3 / E024 E5 — a failed write is logged, cancelled
+     * and reported back to the actor instead of surfacing as a raw 500 page.
+     */
+    private function writeFailed(QueryException $e, string $detail)
+    {
+        report($e);
+
+        return back()
+            ->withInput()
+            ->with('error', 'A database error occurred. '.$detail);
     }
 
     /**
@@ -227,7 +252,11 @@ class DriverManagerController extends Controller
             'remarks' => 'required|string|max:500',
         ]);
 
-        ViolationLog::create($validated);
+        try {
+            ViolationLog::create($validated);
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The violation was not logged.');
+        }
 
         return back()->with('success', 'Violation logged!');
     }
@@ -254,17 +283,24 @@ class DriverManagerController extends Controller
                 ->with('bulk_validation_failed', true);
         }
 
-        foreach ($request->violations as $v) {
-            ViolationLog::create([
-                'user_id' => $request->user_id,
-                'vc_id' => $v['vc_id'],
-                'violation_instance' => $v['violation_instance'],
-                'violation_fine' => $v['violation_fine'],
-                'place_of_violation' => $v['place_of_violation'],
-                'date_of_violation' => $v['date_of_violation'],
-                'time_of_violation' => $v['time_of_violation'],
-                'remarks' => $v['remarks'] ?? null,
-            ]);
+        // All-or-nothing: a failure part-way through stores none of the entries.
+        try {
+            DB::transaction(function () use ($request) {
+                foreach ($request->violations as $v) {
+                    ViolationLog::create([
+                        'user_id' => $request->user_id,
+                        'vc_id' => $v['vc_id'],
+                        'violation_instance' => $v['violation_instance'],
+                        'violation_fine' => $v['violation_fine'],
+                        'place_of_violation' => $v['place_of_violation'],
+                        'date_of_violation' => $v['date_of_violation'],
+                        'time_of_violation' => $v['time_of_violation'],
+                        'remarks' => $v['remarks'] ?? null,
+                    ]);
+                }
+            });
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'No violations were logged.');
         }
 
         return back()
@@ -287,6 +323,29 @@ class DriverManagerController extends Controller
         return 'muted';
     }
 
+    /**
+     * UCN_SC_E024 E3 — field messages that name the offense tiers, e.g.
+     * "The first offense field is required." rather than "The first field is
+     * required." (the form posts them as first / second / third / fourth_plus).
+     */
+    private function violationCodeMessages(): array
+    {
+        return [
+            'first.numeric' => 'The first offense field must be a number.',
+            'second.numeric' => 'The second offense field must be a number.',
+            'third.numeric' => 'The third offense field must be a number.',
+            'fourth_plus.numeric' => 'The fourth offense field must be a number.',
+            'first.required' => 'The first offense field is required.',
+            'second.required' => 'The second offense field is required.',
+            'third.required' => 'The third offense field is required.',
+            'fourth_plus.required' => 'The fourth offense field is required.',
+            'first.min' => 'The first offense field must be at least 0.',
+            'second.min' => 'The second offense field must be at least 0.',
+            'third.min' => 'The third offense field must be at least 0.',
+            'fourth_plus.min' => 'The fourth offense field must be at least 0.',
+        ];
+    }
+
     public function violationCodes()
     {
         activity()->event('Violationcodes')->log('Action performed: violationCodes');
@@ -303,22 +362,26 @@ class DriverManagerController extends Controller
         $request->validate([
             'code' => 'required|string|max:255|unique:violation_codes,code',
             'name' => 'required|string|max:255',
-            'first' => 'required',
-            'second' => 'required',
-            'third' => 'required',
-            'fourth_plus' => 'required',
+            'first' => 'required|numeric|min:0',
+            'second' => 'required|numeric|min:0',
+            'third' => 'required|numeric|min:0',
+            'fourth_plus' => 'required|numeric|min:0',
             'is_revocation' => 'required',
-        ]);
+        ], $this->violationCodeMessages());
 
-        $violationCode = ViolationCode::create([
-            'code' => $request->code,
-            'violation_name' => $request->name,
-            'first_offense' => $request->first,
-            'second_offense' => $request->second,
-            'third_offense' => $request->third,
-            'fourth_offense' => $request->fourth_plus,
-            'is_revoked' => $request->is_revocation,
-        ]);
+        try {
+            $violationCode = ViolationCode::create([
+                'code' => $request->code,
+                'violation_name' => $request->name,
+                'first_offense' => $request->first,
+                'second_offense' => $request->second,
+                'third_offense' => $request->third,
+                'fourth_offense' => $request->fourth_plus,
+                'is_revoked' => $request->is_revocation,
+            ]);
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The violation code was not added.');
+        }
 
         if (! $violationCode) {
             return back()->with('error', 'Error adding violation code.');
@@ -334,28 +397,33 @@ class DriverManagerController extends Controller
         $request->validate([
             'code' => 'required|string|max:255|unique:violation_codes,code,' . $id,
             'name' => 'required|string|max:255',
-            'first' => 'required',
-            'second' => 'required',
-            'third' => 'required',
-            'fourth_plus' => 'required',
+            'first' => 'required|numeric|min:0',
+            'second' => 'required|numeric|min:0',
+            'third' => 'required|numeric|min:0',
+            'fourth_plus' => 'required|numeric|min:0',
             'is_revocation' => 'required',
-        ]);
+        ], $this->violationCodeMessages());
 
+        // UCN_SC_E024 E1 — no such violation code: error flash, nothing changes.
         $violationCode = ViolationCode::find($id);
 
         if (! $violationCode) {
-            return back()->with('error', 'Error no violation code found');
+            return back()->with('error', 'Error no violation code found.');
         }
 
-        $violationCode->update([
-            'code' => $request->code,
-            'violation_name' => $request->name,
-            'first_offense' => $request->first,
-            'second_offense' => $request->second,
-            'third_offense' => $request->third,
-            'fourth_offense' => $request->fourth_plus,
-            'is_revoked' => $request->is_revocation,
-        ]);
+        try {
+            $violationCode->update([
+                'code' => $request->code,
+                'violation_name' => $request->name,
+                'first_offense' => $request->first,
+                'second_offense' => $request->second,
+                'third_offense' => $request->third,
+                'fourth_offense' => $request->fourth_plus,
+                'is_revoked' => $request->is_revocation,
+            ]);
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The violation code was not updated.');
+        }
 
         return back()->with('success', 'Violation code successfully updated!');
     }
@@ -369,10 +437,15 @@ class DriverManagerController extends Controller
             return back()->with('error', 'This violation code is in use by existing violation logs and cannot be deleted.');
         }
 
-        $violationCode = ViolationCode::destroy($id);
+        try {
+            $violationCode = ViolationCode::destroy($id);
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The violation code was not deleted.');
+        }
 
+        // UCN_SC_E024 E1 — no such violation code.
         if (! $violationCode) {
-            return back()->with('message', 'Error no violation code found.');
+            return back()->with('error', 'Error no violation code found.');
         }
 
         return back()->with('success', 'Violation code successfully deleted!');

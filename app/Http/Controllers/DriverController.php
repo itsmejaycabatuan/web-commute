@@ -9,9 +9,13 @@ use App\Models\VehicleLocationHistory;
 use App\Models\ViolationLog;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class DriverController extends Controller
 {
@@ -31,31 +35,59 @@ class DriverController extends Controller
             'contact_info' => 'required|string|max:255',
             'password' => 'required|string|min:8',
             'confirm-password' => 'required|same:password',
-            'terms' => 'required',
+            'terms' => 'accepted',
             'license_image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+        ], [
+            'password.min' => 'The password field must be at least 8 characters.',
+            'confirm-password.same' => 'The password confirmation does not match.',
+            'license_image.mimes' => 'The license image must be an image of type jpg, jpeg, png.',
         ]);
 
-        $path = $request->file('license_image')->store('licenses', 'public');
+        // UCN_SC_E022 E7/E8 — the licence image, the user and the driver record
+        // are created together or not at all. A storage failure is treated the
+        // same as a database failure, and a stored image is removed again when
+        // the records cannot be written.
+        $path = null;
 
-        $user = User::create([
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'email_verified_at' => now(),
-        ]);
+        try {
+            $path = $request->file('license_image')->store('licenses', 'public');
 
-        $driver = $user->driver()->create([
-            'name' => $request->name,
-            'contact_info' => $request->contact_info,
-            'license_image_path' => $path,
-            'license_image_data' => null,
-            'license_image_mime' => null,
-        ]);
+            if (! $path) {
+                throw new \RuntimeException('The license image could not be written to the public disk.');
+            }
 
-        if (! ($user && $driver)) {
-            return back()->with('error', 'Driver registration failed.');
+            $user = DB::transaction(function () use ($request, $path) {
+                $user = User::create([
+                    'email' => $request->email,
+                    'password' => Hash::make($request->password),
+                    'email_verified_at' => now(),
+                ]);
+
+                $user->driver()->create([
+                    'name' => $request->name,
+                    'contact_info' => $request->contact_info,
+                    'license_image_path' => $path,
+                    'license_image_data' => null,
+                    'license_image_mime' => null,
+                ]);
+
+                $user->assignRole('driver');
+
+                return $user;
+            });
+        } catch (\Throwable $e) {
+            if ($path) {
+                Storage::disk('public')->delete($path);
+            }
+
+            report($e);
+            activity()->event('Store')->log('Error during driver registration.');
+
+            throw ValidationException::withMessages([
+                'email' => 'A system error occurred while creating your driver account. Please try again later.',
+            ]);
         }
 
-        $user->assignRole('driver');
         event(new Registered($user));
 
         return redirect()
@@ -84,6 +116,24 @@ class DriverController extends Controller
         activity()->event('Timekeeping')->log('Action performed: timekeeping');
         $driver = Driver::where('user_id', Auth::id())->first();
 
+        // UCN_SC_E023 E1 — no linked Driver record.
+        if (! $driver) {
+            return redirect()->route('map')->with('error', 'Driver profile not found.');
+        }
+
+        try {
+            return $this->buildTimekeepingView($request, $driver);
+        } catch (QueryException $e) {
+            // UCN_SC_E023 E3 — log it and show no data.
+            report($e);
+            activity()->event('Timekeeping')->log('Database error while loading time-keeping.');
+
+            return redirect()->route('map')->with('error', 'Time-keeping failed. Please try again later.');
+        }
+    }
+
+    private function buildTimekeepingView(Request $request, Driver $driver)
+    {
         // Determine which week to show
         if ($request->filled('week')) {
             $weekStart = Carbon::parse($request->week)->startOfWeek();
@@ -218,7 +268,10 @@ class DriverController extends Controller
     public function updateStatus(Request $request)
     {
         activity()->event('Updatestatus')->log('Action performed: updateStatus');
-        $request->validate(['status' => 'required|in:active,inactive']);
+        $request->validate(['status' => 'required|in:active,inactive'], [
+            'status.required' => 'The status field must be either active or inactive.',
+            'status.in' => 'The status field must be either active or inactive.',
+        ]);
         $userId = Auth::user()->id;
         $driver = Driver::where('user_id', $userId)->first();
 
@@ -237,14 +290,25 @@ class DriverController extends Controller
         $userId = Auth::user()->id;
         $driver = Driver::where('user_id', $userId)->first();
 
+        // UCN_SC_E023 E1 — no linked Driver record.
         if (! $driver) {
-            abort(403, 'Driver profile not found.');
+            return redirect()->route('map')->with('error', 'Driver profile not found.');
         }
 
-        $violations = ViolationLog::with('violationCode')
-            ->where('user_id', Auth::id())
-            ->latest()
-            ->get()
+        try {
+            $violations = ViolationLog::with('violationCode')
+                ->where('user_id', Auth::id())
+                ->latest()
+                ->get();
+        } catch (QueryException $e) {
+            // UCN_SC_E023 E3 — log it and show no data.
+            report($e);
+            activity()->event('Violations')->log('Database error while loading violations.');
+
+            return redirect()->route('map')->with('error', 'Violations failed. Please try again later.');
+        }
+
+        $violations = $violations
             ->map(function ($v) {
                 return [
                     'id' => $v->id,

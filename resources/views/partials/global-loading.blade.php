@@ -317,6 +317,53 @@
             });
         }
 
+        // ── Connection errors ──────────────────────────────────────────
+        // UCN "Connection Error" (E1 on the staff pages): when the device is
+        // offline or the service cannot be reached the action is cancelled and
+        // the actor is asked to check their connection.
+        var CONNECTION_MESSAGE = 'You appear to be offline or the service is unreachable. ' +
+            'Please check your connection and try again.';
+        var connectionTimer = null;
+
+        function showConnectionError() {
+            if (!document.body) return;
+
+            var el = document.getElementById('app-connection-error');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'app-connection-error';
+                el.setAttribute('role', 'alert');
+                el.setAttribute('aria-live', 'assertive');
+                el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);' +
+                    'max-width:min(92vw,28rem);z-index:2147483647;padding:12px 16px;border-radius:12px;' +
+                    'background:#b91c1c;color:#fff;font:600 13px/1.4 system-ui,sans-serif;' +
+                    'box-shadow:0 10px 30px rgba(0,0,0,.35);text-align:center;';
+                document.body.appendChild(el);
+            }
+
+            el.textContent = CONNECTION_MESSAGE;
+            el.style.display = 'block';
+            clearTimeout(connectionTimer);
+            connectionTimer = setTimeout(function() {
+                el.style.display = 'none';
+            }, 7000);
+        }
+
+        // Capture phase, registered before the form-submit indicator below: an
+        // offline submission is cancelled before any handler or overlay runs.
+        document.addEventListener('submit', function(e) {
+            var form = e.target;
+            if (!form || form.tagName !== 'FORM') return;
+            if (navigator.onLine !== false) return;
+            if (form.hasAttribute('data-allow-offline')) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            showConnectionError();
+        }, true);
+
+        window.addEventListener('offline', showConnectionError);
+
         // ── Track the last clicked button ──────────────────────────────
         document.addEventListener('click', function(e) {
             var btn = e.target && e.target.closest ?
@@ -345,7 +392,12 @@
                     throw err;
                 }
 
-                return Promise.resolve(result).finally(function() {
+                return Promise.resolve(result).catch(function(err) {
+                    // A rejected fetch() (rather than an HTTP error status) means
+                    // the request never reached the server.
+                    if (err instanceof TypeError) showConnectionError();
+                    throw err;
+                }).finally(function() {
                     hideBar();
                     detachButton(btn);
                 });
@@ -366,6 +418,7 @@
                 if (this.__appTracked) {
                     var btn = attachRecentButton();
                     showBar();
+                    this.addEventListener('error', showConnectionError);
                     this.addEventListener('loadend', function() {
                         hideBar();
                         detachButton(btn);
@@ -448,6 +501,7 @@
             start: showBar,
             done: hideBar,
             button: setButtonLoading,
+            connectionError: showConnectionError,
             reset: resetAll
         };
     })();

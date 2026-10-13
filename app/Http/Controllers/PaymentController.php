@@ -42,6 +42,10 @@ class PaymentController extends Controller
             'destination' => 'required',
             'distance' => 'required|numeric|min:0',
             'price-regular' => 'required',
+        ], [
+            // UCN_SC_E004 E5 — both ends of the trip are needed before "Buy a Ride".
+            'pickup.required' => 'Pick-up point and destination is required.',
+            'destination.required' => 'Pick-up point and destination is required.',
         ]);
 
         // Display the SERVER-priced fare; the calculator's figure is only a hint.
@@ -421,6 +425,16 @@ class PaymentController extends Controller
         $payment = Payment::where('id', $id)
             ->where('paid_by', Auth::id())
             ->firstOrFail();
+
+        // Only a settled payment has a receipt. A pending one goes back through
+        // the gateway reconciliation; a failed or cancelled one has nothing to show.
+        if (! $payment->paid_at) {
+            if ($payment->status === 'pending') {
+                return redirect()->route('payment.returned', ['ref' => $payment->transaction_id]);
+            }
+
+            return redirect()->route('payment.history')->with('error', 'That payment was not completed.');
+        }
 
         return view('commuter.viewreceipt', [
             'pickup' => $payment->starting_point,

@@ -59,7 +59,7 @@
 ## Exceptions
 
 **E1 – Payment Method Unavailable**
-The commuter submits a method that is not available for self-service (anything other than **GCash** or **Maya**). System responds with *"The selected payment method is invalid."* and performs **no** wallet change.
+The commuter submits a method that is not available for self-service (anything other than **GCash** or **Maya**). System responds with *"The selected payment-method is invalid."* and performs **no** wallet change.
 > Cash / "Admin Settlement" is intentionally **not** self-service; it can only be recorded by an admin.
 
 **E2 – Invalid Custom Amount**
@@ -70,6 +70,7 @@ The commuter (double-clicks, refreshes, or replays the request) submits an ident
 
 **E4 – Database / System Error**
 The wallet update fails. System displays *"Top-up failed. Please try again later."* and performs **no** wallet change.
+> **Known gap:** the top-up history row is written *after* the wallet update and outside its error handling. If that insert fails, the wallet has already been credited, no history row exists and the commuter sees the default 500 page.
 
 **E5 – Too Many Attempts (Rate Limiting)**
 The commuter submits more than **5 top-up requests per minute**. System blocks the request (HTTP 429) and performs **no** wallet change.

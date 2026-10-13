@@ -19,8 +19,8 @@ class DriverFactory extends Factory
             'license_code' => fake()->randomElement(['PRO', 'NON-PRO']),
             'license_image_path' => 'images/license/' . fake()->uuid() . '.jpg',
             'license_status' => fake()->randomElement(['valid', 'expired', 'suspended']),
-            'is_approved' => fake()->numberBetween(0, 1),
-            'is_rejected' => fake()->numberBetween(0, 1),
+            'is_approved' => 1,
+            'is_rejected' => 0,
             'status' => fake()->randomElement(['active', 'inactive', 'on_leave']),
         ];
     }

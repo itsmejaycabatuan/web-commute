@@ -99,10 +99,10 @@ The dashboard aggregates role‑specific widgets. The flow differs by role; each
 ## Exceptions
 
 **E1 – Profile not commuter**
-The authenticated user does not have the `commuter` role. System returns a 500 error (missing view) or, if caught, a generic *“Profile page unavailable.”* message.
+The authenticated user does not have the `commuter` role. System redirects to the map and flashes *“Profile page unavailable.”*
 
 **E2 – Dashboard role mismatch**
-The authenticated user’s role is not one of the permitted dashboard roles. System returns a 500 error (missing return) or a generic *“Dashboard unavailable.”* message.
+The authenticated user’s role is not one of the permitted dashboard roles. System redirects to the map and flashes *“Dashboard unavailable.”*
 
 **E3 – Database query failure**
 Any query used to build the profile or dashboard throws a PDO exception. System logs the error and shows an error page or flash message indicating the dashboard could not be loaded.
@@ -117,7 +117,7 @@ Any other unhandled exception results in a 500 error page.
 - The `/profile` endpoint currently only serves commuter users; staff profile information is viewable via the `/settings` route (see UCN_SC_E008 for password change, but other profile fields like email are edited there). A dedicated staff profile page does not exist in the current codebase.
 - The `/dashboard` endpoint is strictly for staff roles; commuters are expected to use the map (`/map`) as their main interface (documented in UCN_SC_E003). This separation is intentional in the product design.
 - Dashboard widgets are refreshed only on page load; there is no auto‑reload or polling for live updates.
-- The maintenance‑manager dashboard reuses the same summary logic as the full `/fleet-maintenance-log` page (UCN_SC_E016) to ensure consistency.
+- The maintenance‑manager dashboard summary is computed by `App\Services\FleetMaintenanceService` (`summaryFor()` / `emptySummary()`); the per-vehicle maintenance-log page (UCN_SC_E025) computes an equivalent summary inline, so the two are not guaranteed to agree.
 - All monetary values are stored as plain numbers in the database; views format them with the “₱” prefix and two decimal places where appropriate.
 - The dashboard does not expose sensitive raw data (e.g., full payment details) beyond what is necessary for the summary widgets.
 - Error handling for missing relationships (e.g., a driver without a vehicle) gracefully shows placeholders like “—” or “Unassigned”.

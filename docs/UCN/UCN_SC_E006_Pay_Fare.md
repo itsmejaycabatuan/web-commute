@@ -93,7 +93,7 @@ The commuter replays a request carrying a `transaction-id` this commuter already
 The gateway rejects the call, times out, or returns an error envelope. System responds with *"The payment service is unavailable right now. Please try again."*, creates **no** payment row and **no** checkout session, and logs `PAYMONGO … FAILED`. The commuter keeps the funds.
 
 **E5 – Payment Declined at the Gateway**
-The commuter declines or the card/e-wallet has insufficient funds. PayMongo reports the intent as `failed` (webhook `payment.failed`, or discovered by the return-URL reconciliation). System sets `status = failed` with `failed_at` and *"The payment was declined by the gateway."* The balance is untouched, and the pending screen stops spinning and explains the failure instead of looping forever.
+The commuter declines or the card/e-wallet has insufficient funds. PayMongo reports the intent as `failed` (webhook `payment.failed`, or discovered by the return-URL reconciliation). System sets `status = failed` with `failed_at` and a failure message — *"The payment was declined by the gateway."* from the webhook, *"The payment was not completed at the gateway."* from the return-URL reconciliation. The balance is untouched, and instead of the pending screen looping forever the commuter is redirected to the payment history with *"That payment could not be completed. Nothing was charged."*
 
 **E6 – Checkout Session Expired**
 PayMongo emits `checkout_session.expired`; System sets `status = cancelled` with *"The checkout session expired."*
@@ -102,7 +102,7 @@ PayMongo emits `checkout_session.expired`; System sets `status = cancelled` with
 A webhook arrives with an invalid HMAC signature. System logs the rejection and responds **401** without touching any payment.
 
 **E8 – Database / System Error**
-Creating the payment record fails. System responds with *"There was a problem processing the payment"* and performs **no** balance change.
+Creating the payment record fails. System responds with *"There was a problem trying to process the payment"* and performs **no** balance change.
 
 **E9 – Missing Wallet**
 The commuter has no wallet row (data inconsistency). System aborts with HTTP 404 rather than crashing.

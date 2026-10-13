@@ -4,11 +4,11 @@
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Use_Case_ID**       | UCN SC E024                                                                                                                                      |
 | **Use Case Name**     | Admin Violation Code Management                                                                                                                  |
-| **Primary Actor**     | Admin / Driver Manager (authenticated user holding the `driver_manager` role; admins with equivalent permissions can also access)            |
+| **Primary Actor**     | Driver Manager (authenticated user holding the `driver_manager` role)                                                                            |
 | **Secondary Actor**   | System                                                                                                                                           |
 | **Goal**              | Allow an authorized user to create, view, edit, and delete violation codes (traffic offenses) that define fines and revocation rules.         |
 | **Trigger**           | User navigates to `/driver-manager/violation-codes` to view the list, or submits the form to add, edit, or delete a code.                     |
-| **Preconditions**     | 1. User is authenticated and logged in.<br>2. User holds the `driver_manager` role (or an admin with the same permissions).<br>3. System is operational. |
+| **Preconditions**     | 1. User is authenticated and logged in.<br>2. User holds the `driver_manager` role (the route group is `role:driver_manager`).<br>3. System is operational. |
 | **Supporting Actors** | `ViolationCode` model                                                                                                                            |
 
 ---
@@ -33,12 +33,12 @@
 2. The `auth` middleware redirects the user to the login page (`/login`).
 
 **A2 – Invalid role**
-1. An authenticated user lacking the `driver_manager` role (and not an admin with equivalent permissions) attempts to access the URL.
+1. An authenticated user lacking the `driver_manager` role attempts to access the URL.
 2. The `role:driver_manager` middleware returns a 403 error (“Unauthorized.”).
 
 **A3 – Validation failure (store/update)**
 1. The user submits a form with missing required fields, duplicate code, or non‑numeric fine values.
-2. Server‑side validation returns HTTP 422 with field‑specific error messages (e.g., *“The code field must be unique.”*, *“The first offense field must be a number.”*). The form is redisplayed with the errors and the previously entered values.
+2. Server‑side validation redirects back to the form (HTTP 422 only for JSON requests) with field‑specific error messages (e.g., *“The code has already been taken.”*, *“The first offense field must be a number.”*). The form is redisplayed with the errors and the previously entered values.
 
 **A4 – Delete attempt on in‑use code**
 1. User attempts to delete a violation code that has one or more associated `ViolationLog` records.
@@ -66,7 +66,7 @@
 The requested `ViolationCode` ID does not exist. System returns an error flash (“Error no violation code found.”) and aborts the operation.
 
 **E2 – Duplicate code**
-During store or update, the submitted `code` already exists in the `violation_codes` table (ignoring the current row on update). System returns a validation error: *“The code field must be unique.”*
+During store or update, the submitted `code` already exists in the `violation_codes` table (ignoring the current row on update). System returns a validation error: *“The code has already been taken.”*
 
 **E3 – Missing or invalid fields**
 One or more required fields are absent, or a fine field is not a numeric value ≥ 0. System returns validation errors per field (e.g., *“The first offense field is required.”*, *“The second offense field must be a number.”*).
@@ -95,7 +95,7 @@ A PDO exception occurs during any database interaction. System logs the exceptio
 
 | Element | Location |
 |---|---|
-| Routes | `routes/web.php` — `GET /driver-manager/violation-codes` (`driver-manager.violation-codes`), `POST /violation-codes/store` (`storeViolationCode`), `PUT /violation-codes/{id}/update` (`updateViolationCode`), `DELETE /violation-codes/{id}/delete` (`destroyViolationCode`) (all inside `role:driver_manager` middleware group) |
+| Routes | `routes/web.php` — `GET /driver-manager/violation-codes` (`driver-manager.violation-codes`), `POST /violation-codes/store` (`violation-codes.store`), `PUT /violation-codes/{id}/update` (`violation-codes.update`), `DELETE /violation-codes/{id}/delete` (`violation-codes.destroy`) (all inside `role:driver_manager` middleware group) |
 | Controller | `app/Http/Controllers/DriverManagerController.php::violationCodes()`, `storeViolationCode()`, `updateViolationCode()`, `destroyViolationCode()` |
 | View | `resources/views/driver-manager/violation-codes.blade.php` |
 | Model | `App\Models\ViolationCode` |

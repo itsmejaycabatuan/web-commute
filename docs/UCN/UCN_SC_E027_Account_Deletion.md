@@ -33,7 +33,7 @@
 
 **A2 – Database deletion failure**
 1. A PDO exception occurs while trying to delete the user record (e.g., foreign‑key constraint failure if another table references the user and the deletion is not cascaded, or a generic DB error).
-2. System logs the exception, returns a generic error view or flashes *“Account deletion failed. Please try again later.”* and does **not** log the user out or invalidate the session (the user remains logged in).
+2. The exception is **not caught** by the controller, so no friendly message is produced — the request falls through to the default 500 error page. The logout/session invalidation at step 2 have already executed, so the session on this device is already ended.
 
 **A3 – Unexpected server error**
 1. Any other unhandled exception occurs during the controller logic.
@@ -57,7 +57,7 @@
 The request lacks a valid authenticated session. System redirects to `/login` (handled by middleware) and does not attempt deletion.
 
 **E2 – Database delete failure**
-A query exception occurs during `User::destroy()`. System logs the exception and returns an error message (“Account deletion failed. Please try again later.”) without logging out the user.
+A query exception occurs during `User::destroy()`. It is not caught: the controller produces no friendly message and the user sees the default 500 error page.
 
 **E3 – Unexpected controller error**
 Any other exception in the `destroy` method results in a 500 error page.

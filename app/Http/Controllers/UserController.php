@@ -21,9 +21,11 @@ use App\Services\FleetMaintenanceService;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
@@ -139,12 +141,30 @@ class UserController extends Controller
         }
     }
 
+    /**
+     * UCN_SC_E026 E2/E3/E4 — a role without a dashboard, or a failing query, is
+     * answered with a message instead of an empty page or a raw 500.
+     */
     public function dashboard(Request $request, FleetMaintenanceService $fleet)
+    {
+        try {
+            $response = $this->renderDashboard($request, $fleet);
+        } catch (QueryException $e) {
+            report($e);
+            activity()->event('Dashboard')->log('Database error while building the dashboard.');
+
+            return redirect()->route('map')->with('error', 'The dashboard could not be loaded. Please try again later.');
+        }
+
+        return $response ?? redirect()->route('map')->with('error', 'Dashboard unavailable.');
+    }
+
+    private function renderDashboard(Request $request, FleetMaintenanceService $fleet)
     {
         activity()->event('Dashboard')->log('Action performed: dashboard');
         $user = Auth::user();
         $userId = Auth::user()->id;
-        $role = $user->roles->first()->name;
+        $role = $user->roles->first()?->name;
         $latestFare = Fare::get()->last();
         $wallet = Wallet::where('user_id', $userId)->first();
 
@@ -326,18 +346,30 @@ class UserController extends Controller
         activity()->event('Profile')->log('Action performed: profile');
         $user = Auth::user();
         $userId = Auth::user()->id;
-        $role = $user->roles->first()->name;
-        $payments = Payment::where('paid_by', $userId)->get();
-        $topups = TopupHistory::where('user_id', $userId)->get();
-        $wallet = Wallet::where('user_id', $userId)->first();
+        $role = $user->roles->first()?->name;
 
-        if ($role == 'commuter') {
-            return view('commuter.profile', [
-                'payments' => $payments,
-                'topups' => $topups,
-                'wallet' => $wallet,
-            ]);
+        // UCN_SC_E026 E1 — only commuters have a profile page.
+        if ($role !== 'commuter') {
+            return redirect()->route('map')->with('error', 'Profile page unavailable.');
         }
+
+        // UCN_SC_E026 E3 — a failing query is logged and reported, not a raw 500.
+        try {
+            $payments = Payment::where('paid_by', $userId)->get();
+            $topups = TopupHistory::where('user_id', $userId)->get();
+            $wallet = Wallet::where('user_id', $userId)->first();
+        } catch (QueryException $e) {
+            report($e);
+            activity()->event('Profile')->log('Database error while building the profile.');
+
+            return redirect()->route('map')->with('error', 'The profile could not be loaded. Please try again later.');
+        }
+
+        return view('commuter.profile', [
+            'payments' => $payments,
+            'topups' => $topups,
+            'wallet' => $wallet,
+        ]);
     }
 
     public function updateProfile(Request $request)
@@ -453,26 +485,36 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
             'confirm-password' => 'required|same:password',
             'terms' => 'accepted',
+        ], [
+            'password.min' => 'The password field must be at least 8 characters.',
+            'confirm-password.same' => 'The password confirmation does not match.',
         ]);
 
+        // UCN_SC_E002 E6 — the account, its role and its wallet are created
+        // together or not at all, so a failure leaves no half-registered user.
         try {
-            $user = User::create([
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-            ]);
+            $user = DB::transaction(function () use ($request) {
+                $user = User::create([
+                    'email' => $request->email,
+                    'password' => Hash::make($request->password),
+                ]);
+
+                $user->assignRole('commuter');
+
+                Wallet::create([
+                    'user_id' => $user->id,
+                ]);
+
+                return $user;
+            });
         } catch (\Exception $e) {
+            report($e);
             activity()->event('Register')->log('Database error during registration.');
 
             throw ValidationException::withMessages([
                 'email' => 'A system error occurred while creating your account. Please try again later.',
             ]);
         }
-
-        $user->assignRole('commuter');
-
-        Wallet::create([
-            'user_id' => $user->id,
-        ]);
 
         event(new Registered($user));
 
@@ -601,6 +643,8 @@ class UserController extends Controller
             'email' => 'required|email',
             'password' => 'required|min:8',
             'confirm-password' => 'required|same:password',
+        ], [
+            'confirm-password.same' => 'The password confirmation does not match.',
         ]);
 
         $status = Password::reset(

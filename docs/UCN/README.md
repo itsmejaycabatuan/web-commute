@@ -1,4 +1,4 @@
-577z# Use Case Narratives (UCN) — Web Commute
+# Use Case Narratives (UCN) — Web Commute
 
 Documentation of the implemented behaviour of the system's core guest, commuter, staff and driver journeys.
 
@@ -24,6 +24,13 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 | UCN_SC_E018 | Manage Commuters | Admin | [UCN_SC_E018_Manage_Commuters.md](UCN_SC_E018_Manage_Commuters.md) |
 | UCN_SC_E019 | Manage Fare Rates | Admin | [UCN_SC_E019_Manage_Fare_Rates.md](UCN_SC_E019_Manage_Fare_Rates.md) |
 | UCN_SC_E020 | View System Reports | Admin | [UCN_SC_E020_View_System_Reports.md](UCN_SC_E020_View_System_Reports.md) |
+| UCN_SC_E021 | Share Vehicle Location (Driver Broadcast) | Driver | [UCN_SC_E021_Share_Vehicle_Location.md](UCN_SC_E021_Share_Vehicle_Location.md) |
+| UCN_SC_E022 | Driver Registration | Guest | [UCN_SC_E022_Driver_Registration.md](UCN_SC_E022_Driver_Registration.md) |
+| UCN_SC_E023 | Driver Dashboard Views | Driver | [UCN_SC_E023_Driver_Dashboard_Views.md](UCN_SC_E023_Driver_Dashboard_Views.md) |
+| UCN_SC_E024 | Admin Violation Code Management | Driver Manager | [UCN_SC_E024_Admin_Violation_Code_Management.md](UCN_SC_E024_Admin_Violation_Code_Management.md) |
+| UCN_SC_E025 | Vehicle Maintenance Log CRUD | Maintenance Manager | [UCN_SC_E025_Vehicle_Maintenance_Log_CRUD.md](UCN_SC_E025_Vehicle_Maintenance_Log_CRUD.md) |
+| UCN_SC_E026 | Profile and Dashboard Views | All authenticated roles | [UCN_SC_E026_Profile_and_Dashboard.md](UCN_SC_E026_Profile_and_Dashboard.md) |
+| UCN_SC_E027 | Account Deletion | Authenticated user | [UCN_SC_E027_Account_Deletion.md](UCN_SC_E027_Account_Deletion.md) |
 
 > **Numbering note.** E011–E020 were reconciled against the implementation. Two sheets previously
 > carried a duplicate identifier — *Manage Violations* shared `UCN_SC_E013` with *Manage Timekeeping*

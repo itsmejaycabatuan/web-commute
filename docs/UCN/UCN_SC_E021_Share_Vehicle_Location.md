@@ -69,7 +69,7 @@
 A required field is missing or malformed (e.g. non-numeric latitude). System answers `422` with the field errors and writes nothing.
 
 **E2 – Not Signed In / Not a Driver / No Driver Profile**
-The request comes from a guest, a commuter, a manager, or a driver without a `Driver` row. System answers `403` (*"Sign in as a driver to broadcast your vehicle location."* / *"Only drivers can broadcast a vehicle location."*) and writes nothing.
+The request comes from a guest, a commuter, a manager, or a driver without a `Driver` row. System answers `403` (*"Sign in as a driver to broadcast your vehicle location."* / *"Only drivers can broadcast a vehicle location."*) and writes nothing. The payload is validated first, so a malformed request from any of these actors is answered with **E1** (`422`) instead.
 
 **E3 – Vehicle Not Assigned**
 The broadcast vehicle is not assigned to the broadcasting driver. System answers `403` (*"This vehicle is not assigned to you."*) and writes nothing — the endpoint cannot be used to track another driver's vehicle.

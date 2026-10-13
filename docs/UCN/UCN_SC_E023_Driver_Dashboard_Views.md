@@ -17,12 +17,12 @@
 
 | #   | Actor's Action                                                                    | System Response                                                                                                                                                                                           |
 | --- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Driver clicks the **Timekeeping** item in the sidebar (or navigates to `/driver/timekeeping`). | System authenticates the driver, fetches the driver’s `TimeKeeping` records for the current week (or the week selected via query param), calculates weekly totals, and returns the `driver.time-keeping` view with the data. |
+| 1   | Driver clicks the **Timekeeping** item in the sidebar (or navigates to `/timekeeping`). | System authenticates the driver, fetches the driver’s `TimeKeeping` records for the current week (or the week selected via query param), calculates weekly totals, and returns the `driver.time-keeping` view with the data. |
 | 2   |                                                                                   | The view renders a weekly summary card (hours, overtime, progress) and a table (or mobile cards) showing each day of the week with date, time‑in, time‑out, hours worked, overtime, and status (Complete/Active/Absent/etc.). |
 | 3   | Driver can change the displayed week by clicking **Previous Week**, **Next Week**, or **Today** links. | System receives the `week` query parameter, repeats step 1 for the requested week, and updates the view accordingly.                           |
-| 4   | Driver clicks the **Violations** item in the sidebar (or navigates to `/driver/violations`). | System fetches the driver’s `ViolationLog` records (with eager‑loaded `violationCode`), computes total violations and total fines, and returns the `driver.violations` view. |
+| 4   | Driver clicks the **Violations** item in the sidebar (or navigates to `/violations`). | System fetches the driver’s `ViolationLog` records (with eager‑loaded `violationCode`), computes total violations and total fines, and returns the `driver.violations` view. |
 | 5   |                                                                                   | The view renders summary cards (total violations, total fines, latest violation) and a list/table of each violation with details: violation type, code, offense count, date, location, fine, penalty, and remarks. |
-| 6   | Driver toggles the **status switch** in the header (or submits a form to `/driver/status` with `status=active|inactive`). | System validates the `status` input (`required|in:active,inactive`), updates the `status` column on the driver’s `Driver` record, and returns a success toast (“You have successfully set your driver status”). |
+| 6   | Driver toggles the **status switch** in the header (or submits a form to `/status` with `status=active|inactive`). | System validates the `status` input (`required|in:active,inactive`), updates the `status` column on the driver’s `Driver` record, and returns a success toast (“You have successfully set your driver status”). |
 | 7   |                                                                                   | The page reloads (or the toast appears) and the driver’s current status is reflected in the header UI.                                          |
 
 ---
@@ -30,7 +30,7 @@
 ## Alternate Flow
 
 **A1 – Unauthenticated access attempt**
-1. An unauthenticated user tries to access `/driver/timekeeping`, `/driver/violations`, or submits to `/driver/status`.
+1. An unauthenticated user tries to access `/timekeeping`, `/violations`, or submits to `/status`.
 2. The `auth` middleware redirects the user to the login page (`/login`) with no data retrieved.
 
 **A2 – Invalid status value**
@@ -59,10 +59,10 @@
 ## Exceptions
 
 **E1 – Driver profile not found**
-The authenticated user lacks a linked `Driver` record. System returns an error view or flashes *“Driver profile not found.”* and aborts the request.
+The authenticated user lacks a linked `Driver` record. On the time-keeping and violations pages the System redirects to the map and flashes *“Driver profile not found.”*; on a status update it redirects back and flashes *“Driver not found.”* Nothing is written.
 
 **E2 – Invalid status input**
-The `status` parameter is missing or not one of `active`/`inactive`. System returns a validation error (HTTP 422) with message *“The status field must be either active or inactive.”* and does not update the record.
+The `status` parameter is missing or not one of `active`/`inactive`. System redirects back to the form (HTTP 422 only for JSON requests) with the validation message *“The status field must be either active or inactive.”* and does not update the record.
 
 **E3 – Database query failure**
 A query exception occurs while fetching `TimeKeeping` or `ViolationLog`. System logs the exception, returns a generic error view or flashes *“[Time‑keeping/Violations] failed. Please try again later.”* and shows no data.
@@ -87,7 +87,7 @@ Any other unhandled exception results in a 500 error page (or the Laravel defaul
 
 | Element | Location |
 |---|---|
-| Routes | `routes/web.php` — `GET /driver/timekeeping` (`driver.timekeeping`), `GET /driver/violations` (`driver.violations`), `POST /driver/status` (`driver.status.update`) (all inside `role:driver` middleware group) |
+| Routes | `routes/web.php` — `GET /timekeeping` (`driver.timekeeping`), `GET /violations` (`driver.violations`), `POST /status` (`driver.status.update`) (all inside `role:driver` middleware group) |
 | Controller | `app/Http/Controllers/DriverController.php::timekeeping()`, `violations()`, `updateStatus()` |
 | Views | `resources/views/driver/time-keeping.blade.php`, `resources/views/driver/violations.blade.php` |
 | Models | `App\Models\TimeKeeping`, `App\Models\ViolationLog`, `App\Models\Driver` |
