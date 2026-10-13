@@ -241,17 +241,6 @@
             transform: rotate(-45deg) translate(5px, -5px);
         }
 
-        input::placeholder,
-        textarea::placeholder {
-            color: rgba(255, 255, 255, 0.2);
-        }
-
-        input:focus,
-        textarea:focus {
-            border-color: rgba(59, 130, 246, 0.5) !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
         .service-card {
             position: relative;
             overflow: hidden;
@@ -273,22 +262,6 @@
             opacity: 1;
         }
 
-        .testimonial-card {
-            position: relative;
-        }
-
-        .testimonial-card::after {
-            content: '"';
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            font-size: 120px;
-            font-weight: 900;
-            line-height: 1;
-            color: rgba(59, 130, 246, 0.05);
-            pointer-events: none;
-        }
-
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -305,39 +278,11 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.2);
         }
-
-        /* Toast notification */
-        .toast {
-            position: fixed;
-            bottom: 1.5rem;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            opacity: 0;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 200;
-            pointer-events: none;
-        }
-
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-            pointer-events: auto;
-        }
     </style>
     @include('partials.global-loading')
 </head>
 
 <body class="font-sans text-white bg-[#050505] overflow-x-hidden">
-
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">
-        <div class="glass-card glow-blue px-5 py-3 rounded-2xl flex items-center gap-3 border border-blue-500/20">
-            <div class="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center shrink-0">
-                <i class="fa-solid fa-check text-green-400 text-xs"></i>
-            </div>
-            <span id="toastMsg" class="text-sm font-medium">Message sent successfully!</span>
-        </div>
-    </div>
 
     <!-- Mobile Menu Overlay -->
     <div id="mobileOverlay" class="mobile-overlay fixed inset-0 bg-black/60 backdrop-blur-sm z-[90]"
@@ -391,7 +336,7 @@
                     </div>
                     <div>
                         <p class="font-semibold text-sm">View Map</p>
-                        <p class="text-[10px] text-gray-500">Explore live routes</p>
+                        <p class="text-[10px] text-gray-500">See PUJs on the road now</p>
                     </div>
                 </a>
             @endif
@@ -405,10 +350,6 @@
                     </div>
                     <div>
                         <p class="font-semibold text-sm">Map</p>
-                        <i clas="fa-gauge-high text-blue-400 text-xs sm:text-sm"></i>
-                    </div>
-                    <div>
-                        <p class="font-semibold text-sm">Map</p>
                         <p class="text-[10px] text-gray-500">Your commute hub</p>
                     </div>
                 </a>
@@ -419,10 +360,10 @@
                     class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Features</a>
                 <a href="#services" onclick="closeMobileMenu()"
                     class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Services</a>
-                <a href="#feedback" onclick="closeMobileMenu()"
-                    class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Feedback</a>
-                <a href="#contacts" onclick="closeMobileMenu()"
-                    class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Contact</a>
+                <a href="#audience" onclick="closeMobileMenu()"
+                    class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Who It's For</a>
+                <a href="#get-started" onclick="closeMobileMenu()"
+                    class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Get Started</a>
             </div>
         </nav>
 
@@ -510,41 +451,38 @@
         <div class="max-w-5xl relative z-10 pt-4 sm:pt-8 md:pt-0">
             <h1
                 class="hero-load-2 text-[1.75rem] sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-extrabold leading-[0.95] sm:leading-[1] mb-4 sm:mb-6 md:mb-8 tracking-tight">
-                The Smartest Way <br class="hidden xs:block">
-                To <span class="text-gradient">Optimize</span> Your <br class="hidden sm:block">
-                Daily Commute
+                Track Your PUJ. <br class="hidden sm:block">
+                Know Your <span class="text-gradient">Fare.</span> <br class="hidden sm:block">
+                Pay Cash-Free.
             </h1>
 
             <div
                 class="hero-load-3 flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1.5 sm:gap-y-2 text-sm sm:text-base md:text-lg lg:text-xl">
-                <span class="font-semibold text-white">Swift,</span>
-                <span class="font-semibold text-blue-400">Safe,</span>
+                <span class="font-semibold text-white">Live,</span>
+                <span class="font-semibold text-blue-400">Transparent,</span>
                 <span class="text-gray-400">and</span>
-                <span class="font-semibold text-green-400">Affordable</span>
+                <span class="font-semibold text-green-400">Cash-Free</span>
             </div>
 
             <!-- Stats row — visible on all screens, compact on mobile -->
             <div
                 class="hero-load-4 flex items-center gap-4 sm:gap-6 md:gap-8 mt-6 sm:mt-8 md:mt-10 pt-4 sm:pt-6 md:pt-8 border-t border-white/10">
                 <div>
-                    <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">12K<span
-                            class="text-blue-400">+</span></p>
-                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-500 mt-0.5 sm:mt-1">Daily
-                        Commuters</p>
+                    <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">Live</p>
+                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-500 mt-0.5 sm:mt-1">PUJ
+                        Tracking</p>
                 </div>
                 <div class="w-px h-6 sm:h-8 md:h-10 bg-white/10"></div>
                 <div>
-                    <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">98<span
-                            class="text-green-400">%</span></p>
-                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-500 mt-0.5 sm:mt-1">On-Time
-                        Rate</p>
+                    <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">3</p>
+                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-500 mt-0.5 sm:mt-1">Ways
+                        to Pay</p>
                 </div>
                 <div class="w-px h-6 sm:h-8 md:h-10 bg-white/10"></div>
                 <div>
-                    <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">45<span
-                            class="text-purple-400">+</span></p>
-                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-500 mt-0.5 sm:mt-1">Active
-                        Routes</p>
+                    <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">Free</p>
+                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-500 mt-0.5 sm:mt-1">Guest
+                        Map Access</p>
                 </div>
             </div>
         </div>
@@ -582,25 +520,25 @@
                 Tracking</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-purple-500"></i> Contactless
+                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-purple-500"></i> Cash-Free
                 Payments</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet Analytics</span>
+                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver Reports</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-pink-500"></i> Passenger Insights</span>
+                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-pink-500"></i> Fare Calculator</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-blue-500"></i> Real-Time GPS
                 Tracking</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-purple-500"></i> Contactless
+                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-purple-500"></i> Cash-Free
                 Payments</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet Analytics</span>
+                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver Reports</span>
             <!-- Duplicate for seamless loop -->
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
@@ -608,14 +546,14 @@
                 Tracking</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-purple-500"></i> Contactless
+                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-purple-500"></i> Cash-Free
                 Payments</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet Analytics</span>
+                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver Reports</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-pink-500"></i> Passenger Insights</span>
+                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-pink-500"></i> Fare Calculator</span>
         </div>
     </div>
 
@@ -633,7 +571,7 @@
                     <div
                         class="glass-card p-2 sm:p-3 md:p-4 rounded-xl sm:rounded-[2rem] md:rounded-[3rem] overflow-hidden">
                         <img src="https://img.freepik.com/free-vector/data-informational-infographic-statistic_24877-51525.jpg"
-                            alt="System Analytics"
+                            alt="GPS navigation illustration"
                             class="rounded-lg sm:rounded-[1.5rem] md:rounded-[2.5rem] w-full grayscale hover:grayscale-0 transition-all duration-700 hover:scale-[1.02]">
                     </div>
                 </div>
@@ -654,8 +592,9 @@
                         <span class="text-white/20 italic font-light">Made Smarter</span>
                     </h2>
                     <p class="text-gray-400 text-xs sm:text-sm md:text-base leading-relaxed max-w-xl">
-                        We believe in the power of real-time data. Our analytics-driven approach allows us to make
-                        informed decisions and optimize your commute for maximum efficiency.
+                        SmartCommute puts the things you usually have to guess on one map: where the nearest PUJ is,
+                        how far you are going, and what the ride will cost. Nothing to install, and no account
+                        needed to take a look.
                     </p>
                 </div>
 
@@ -664,11 +603,11 @@
                         class="glass-card p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl sm:rounded-2xl reveal reveal-delay-1 group cursor-default">
                         <div
                             class="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-blue-500/10 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 md:mb-4 group-hover:bg-blue-600/20 group-hover:scale-110 transition-all duration-500">
-                            <i class="fa-solid fa-chart-line text-blue-400 text-xs sm:text-sm"></i>
+                            <i class="fa-solid fa-calculator text-blue-400 text-xs sm:text-sm"></i>
                         </div>
-                        <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Data-Driven</h4>
-                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed">Optimization
-                            based on thousands of daily commute patterns.</p>
+                        <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Official Fares</h4>
+                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed">Regular and
+                            discounted fares, worked out by distance from the published fare table.</p>
                     </div>
 
                     <div
@@ -678,8 +617,8 @@
                             <i class="fa-solid fa-bolt text-green-400 text-xs sm:text-sm"></i>
                         </div>
                         <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Real-Time</h4>
-                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed">Instant updates
-                            on PUJ locations and traffic delays.</p>
+                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed">Live PUJ
+                            positions and arrival estimates, updated as drivers move.</p>
                     </div>
 
                     <div
@@ -689,19 +628,19 @@
                             <i class="fa-solid fa-shield text-purple-400 text-xs sm:text-sm"></i>
                         </div>
                         <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Secure</h4>
-                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed">End-to-end
-                            encrypted payments and private data handling.</p>
+                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed">Email-verified
+                            accounts, fares priced on the server, and a receipt for every payment.</p>
                     </div>
 
                     <div
                         class="glass-card p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl sm:rounded-2xl reveal reveal-delay-4 group cursor-default">
                         <div
                             class="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-orange-500/10 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 md:mb-4 group-hover:bg-orange-600/20 group-hover:scale-110 transition-all duration-500">
-                            <i class="fa-solid fa-leaf text-orange-400 text-xs sm:text-sm"></i>
+                            <i class="fa-solid fa-door-open text-orange-400 text-xs sm:text-sm"></i>
                         </div>
-                        <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Eco-Friendly</h4>
-                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed">Reduced carbon
-                            footprint through optimized route planning.</p>
+                        <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Open to Guests</h4>
+                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed">Browse the live
+                            map and try the fare calculator before you ever create an account.</p>
                     </div>
                 </div>
             </div>
@@ -725,10 +664,10 @@
                         System</span>
                 </div>
                 <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                    Comprehensive Commute <span class="text-white/20 italic font-light">Solutions</span>
+                    From the Curb <span class="text-white/20 italic font-light">to the Garage</span>
                 </h2>
-                <p class="text-gray-500 max-w-2xl mx-auto text-[11px] sm:text-xs md:text-sm px-2 sm:px-4">Everything
-                    you need to navigate your daily journey with precision and ease.</p>
+                <p class="text-gray-500 max-w-2xl mx-auto text-[11px] sm:text-xs md:text-sm px-2 sm:px-4">Tools for
+                    the people who ride PUJs, the people who drive them, and the people who keep them running.</p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
@@ -743,8 +682,8 @@
                     <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Live GPS Tracking</h4>
                     <p
                         class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
-                        Track your PUJ in real-time with meter-perfect precision. Never miss a ride or wait in the rain
-                        again.</p>
+                        See active PUJs on a live map, each with an arrival estimate, and spot the nearest one at a
+                        glance. Head out when your ride is actually close.</p>
                     <a
                         class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-white transition flex items-center gap-1.5 sm:gap-2 group/link">
                         Live Update <i
@@ -762,29 +701,30 @@
                     <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Time Keeping</h4>
                     <p
                         class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
-                        Automated logs for driver shifts and attendance ensuring compliance and safety.</p>
+                        Drivers clock in and out right from the map. Hours and overtime are logged per shift, ready
+                        for managers to review.</p>
                     <a
                         class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-purple-400 hover:text-white transition flex items-center gap-1.5 sm:gap-2 group/link">
-                        Compliance <i
+                        Shift Logs <i
                             class="fa-solid fa-arrow-right text-[7px] sm:text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
                     </a>
                 </div>
 
-                <!-- Card 3: Contactless Pay -->
+                <!-- Card 3: Cash-Free Fares -->
                 <div
                     class="service-card glass-card p-4 sm:p-5 md:p-6 lg:p-8 rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] transition-all duration-500 group reveal reveal-delay-3">
                     <div
                         class="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-green-500/10 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 md:mb-5 lg:mb-6 group-hover:scale-110 group-hover:bg-green-500/20 transition-all duration-500">
                         <i class="fa-solid fa-credit-card text-green-400 text-sm sm:text-lg md:text-xl"></i>
                     </div>
-                    <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Contactless Pay</h4>
+                    <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Cash-Free Fares</h4>
                     <p
                         class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
-                        Swift, secure, and cash-free. Manage your digital wallet and pay for rides with a single tap or
-                        scan.</p>
+                        Top up your wallet and pay your fare with wallet balance, GCash or Maya. Every payment gets a
+                        receipt and a place in your history.</p>
                     <a
                         class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-green-400 hover:text-white transition flex items-center gap-1.5 sm:gap-2 group/link">
-                        Efficiency <i
+                        Wallet <i
                             class="fa-solid fa-arrow-right text-[7px] sm:text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
                     </a>
                 </div>
@@ -799,7 +739,8 @@
                     <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">PUJ Maintenance Records</h4>
                     <p
                         class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
-                        Digital logs for repairs, inspections, and service history to keep the fleet in top condition.
+                        Preventive maintenance schedules and service logs for every vehicle, with due dates, odometer
+                        readings and costs on record.
                     </p>
                     <a
                         class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-orange-400 hover:text-white transition flex items-center gap-1.5 sm:gap-2 group/link">
@@ -812,8 +753,8 @@
         </div>
     </section>
 
-    <!-- ==================== FEEDBACK SECTION ==================== -->
-    <section id="feedback" class="py-10 sm:py-16 md:py-24 lg:py-32 px-3 sm:px-5 md:px-8 bg-[#050505] relative">
+    <!-- ==================== AUDIENCE SECTION ==================== -->
+    <section id="audience" class="py-10 sm:py-16 md:py-24 lg:py-32 px-3 sm:px-5 md:px-8 bg-[#050505] relative">
         <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent">
         </div>
 
@@ -823,115 +764,105 @@
                     class="inline-flex items-center gap-1.5 sm:gap-2 bg-blue-500/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full">
                     <span class="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-400 rounded-full"></span>
                     <span
-                        class="text-blue-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em]">Feedbacks</span>
+                        class="text-blue-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em]">Who
+                        It's For</span>
                 </div>
                 <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                    What Our <span class="text-white/20 italic font-light">Users Say</span>
+                    One System, <span class="text-white/20 italic font-light">Three Seats</span>
                 </h2>
-                <p class="text-gray-500 max-w-2xl mx-auto text-[11px] sm:text-xs md:text-sm px-2 sm:px-4">See how
-                    SmartCommute is changing the daily journey for thousands of people.</p>
+                <p class="text-gray-500 max-w-2xl mx-auto text-[11px] sm:text-xs md:text-sm px-2 sm:px-4">Whether you
+                    ride, drive or run the fleet, there is a side of SmartCommute built for you.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
 
+                <!-- Commuters -->
                 <div
-                    class="testimonial-card glass-card p-5 sm:p-6 md:p-7 lg:p-10 rounded-xl sm:rounded-2xl md:rounded-[2rem] flex flex-col items-center text-center relative group reveal reveal-delay-1">
+                    class="glass-card p-5 sm:p-6 md:p-7 lg:p-10 rounded-xl sm:rounded-2xl md:rounded-[2rem] flex flex-col items-center text-center relative group reveal reveal-delay-1">
                     <div
                         class="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-600/5 border border-blue-500/20 flex items-center justify-center mb-3 sm:mb-4 md:mb-5 group-hover:border-blue-500/50 group-hover:scale-105 transition-all duration-500">
-                        <i class="fa-solid fa-user text-base sm:text-lg md:text-xl lg:text-2xl text-blue-400"></i>
-                    </div>
-
-                    <div class="flex space-x-0.5 mb-3 sm:mb-4 text-yellow-500 text-[10px] sm:text-xs">
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-person-walking text-base sm:text-lg md:text-xl lg:text-2xl text-blue-400"></i>
                     </div>
 
                     <p
-                        class="text-gray-400 text-[11px] sm:text-xs md:text-sm italic leading-relaxed mb-4 sm:mb-5 md:mb-7 lg:mb-8">
-                        "The real-time tracking is a lifesaver. I used to wait 20 minutes at the stop, but now I time my
-                        walk perfectly. The digital wallet makes boarding so much faster!"
+                        class="text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-widest text-blue-400 font-bold mb-1.5 sm:mb-2">
+                        For Commuters</p>
+                    <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Ride Informed</h4>
+
+                    <p
+                        class="text-gray-400 text-[11px] sm:text-xs md:text-sm leading-relaxed mb-4 sm:mb-5 md:mb-7 lg:mb-8">
+                        Watch PUJs approach on the live map, plan a trip to see the distance and fare, then pay with
+                        your wallet, GCash or Maya. Every payment is saved to your history.
                     </p>
 
-                    <div class="mt-auto">
-                        <h5 class="font-bold text-white text-xs sm:text-sm">Karl Campoy</h5>
-                        <p
-                            class="text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-widest text-blue-400 font-bold mt-0.5 sm:mt-1">
-                            Daily Commuter</p>
-                    </div>
+                    @if (!Auth::user())
+                        <a href="{{ url('/register') }}"
+                            class="mt-auto text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-white transition flex items-center gap-1.5 sm:gap-2 group/link">
+                            Create an Account <i
+                                class="fa-solid fa-arrow-right text-[7px] sm:text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
+                        </a>
+                    @endif
                 </div>
 
+                <!-- Drivers -->
                 <div
-                    class="testimonial-card glass-card p-5 sm:p-6 md:p-7 lg:p-10 rounded-xl sm:rounded-2xl md:rounded-[2rem] flex flex-col items-center text-center relative group border-blue-500/15 glow-blue reveal reveal-delay-2">
-                    <div
-                        class="absolute top-3 right-3 sm:top-4 sm:right-4 bg-blue-500/10 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full">
-                        <span
-                            class="text-[7px] sm:text-[8px] font-bold uppercase tracking-wider text-blue-400">Featured</span>
-                    </div>
+                    class="glass-card p-5 sm:p-6 md:p-7 lg:p-10 rounded-xl sm:rounded-2xl md:rounded-[2rem] flex flex-col items-center text-center relative group border-blue-500/15 glow-blue reveal reveal-delay-2">
                     <div
                         class="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/5 border border-purple-500/20 flex items-center justify-center mb-3 sm:mb-4 md:mb-5 group-hover:border-purple-500/50 group-hover:scale-105 transition-all duration-500">
-                        <i class="fa-solid fa-user text-base sm:text-lg md:text-xl lg:text-2xl text-purple-400"></i>
-                    </div>
-
-                    <div class="flex space-x-0.5 mb-3 sm:mb-4 text-yellow-500 text-[10px] sm:text-xs">
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-id-card text-base sm:text-lg md:text-xl lg:text-2xl text-purple-400"></i>
                     </div>
 
                     <p
-                        class="text-gray-400 text-[11px] sm:text-xs md:text-sm italic leading-relaxed mb-4 sm:mb-5 md:mb-7 lg:mb-8">
-                        "Managing my routes and schedule through the app has reduced my stress significantly. The
-                        navigation is optimized for PUJ, which is exactly what we needed."
+                        class="text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-widest text-purple-400 font-bold mb-1.5 sm:mb-2">
+                        For Drivers</p>
+                    <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Your Shift, On Record</h4>
+
+                    <p
+                        class="text-gray-400 text-[11px] sm:text-xs md:text-sm leading-relaxed mb-4 sm:mb-5 md:mb-7 lg:mb-8">
+                        Register online with your licence details. Once you are approved and assigned a vehicle, clock
+                        in from the map, share your location with waiting riders, and review your own weekly hours.
                     </p>
 
-                    <div class="mt-auto">
-                        <h5 class="font-bold text-white text-xs sm:text-sm">Daniel Padilla</h5>
-                        <p
-                            class="text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-widest text-purple-400 font-bold mt-0.5 sm:mt-1">
-                            Transit Driver</p>
-                    </div>
+                    @if (!Auth::user())
+                        <a href="{{ route('driver.register.page') }}"
+                            class="mt-auto text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-purple-400 hover:text-white transition flex items-center gap-1.5 sm:gap-2 group/link">
+                            Register as a Driver <i
+                                class="fa-solid fa-arrow-right text-[7px] sm:text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
+                        </a>
+                    @endif
                 </div>
 
+                <!-- Operators -->
                 <div
-                    class="testimonial-card glass-card p-5 sm:p-6 md:p-7 lg:p-10 rounded-xl sm:rounded-2xl md:rounded-[2rem] flex flex-col items-center text-center relative group reveal reveal-delay-3">
+                    class="glass-card p-5 sm:p-6 md:p-7 lg:p-10 rounded-xl sm:rounded-2xl md:rounded-[2rem] flex flex-col items-center text-center relative group reveal reveal-delay-3">
                     <div
                         class="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full bg-gradient-to-br from-green-500/20 to-green-600/5 border border-green-500/20 flex items-center justify-center mb-3 sm:mb-4 md:mb-5 group-hover:border-green-500/50 group-hover:scale-105 transition-all duration-500">
-                        <i class="fa-solid fa-user text-base sm:text-lg md:text-xl lg:text-2xl text-green-400"></i>
-                    </div>
-
-                    <div class="flex space-x-0.5 mb-3 sm:mb-4 text-yellow-500 text-[10px] sm:text-xs">
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star-half-stroke"></i>
+                        <i
+                            class="fa-solid fa-clipboard-list text-base sm:text-lg md:text-xl lg:text-2xl text-green-400"></i>
                     </div>
 
                     <p
-                        class="text-gray-400 text-[11px] sm:text-xs md:text-sm italic leading-relaxed mb-4 sm:mb-5 md:mb-7 lg:mb-8">
-                        "From an administrative standpoint, the analytics dashboard provides insights we never had
-                        before. We've optimized fuel consumption by 15% across the fleet."
+                        class="text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-widest text-green-400 font-bold mb-1.5 sm:mb-2">
+                        For Operators</p>
+                    <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Run the Fleet</h4>
+
+                    <p
+                        class="text-gray-400 text-[11px] sm:text-xs md:text-sm leading-relaxed mb-4 sm:mb-5 md:mb-7 lg:mb-8">
+                        Approve drivers, review timekeeping, record violations, schedule vehicle maintenance, set fare
+                        rates, and export financial, driver and fleet reports as CSV.
                     </p>
 
-                    <div class="mt-auto">
-                        <h5 class="font-bold text-white text-xs sm:text-sm">Juswa Garcia</h5>
-                        <p
-                            class="text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-widest text-green-400 font-bold mt-0.5 sm:mt-1">
-                            Fleet Manager</p>
-                    </div>
+                    <p
+                        class="mt-auto text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-widest text-gray-500 font-bold">
+                        Admin &middot; Driver Manager &middot; Maintenance Manager</p>
                 </div>
 
             </div>
         </div>
     </section>
 
-    <!-- ==================== CONTACT SECTION ==================== -->
-    <section id="contacts" class="py-10 sm:py-16 md:py-24 lg:py-32 px-3 sm:px-5 md:px-8 bg-[#050505] relative">
+    <!-- ==================== GET STARTED SECTION ==================== -->
+    <section id="get-started" class="py-10 sm:py-16 md:py-24 lg:py-32 px-3 sm:px-5 md:px-8 bg-[#050505] relative">
         <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent">
         </div>
         <div
@@ -947,16 +878,16 @@
                             class="inline-flex items-center gap-1.5 sm:gap-2 bg-blue-500/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full mb-4 sm:mb-6">
                             <span class="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-400 rounded-full"></span>
                             <span
-                                class="text-blue-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em]">Contact
-                                Us</span>
+                                class="text-blue-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em]">Get
+                                Started</span>
                         </div>
                         <h2
                             class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold leading-[1.05] tracking-tight mb-3 sm:mb-4">
-                            Get in <span class="text-gradient">Touch</span>
+                            See It <span class="text-gradient">Live</span>
                         </h2>
                         <p class="text-gray-400 text-xs sm:text-sm md:text-base max-w-md leading-relaxed">
-                            Have questions about our routes or pricing? Our team is here to help you optimize your
-                            commute.
+                            The map is open to everyone. Look at the PUJs on the road right now, then create an account
+                            when you are ready to pay your fare from your phone.
                         </p>
                     </div>
 
@@ -964,82 +895,73 @@
                         <div class="flex items-center gap-3 sm:gap-4 group">
                             <div
                                 class="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-sm sm:text-base md:text-lg group-hover:bg-blue-500/10 group-hover:border-blue-500/30 transition-all duration-300 shrink-0">
-                                <i class="fa-solid fa-envelope text-blue-400"></i>
+                                <i class="fa-solid fa-map-location-dot text-blue-400"></i>
                             </div>
                             <div class="min-w-0">
                                 <p class="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">
-                                    Email Us</p>
-                                <p class="text-xs sm:text-sm md:text-base font-medium truncate">
-                                    support@smartcommute.com</p>
+                                    Step 1</p>
+                                <p class="text-xs sm:text-sm md:text-base font-medium">Open the live map, no account
+                                    needed</p>
                             </div>
                         </div>
 
                         <div class="flex items-center gap-3 sm:gap-4 group">
                             <div
                                 class="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-sm sm:text-base md:text-lg group-hover:bg-green-500/10 group-hover:border-green-500/30 transition-all duration-300 shrink-0">
-                                <i class="fa-solid fa-phone text-green-400"></i>
+                                <i class="fa-solid fa-route text-green-400"></i>
                             </div>
                             <div class="min-w-0">
                                 <p class="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">
-                                    Call Us</p>
-                                <p class="text-xs sm:text-sm md:text-base font-medium">+1 (555) 000-1234</p>
+                                    Step 2</p>
+                                <p class="text-xs sm:text-sm md:text-base font-medium">Set your pick-up and destination
+                                    to see the fare</p>
                             </div>
                         </div>
 
                         <div class="flex items-center gap-3 sm:gap-4 group">
                             <div
                                 class="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-sm sm:text-base md:text-lg group-hover:bg-purple-500/10 group-hover:border-purple-500/30 transition-all duration-300 shrink-0">
-                                <i class="fa-solid fa-location-dot text-purple-400"></i>
+                                <i class="fa-solid fa-wallet text-purple-400"></i>
                             </div>
                             <div class="min-w-0">
                                 <p class="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">
-                                    Visit Us</p>
-                                <p class="text-xs sm:text-sm md:text-base font-medium">123 Transit Ave, Metro City</p>
+                                    Step 3</p>
+                                <p class="text-xs sm:text-sm md:text-base font-medium">Sign up, top up, and pay
+                                    cash-free</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div
-                    class="glass-card p-4 sm:p-5 md:p-6 lg:p-8 md:p-10 rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] reveal reveal-delay-2">
-                    <form action="#" class="space-y-3 sm:space-y-4 md:space-y-5">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                            <div class="space-y-1.5 sm:space-y-2">
-                                <label
-                                    class="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-500 ml-1 font-medium">First
-                                    Name</label>
-                                <input type="text" placeholder="John"
-                                    class="w-full bg-white/5 border border-white/10 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm transition-all duration-300">
-                            </div>
-                            <div class="space-y-1.5 sm:space-y-2">
-                                <label
-                                    class="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-500 ml-1 font-medium">Last
-                                    Name</label>
-                                <input type="text" placeholder="Doe"
-                                    class="w-full bg-white/5 border border-white/10 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm transition-all duration-300">
-                            </div>
-                        </div>
-
-                        <div class="space-y-1.5 sm:space-y-2">
-                            <label
-                                class="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-500 ml-1 font-medium">Email</label>
-                            <input type="email" placeholder="john@example.com"
-                                class="w-full bg-white/5 border border-white/10 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm transition-all duration-300">
-                        </div>
-
-                        <div class="space-y-1.5 sm:space-y-2">
-                            <label
-                                class="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-500 ml-1 font-medium">Message</label>
-                            <textarea rows="4" placeholder="How can we help?"
-                                class="w-full bg-white/5 border border-white/10 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm transition-all duration-300 resize-none"></textarea>
-                        </div>
-
-                        <button type="button" id="sendBtn"
+                    class="glass-card p-4 sm:p-5 md:p-6 lg:p-8 md:p-10 rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] space-y-3 sm:space-y-4 reveal reveal-delay-2">
+                    @if (!Auth::user())
+                        <a href="{{ route('map.guest') }}"
                             class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 sm:py-3.5 md:py-4 rounded-lg sm:rounded-xl transition-all duration-300 transform active:scale-[0.98] uppercase tracking-widest text-[9px] sm:text-[10px] md:text-xs flex items-center justify-center gap-2">
-                            <span id="sendText">Send Message</span>
-                            <i class="fa-solid fa-paper-plane text-[8px] sm:text-[10px]"></i>
-                        </button>
-                    </form>
+                            <span>View the Live Map</span>
+                            <i class="fa-solid fa-map-location-dot text-[8px] sm:text-[10px]"></i>
+                        </a>
+                        <a href="{{ url('/register') }}"
+                            class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-3 sm:py-3.5 md:py-4 rounded-lg sm:rounded-xl transition-all duration-300 transform active:scale-[0.98] uppercase tracking-widest text-[9px] sm:text-[10px] md:text-xs flex items-center justify-center gap-2">
+                            <span>Create a Commuter Account</span>
+                            <i class="fa-solid fa-user-plus text-[8px] sm:text-[10px]"></i>
+                        </a>
+                        <a href="{{ route('driver.register.page') }}"
+                            class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-3 sm:py-3.5 md:py-4 rounded-lg sm:rounded-xl transition-all duration-300 transform active:scale-[0.98] uppercase tracking-widest text-[9px] sm:text-[10px] md:text-xs flex items-center justify-center gap-2">
+                            <span>Register as a Driver</span>
+                            <i class="fa-solid fa-id-card text-[8px] sm:text-[10px]"></i>
+                        </a>
+                        <p class="text-center text-[10px] sm:text-[11px] text-gray-500 pt-1 sm:pt-2">
+                            Already have an account? <a href="{{ url('/login') }}"
+                                class="text-blue-400 hover:text-white transition">Log in</a>
+                        </p>
+                    @else
+                        <a href="{{ route('dashboard') }}"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 sm:py-3.5 md:py-4 rounded-lg sm:rounded-xl transition-all duration-300 transform active:scale-[0.98] uppercase tracking-widest text-[9px] sm:text-[10px] md:text-xs flex items-center justify-center gap-2">
+                            <span>Go to Your Dashboard</span>
+                            <i class="fa-solid fa-gauge-high text-[8px] sm:text-[10px]"></i>
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>
@@ -1058,8 +980,9 @@
                         <span class="text-sm sm:text-base md:text-lg font-bold tracking-tight">Smart<span
                                 class="text-blue-400">Commute</span></span>
                     </div>
-                    <p class="text-[10px] sm:text-xs text-gray-500 leading-relaxed max-w-xs">Optimizing daily commutes
-                        with real-time data, contactless payments, and intelligent route planning.</p>
+                    <p class="text-[10px] sm:text-xs text-gray-500 leading-relaxed max-w-xs">Live PUJ tracking, fare
+                        planning and cash-free payments for commuters, with timekeeping and maintenance tools for the
+                        people who run the fleet.</p>
                 </div>
 
                 <!-- Links -->
@@ -1074,59 +997,66 @@
                         <li><a href="#services"
                                 class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Services</a>
                         </li>
-                        <li><a href="#"
-                                class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Pricing</a>
+                        <li><a href="#audience"
+                                class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Who It's
+                                For</a>
                         </li>
                     </ul>
                 </div>
 
-                <div>
-                    <h6
-                        class="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3 sm:mb-4">
-                        Company</h6>
-                    <ul class="space-y-1.5 sm:space-y-2">
-                        <li><a href="#"
-                                class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">About</a></li>
-                        <li><a href="#contacts"
-                                class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Contact</a>
-                        </li>
-                        <li><a href="#"
-                                class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Careers</a>
-                        </li>
-                    </ul>
-                </div>
+                @if (!Auth::user())
+                    <div>
+                        <h6
+                            class="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3 sm:mb-4">
+                            Commuters</h6>
+                        <ul class="space-y-1.5 sm:space-y-2">
+                            <li><a href="{{ route('map.guest') }}"
+                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Live
+                                    Map</a></li>
+                            <li><a href="{{ url('/register') }}"
+                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Create
+                                    Account</a>
+                            </li>
+                            <li><a href="{{ url('/login') }}"
+                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Log In</a>
+                            </li>
+                        </ul>
+                    </div>
 
-                <div class="col-span-2 sm:col-span-1">
-                    <h6
-                        class="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3 sm:mb-4">
-                        Legal</h6>
-                    <ul class="space-y-1.5 sm:space-y-2">
-                        <li><a href="#"
-                                class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Privacy</a>
-                        </li>
-                        <li><a href="#"
-                                class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Terms</a></li>
-                    </ul>
-                </div>
+                    <div class="col-span-2 sm:col-span-1">
+                        <h6
+                            class="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3 sm:mb-4">
+                            Drivers</h6>
+                        <ul class="space-y-1.5 sm:space-y-2">
+                            <li><a href="{{ route('driver.register.page') }}"
+                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Driver
+                                    Registration</a>
+                            </li>
+                            <li><a href="{{ url('/login') }}"
+                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Driver Log
+                                    In</a></li>
+                        </ul>
+                    </div>
+                @else
+                    <div>
+                        <h6
+                            class="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3 sm:mb-4">
+                            Account</h6>
+                        <ul class="space-y-1.5 sm:space-y-2">
+                            <li><a href="{{ route('dashboard') }}"
+                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Dashboard</a>
+                            </li>
+                            <li><a href="{{ route('profile') }}"
+                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Profile</a>
+                            </li>
+                        </ul>
+                    </div>
+                @endif
             </div>
 
-            <div
-                class="border-t border-white/5 pt-6 sm:pt-8 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
-                <p class="text-[9px] sm:text-[10px] text-gray-600">&copy; 2025 SmartCommute. All rights reserved.</p>
-                <div class="flex items-center gap-3 sm:gap-4">
-                    <a href="#"
-                        class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition">
-                        <i class="fa-brands fa-facebook-f text-[10px] sm:text-xs text-gray-400"></i>
-                    </a>
-                    <a href="#"
-                        class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition">
-                        <i class="fa-brands fa-twitter text-[10px] sm:text-xs text-gray-400"></i>
-                    </a>
-                    <a href="#"
-                        class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition">
-                        <i class="fa-brands fa-github text-[10px] sm:text-xs text-gray-400"></i>
-                    </a>
-                </div>
+            <div class="border-t border-white/5 pt-6 sm:pt-8">
+                <p class="text-[9px] sm:text-[10px] text-gray-600 text-center sm:text-left">&copy; {{ date('Y') }}
+                    SmartCommute. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -1163,32 +1093,6 @@
         });
 
         revealElements.forEach(el => revealObserver.observe(el));
-
-        // Send button interaction
-        const sendBtn = document.getElementById('sendBtn');
-        const sendText = document.getElementById('sendText');
-
-        if (sendBtn) {
-            sendBtn.addEventListener('click', function() {
-                sendText.textContent = 'Sending...';
-                sendBtn.disabled = true;
-                sendBtn.classList.add('opacity-70');
-
-                setTimeout(() => {
-                    sendText.textContent = 'Message Sent!';
-                    sendBtn.classList.remove('opacity-70');
-                    sendBtn.classList.add('bg-green-600');
-                    sendBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-
-                    setTimeout(() => {
-                        sendText.textContent = 'Send Message';
-                        sendBtn.disabled = false;
-                        sendBtn.classList.remove('bg-green-600');
-                        sendBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-                    }, 2500);
-                }, 1500);
-            });
-        }
 
         // Close mobile menu on resize to desktop
         window.addEventListener('resize', () => {
