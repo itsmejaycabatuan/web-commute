@@ -15,7 +15,9 @@ class CommuterControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Role::firstOrCreate(['name' => 'commuter']);
+        foreach (['admin', 'commuter'] as $role) {
+            Role::firstOrCreate(['name' => $role]);
+        }
     }
 
     public function test_commuters_index_route_responds()
@@ -54,46 +56,51 @@ class CommuterControllerTest extends TestCase
     /**
      * Commuter CRUD Tests
      */
+    protected function admin(): User
+    {
+        return User::factory()->create()->assignRole('admin');
+    }
+
+    protected function commuter(array $attributes = []): User
+    {
+        return User::factory()->create($attributes)->assignRole('commuter');
+    }
+
     public function test_admin_can_store_commuter_with_valid_data()
     {
-        $admin = User::factory()->create()->assignRole('admin');
-
-        $response = $this->actingAs($admin)
+        $response = $this->actingAs($this->admin())
             ->withoutMiddleware(VerifyCsrfToken::class)
             ->post(route('commuters.store'), [
-                'name' => 'John Commuter',
                 'email' => 'john@example.com',
-                'contact_info' => '09171234567',
+                'password' => 'password123',
+                'password_confirmation' => 'password123',
             ]);
 
         $this->assertDatabaseHas('users', ['email' => 'john@example.com']);
-        $response->assertRedirect();
+        $this->assertTrue(User::where('email', 'john@example.com')->first()->hasRole('commuter'));
+        $response->assertRedirect(route('commuters.index'));
     }
 
-    public function test_commuter_store_fails_with_missing_name()
+    public function test_commuter_store_fails_with_missing_password()
     {
-        $admin = User::factory()->create()->assignRole('admin');
-
-        $response = $this->actingAs($admin)
+        $response = $this->actingAs($this->admin())
             ->withoutMiddleware(VerifyCsrfToken::class)
             ->post(route('commuters.store'), [
                 'email' => 'john@example.com',
-                'contact_info' => '09171234567',
             ]);
 
-        $response->assertSessionHasErrors(['name']);
+        $response->assertSessionHasErrors(['password']);
+        $this->assertDatabaseMissing('users', ['email' => 'john@example.com']);
     }
 
     public function test_commuter_store_fails_with_invalid_email()
     {
-        $admin = User::factory()->create()->assignRole('admin');
-
-        $response = $this->actingAs($admin)
+        $response = $this->actingAs($this->admin())
             ->withoutMiddleware(VerifyCsrfToken::class)
             ->post(route('commuters.store'), [
-                'name' => 'John Commuter',
                 'email' => 'not-an-email',
-                'contact_info' => '09171234567',
+                'password' => 'password123',
+                'password_confirmation' => 'password123',
             ]);
 
         $response->assertSessionHasErrors(['email']);
@@ -101,26 +108,23 @@ class CommuterControllerTest extends TestCase
 
     public function test_commuter_can_be_updated()
     {
-        $user = User::factory()->create(['name' => 'Old Name', 'email' => 'old@example.com']);
-        $admin = User::factory()->create()->assignRole('admin');
+        $user = $this->commuter(['email' => 'old@example.com']);
 
-        $response = $this->actingAs($admin)
+        $this->actingAs($this->admin())
             ->withoutMiddleware(VerifyCsrfToken::class)
             ->put(route('commuters.update', ['user' => $user->id]), [
-                'name' => 'New Name',
                 'email' => 'new@example.com',
-                'contact_info' => '09189999999',
-            ]);
+            ])
+            ->assertRedirect(route('commuters.index'));
 
-        $this->assertDatabaseHas('users', ['id' => $user->id, 'name' => 'New Name']);
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'email' => 'new@example.com']);
     }
 
     public function test_commuter_can_be_deleted()
     {
-        $user = User::factory()->create();
-        $admin = User::factory()->create()->assignRole('admin');
+        $user = $this->commuter();
 
-        $this->actingAs($admin)
+        $this->actingAs($this->admin())
             ->withoutMiddleware(VerifyCsrfToken::class)
             ->delete(route('commuters.destroy', ['user' => $user->id]));
 
@@ -129,10 +133,9 @@ class CommuterControllerTest extends TestCase
 
     public function test_commuter_update_fails_with_invalid_email()
     {
-        $user = User::factory()->create();
-        $admin = User::factory()->create()->assignRole('admin');
+        $user = $this->commuter();
 
-        $response = $this->actingAs($admin)
+        $response = $this->actingAs($this->admin())
             ->withoutMiddleware(VerifyCsrfToken::class)
             ->put(route('commuters.update', ['user' => $user->id]), [
                 'email' => 'not-valid',

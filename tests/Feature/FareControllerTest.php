@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Fare;
+use App\Models\FareRate;
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -45,47 +47,50 @@ class FareControllerTest extends TestCase
         $this->assertTrue($response->getStatusCode() > 0);
     }
 
-    public function test_admin_can_create_fare()
+    public function test_fare_upload_requires_a_pdf()
     {
         $admin = User::factory()->create()->assignRole('admin');
 
-        $response = $this->actingAs($admin)
+        $this->actingAs($admin)
             ->withoutMiddleware(VerifyCsrfToken::class)
-            ->post(route('fares.store'), [
-                'route_name' => 'Test Route',
-                'fare_amount' => 50.00,
-            ]);
+            ->put(route('fares.upload'), [])
+            ->assertSessionHasErrors('fare');
 
-        $this->assertDatabaseHas('fares', ['route_name' => 'Test Route', 'fare_amount' => 50.00]);
+        $this->actingAs($admin)
+            ->withoutMiddleware(VerifyCsrfToken::class)
+            ->put(route('fares.upload'), ['fare' => UploadedFile::fake()->image('fare.png')])
+            ->assertSessionHasErrors('fare');
     }
 
-    public function test_fare_store_fails_with_invalid_amount()
+    public function test_fare_bulk_update_rejects_a_zero_rate()
     {
         $admin = User::factory()->create()->assignRole('admin');
+        $rate = FareRate::factory()->create(['regular' => 20, 'discount' => 16]);
 
         $response = $this->actingAs($admin)
             ->withoutMiddleware(VerifyCsrfToken::class)
-            ->post(route('fares.store'), [
-                'route_name' => 'Test Route',
-                'fare_amount' => -10,
+            ->put(route('fares.bulk-update'), [
+                'rates' => [$rate->id => ['id' => $rate->id, 'regular' => 0, 'discount' => 16]],
             ]);
 
-        $response->assertSessionHasErrors(['fare_amount']);
+        $response->assertSessionHasErrors('rates.*.regular');
+        $this->assertEquals(20.0, (float) $rate->fresh()->regular);
     }
 
-    public function test_admin_can_update_fare()
+    public function test_admin_can_bulk_update_fare_rates()
     {
-        $fare = Fare::factory()->create(['route_name' => 'Old Route', 'fare_amount' => 20.00]);
         $admin = User::factory()->create()->assignRole('admin');
+        $rate = FareRate::factory()->create(['regular' => 20, 'discount' => 16]);
 
-        $response = $this->actingAs($admin)
+        $this->actingAs($admin)
             ->withoutMiddleware(VerifyCsrfToken::class)
-            ->put(route('fares.update', ['id' => $fare->id]), [
-                'route_name' => 'New Route',
-                'fare_amount' => 30.00,
-            ]);
+            ->put(route('fares.bulk-update'), [
+                'rates' => [$rate->id => ['id' => $rate->id, 'regular' => 25.5, 'discount' => 20.4]],
+            ])
+            ->assertSessionHas('success');
 
-        $this->assertDatabaseHas('fares', ['id' => $fare->id, 'route_name' => 'New Route', 'fare_amount' => 30.00]);
+        $this->assertEquals(25.5, (float) $rate->fresh()->regular);
+        $this->assertEquals(20.4, (float) $rate->fresh()->discount);
     }
 
     public function test_fare_bulk_update_with_valid_data()

@@ -108,29 +108,41 @@ class DriverManagerControllerTest extends TestCase
 
     public function test_admin_cannot_store_time_keeping_without_driver()
     {
-        $admin = User::factory()->create()->assignRole('admin');
+        // Time keeping belongs to the driver manager; an unknown driver is a validation error.
+        $manager = User::factory()->create()->assignRole('driver_manager');
 
-        $response = $this->actingAs($admin)
+        $response = $this->actingAs($manager)
             ->withoutMiddleware(VerifyCsrfToken::class)
             ->post(route('driver-manager.time-keeping.store'), [
                 'driver_id' => 99999,
-                'time_in' => '08:00 AM',
-                'time_out' => '05:00 PM',
+                'date' => now()->toDateString(),
+                'time_in' => '08:00',
+                'time_out' => '17:00',
             ]);
 
-        $response->assertStatus(422);
+        $response->assertSessionHasErrors('driver_id');
+    }
+
+    protected function violationCodeInput(array $overrides = []): array
+    {
+        return $overrides + [
+            'code' => 'OV-01',
+            'name' => 'Speeding',
+            'first' => 100,
+            'second' => 200,
+            'third' => 300,
+            'fourth_plus' => 400,
+            'is_revocation' => 0,
+        ];
     }
 
     public function test_driver_manager_can_store_violation_code()
     {
-        $admin = User::factory()->create()->assignRole('admin');
+        $manager = User::factory()->create()->assignRole('driver_manager');
 
-        $response = $this->actingAs($admin)
+        $response = $this->actingAs($manager)
             ->withoutMiddleware(VerifyCsrfToken::class)
-            ->post(route('violation-codes.store'), [
-                'code' => 'OV-01',
-                'violation_name' => 'Speeding',
-            ]);
+            ->post(route('violation-codes.store'), $this->violationCodeInput());
 
         $this->assertDatabaseHas('violation_codes', ['code' => 'OV-01', 'violation_name' => 'Speeding']);
         $response->assertRedirect();
@@ -138,42 +150,52 @@ class DriverManagerControllerTest extends TestCase
 
     public function test_driver_manager_cannot_store_duplicate_violation_code()
     {
-        // First create a violation code
-        $existing = ViolationCode::factory()->create(['code' => 'DUP-01']);
+        ViolationCode::factory()->create(['code' => 'DUP-01']);
 
-        $admin = User::factory()->create()->assignRole('admin');
+        $manager = User::factory()->create()->assignRole('driver_manager');
 
-        $response = $this->actingAs($admin)
+        $response = $this->actingAs($manager)
             ->withoutMiddleware(VerifyCsrfToken::class)
-            ->post(route('violation-codes.store'), [
-                'code' => 'DUP-01',
-                'violation_name' => 'Duplicate',
-            ]);
+            ->post(route('violation-codes.store'), $this->violationCodeInput(['code' => 'DUP-01', 'name' => 'Duplicate']));
 
-        // Should fail validation for duplicate code
-        $response->assertStatus(422);
+        $response->assertSessionHasErrors('code');
+        $this->assertDatabaseMissing('violation_codes', ['violation_name' => 'Duplicate']);
     }
 
-    public function test_admin_can_update_violation_code()
+    public function test_admin_cannot_manage_violation_codes()
     {
-        $code = ViolationCode::factory()->create(['code' => 'UPD-01', 'violation_name' => 'Old Name']);
+        // Violation codes are driver-manager territory; an admin is turned away.
         $admin = User::factory()->create()->assignRole('admin');
 
-        $response = $this->actingAs($admin)
+        $this->actingAs($admin)
             ->withoutMiddleware(VerifyCsrfToken::class)
-            ->put(route('violation-codes.update', ['id' => $code->id]), [
-                'violation_name' => 'Updated Name',
-            ]);
+            ->post(route('violation-codes.store'), $this->violationCodeInput())
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('violation_codes', ['code' => 'OV-01']);
+    }
+
+    public function test_driver_manager_can_update_violation_code()
+    {
+        $code = ViolationCode::factory()->create(['code' => 'UPD-01', 'violation_name' => 'Old Name']);
+        $manager = User::factory()->create()->assignRole('driver_manager');
+
+        $this->actingAs($manager)
+            ->withoutMiddleware(VerifyCsrfToken::class)
+            ->put(route('violation-codes.update', ['id' => $code->id]), $this->violationCodeInput([
+                'code' => 'UPD-01',
+                'name' => 'Updated Name',
+            ]));
 
         $this->assertDatabaseHas('violation_codes', ['id' => $code->id, 'violation_name' => 'Updated Name']);
     }
 
-    public function test_admin_can_delete_violation_code()
+    public function test_driver_manager_can_delete_violation_code()
     {
         $code = ViolationCode::factory()->create(['code' => 'TO-DELETE', 'violation_name' => 'To Be Deleted']);
-        $admin = User::factory()->create()->assignRole('admin');
+        $manager = User::factory()->create()->assignRole('driver_manager');
 
-        $response = $this->actingAs($admin)
+        $this->actingAs($manager)
             ->withoutMiddleware(VerifyCsrfToken::class)
             ->delete(route('violation-codes.destroy', ['id' => $code->id]));
 

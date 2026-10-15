@@ -192,7 +192,7 @@ class DriverApprovalControllerTest extends TestCase
 
         $this->actAsAdmin()
             ->withoutMiddleware(VerifyCsrfToken::class)
-            ->put(route('drivers.reject', ['user' => $driver->id])); // Route is PUT based on web.php
+            ->post(route('drivers.reject', ['user' => $driver->id]));
 
         $this->assertDatabaseHas('drivers', [
             'id' => $driver->id,

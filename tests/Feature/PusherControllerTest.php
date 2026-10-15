@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Events\PusherEvent;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class PusherControllerTest extends TestCase
@@ -37,14 +39,14 @@ class PusherControllerTest extends TestCase
         $this->assertTrue($response->getStatusCode() > 0);
     }
 
-    public function test_fire_event_requires_valid_data()
+    public function test_fire_event_broadcasts_and_confirms()
     {
-        $response = $this->withoutMiddleware([VerifyCsrfToken::class])
-            ->post(route('fire.event'), [
-                'event' => '',
-                'data' => null,
-            ]);
+        Event::fake([PusherEvent::class]);
 
-        $response->assertStatus(422);
+        $response = $this->withoutMiddleware([VerifyCsrfToken::class])
+            ->post(route('fire.event'));
+
+        $response->assertOk()->assertJson(['message' => 'event sent']);
+        Event::assertDispatched(PusherEvent::class);
     }
 }

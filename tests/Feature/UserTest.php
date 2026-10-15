@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -74,10 +75,12 @@ class UserTest extends TestCase
     public function test_drivers_can_register()
     {
         $this->withoutMiddleware(VerifyCsrfToken::class);
+        Storage::fake('public');
 
         $licenseImage = UploadedFile::fake()->image('license.jpg', 800, 600);
 
         $this->post(route('driver.register'), [
+            'name' => 'Test Driver',
             'email' => 'testdriver@gmail.com',
             'contact_info' => '9984483912',
             'password' => 'password123',
@@ -178,8 +181,9 @@ class UserTest extends TestCase
      */
     public function test_guest_can_view_map()
     {
-        $response = $this->get(route('map'));
-        $response->assertOk()->assertViewHas('rates');
+        $this->get(route('map'))->assertRedirect(route('login'));
+
+        $this->get(route('map.guest'))->assertOk()->assertViewHas('rates');
     }
 
     public function test_commuter_can_view_map()
@@ -403,7 +407,8 @@ class UserTest extends TestCase
             'password' => 'wrong-password',
         ]);
 
-        $this->assertEquals('Error logging in', session('error'));
+        $response->assertSessionHasErrors('credentials');
+        $this->assertGuest();
     }
 
     /**
@@ -413,9 +418,10 @@ class UserTest extends TestCase
     {
         Mail::fake(); // Prevent actual email sending
 
-        $user = $this->createUserWithRole('commuter');
+        // The notice is only for accounts that have not verified their email yet.
+        $user = $this->createUserWithRole('commuter', ['email_verified_at' => null]);
 
-        $response = $this->actingAs($user)->get(route('verification.notice')); // Assuming route name
+        $response = $this->actingAs($user)->get(route('verification.notice'));
 
         $response->assertViewIs('auth.verify-email');
     }

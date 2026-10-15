@@ -81,54 +81,67 @@ class MaintenanceManagerControllerTest extends TestCase
     /**
      * Maintenance Manager Tests
      */
-    public function test_admin_can_create_maintenance_task()
+    protected function manager(): User
     {
-        $admin = User::factory()->create()->assignRole('admin');
-
-        $response = $this->actingAs($admin)
-            ->withoutMiddleware([VerifyCsrfToken::class])
-            ->post(route('maintenance-manager.maintenance-tasks.store'), [
-                'name' => 'Oil Change',
-            ]);
-
-        $this->assertDatabaseHas('maintenance_tasks', ['name' => 'Oil Change']);
+        return User::factory()->create()->assignRole('maintenance_manager');
     }
 
-    public function test_admin_cannot_create_task_without_name()
+    public function test_maintenance_manager_can_create_maintenance_task()
     {
-        $admin = User::factory()->create()->assignRole('admin');
+        $this->actingAs($this->manager())
+            ->withoutMiddleware([VerifyCsrfToken::class])
+            ->post(route('maintenance-manager.maintenance-tasks.store'), [
+                'tasks_performed' => 'Oil Change',
+                'miles_between_service' => 5000,
+            ])
+            ->assertSessionHas('success');
 
-        $response = $this->actingAs($admin)
+        $this->assertDatabaseHas('maintenance_tasks', ['tasks_performed' => 'Oil Change', 'miles_between_service' => 5000]);
+    }
+
+    public function test_maintenance_manager_cannot_create_task_without_name()
+    {
+        $response = $this->actingAs($this->manager())
             ->withoutMiddleware([VerifyCsrfToken::class])
             ->post(route('maintenance-manager.maintenance-tasks.store'), []);
 
-        $response->assertSessionHasErrors(['name']);
+        $response->assertSessionHasErrors(['tasks_performed']);
     }
 
-    public function test_admin_can_update_maintenance_task()
+    public function test_maintenance_manager_can_update_maintenance_task()
     {
-        $task = \App\Models\MaintenanceTask::create(["name" => "Old Task"]);
-        $admin = User::factory()->create()->assignRole('admin');
+        $task = MaintenanceTask::create(['tasks_performed' => 'Old Task']);
 
-        $response = $this->actingAs($admin)
+        $this->actingAs($this->manager())
             ->withoutMiddleware([VerifyCsrfToken::class])
             ->put(route('maintenance-manager.maintenance-tasks.update', ['task' => $task->id]), [
-                'name' => 'New Task Name',
+                'tasks_performed' => 'New Task Name',
             ]);
 
-        $this->assertDatabaseHas('maintenance_tasks', ['id' => $task->id, 'name' => 'New Task Name']);
+        $this->assertDatabaseHas('maintenance_tasks', ['id' => $task->id, 'tasks_performed' => 'New Task Name']);
     }
 
-    public function test_admin_can_delete_maintenance_task()
+    public function test_maintenance_manager_can_delete_maintenance_task()
     {
-        $admin = User::factory()->create()->assignRole('admin');
-        $task = \App\Models\MaintenanceTask::create(["name" => "Test Task"]);
+        $task = MaintenanceTask::create(['tasks_performed' => 'Test Task']);
 
-        $response = $this->actingAs($admin)
+        $this->actingAs($this->manager())
             ->withoutMiddleware([VerifyCsrfToken::class])
             ->delete(route('maintenance-manager.maintenance-tasks.destroy', ['task' => $task->id]));
 
         $this->assertDatabaseMissing('maintenance_tasks', ['id' => $task->id]);
     }
 
+    public function test_admin_cannot_manage_maintenance_tasks()
+    {
+        Role::firstOrCreate(['name' => 'admin']);
+        $admin = User::factory()->create()->assignRole('admin');
+
+        $this->actingAs($admin)
+            ->withoutMiddleware([VerifyCsrfToken::class])
+            ->post(route('maintenance-manager.maintenance-tasks.store'), ['tasks_performed' => 'Nope'])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('maintenance_tasks', ['tasks_performed' => 'Nope']);
+    }
 }

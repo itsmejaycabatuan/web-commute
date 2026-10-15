@@ -56,20 +56,24 @@ class AdminControllerTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('dashboard'));
 
-        $response->assertStatus(403);
+        // A user without the admin role never gets the admin dashboard; they are
+        // sent back to the map.
+        $response->assertRedirect(route('map'));
     }
 
-    public function test_admin_dashboard_shows_zero_when_no_data()
+    public function test_admin_dashboard_exposes_summary_figures()
     {
         $user = User::factory()->create()->assignRole('admin');
 
         $response = $this->actingAs($user)->get(route('dashboard'));
 
         $response->assertOk()
+            ->assertViewIs('admin.dashboard')
             ->assertViewHas('totalRevenue')
-            ->assertViewHas('totalDrivers')
-            ->assertViewHas('totalVehicles')
-            ->assertViewHas('totalCommuters');
+            ->assertViewHas('totalFundsAdded')
+            ->assertViewHas('activeUsersCount')
+            ->assertViewHas('revenueByDay')
+            ->assertViewHas('topupsByDay');
     }
 
     public function test_admin_can_access_dashboard_via_post()

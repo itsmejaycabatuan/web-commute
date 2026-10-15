@@ -41,9 +41,9 @@ class GuestControllerTest extends TestCase
 
     public function test_guest_can_view_map_with_fares()
     {
-        // Assuming there are fare entries in the database
-        $response = $this->get(route('map'));
-        $response->assertOk();
+        // /map is for signed-in users; guests get the read-only guest map.
+        $response = $this->get(route('map.guest'));
+        $response->assertOk()->assertViewHas('rates');
     }
 
     public function test_guest_can_access_login_page()
