@@ -684,7 +684,7 @@
             </div>
 
             <!-- ── Disclaimer ── -->
-            <div class="mt-5 px-4 py-3 rounded-xl bg-[#0a0a0a] border border-[#141414] flex items-start gap-3">
+            <div class="mt-5 px-4 py-3 rounded-xl bg-slate-50 dark:bg-[#0a0a0a] border border-slate-200 dark:border-[#141414] flex items-start gap-3">
                 <i class="fa-solid fa-circle-info text-[9px] text-[#333] mt-0.5 shrink-0"></i>
                 <p class="text-[9px] text-[#333] leading-relaxed">
                     This is a read-only record of violations filed against your license. If you believe any entry is

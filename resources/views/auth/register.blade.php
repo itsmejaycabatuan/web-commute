@@ -96,7 +96,7 @@
         }
 
         .input-field::placeholder {
-            color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.55);
         }
 
         @keyframes card-enter {
@@ -201,7 +201,7 @@
                     class="block mb-1 sm:mb-1.5 ml-0.5 sm:ml-1 font-semibold tracking-widest uppercase text-[9px] sm:text-[10px] text-gray-400">Email</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-envelope text-[10px] sm:text-xs text-white/20"></i>
+                        <i class="fa-solid fa-envelope text-[10px] sm:text-xs text-white/50"></i>
                     </div>
                     <input type="email" name="email" placeholder="you@example.com" value="{{ old('email') }}"
                         class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
@@ -221,13 +221,13 @@
                     class="block mb-1 sm:mb-1.5 ml-0.5 sm:ml-1 font-semibold tracking-widest uppercase text-[9px] sm:text-[10px] text-gray-400">Password</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/20"></i>
+                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/50"></i>
                     </div>
                     <input type="password" name="password" id="password" placeholder="••••••••"
                         value="{{ old('password') }}"
                         class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-9 sm:pr-10 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
                     <button type="button" onclick="togglePassword('password', 'eye-icon-1')"
-                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/30 hover:text-white/70 transition">
+                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/60 hover:text-white/70 transition">
                         <i id="eye-icon-1" class="fa-solid fa-eye text-[10px] sm:text-xs"></i>
                     </button>
                 </div>
@@ -247,12 +247,12 @@
                     Password</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/20"></i>
+                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/50"></i>
                     </div>
                     <input type="password" name="confirm-password" id="confirm-password" placeholder="••••••••"
                         class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-9 sm:pr-10 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
                     <button type="button" onclick="togglePassword('confirm-password', 'eye-icon-2')"
-                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/30 hover:text-white/70 transition">
+                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/60 hover:text-white/70 transition">
                         <i id="eye-icon-2" class="fa-solid fa-eye text-[10px] sm:text-xs"></i>
                     </button>
                 </div>
@@ -293,7 +293,7 @@
         <!-- OR Divider -->
         <div class="flex items-center my-4 sm:my-5 gap-2 sm:gap-3">
             <div class="flex-grow h-px bg-white/10"></div>
-            <span class="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-600 uppercase">or</span>
+            <span class="text-[9px] sm:text-[10px] font-bold tracking-widest text-gray-400 uppercase">or</span>
             <div class="flex-grow h-px bg-white/10"></div>
         </div>
 
@@ -304,7 +304,7 @@
         </a>
 
         <div class="pt-4 sm:pt-6 mt-4 sm:mt-6 text-center border-t border-white/5">
-            <p class="text-[11px] sm:text-xs text-gray-500">
+            <p class="text-[11px] sm:text-xs text-gray-400">
                 Already have an account?
                 <a href="{{ url('/login') }}" class="font-semibold text-white hover:text-blue-400 transition">Log
                     in</a>

@@ -352,7 +352,7 @@
                                 </td>
                                 <td class="px-4 sm:px-6 py-3.5">
                                     <div
-                                        class="flex items-center justify-center gap-1 opacity-30 group-hover:opacity-100 transition-opacity">
+                                        class="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                                         <button type="button"
                                             @click="openEditModal({{ $task->id }}, '{{ str_replace("'", "\'", $task->tasks_performed) }}', {{ $task->miles_between_service ?? 'null' }}, {{ $task->months_between_service ?? 'null' }})"
                                             class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 dark:text-[#555] hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 transition-all"

@@ -25,7 +25,7 @@
 
         .font-size-btn.active {
             background: #ffffff;
-            color: #3b82f6;
+            color: #1d4ed8;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 

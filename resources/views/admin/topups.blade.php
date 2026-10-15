@@ -52,7 +52,7 @@
             transition: all 0.2s;
             border: 1px solid #e2e8f0;
             background: #f8fafc;
-            color: #64748b;
+            color: #586172;
         }
 
         .pagination a:hover {
@@ -76,7 +76,7 @@
         .dark .pagination span {
             border-color: #1e1e1e;
             background: #111;
-            color: #555;
+            color: #a3a3a3;
         }
 
         .dark .pagination a:hover {

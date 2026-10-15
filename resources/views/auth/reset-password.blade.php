@@ -57,7 +57,7 @@
         }
 
         .input-field::placeholder {
-            color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.55);
         }
 
         @keyframes card-enter {
@@ -172,11 +172,11 @@
                     class="flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-white/[0.03] border border-white/[0.06]">
                     <div
                         class="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-white/[0.05] flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-envelope text-[9px] sm:text-[10px] text-gray-500"></i>
+                        <i class="fa-solid fa-envelope text-[9px] sm:text-[10px] text-gray-400"></i>
                     </div>
                     <div class="min-w-0 text-left">
                         <p
-                            class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.15em] text-gray-600">
+                            class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.12em] sm:tracking-[0.15em] text-gray-400">
                             Resetting for</p>
                         <p class="text-[10px] sm:text-[11px] font-semibold text-gray-300 truncate">{{ $email }}
                         </p>
@@ -209,13 +209,13 @@
                     Password</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/20"></i>
+                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/50"></i>
                     </div>
                     <input type="password" name="password" id="password" placeholder="••••••••"
                         value="{{ old('password') }}" oninput="checkStrength(this.value)"
                         class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-9 sm:pr-10 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
                     <button type="button" onclick="togglePassword('password', 'eye-icon-1')"
-                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/30 hover:text-white/70 transition">
+                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/60 hover:text-white/70 transition">
                         <i id="eye-icon-1" class="fa-solid fa-eye text-[10px] sm:text-xs"></i>
                     </button>
                 </div>
@@ -225,7 +225,7 @@
                     <div class="strength-bar flex-1 bg-white/5" id="str-3"></div>
                     <div class="strength-bar flex-1 bg-white/5" id="str-4"></div>
                 </div>
-                <p class="mt-1 ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] text-gray-600" id="strength-text">Minimum 8
+                <p class="mt-1 ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] text-gray-400" id="strength-text">Minimum 8
                     characters</p>
                 @if ($errors->has('password'))
                     <div class="mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
@@ -244,13 +244,13 @@
                     Password</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/20"></i>
+                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/50"></i>
                     </div>
                     <input type="password" name="confirm-password" id="confirm-password" placeholder="••••••••"
                         oninput="checkMatch()"
                         class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-9 sm:pr-10 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
                     <button type="button" onclick="togglePassword('confirm-password', 'eye-icon-2')"
-                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/30 hover:text-white/70 transition">
+                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/60 hover:text-white/70 transition">
                         <i id="eye-icon-2" class="fa-solid fa-eye text-[10px] sm:text-xs"></i>
                     </button>
                 </div>
@@ -278,7 +278,7 @@
         </form>
 
         <div class="pt-4 sm:pt-6 mt-5 sm:mt-7 text-center border-t border-white/5">
-            <p class="text-[11px] sm:text-xs text-gray-500">
+            <p class="text-[11px] sm:text-xs text-gray-400">
                 Remember your password?
                 <a href="{{ route('login') }}" class="font-semibold text-white hover:text-blue-400 transition">Back
                     to login</a>
@@ -332,11 +332,11 @@
             });
 
             if (password.length === 0) {
-                text.className = 'mt-1 ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] text-gray-600';
+                text.className = 'mt-1 ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] text-gray-400';
                 text.textContent = 'Minimum 8 characters';
             } else {
                 text.className = 'mt-1 ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] ' + (textColors[score - 1] ||
-                    'text-gray-600');
+                    'text-gray-400');
                 text.textContent = labels[score - 1] || 'Too short';
             }
 
@@ -358,7 +358,7 @@
             indicator.classList.remove('hidden');
 
             if (pass === confirm) {
-                icon.className = 'text-[8px] sm:text-[9px] fa-solid fa-circle-check text-green-4003';
+                icon.className = 'text-[8px] sm:text-[9px] fa-solid fa-circle-check text-green-400';
                 text.className = 'text-[9px] sm:text-[10px] text-green-400';
                 text.textContent = 'Passwords match';
             } else {

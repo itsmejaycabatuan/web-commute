@@ -172,7 +172,7 @@
         }
 
         .pagination a {
-            color: #64748b;
+            color: #586172;
             background: #ffffff;
             border-color: #e2e8f0;
         }
@@ -184,7 +184,7 @@
         }
 
         .dark .pagination a {
-            color: #666;
+            color: #a8a8a8;
             background: #111;
             border-color: #1e1e1e;
         }
@@ -203,7 +203,7 @@
         }
 
         .pagination .disabled {
-            color: #cbd5e1;
+            color: #626b7b;
             background: #f8fafc;
             border-color: #e2e8f0;
             cursor: default;
@@ -211,7 +211,7 @@
         }
 
         .dark .pagination .disabled {
-            color: #333;
+            color: #8f8f8f;
             background: #0a0a0a;
             border-color: #151515;
         }

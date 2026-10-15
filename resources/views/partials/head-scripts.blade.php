@@ -363,13 +363,13 @@
     /* ── Inactive badge ── */
     .badge-inactive {
         background: #f1f5f9;
-        color: #94a3b8;
+        color: #5d6676;
         border: 1px solid #e2e8f0;
     }
 
     .dark .badge-inactive {
         background: #111;
-        color: #444;
+        color: #9a9a9a;
         border: 1px solid #1e1e1e;
     }
 
@@ -409,43 +409,43 @@
     }
 
     .text-muted {
-        color: #64748b;
+        color: #4b5563;
     }
 
     .dark .text-muted {
-        color: #888;
+        color: #b8b8b8;
     }
 
     .text-faint {
-        color: #64748b;
+        color: #586172;
     }
 
     .dark .text-faint {
-        color: #555;
+        color: #a3a3a3;
     }
 
     .text-dim {
-        color: #94a3b8;
+        color: #5d6676;
     }
 
     .dark .text-dim {
-        color: #444;
+        color: #9a9a9a;
     }
 
     .text-ghost {
-        color: #cbd5e1;
+        color: #626b7b;
     }
 
     .dark .text-ghost {
-        color: #333;
+        color: #8f8f8f;
     }
 
     .text-invisible {
-        color: #e2e8f0;
+        color: #667080;
     }
 
     .dark .text-invisible {
-        color: #222;
+        color: #858585;
     }
 
     /* ── Group hover text ── */
@@ -462,7 +462,7 @@
     }
 
     .dark .group:hover .group-hover\:text-faint {
-        color: #555;
+        color: #a3a3a3;
     }
 
     /* ═══ FONT SIZE BUTTON ═══ */
@@ -474,7 +474,7 @@
 
     .font-size-btn.active {
         background: #ffffff;
-        color: #3b82f6;
+        color: #1d4ed8;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
@@ -482,39 +482,6 @@
         background: #1a1a1a;
         color: #60a5fa;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    }
-
-    /* ═══ ACCENT PRESERVATION ═══ */
-    .text-blue-400 {
-        color: #3b82f6 !important;
-    }
-
-    .text-emerald-400 {
-        color: #10b981 !important;
-    }
-
-    .text-amber-400 {
-        color: #f59e0b !important;
-    }
-
-    .text-red-400 {
-        color: #f87171 !important;
-    }
-
-    .text-purple-400 {
-        color: #a78bfa !important;
-    }
-
-    .text-rose-400 {
-        color: #fb7185 !important;
-    }
-
-    .text-orange-400 {
-        color: #fb923c !important;
-    }
-
-    .text-yellow-400 {
-        color: #facc15 !important;
     }
 
     /* ═══ MISC ═══ */
@@ -533,6 +500,9 @@
 
 {{-- Short/landscape viewport support (phones & small tablets held sideways) --}}
 @include('partials.landscape-styles')
+
+{{-- Colour-coded elements that stay readable in light and dark mode --}}
+@include('partials.accessible-colors')
 
 {{-- Global loading indicators (form submits & AJAX requests) --}}
 @include('partials.global-loading')

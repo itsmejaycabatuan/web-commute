@@ -515,7 +515,7 @@
                             $isToday = $day->isToday();
                             $isFuture = $day->isAfter(today());
                         @endphp
-                        <div class="card-animate rounded-xl border overflow-hidden {{ $isToday ? 'border-blue-500/20 bg-blue-500/[0.03]' : ($isFuture ? 'border-[#141414] bg-[#0e0e0e] opacity-40' : 'border-[#1a1a1a] bg-[#111]') }}"
+                        <div class="card-animate rounded-xl border overflow-hidden {{ $isToday ? 'border-blue-500/20 bg-blue-500/[0.03]' : ($isFuture ? 'border-[#141414] bg-[#0e0e0e]' : 'border-[#1a1a1a] bg-[#111]') }}"
                             style="animation-delay: {{ $index * 40 }}ms">
 
                             <!-- Card Top: Date + Status -->
@@ -562,7 +562,7 @@
                                         </span>
                                     @elseif(!$isFuture && !$isToday)
                                         <span
-                                            class="text-[7px] bg-[#0a0a0a] text-[#444] border border-[#1e1e1e] px-2 py-0.5 rounded-md font-bold uppercase">Absent</span>
+                                            class="text-[7px] bg-red-500/10 text-red-400 border border-red-500/15 px-2 py-0.5 rounded-md font-bold uppercase">Absent</span>
                                     @else
                                         <span
                                             class="text-[7px] bg-[#0a0a0a] text-[#333] border border-[#151515] px-2 py-0.5 rounded-md font-bold uppercase">Waiting</span>
@@ -665,7 +665,7 @@
                                     $isFuture = $day->isAfter(today());
                                 @endphp
                                 <tr
-                                    class="table-row @if ($isToday) bg-blue-500/[0.03] @elseif($isFuture) opacity-30 @endif">
+                                    class="table-row @if ($isToday) bg-blue-500/[0.03] @endif">
                                     <td class="px-6 py-3.5">
                                         <div class="flex items-center gap-2.5">
                                             @if ($isToday)
@@ -732,7 +732,7 @@
                                                 class="text-[8px] bg-amber-500/10 text-amber-400 border border-amber-500/15 px-2 py-0.5 rounded-md font-bold uppercase">Active</span>
                                         @elseif(!$isFuture && !$isToday)
                                             <span
-                                                class="text-[8px] bg-[#0a0a0a] text-[#444] border border-[#1e1e1e] px-2 py-0.5 rounded-md font-bold uppercase">Absent</span>
+                                                class="text-[8px] bg-red-500/10 text-red-400 border border-red-500/15 px-2 py-0.5 rounded-md font-bold uppercase">Absent</span>
                                         @else
                                             <span
                                                 class="text-[8px] bg-[#0a0a0a] text-[#333] border border-[#151515] px-2 py-0.5 rounded-md font-bold uppercase">Waiting</span>

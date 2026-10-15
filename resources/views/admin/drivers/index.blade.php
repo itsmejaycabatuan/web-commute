@@ -220,7 +220,7 @@
         input[type="file"]::file-selector-button {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
-            color: #64748b;
+            color: #586172;
             padding: 6px 14px;
             border-radius: 8px;
             font-size: 9px;
@@ -240,7 +240,7 @@
         .dark input[type="file"]::file-selector-button {
             background: #111;
             border: 1px solid #1e1e1e;
-            color: #555;
+            color: #a3a3a3;
         }
 
         .dark input[type="file"]::file-selector-button:hover {

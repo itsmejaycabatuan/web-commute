@@ -96,7 +96,7 @@
         }
 
         .input-field::placeholder {
-            color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.55);
         }
 
         @keyframes card-enter {
@@ -240,7 +240,7 @@
                     class="block mb-1 sm:mb-1.5 ml-0.5 sm:ml-1 font-semibold tracking-widest uppercase text-[9px] sm:text-[10px] text-gray-400">Name</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-user text-[10px] sm:text-xs text-white/20"></i>
+                        <i class="fa-solid fa-user text-[10px] sm:text-xs text-white/50"></i>
                     </div>
                     <input type="text" name="name" placeholder="Full Name" value="{{ old('name') }}"
                         class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
@@ -259,7 +259,7 @@
                     class="block mb-1 sm:mb-1.5 ml-0.5 sm:ml-1 font-semibold tracking-widest uppercase text-[9px] sm:text-[10px] text-gray-400">Email</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-envelope text-[10px] sm:text-xs text-white/20"></i>
+                        <i class="fa-solid fa-envelope text-[10px] sm:text-xs text-white/50"></i>
                     </div>
                     <input type="email" name="email" placeholder="you@example.com" value="{{ old('email') }}"
                         class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
@@ -284,14 +284,14 @@
                     </div>
                     <div class="relative flex-1">
                         <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-phone text-[10px] sm:text-xs text-white/20"></i>
+                            <i class="fa-solid fa-phone text-[10px] sm:text-xs text-white/50"></i>
                         </div>
                         <input type="tel" name="contact_info" id="contact-info" placeholder="9XX XXX XXXX"
                             maxlength="12" value="{{ old('contact_info') }}" oninput="formatPhoneNumber(this)"
-                            class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 w-full text-xs sm:text-sm rounded-r-lg sm:rounded-r-xl focus:outline-none placeholder:text-white/20">
+                            class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 w-full text-xs sm:text-sm rounded-r-lg sm:rounded-r-xl focus:outline-none placeholder:text-white/50">
                     </div>
                 </div>
-                <p class="mt-1 sm:mt-1.5 ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] text-gray-600">Philippine mobile
+                <p class="mt-1 sm:mt-1.5 ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] text-gray-400">Philippine mobile
                     number (e.g., 917 123 4567)</p>
                 @error('contact_info')
                     <div class="mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
@@ -307,12 +307,12 @@
                     class="block mb-1 sm:mb-1.5 ml-0.5 sm:ml-1 font-semibold tracking-widest uppercase text-[9px] sm:text-[10px] text-gray-400">Password</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/20"></i>
+                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/50"></i>
                     </div>
                     <input type="password" name="password" id="password" placeholder="••••••••"
                         class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-9 sm:pr-10 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
                     <button type="button" onclick="togglePassword('password', 'eye-icon-1')"
-                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/30 hover:text-white/70 transition">
+                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/60 hover:text-white/70 transition">
                         <i id="eye-icon-1" class="fa-solid fa-eye text-[10px] sm:text-xs"></i>
                     </button>
                 </div>
@@ -331,12 +331,12 @@
                     Password</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/20"></i>
+                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/50"></i>
                     </div>
                     <input type="password" name="confirm-password" id="confirm-password" placeholder="••••••••"
                         class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-9 sm:pr-10 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
                     <button type="button" onclick="togglePassword('confirm-password', 'eye-icon-2')"
-                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/30 hover:text-white/70 transition">
+                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/60 hover:text-white/70 transition">
                         <i id="eye-icon-2" class="fa-solid fa-eye text-[10px] sm:text-xs"></i>
                     </button>
                 </div>
@@ -361,11 +361,11 @@
                         <div class="flex justify-center mb-1.5 sm:mb-2">
                             <div
                                 class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 flex items-center justify-center">
-                                <i class="fa-solid fa-cloud-arrow-up text-white/30 text-xs sm:text-base"></i>
+                                <i class="fa-solid fa-cloud-arrow-up text-white/60 text-xs sm:text-base"></i>
                             </div>
                         </div>
                         <p class="text-[11px] sm:text-xs text-gray-400 font-medium">Click to upload</p>
-                        <p class="text-[9px] sm:text-[10px] text-gray-600 mt-0.5">JPG, PNG — Max 2MB</p>
+                        <p class="text-[9px] sm:text-[10px] text-gray-400 mt-0.5">JPG, PNG — Max 2MB</p>
                     </div>
                     <div id="fileSelected" class="hidden">
                         <div class="flex justify-center mb-1.5 sm:mb-2">
@@ -375,7 +375,7 @@
                             </div>
                         </div>
                         <p class="text-[11px] sm:text-xs text-green-300 font-medium" id="fileName"></p>
-                        <p class="text-[9px] sm:text-[10px] text-gray-500 mt-0.5">Click to change</p>
+                        <p class="text-[9px] sm:text-[10px] text-gray-400 mt-0.5">Click to change</p>
                     </div>
                 </div>
                 @error('license_image')
@@ -410,7 +410,7 @@
         </form>
 
         <div class="pt-4 sm:pt-6 mt-4 sm:mt-6 text-center border-t border-white/5">
-            <p class="text-[11px] sm:text-xs text-gray-500">
+            <p class="text-[11px] sm:text-xs text-gray-400">
                 Already have an account?
                 <a href="{{ url('/login') }}" class="font-semibold text-white hover:text-blue-400 transition">Log
                     in</a>

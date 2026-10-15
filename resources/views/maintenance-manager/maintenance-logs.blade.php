@@ -171,14 +171,14 @@
             font-weight: 700;
             transition: all 0.15s;
             border: 1px solid #e2e8f0;
-            color: #64748b;
+            color: #586172;
             background: transparent;
         }
 
         .dark .pagination a,
         .dark .pagination span {
             border: 1px solid #1e1e1e;
-            color: #555;
+            color: #a3a3a3;
             background: transparent;
         }
 
@@ -197,7 +197,7 @@
         .pagination .active {
             background: rgba(59, 130, 246, 0.08);
             border-color: rgba(59, 130, 246, 0.25);
-            color: #3b82f6;
+            color: #1d4ed8;
         }
 
         .dark .pagination .active {

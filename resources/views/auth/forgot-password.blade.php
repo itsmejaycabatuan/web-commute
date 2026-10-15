@@ -57,7 +57,7 @@
         }
 
         .input-field::placeholder {
-            color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.55);
         }
 
         @keyframes card-enter {
@@ -158,7 +158,7 @@
                     Address</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-envelope text-[10px] sm:text-xs text-white/20"></i>
+                        <i class="fa-solid fa-envelope text-[10px] sm:text-xs text-white/50"></i>
                     </div>
                     <input type="text" placeholder="you@example.com" name="email" value="{{ old('email') }}"
                         class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
@@ -180,7 +180,7 @@
         </form>
 
         <div class="pt-4 sm:pt-6 mt-5 sm:mt-7 text-center border-t border-white/5">
-            <p class="text-[11px] sm:text-xs text-gray-500">
+            <p class="text-[11px] sm:text-xs text-gray-400">
                 Remember your password?
                 <a href="{{ route('login') }}" class="font-semibold text-white hover:text-blue-400 transition">Back to
                     login</a>

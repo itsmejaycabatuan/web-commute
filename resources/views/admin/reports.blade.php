@@ -86,6 +86,7 @@
                             <option value="financial">Financial Overview</option>
                             <option value="driver">Driver Performance</option>
                             <option value="maintenance">Maintenance & Fleet</option>
+                            <option value="commuter">Commuter Activity</option>
                         </select>
                         <i
                             class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-[8px] text-gray-400 dark:text-[#333] pointer-events-none"></i>
@@ -422,6 +423,124 @@
             @endisset
         </div>
 
+        <!-- ── 4. COMMUTER ACTIVITY REPORT ── -->
+        <div x-show="currentTab === 'commuter'" x-cloak x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+
+            @isset($commuterStats)
+                <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                    <div class="glass-card p-5 rounded-[1.25rem] border-l-2 border-l-blue-500">
+                        <span class="text-[8px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444]">Total
+                            Commuters</span>
+                        <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-1">
+                            {{ number_format($commuterStats['total']) }}</h3>
+                    </div>
+                    <div class="glass-card p-5 rounded-[1.25rem] border-l-2 border-l-cyan-500">
+                        <span class="text-[8px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444]">New
+                            Sign-ups</span>
+                        <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-1">
+                            {{ number_format($commuterStats['new']) }}</h3>
+                    </div>
+                    <div class="glass-card p-5 rounded-[1.25rem] border-l-2 border-l-emerald-500">
+                        <span class="text-[8px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444]">Paying
+                            Riders</span>
+                        <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-1">
+                            {{ number_format($commuterStats['riders']) }}</h3>
+                    </div>
+                    <div class="glass-card p-5 rounded-[1.25rem] border-l-2 border-l-red-500">
+                        <span
+                            class="text-[8px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444]">Suspended</span>
+                        <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-1">
+                            {{ number_format($commuterStats['suspended']) }}</h3>
+                    </div>
+                    <div class="glass-card p-5 rounded-[1.25rem] border-l-2 border-l-purple-500 col-span-2 lg:col-span-1">
+                        <span class="text-[8px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444]">Wallet
+                            Balances</span>
+                        <h3 class="text-2xl font-black text-gray-900 dark:text-white mt-1">
+                            ₱{{ number_format($commuterStats['wallet_total'], 2) }}</h3>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="glass-card p-6 rounded-[1.25rem] lg:col-span-2">
+                        <h3 class="text-xs font-bold text-gray-400 dark:text-[#555] uppercase tracking-widest mb-4">New
+                            Sign-ups</h3>
+                        <div class="relative h-56">
+                            <canvas id="commuterSignupChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-card p-6 rounded-[1.25rem]">
+                        <h3 class="text-xs font-bold text-gray-400 dark:text-[#555] uppercase tracking-widest mb-4">
+                            Account Status</h3>
+                        <div class="relative h-56">
+                            <canvas id="commuterStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-[1.25rem] overflow-hidden">
+                    <div class="p-5 border-b border-gray-200 dark:border-[#1e1e1e]">
+                        <h3 class="text-xs font-bold text-gray-900 dark:text-white">Top Commuters by Spend</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr
+                                    class="text-[8px] uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] bg-gray-50 dark:bg-[#0a0a0a]">
+                                    <th class="px-5 py-3 font-bold">Commuter</th>
+                                    <th class="px-5 py-3 font-bold text-right">Fares Paid</th>
+                                    <th class="px-5 py-3 font-bold text-right">Spend</th>
+                                    <th class="px-5 py-3 font-bold text-right">Top-ups</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
+                                @forelse($topCommuters ?? [] as $commuter)
+                                    <tr class="table-row hover:bg-gray-50 dark:hover:bg-[#111] transition">
+                                        <td class="px-5 py-3">
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="w-8 h-8 rounded-full bg-gray-200 dark:bg-[#333] flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-gray-300">
+                                                    {{ strtoupper(substr($commuter['email'], 0, 1)) }}
+                                                </div>
+                                                <span
+                                                    class="text-[11px] font-bold text-gray-700 dark:text-[#ccc] truncate max-w-[220px]">{{ $commuter['email'] }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-5 py-3 text-right text-[11px] text-gray-500 dark:text-[#888]">
+                                            {{ number_format($commuter['trips']) }}</td>
+                                        <td class="px-5 py-3 text-right">
+                                            <span
+                                                class="text-[11px] font-bold text-gray-900 dark:text-white">₱{{ number_format($commuter['spend'], 2) }}</span>
+                                        </td>
+                                        <td class="px-5 py-3 text-right text-[11px] text-gray-500 dark:text-[#888]">
+                                            ₱{{ number_format($commuter['topups'], 2) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4"
+                                            class="px-5 py-8 text-center text-[10px] text-gray-400 dark:text-[#555]">No
+                                            fares were paid in the selected date range.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @else
+                <!-- EMPTY PLACEHOLDER -->
+                <div
+                    class="glass-card p-8 sm:p-12 rounded-[1.25rem] flex flex-col items-center justify-center text-center min-h-[400px]">
+                    <div
+                        class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-users text-xl text-gray-300 dark:text-[#333]"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white mb-2">Commuter Report Not Generated</h3>
+                    <p class="text-[11px] text-gray-500 dark:text-[#555] max-w-xs">Please select "Commuter Activity" and
+                        click "Generate Report" to view commuter stats.</p>
+                </div>
+            @endisset
+        </div>
+
     </main>
 
     <!-- ══════════ CHARTS LOGIC ══════════ -->
@@ -508,6 +627,90 @@
                             datasets: [{
                                 data: driverStatusData,
                                 backgroundColor: ['#10b981', '#f59e0b', '#64748b'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '70%',
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        usePointStyle: true,
+                                        boxWidth: 6
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            @endisset
+
+            @isset($commuterStats)
+                // 4. Commuter charts
+                const cuSignupCtx = document.getElementById('commuterSignupChart');
+                const cuLabels = @json($commuterChartLabels ?? []);
+                const cuCounts = @json($commuterChartData ?? []);
+
+                if (cuSignupCtx && cuLabels.length > 0) {
+                    new Chart(cuSignupCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: cuLabels,
+                            datasets: [{
+                                label: 'New commuters',
+                                data: cuCounts,
+                                backgroundColor: '#06b6d4',
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    grid: {
+                                        color: getGridColor(),
+                                        border: {
+                                            display: false
+                                        }
+                                    },
+                                    ticks: {
+                                        precision: 0
+                                    },
+                                    beginAtZero: true
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    },
+                                    border: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                const cuStatusCtx = document.getElementById('commuterStatusChart');
+                const cuStatusData = @json($commuterStatusData ?? []);
+
+                if (cuStatusCtx && cuStatusData.some(v => v > 0)) {
+                    new Chart(cuStatusCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: @json($commuterStatusLabels ?? []),
+                            datasets: [{
+                                data: cuStatusData,
+                                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
                                 borderWidth: 0
                             }]
                         },

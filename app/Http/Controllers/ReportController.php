@@ -6,6 +6,7 @@ use App\Models\Driver;
 use App\Models\Payment;
 use App\Models\PreventiveMaintenance;
 use App\Models\TopupHistory;
+use App\Models\User;
 use App\Models\VehicleMaintenanceLog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -17,7 +18,7 @@ class ReportController extends Controller
     /**
      * Report types the admin may generate.
      */
-    private const REPORT_TYPES = ['financial', 'driver', 'maintenance'];
+    private const REPORT_TYPES = ['financial', 'driver', 'maintenance', 'commuter'];
 
     public function generate(Request $request)
     {
@@ -200,7 +201,87 @@ class ReportController extends Controller
             $data['upcomingSchedule'] = $upcomingSchedule;
         }
 
+        if ($type === 'commuter') {
+            [$from, $to] = $this->commuterWindow($start, $end);
+
+            $commuters = $this->commuterQuery($from, $to)->get();
+
+            // Same precedence as the Commuters page: suspended, then verified,
+            // otherwise still waiting on email verification.
+            $suspended = $commuters->where('is_suspended', true)->count();
+            $verified = $commuters->where('is_suspended', false)->whereNotNull('email_verified_at')->count();
+            $unverified = $commuters->count() - $suspended - $verified;
+
+            $data['commuterStats'] = [
+                'total' => $commuters->count(),
+                'new' => $commuters->filter(fn ($c) => $c->created_at->between($from, $to))->count(),
+                'riders' => $commuters->where('trips', '>', 0)->count(),
+                'suspended' => $suspended,
+                'wallet_total' => (float) $commuters->sum(fn ($c) => $c->wallet?->balance ?? 0),
+            ];
+
+            $data['commuterStatusLabels'] = ['Verified', 'Unverified', 'Suspended'];
+            $data['commuterStatusData'] = [$verified, $unverified, $suspended];
+
+            // Sign-ups per day, gaps filled with 0 so the chart axis is continuous.
+            $signups = $commuters
+                ->filter(fn ($c) => $c->created_at->between($from, $to))
+                ->countBy(fn ($c) => $c->created_at->format('Y-m-d'));
+
+            $labels = [];
+            $counts = [];
+            foreach (new \DatePeriod($from->copy()->startOfDay(), new \DateInterval('P1D'), $to->copy()->addDay()->startOfDay()) as $day) {
+                $labels[] = $day->format('M d');
+                $counts[] = (int) ($signups[$day->format('Y-m-d')] ?? 0);
+            }
+            $data['commuterChartLabels'] = $labels;
+            $data['commuterChartData'] = $counts;
+
+            $data['topCommuters'] = $commuters
+                ->where('trips', '>', 0)
+                ->sortByDesc('spend')
+                ->take(5)
+                ->map(fn ($c) => [
+                    'email' => $c->email,
+                    'trips' => (int) $c->trips,
+                    'spend' => (float) $c->spend,
+                    'topups' => (float) $c->topups,
+                ])
+                ->values()
+                ->toArray();
+        }
+
         return $data;
+    }
+
+    /**
+     * The report window as whole days, defaulting to the last 7 days (the same
+     * default the date pickers show).
+     *
+     * @return array{0: \Carbon\Carbon, 1: \Carbon\Carbon}
+     */
+    private function commuterWindow(?string $start, ?string $end): array
+    {
+        $from = $start ? \Carbon\Carbon::parse($start) : now()->subDays(7);
+        $to = $end ? \Carbon\Carbon::parse($end) : now();
+
+        return [$from->startOfDay(), $to->endOfDay()];
+    }
+
+    /**
+     * Every commuter with their settled fares, spend and top-ups inside the window.
+     */
+    private function commuterQuery(\Carbon\Carbon $from, \Carbon\Carbon $to)
+    {
+        $paid = fn ($q) => $q->where('status', Payment::STATUS_PAID)->whereBetween('paid_at', [$from, $to]);
+        $topups = fn ($q) => $q->whereBetween('created_at', [$from, $to]);
+
+        return User::role('commuter')
+            ->with('wallet')
+            ->withCount(['payment as trips' => $paid])
+            ->withSum(['payment as spend' => $paid], 'price')
+            ->withSum(['topupHistories as topups' => $topups], 'amount_added')
+            ->orderBy('email');
     }
 
     /**
@@ -215,6 +296,7 @@ class ReportController extends Controller
             'driver' => Driver::count() === 0,
             'maintenance' => PreventiveMaintenance::count() === 0
                 && VehicleMaintenanceLog::whereBetween('created_at', [$start, $end])->count() === 0,
+            'commuter' => User::role('commuter')->count() === 0,
             default => true,
         };
     }
@@ -315,6 +397,23 @@ class ReportController extends Controller
                         $task->maintenanceTask?->tasks_performed ?? 'Unknown',
                         $dueDate ? $dueDate->format('Y-m-d') : 'N/A',
                         $isOverdue ? 'Overdue' : 'Scheduled',
+                    ]);
+                }
+            } elseif ($type === 'commuter') {
+                // 4. COMMUTER EXPORT
+                fputcsv($file, ['Email', 'Status', 'Registered', 'Wallet Balance', 'Fares Paid', 'Total Spend', 'Top-ups']);
+
+                [$from, $to] = $this->commuterWindow($start, $end);
+
+                foreach ($this->commuterQuery($from, $to)->get() as $c) {
+                    fputcsv($file, [
+                        $c->email,
+                        $c->is_suspended ? 'Suspended' : ($c->email_verified_at ? 'Verified' : 'Unverified'),
+                        $c->created_at->format('Y-m-d'),
+                        $c->wallet?->balance ?? 0,
+                        (int) $c->trips,
+                        (float) $c->spend,
+                        (float) $c->topups,
                     ]);
                 }
             }

@@ -206,7 +206,7 @@
         </form>
 
         <div class="mt-3 sm:mt-4 pt-4 sm:pt-5 border-t border-white/5">
-            <p class="text-[10px] sm:text-[11px] text-gray-600">
+            <p class="text-[10px] sm:text-[11px] text-gray-400">
                 Didn't receive the email? Check your spam folder or try again in a few minutes.
             </p>
         </div>

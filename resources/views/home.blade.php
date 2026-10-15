@@ -314,7 +314,7 @@
                     </div>
                     <div>
                         <p class="font-semibold text-sm">Register</p>
-                        <p class="text-[10px] text-gray-500">Create a new account</p>
+                        <p class="text-[10px] text-gray-400">Create a new account</p>
                     </div>
                 </a>
                 <a href="{{ url('/login') }}" onclick="closeMobileMenu()"
@@ -325,7 +325,7 @@
                     </div>
                     <div>
                         <p class="font-semibold text-sm">Log In</p>
-                        <p class="text-[10px] text-gray-500">Access your account</p>
+                        <p class="text-[10px] text-gray-400">Access your account</p>
                     </div>
                 </a>
                 <a href="{{ route('map.guest') }}" onclick="closeMobileMenu()"
@@ -336,7 +336,7 @@
                     </div>
                     <div>
                         <p class="font-semibold text-sm">View Map</p>
-                        <p class="text-[10px] text-gray-500">See PUJs on the road now</p>
+                        <p class="text-[10px] text-gray-400">See PUJs on the road now</p>
                     </div>
                 </a>
             @endif
@@ -350,7 +350,7 @@
                     </div>
                     <div>
                         <p class="font-semibold text-sm">Map</p>
-                        <p class="text-[10px] text-gray-500">Your commute hub</p>
+                        <p class="text-[10px] text-gray-400">Your commute hub</p>
                     </div>
                 </a>
             @endif
@@ -469,19 +469,19 @@
                 class="hero-load-4 flex items-center gap-4 sm:gap-6 md:gap-8 mt-6 sm:mt-8 md:mt-10 pt-4 sm:pt-6 md:pt-8 border-t border-white/10">
                 <div>
                     <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">Live</p>
-                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-500 mt-0.5 sm:mt-1">PUJ
+                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-400 mt-0.5 sm:mt-1">PUJ
                         Tracking</p>
                 </div>
                 <div class="w-px h-6 sm:h-8 md:h-10 bg-white/10"></div>
                 <div>
                     <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">3</p>
-                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-500 mt-0.5 sm:mt-1">Ways
+                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-400 mt-0.5 sm:mt-1">Ways
                         to Pay</p>
                 </div>
                 <div class="w-px h-6 sm:h-8 md:h-10 bg-white/10"></div>
                 <div>
                     <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">Free</p>
-                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-500 mt-0.5 sm:mt-1">Guest
+                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-400 mt-0.5 sm:mt-1">Guest
                         Map Access</p>
                 </div>
             </div>
@@ -504,7 +504,7 @@
         <!-- Scroll indicator -->
         <div
             class="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 hero-load-4">
-            <span class="text-[9px] uppercase tracking-[0.3em] text-gray-600">Scroll</span>
+            <span class="text-[9px] uppercase tracking-[0.3em] text-gray-400">Scroll</span>
             <div class="w-5 h-8 rounded-full border border-white/20 flex justify-center pt-1.5">
                 <div class="w-1 h-2 bg-white/40 rounded-full animate-bounce"></div>
             </div>
@@ -515,44 +515,44 @@
     <div class="bg-[#0a0a0a] border-y border-white/5 py-3 sm:py-4 overflow-hidden">
         <div class="flex animate-marquee whitespace-nowrap">
             <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
+                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-blue-500"></i> Real-Time GPS
                 Tracking</span>
             <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
+                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-purple-500"></i> Cash-Free
                 Payments</span>
             <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
+                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver Reports</span>
             <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
+                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-pink-500"></i> Fare Calculator</span>
             <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
+                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-blue-500"></i> Real-Time GPS
                 Tracking</span>
             <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
+                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-purple-500"></i> Cash-Free
                 Payments</span>
             <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
+                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver Reports</span>
             <!-- Duplicate for seamless loop -->
             <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
+                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-blue-500"></i> Real-Time GPS
                 Tracking</span>
             <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
+                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-purple-500"></i> Cash-Free
                 Payments</span>
             <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
+                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver Reports</span>
             <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-600 font-medium flex items-center gap-2 sm:gap-3"><i
+                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-pink-500"></i> Fare Calculator</span>
         </div>
     </div>
@@ -589,7 +589,7 @@
                     <h2
                         class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold leading-[1.05] sm:leading-[1.05] tracking-tight">
                         Your Commute <br>
-                        <span class="text-white/20 italic font-light">Made Smarter</span>
+                        <span class="text-white/50 italic font-light">Made Smarter</span>
                     </h2>
                     <p class="text-gray-400 text-xs sm:text-sm md:text-base leading-relaxed max-w-xl">
                         SmartCommute puts the things you usually have to guess on one map: where the nearest PUJ is,
@@ -606,7 +606,7 @@
                             <i class="fa-solid fa-calculator text-blue-400 text-xs sm:text-sm"></i>
                         </div>
                         <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Official Fares</h4>
-                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed">Regular and
+                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed">Regular and
                             discounted fares, worked out by distance from the published fare table.</p>
                     </div>
 
@@ -617,7 +617,7 @@
                             <i class="fa-solid fa-bolt text-green-400 text-xs sm:text-sm"></i>
                         </div>
                         <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Real-Time</h4>
-                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed">Live PUJ
+                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed">Live PUJ
                             positions and arrival estimates, updated as drivers move.</p>
                     </div>
 
@@ -628,7 +628,7 @@
                             <i class="fa-solid fa-shield text-purple-400 text-xs sm:text-sm"></i>
                         </div>
                         <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Secure</h4>
-                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed">Email-verified
+                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed">Email-verified
                             accounts, fares priced on the server, and a receipt for every payment.</p>
                     </div>
 
@@ -639,7 +639,7 @@
                             <i class="fa-solid fa-door-open text-orange-400 text-xs sm:text-sm"></i>
                         </div>
                         <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Open to Guests</h4>
-                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed">Browse the live
+                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed">Browse the live
                             map and try the fare calculator before you ever create an account.</p>
                     </div>
                 </div>
@@ -664,9 +664,9 @@
                         System</span>
                 </div>
                 <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                    From the Curb <span class="text-white/20 italic font-light">to the Garage</span>
+                    From the Curb <span class="text-white/50 italic font-light">to the Garage</span>
                 </h2>
-                <p class="text-gray-500 max-w-2xl mx-auto text-[11px] sm:text-xs md:text-sm px-2 sm:px-4">Tools for
+                <p class="text-gray-400 max-w-2xl mx-auto text-[11px] sm:text-xs md:text-sm px-2 sm:px-4">Tools for
                     the people who ride PUJs, the people who drive them, and the people who keep them running.</p>
             </div>
 
@@ -681,7 +681,7 @@
                     </div>
                     <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Live GPS Tracking</h4>
                     <p
-                        class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
+                        class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
                         See active PUJs on a live map, each with an arrival estimate, and spot the nearest one at a
                         glance. Head out when your ride is actually close.</p>
                     <a
@@ -700,7 +700,7 @@
                     </div>
                     <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Time Keeping</h4>
                     <p
-                        class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
+                        class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
                         Drivers clock in and out right from the map. Hours and overtime are logged per shift, ready
                         for managers to review.</p>
                     <a
@@ -719,7 +719,7 @@
                     </div>
                     <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Cash-Free Fares</h4>
                     <p
-                        class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
+                        class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
                         Top up your wallet and pay your fare with wallet balance, GCash or Maya. Every payment gets a
                         receipt and a place in your history.</p>
                     <a
@@ -738,7 +738,7 @@
                     </div>
                     <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">PUJ Maintenance Records</h4>
                     <p
-                        class="text-[10px] sm:text-[11px] md:text-xs text-gray-500 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
+                        class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
                         Preventive maintenance schedules and service logs for every vehicle, with due dates, odometer
                         readings and costs on record.
                     </p>
@@ -768,9 +768,9 @@
                         It's For</span>
                 </div>
                 <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                    One System, <span class="text-white/20 italic font-light">Three Seats</span>
+                    One System, <span class="text-white/50 italic font-light">Three Seats</span>
                 </h2>
-                <p class="text-gray-500 max-w-2xl mx-auto text-[11px] sm:text-xs md:text-sm px-2 sm:px-4">Whether you
+                <p class="text-gray-400 max-w-2xl mx-auto text-[11px] sm:text-xs md:text-sm px-2 sm:px-4">Whether you
                     ride, drive or run the fleet, there is a side of SmartCommute built for you.</p>
             </div>
 
@@ -853,7 +853,7 @@
                     </p>
 
                     <p
-                        class="mt-auto text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-widest text-gray-500 font-bold">
+                        class="mt-auto text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-widest text-gray-400 font-bold">
                         Admin &middot; Driver Manager &middot; Maintenance Manager</p>
                 </div>
 
@@ -898,7 +898,7 @@
                                 <i class="fa-solid fa-map-location-dot text-blue-400"></i>
                             </div>
                             <div class="min-w-0">
-                                <p class="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">
+                                <p class="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">
                                     Step 1</p>
                                 <p class="text-xs sm:text-sm md:text-base font-medium">Open the live map, no account
                                     needed</p>
@@ -911,7 +911,7 @@
                                 <i class="fa-solid fa-route text-green-400"></i>
                             </div>
                             <div class="min-w-0">
-                                <p class="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">
+                                <p class="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">
                                     Step 2</p>
                                 <p class="text-xs sm:text-sm md:text-base font-medium">Set your pick-up and destination
                                     to see the fare</p>
@@ -924,7 +924,7 @@
                                 <i class="fa-solid fa-wallet text-purple-400"></i>
                             </div>
                             <div class="min-w-0">
-                                <p class="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-widest mb-0.5">
+                                <p class="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">
                                     Step 3</p>
                                 <p class="text-xs sm:text-sm md:text-base font-medium">Sign up, top up, and pay
                                     cash-free</p>
@@ -951,7 +951,7 @@
                             <span>Register as a Driver</span>
                             <i class="fa-solid fa-id-card text-[8px] sm:text-[10px]"></i>
                         </a>
-                        <p class="text-center text-[10px] sm:text-[11px] text-gray-500 pt-1 sm:pt-2">
+                        <p class="text-center text-[10px] sm:text-[11px] text-gray-400 pt-1 sm:pt-2">
                             Already have an account? <a href="{{ url('/login') }}"
                                 class="text-blue-400 hover:text-white transition">Log in</a>
                         </p>
@@ -980,7 +980,7 @@
                         <span class="text-sm sm:text-base md:text-lg font-bold tracking-tight">Smart<span
                                 class="text-blue-400">Commute</span></span>
                     </div>
-                    <p class="text-[10px] sm:text-xs text-gray-500 leading-relaxed max-w-xs">Live PUJ tracking, fare
+                    <p class="text-[10px] sm:text-xs text-gray-400 leading-relaxed max-w-xs">Live PUJ tracking, fare
                         planning and cash-free payments for commuters, with timekeeping and maintenance tools for the
                         people who run the fleet.</p>
                 </div>
@@ -992,13 +992,13 @@
                         Product</h6>
                     <ul class="space-y-1.5 sm:space-y-2">
                         <li><a href="#features"
-                                class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Features</a>
+                                class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Features</a>
                         </li>
                         <li><a href="#services"
-                                class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Services</a>
+                                class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Services</a>
                         </li>
                         <li><a href="#audience"
-                                class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Who It's
+                                class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Who It's
                                 For</a>
                         </li>
                     </ul>
@@ -1011,14 +1011,14 @@
                             Commuters</h6>
                         <ul class="space-y-1.5 sm:space-y-2">
                             <li><a href="{{ route('map.guest') }}"
-                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Live
+                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Live
                                     Map</a></li>
                             <li><a href="{{ url('/register') }}"
-                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Create
+                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Create
                                     Account</a>
                             </li>
                             <li><a href="{{ url('/login') }}"
-                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Log In</a>
+                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Log In</a>
                             </li>
                         </ul>
                     </div>
@@ -1029,11 +1029,11 @@
                             Drivers</h6>
                         <ul class="space-y-1.5 sm:space-y-2">
                             <li><a href="{{ route('driver.register.page') }}"
-                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Driver
+                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Driver
                                     Registration</a>
                             </li>
                             <li><a href="{{ url('/login') }}"
-                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Driver Log
+                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Driver Log
                                     In</a></li>
                         </ul>
                     </div>
@@ -1044,10 +1044,10 @@
                             Account</h6>
                         <ul class="space-y-1.5 sm:space-y-2">
                             <li><a href="{{ route('dashboard') }}"
-                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Dashboard</a>
+                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Dashboard</a>
                             </li>
                             <li><a href="{{ route('profile') }}"
-                                    class="text-[11px] sm:text-xs text-gray-500 hover:text-white transition">Profile</a>
+                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Profile</a>
                             </li>
                         </ul>
                     </div>
@@ -1055,7 +1055,7 @@
             </div>
 
             <div class="border-t border-white/5 pt-6 sm:pt-8">
-                <p class="text-[9px] sm:text-[10px] text-gray-600 text-center sm:text-left">&copy; {{ date('Y') }}
+                <p class="text-[9px] sm:text-[10px] text-gray-400 text-center sm:text-left">&copy; {{ date('Y') }}
                     SmartCommute. All rights reserved.</p>
             </div>
         </div>

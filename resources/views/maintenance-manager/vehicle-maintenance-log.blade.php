@@ -188,7 +188,7 @@
                 <div>
                     <h2 class="text-3xl font-black tracking-tight mb-1">Fleet Maintenance <span
                             class="text-blue-500">Log</span></h2>
-                    <p class="text-white/40 text-sm">Detailed history, costs, and service records.</p>
+                    <p class="text-white/70 text-sm">Detailed history, costs, and service records.</p>
                 </div>
                 <div class="flex gap-3 self-start">
                     <select id="fleet-selector"
@@ -214,23 +214,23 @@
                             <h3 class="text-lg font-bold text-white mb-3">Fleet Information</h3>
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-3 text-sm">
                                 <div>
-                                    <span class="text-[10px] uppercase font-bold text-white/30 block">Plate
+                                    <span class="text-[10px] uppercase font-bold text-white/65 block">Plate
                                         Number</span>
                                     <span
                                         class="text-white/80 font-medium font-mono">{{ $vehicle?->plate_number ?? '—' }}</span>
                                 </div>
                                 <div>
-                                    <span class="text-[10px] uppercase font-bold text-white/30 block">Year</span>
+                                    <span class="text-[10px] uppercase font-bold text-white/65 block">Year</span>
                                     <span class="text-white/80 font-medium">{{ $vehicle?->year ?? '—' }}</span>
                                 </div>
                                 <div>
-                                    <span class="text-[10px] uppercase font-bold text-white/30 block">Brand /
+                                    <span class="text-[10px] uppercase font-bold text-white/65 block">Brand /
                                         Model</span>
                                     <span class="text-white/80 font-medium">{{ $vehicle?->brand }}
                                         {{ $vehicle?->model }}</span>
                                 </div>
                                 <div>
-                                    <span class="text-[10px] uppercase font-bold text-white/30 block">Driver</span>
+                                    <span class="text-[10px] uppercase font-bold text-white/65 block">Driver</span>
                                     <span
                                         class="text-white/80 font-medium">{{ $vehicle?->driver?->name ?? 'Unassigned' }}</span>
                                 </div>
@@ -244,26 +244,26 @@
 
                     <!-- Cost Per Kilometer Summary -->
                     <div class="border-t border-white/5 pt-5">
-                        <h4 class="text-[10px] uppercase font-black text-white/30 tracking-widest mb-3">Cost Per
+                        <h4 class="text-[10px] uppercase font-black text-white/65 tracking-widest mb-3">Cost Per
                             Kilometer Summary</h4>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                             <div class="bg-white/[0.02] rounded-lg p-3 border border-white/5">
-                                <span class="text-[10px] text-white/30 block mb-1">Current Odometer</span>
+                                <span class="text-[10px] text-white/65 block mb-1">Current Odometer</span>
                                 <span class="text-white font-bold font-mono">{{ number_format($latestOdometer) }}
                                     km</span>
                             </div>
                             <div class="bg-white/[0.02] rounded-lg p-3 border border-white/5">
-                                <span class="text-[10px] text-white/30 block mb-1">Total Services</span>
+                                <span class="text-[10px] text-white/65 block mb-1">Total Services</span>
                                 <span class="text-white font-bold">{{ $totalServices }}
                                     {{ $totalServices === 1 ? 'Log' : 'Logs' }}</span>
                             </div>
                             <div class="bg-white/[0.02] rounded-lg p-3 border border-white/5">
-                                <span class="text-[10px] text-white/30 block mb-1">Avg Cost / Service</span>
+                                <span class="text-[10px] text-white/65 block mb-1">Avg Cost / Service</span>
                                 <span class="text-white font-bold font-mono">₱
                                     {{ $totalServices > 0 ? number_format($totalCost / $totalServices, 2) : '0.00' }}</span>
                             </div>
                             <div class="bg-white/[0.02] rounded-lg p-3 border border-white/5">
-                                <span class="text-[10px] text-white/30 block mb-1">Cost / Kilometer</span>
+                                <span class="text-[10px] text-white/65 block mb-1">Cost / Kilometer</span>
                                 <span class="text-emerald-400 font-bold font-mono">₱
                                     {{ number_format($costPerMile, 2) }}</span>
                             </div>
@@ -284,7 +284,7 @@
                             <span
                                 class="text-sm font-bold text-white/90 block group-hover:text-white transition-colors">Maintenance
                                 Guide</span>
-                            <span class="text-xs text-white/40 flex items-center gap-1">View scheduled services <i
+                            <span class="text-xs text-white/70 flex items-center gap-1">View scheduled services <i
                                     class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition-transform"></i></span>
                         </div>
                     </a>
@@ -328,13 +328,13 @@
                                     <td class="px-5 py-4">
                                         <div class="text-sm text-white/70 font-medium">
                                             {{ $log->service_date?->format('M d, Y') ?? '—' }}</div>
-                                        <div class="text-xs text-white/30 font-mono mt-0.5">
+                                        <div class="text-xs text-white/65 font-mono mt-0.5">
                                             {{ number_format($log->mileage_at_service) }} km</div>
                                     </td>
                                     <td class="px-5 py-4">
                                         <div class="text-sm text-white font-semibold">
                                             {{ $log->maintenanceTask?->tasks_performed ?? 'Unknown Task' }}</div>
-                                        <div class="text-xs text-white/40 mt-0.5">{{ $log->performed_by ?? '—' }}</div>
+                                        <div class="text-xs text-white/70 mt-0.5">{{ $log->performed_by ?? '—' }}</div>
                                     </td>
                                     <td class="px-5 py-4">
                                         <div class="text-sm text-white font-bold font-mono">₱
@@ -350,15 +350,15 @@
                                                 Warranty</span>
                                         @elseif($log->remarks)
                                             <span
-                                                class="text-xs text-white/30">{{ \Illuminate\Support\Str::limit($log->remarks, 40) }}</span>
+                                                class="text-xs text-white/65">{{ \Illuminate\Support\Str::limit($log->remarks, 40) }}</span>
                                         @else
-                                            <span class="text-sm text-white/30">—</span>
+                                            <span class="text-sm text-white/65">—</span>
                                         @endif
                                     </td>
                                     <td class="px-5 py-4 text-center">
                                         <div class="flex items-center justify-center gap-1">
                                             <button @click="openEdit(@js($log->only('id', 'vm_id', 'service_date_formatted', 'mileage_at_service', 'maintenance_task_id', 'performed_by', 'cost', 'invoice_number', 'remarks')))"
-                                                class="w-8 h-8 rounded-lg hover:bg-white/[0.06] flex items-center justify-center text-white/30 hover:text-blue-400 transition-colors"
+                                                class="w-8 h-8 rounded-lg hover:bg-white/[0.06] flex items-center justify-center text-white/65 hover:text-blue-400 transition-colors"
                                                 title="Edit">
                                                 <i class="fa-solid fa-pen text-xs"></i>
                                             </button>
@@ -370,7 +370,7 @@
                                                 @method('DELETE')
                                                 <button type="submit"
                                                     onclick="return confirm('Delete this maintenance log?')"
-                                                    class="w-8 h-8 rounded-lg hover:bg-rose-500/[0.08] flex items-center justify-center text-white/30 hover:text-rose-400 transition-colors"
+                                                    class="w-8 h-8 rounded-lg hover:bg-rose-500/[0.08] flex items-center justify-center text-white/65 hover:text-rose-400 transition-colors"
                                                     title="Delete">
                                                     <i class="fa-solid fa-trash-can text-xs"></i>
                                                 </button>
@@ -383,10 +383,10 @@
                                     <td colspan="5" class="px-5 py-16 text-center">
                                         <div class="flex flex-col items-center gap-3">
                                             <div
-                                                class="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-white/15">
+                                                class="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-white/50">
                                                 <i class="fa-solid fa-clipboard-list text-xl"></i>
                                             </div>
-                                            <p class="text-sm text-white/30">No maintenance logs recorded yet.</p>
+                                            <p class="text-sm text-white/65">No maintenance logs recorded yet.</p>
                                             <button @click="showModal = true"
                                                 class="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
                                                 <i class="fa-solid fa-plus text-[10px]"></i> Log first service
@@ -403,7 +403,7 @@
 
         <!-- Pagination Pinned to Bottom -->
         <div
-            class="-mx-8 md:-mx-12 -mb-8 md:-mb-12 mt-4 px-8 md:px-12 py-4 bg-[#0a0a0a] border-t border-white/5 flex justify-between items-center text-xs text-white/30 shrink-0">
+            class="-mx-8 md:-mx-12 -mb-8 md:-mb-12 mt-4 px-8 md:px-12 py-4 bg-[#0a0a0a] border-t border-white/5 flex justify-between items-center text-xs text-white/65 shrink-0">
             <span>Showing {{ $totalServices }} {{ $totalServices === 1 ? 'entry' : 'entries' }}</span>
             <div class="flex gap-2">
                 <button
@@ -445,13 +445,13 @@
                         </div>
                         <div>
                             <h3 id="modal-title" class="text-lg font-black tracking-tight">Log New Service</h3>
-                            <p class="text-xs text-white/30 mt-0.5">{{ $vehicle?->plate_number }} &middot;
+                            <p class="text-xs text-white/65 mt-0.5">{{ $vehicle?->plate_number }} &middot;
                                 {{ $vehicle?->brand }} {{ $vehicle?->model }}
                                 ({{ $vehicle?->year }})</p>
                         </div>
                     </div>
                     <button type="button" @click="showModal = false"
-                        class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-colors"
+                        class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors"
                         aria-label="Close modal">
                         <i class="fa-solid fa-xmark text-sm"></i>
                     </button>
@@ -499,7 +499,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label for="service_date"
-                                class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                                class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                                 Service Date <span class="text-red-400/70">*</span>
                             </label>
                             <input id="service_date" type="date" name="service_date"
@@ -508,20 +508,20 @@
                         </div>
                         <div>
                             <label for="mileage_at_service"
-                                class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                                class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                                 Odometer (km) <span class="text-red-400/70">*</span>
                             </label>
                             <input id="mileage_at_service" type="number" name="mileage_at_service"
                                 value="{{ old('mileage_at_service') }}" min="0" placeholder="e.g. 21000"
                                 required
-                                class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/15 font-mono {{ $errors->has('mileage_at_service') ? 'input-error' : '' }}">
+                                class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/50 font-mono {{ $errors->has('mileage_at_service') ? 'input-error' : '' }}">
                         </div>
                     </div>
 
                     <!-- Row 2: Work Performed -->
                     <div>
                         <label for="maintenance_task_id"
-                            class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                            class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                             Work Performed <span class="text-red-400/70">*</span>
                         </label>
                         <select id="maintenance_task_id" name="maintenance_task_id" required
@@ -540,50 +540,50 @@
                     <!-- Row 3: Performed By -->
                     <div>
                         <label for="performed_by"
-                            class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                            class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                             Performed By <span class="text-red-400/70">*</span>
                         </label>
                         <input id="performed_by" type="text" name="performed_by"
                             value="{{ old('performed_by') }}" placeholder="e.g. Castrol Shop, In-House" required
-                            class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/15 {{ $errors->has('performed_by') ? 'input-error' : '' }}">
+                            class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/50 {{ $errors->has('performed_by') ? 'input-error' : '' }}">
                     </div>
 
                     <!-- Row 4: Cost + Invoice Number -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label for="cost"
-                                class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                                class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                                 Cost <span class="text-red-400/70">*</span>
                             </label>
                             <div class="relative">
                                 <span
-                                    class="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-white/20 font-mono">₱</span>
+                                    class="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-white/55 font-mono">₱</span>
                                 <input id="cost" type="number" name="cost" value="{{ old('cost') }}"
                                     min="0" step="0.01" placeholder="0.00" required
-                                    class="form-input w-full rounded-xl pl-9 pr-4 py-3 text-sm placeholder:text-white/15 font-mono {{ $errors->has('cost') ? 'input-error' : '' }}">
+                                    class="form-input w-full rounded-xl pl-9 pr-4 py-3 text-sm placeholder:text-white/50 font-mono {{ $errors->has('cost') ? 'input-error' : '' }}">
                             </div>
-                            <p class="text-[10px] text-white/20 mt-1.5 pl-1">Leave 0 if covered under warranty.</p>
+                            <p class="text-[10px] text-white/55 mt-1.5 pl-1">Leave 0 if covered under warranty.</p>
                         </div>
                         <div>
                             <label for="invoice_number"
-                                class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                                class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                                 Invoice Number
                             </label>
                             <input id="invoice_number" type="text" name="invoice_number"
                                 value="{{ old('invoice_number') }}" placeholder="e.g. INV-0050"
-                                class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/15 font-mono {{ $errors->has('invoice_number') ? 'input-error' : '' }}">
+                                class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/50 font-mono {{ $errors->has('invoice_number') ? 'input-error' : '' }}">
                         </div>
                     </div>
 
                     <!-- Row 5: Remarks -->
                     <div>
                         <label for="remarks"
-                            class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                            class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                             Remarks
                         </label>
                         <textarea id="remarks" name="remarks" rows="3"
                             placeholder="e.g. Covered under warranty, Parts replaced: front brake pads (OEM)..."
-                            class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/15 resize-none leading-relaxed {{ $errors->has('remarks') ? 'input-error' : '' }}">{{ old('remarks') }}</textarea>
+                            class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/50 resize-none leading-relaxed {{ $errors->has('remarks') ? 'input-error' : '' }}">{{ old('remarks') }}</textarea>
                     </div>
                 </div>
 
@@ -632,14 +632,14 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-black tracking-tight">Edit Service Log</h3>
-                            <p class="text-xs text-white/30 mt-0.5">
+                            <p class="text-xs text-white/65 mt-0.5">
                                 {{ $vehicle?->plate_number }} &middot; {{ $vehicle?->brand }}
                                 {{ $vehicle?->model }} ({{ $vehicle?->year }})
                             </p>
                         </div>
                     </div>
                     <button type="button" @click="showEditModal = false"
-                        class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-colors"
+                        class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors"
                         aria-label="Close modal">
                         <i class="fa-solid fa-xmark text-sm"></i>
                     </button>
@@ -687,7 +687,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label
-                                class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                                class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                                 Service Date <span class="text-red-400/70">*</span>
                             </label>
                             <input type="date" name="service_date" x-model="editLog.service_date" required
@@ -695,19 +695,19 @@
                         </div>
                         <div>
                             <label
-                                class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                                class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                                 Odometer (km) <span class="text-red-400/70">*</span>
                             </label>
                             <input type="number" name="mileage_at_service" x-model="editLog.mileage_at_service"
                                 min="0" required
-                                class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/15 font-mono">
+                                class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/50 font-mono">
                         </div>
                     </div>
 
                     <!-- Work Performed -->
                     <div>
                         <label
-                            class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                            class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                             Work Performed <span class="text-red-400/70">*</span>
                         </label>
                         <select name="maintenance_task_id" x-model="editLog.maintenance_task_id" required
@@ -722,45 +722,45 @@
                     <!-- Performed By -->
                     <div>
                         <label
-                            class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                            class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                             Performed By <span class="text-red-400/70">*</span>
                         </label>
                         <input type="text" name="performed_by" x-model="editLog.performed_by" required
-                            class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/15">
+                            class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/50">
                     </div>
 
                     <!-- Cost + Invoice -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label
-                                class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                                class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                                 Cost <span class="text-red-400/70">*</span>
                             </label>
                             <div class="relative">
                                 <span
-                                    class="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-white/20 font-mono">₱</span>
+                                    class="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-white/55 font-mono">₱</span>
                                 <input type="number" name="cost" x-model="editLog.cost" min="0" required
-                                    class="form-input w-full rounded-xl pl-9 pr-4 py-3 text-sm placeholder:text-white/15 font-mono">
+                                    class="form-input w-full rounded-xl pl-9 pr-4 py-3 text-sm placeholder:text-white/50 font-mono">
                             </div>
                         </div>
                         <div>
                             <label
-                                class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                                class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                                 Invoice Number
                             </label>
                             <input type="text" name="invoice_number" x-model="editLog.invoice_number"
-                                class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/15 font-mono">
+                                class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/50 font-mono">
                         </div>
                     </div>
 
                     <!-- Remarks -->
                     <div>
                         <label
-                            class="col-header block text-[10px] uppercase font-bold text-white/40 tracking-widest mb-2">
+                            class="col-header block text-[10px] uppercase font-bold text-white/70 tracking-widest mb-2">
                             Remarks
                         </label>
                         <textarea name="remarks" x-model="editLog.remarks" rows="3"
-                            class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/15 resize-none leading-relaxed"></textarea>
+                            class="form-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-white/50 resize-none leading-relaxed"></textarea>
                     </div>
                 </div>
 

@@ -38,7 +38,7 @@
             cursor: pointer;
             background: #f8fafc;
             border: 1px solid #e2e8f0;
-            color: #64748b;
+            color: #586172;
             font-size: 9px;
             font-weight: 700;
             text-transform: uppercase;
@@ -54,7 +54,7 @@
         .dark input[type="file"]+label {
             background: #111;
             border-color: #1e1e1e;
-            color: #555;
+            color: #a3a3a3;
         }
 
         .dark input[type="file"]+label:hover {

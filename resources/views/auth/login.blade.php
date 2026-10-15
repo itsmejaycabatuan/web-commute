@@ -57,7 +57,7 @@
         }
 
         .input-field::placeholder {
-            color: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.55);
         }
 
         @keyframes card-enter {
@@ -142,7 +142,7 @@
                     </div>
                 </div>
                 <h3 class="text-base sm:text-lg font-bold tracking-tight">Your account is pending</h3>
-                <p class="mt-1.5 sm:mt-2 text-xs sm:text-sm text-gray-500 leading-relaxed">An administrator must
+                <p class="mt-1.5 sm:mt-2 text-xs sm:text-sm text-gray-400 leading-relaxed">An administrator must
                     approve your driver account before you can sign in.</p>
                 <button type="button" onclick="document.getElementById('driver-pending-modal').remove()"
                     class="py-2.5 sm:py-3 mt-4 sm:mt-6 w-full text-[10px] sm:text-xs font-bold tracking-widest text-white uppercase bg-gray-900 rounded-xl transition hover:bg-gray-800 active:scale-[0.98]">
@@ -164,7 +164,7 @@
                     </div>
                 </div>
                 <h3 class="text-base sm:text-lg font-bold tracking-tight">Account submission rejected</h3>
-                <p class="mt-1.5 sm:mt-2 text-xs sm:text-sm text-gray-500 leading-relaxed">Your driver application was
+                <p class="mt-1.5 sm:mt-2 text-xs sm:text-sm text-gray-400 leading-relaxed">Your driver application was
                     not approved. If you believe this is a mistake, contact support.</p>
                 <button type="button" onclick="document.getElementById('driver-rejected-modal').remove()"
                     class="py-2.5 sm:py-3 mt-4 sm:mt-6 w-full text-[10px] sm:text-xs font-bold tracking-widest text-white uppercase bg-gray-900 rounded-xl transition hover:bg-gray-800 active:scale-[0.98]">
@@ -221,7 +221,7 @@
                     Address</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-envelope text-[10px] sm:text-xs text-white/20"></i>
+                        <i class="fa-solid fa-envelope text-[10px] sm:text-xs text-white/50"></i>
                     </div>
                     <input type="email" placeholder="you@example.com" name="email" value="{{ old('email') }}"
                         class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
@@ -241,13 +241,13 @@
                     class="block mb-1 sm:mb-1.5 ml-0.5 sm:ml-1 font-semibold tracking-widest uppercase text-[9px] sm:text-[10px] text-gray-400">Password</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/20"></i>
+                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/50"></i>
                     </div>
                     <input type="password" id="password" placeholder="••••••••" name="password"
                         value="{{ old('password') }}"
                         class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-9 sm:pr-10 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
                     <button type="button" onclick="togglePassword()"
-                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/30 hover:text-white/70 transition">
+                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/60 hover:text-white/70 transition">
                         <i id="eye-icon" class="fa-solid fa-eye text-[10px] sm:text-xs"></i>
                     </button>
                 </div>
@@ -289,7 +289,7 @@
         </form>
 
         <div class="pt-4 sm:pt-6 mt-5 sm:mt-7 text-center border-t border-white/5">
-            <p class="text-[11px] sm:text-xs text-gray-500">
+            <p class="text-[11px] sm:text-xs text-gray-400">
                 Don't have an account?
                 <a href="{{ url('/register') }}"
                     class="font-semibold text-white hover:text-blue-400 transition">Create one</a>

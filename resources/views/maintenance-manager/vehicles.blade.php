@@ -592,7 +592,7 @@
                                         </td>
                                         <td class="px-4 sm:px-6 py-3.5">
                                             <div
-                                                class="opacity-30 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                                                class="opacity-80 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
                                                 <button @click="openViewModal(v)"
                                                     class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 dark:text-[#555] hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-all"
                                                     title="View Details"><i

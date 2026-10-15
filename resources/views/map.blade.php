@@ -55,6 +55,27 @@
          * `.dark` block. Light is the default, exactly like the rest of the
          * page (the `dark` class is set on <html>).
          * ══════════════════════════════════════════════════════════════ */
+        /* ETA colour code (arriving / soon / near / far) and vehicle status (active / offline).
+           These colour the Nearest-PUJ indicator and the marker popup, so each needs a shade
+           that reads on the white overlay in light mode and on the dark one in dark mode. */
+        :root {
+            --eta-here: #047857;
+            --eta-soon: #a35200;
+            --eta-near: #b43c0a;
+            --eta-far: #586172;
+            --status-ok: #047857;
+            --status-off: #b91c1c;
+        }
+
+        .dark {
+            --eta-here: #34d399;
+            --eta-soon: #fbbf24;
+            --eta-near: #fb923c;
+            --eta-far: #a3a3a3;
+            --status-ok: #34d399;
+            --status-off: #f87171;
+        }
+
         #map-alert,
         #nearest-vehicle-indicator {
             --ov-bg: rgba(255, 255, 255, 0.94);
@@ -65,8 +86,8 @@
             --ov-shadow-hover: 0 12px 40px rgba(15, 23, 42, 0.22);
             --ov-title: #0f172a;
             --ov-text: #475569;
-            --ov-dim: #94a3b8;
-            --ov-accent: #60a5fa;
+            --ov-dim: #5d6676;
+            --ov-accent: #1d4ed8;
         }
 
         .dark #map-alert,
@@ -78,8 +99,8 @@
             --ov-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             --ov-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.5);
             --ov-title: #eeeeee;
-            --ov-text: #888888;
-            --ov-dim: #555555;
+            --ov-text: #b8b8b8;
+            --ov-dim: #a3a3a3;
             --ov-accent: #60a5fa;
         }
 
@@ -250,7 +271,7 @@
         .nv-time {
             font-size: 14px;
             font-weight: 800;
-            color: #34d399;
+            color: var(--eta-here);
             transition: color 0.3s ease;
             line-height: 1.3;
             white-space: nowrap;
@@ -286,8 +307,8 @@
             --pp-border: #e2e8f0;
             --pp-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
             --pp-text: #0f172a;
-            --pp-muted: #64748b;
-            --pp-dim: #94a3b8;
+            --pp-muted: #586172;
+            --pp-dim: #5d6676;
             --pp-divider: #e2e8f0;
             --pp-chip: rgba(59, 130, 246, 0.06);
             --pp-chip-border: rgba(59, 130, 246, 0.18);
@@ -302,7 +323,7 @@
             --pp-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
             --pp-text: #ffffff;
             --pp-muted: #9ca3af;
-            --pp-dim: #6b7280;
+            --pp-dim: #9a9a9a;
             --pp-divider: #1e1e1e;
             --pp-chip: rgba(59, 130, 246, 0.06);
             --pp-chip-border: rgba(59, 130, 246, 0.12);
@@ -586,17 +607,17 @@
         }
 
         .eta-here {
-            background: #059669;
+            background: #047857;
             color: #fff;
         }
 
         .eta-soon {
-            background: #d97706;
+            background: #b45309;
             color: #fff;
         }
 
         .eta-near {
-            background: #ea580c;
+            background: #c2410c;
             color: #fff;
         }
 
@@ -672,7 +693,7 @@
         .dark .sim-speed-btn {
             border-color: #222;
             background: #0e0e0e;
-            color: #666;
+            color: #a8a8a8;
         }
 
         .dark .sim-speed-btn:hover {
@@ -878,7 +899,7 @@
             background: #111111;
             border: 1px solid #1e1e1e;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            color: #666;
+            color: #a8a8a8;
         }
 
         .dark .rounded-rect:hover {
@@ -1131,35 +1152,35 @@
         }
 
         .search-item .result-detail {
-            color: #94a3b8;
+            color: #5d6676;
             font-size: 10px;
             margin-top: 2px;
         }
 
         .dark .search-item .result-detail {
-            color: #555;
+            color: #a3a3a3;
         }
 
         .search-loading {
             padding: 14px;
             text-align: center;
-            color: #94a3b8;
+            color: #5d6676;
             font-size: 11px;
         }
 
         .dark .search-loading {
-            color: #555;
+            color: #a3a3a3;
         }
 
         .search-no-results {
             padding: 14px;
             text-align: center;
-            color: #cbd5e1;
+            color: #626b7b;
             font-size: 11px;
         }
 
         .dark .search-no-results {
-            color: #444;
+            color: #9a9a9a;
         }
 
         /* ═══ MOBILE SHEET ═══ */
@@ -2487,7 +2508,7 @@
                                     <form action="{{ route('driver.timekeeping.clock-in') }}" method="POST">
                                         @csrf
                                         <button type="submit"
-                                            class="w-full p-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-blue">
+                                            class="w-full p-3.5 rounded-2xl text-white bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-blue">
                                             <i class="fa-solid fa-right-to-bracket text-sm"></i>
                                             <span class="text-[10px] font-black uppercase tracking-widest">Clock
                                                 In</span>
@@ -2497,7 +2518,7 @@
                                     <form action="{{ route('driver.timekeeping.clock-out') }}" method="POST">
                                         @csrf
                                         <button type="submit"
-                                            class="w-full p-3.5 rounded-2xl bg-amber-600 hover:bg-amber-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-amber">
+                                            class="w-full p-3.5 rounded-2xl text-white bg-amber-600 hover:bg-amber-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-amber">
                                             <i class="fa-solid fa-right-from-bracket text-sm"></i>
                                             <span class="text-[10px] font-black uppercase tracking-widest">Clock
                                                 Out</span>
@@ -2768,13 +2789,13 @@
                                     colorFor: function(cls) {
                                         switch (cls) {
                                             case 'eta-here':
-                                                return '#34d399';
+                                                return 'var(--eta-here)';
                                             case 'eta-soon':
-                                                return '#fbbf24';
+                                                return 'var(--eta-soon)';
                                             case 'eta-near':
-                                                return '#fb923c';
+                                                return 'var(--eta-near)';
                                             default:
-                                                return '#6b7280';
+                                                return 'var(--eta-far)';
                                         }
                                     },
 
@@ -4287,12 +4308,12 @@ sim._lastEtaUpdate = null;
             window.createPrivacyPopup = function(d) {
                 // Vehicle status: derived when the payload carries it, otherwise 'Active'
                 var statusText = 'Active';
-                var statusColor = '#34d399';
+                var statusColor = 'var(--status-ok)';
                 if (d.driver_status === 'active') {
                     statusText = 'Available';
                 } else if (d.driver_status === 'inactive' || d.driver_status === 'unavailable') {
                     statusText = 'Unavailable';
-                    statusColor = '#ef4444';
+                    statusColor = 'var(--status-off)';
                 } else if (d.marker_status && d.marker_status !== 'active') {
                     statusText = 'Inactive';
                     statusColor = 'var(--pp-muted)';
@@ -4378,7 +4399,7 @@ sim._lastEtaUpdate = null;
                 var isActive = d.driver_status === 'active';
                 var statusBg = isActive ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
                 var statusBorder = isActive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)';
-                var statusColor = isActive ? '#34d399' : '#ef4444';
+                var statusColor = isActive ? 'var(--status-ok)' : 'var(--status-off)';
                 var statusLabel = isActive ? 'Available' : 'Unavailable';
                 var statusIcon = isActive ? 'fa-circle-check' : 'fa-circle-xmark';
 

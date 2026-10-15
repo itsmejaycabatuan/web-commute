@@ -9,6 +9,31 @@
     'settingsIcon' => 'fa-gear',
 ])
 
+@php
+    // Colour code for menu areas (the 'color' key in config/menu.php). Every link keeps a
+    // soft chip in its area colour; the page you are on gets a solid chip and a tinted row,
+    // so "where am I" never depends on telling two tints apart.
+    $navTone = function (?string $color, bool $active): array {
+        if ($color === 'slate') {
+            return [
+                'row' => 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600',
+                'chip' => $active
+                    ? 'bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300',
+            ];
+        }
+
+        $c = $color ?: 'blue';
+
+        return [
+            'row' => "bg-{$c}-50 dark:bg-{$c}-500/10 text-{$c}-600 dark:text-{$c}-400 border-{$c}-200 dark:border-{$c}-500/20",
+            'chip' => $active
+                ? "bg-{$c}-600 text-white"
+                : "bg-{$c}-500/10 dark:bg-{$c}-500/15 text-{$c}-600 dark:text-{$c}-400",
+        ];
+    };
+@endphp
+
 <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
 
 <div x-data x-cloak>
@@ -106,10 +131,11 @@
                     </p>
                     @continue
                 @endif
+                @php $tone = $navTone($item['color'] ?? null, request()->routeIs($item['route'])); @endphp
                 <a href="{{ route($item['route']) }}"
-                    class="drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs($item['route']) ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' : 'text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200' }}">
+                    class="drawer-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all border {{ request()->routeIs($item['route']) ? $tone['row'] : 'text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200' }}">
                     <div
-                        class="w-7 h-7 rounded-lg {{ request()->routeIs($item['route']) ? 'bg-blue-100 dark:bg-blue-500/20' : 'bg-gray-100 dark:bg-gray-800' }} flex items-center justify-center shrink-0">
+                        class="w-7 h-7 rounded-lg {{ $tone['chip'] }} flex items-center justify-center shrink-0">
                         <i class="fa-solid {{ $item['icon'] }} text-[10px]"></i>
                     </div>
                     <span class="text-[10px] font-bold uppercase tracking-[0.12em]">{{ $item['label'] }}</span>
@@ -189,11 +215,12 @@
                         {{ $item['section'] }}</p>
                     @continue
                 @endif
+                @php $tone = $navTone($item['color'] ?? null, request()->routeIs($item['route'])); @endphp
                 <a href="{{ route($item['route']) }}"
                     :class="$store.sidebar.open ? 'gap-3 px-3' : 'justify-center px-0'"
-                    class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs($item['route']) ? 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/20' : 'text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-200 dark:hover:border-gray-700' }}">
+                    class="flex items-center py-2.5 rounded-xl transition-all border group {{ request()->routeIs($item['route']) ? $tone['row'] : 'text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-200 dark:hover:border-gray-700' }}">
                     <div
-                        class="w-8 h-8 rounded-lg {{ request()->routeIs($item['route']) ? 'bg-blue-100 dark:bg-blue-500/20' : 'bg-gray-100 dark:bg-gray-800 group-hover:bg-gray-200 dark:group-hover:bg-gray-700' }} flex items-center justify-center shrink-0 transition">
+                        class="w-8 h-8 rounded-lg {{ $tone['chip'] }} flex items-center justify-center shrink-0 transition">
                         <i class="fa-solid {{ $item['icon'] }} text-[11px]"></i>
                     </div>
                     <span x-show="$store.sidebar.open" x-transition.opacity.duration.200ms

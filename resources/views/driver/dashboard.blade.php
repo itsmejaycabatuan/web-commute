@@ -326,7 +326,7 @@
                                                         Progress</span>
                                                 @else
                                                     <span
-                                                        class="text-[7px] sm:text-[8px] bg-gray-100 dark:bg-[#111] text-gray-400 dark:text-[#444] border border-gray-200 dark:border-[#1e1e1e] px-1.5 py-0.5 rounded-md font-bold uppercase">Absent</span>
+                                                        class="text-[7px] sm:text-[8px] bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/15 px-1.5 py-0.5 rounded-md font-bold uppercase">Absent</span>
                                                 @endif
                                             </td>
                                         </tr>

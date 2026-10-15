@@ -121,7 +121,7 @@
         .form-input-locked {
             background: #f1f5f9;
             border: 1px solid #e2e8f0;
-            color: #94a3b8;
+            color: #5d6676;
             cursor: not-allowed;
             user-select: none;
         }
@@ -129,7 +129,7 @@
         .dark .form-input-locked {
             background: #0a0a0a;
             border: 1px solid #1e1e1e;
-            color: #444;
+            color: #9a9a9a;
         }
 
         .setting-row {
@@ -236,7 +236,7 @@
 
         .font-size-btn.active {
             background: #ffffff;
-            color: #3b82f6;
+            color: #1d4ed8;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 

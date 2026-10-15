@@ -54,5 +54,8 @@
 {{-- Short/landscape viewport support (phones & small tablets held sideways) --}}
 @include('partials.landscape-styles')
 
+{{-- Colour-coded elements that stay readable in light and dark mode --}}
+@include('partials.accessible-colors')
+
 {{-- Global loading indicators (form submits & AJAX requests) --}}
 @include('partials.global-loading')

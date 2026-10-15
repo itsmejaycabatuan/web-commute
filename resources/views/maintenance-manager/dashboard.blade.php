@@ -80,7 +80,7 @@
         }
 
         .tab-active {
-            color: #3b82f6;
+            color: #1d4ed8;
             border-bottom: 2px solid #3b82f6;
         }
 
@@ -90,12 +90,12 @@
         }
 
         .tab-inactive {
-            color: #94a3b8;
+            color: #5d6676;
             border-bottom: 2px solid transparent;
         }
 
         .dark .tab-inactive {
-            color: #333;
+            color: #8f8f8f;
             border-bottom: 2px solid transparent;
         }
 
@@ -104,7 +104,7 @@
         }
 
         .dark .tab-inactive:hover {
-            color: #666;
+            color: #cccccc;
         }
 
         ::-webkit-scrollbar {
@@ -616,7 +616,7 @@
                                                 </td>
                                                 @foreach (range(1, 12) as $m)
                                                     <td
-                                                        class="px-3 sm:px-4 py-3 font-mono text-[9px] sm:text-[10px] text-right font-bold @if ($monthlyTotals[$m] > 0) text-blue-600 dark:text-blue-400 @else text-blue-100 dark:text-[#1a1a1a] @endif">
+                                                        class="px-3 sm:px-4 py-3 font-mono text-[9px] sm:text-[10px] text-right font-bold @if ($monthlyTotals[$m] > 0) text-blue-600 dark:text-blue-400 @else text-gray-400 dark:text-[#444] @endif">
                                                         ₱{{ number_format($monthlyTotals[$m], 2) }}</td>
                                                 @endforeach
                                                 <td
@@ -724,7 +724,7 @@
                                                     </td>
                                                     @foreach (range(1, 12) as $m)
                                                         <td
-                                                            class="px-3 sm:px-4 py-3 font-mono text-[9px] sm:text-[10px] text-right font-bold @if ($monthlyTotals[$m] > 0) text-blue-600 dark:text-blue-400 @else text-blue-100 dark:text-[#1a1a1a] @endif">
+                                                            class="px-3 sm:px-4 py-3 font-mono text-[9px] sm:text-[10px] text-right font-bold @if ($monthlyTotals[$m] > 0) text-blue-600 dark:text-blue-400 @else text-gray-400 dark:text-[#444] @endif">
                                                             ₱{{ number_format($monthlyTotals[$m], 2) }}</td>
                                                     @endforeach
                                                 </tr>
