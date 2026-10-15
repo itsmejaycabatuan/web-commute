@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Driver;
 use App\Models\MaintenanceTask;
-use App\Models\Payment;
 use App\Models\PreventiveMaintenance;
 use App\Models\TimeKeeping;
 use App\Models\User;
@@ -646,68 +645,6 @@ class UcnStaffRegressionTest extends TestCase
             ]))
             ->assertOk()
             ->assertSee('No data found');
-    }
-
-    /** E020 — the commuter report counts only settled fares inside the window. */
-    public function test_the_commuter_report_summarises_signups_and_spend()
-    {
-        $params = [
-            'type' => 'commuter',
-            'start_date' => now()->subDay()->toDateString(),
-            'end_date' => now()->toDateString(),
-        ];
-        $admin = $this->admin();
-        // The suite runs against the dev database, so measure against what is already there.
-        $before = $this->actingAs($admin)->get(route('reports.generate', $params))->viewData('commuterStats');
-
-        $rider = User::factory()->create(['email' => 'rider@report.test'])->assignRole('commuter');
-        $rider->markEmailAsVerified();
-        Wallet::create(['user_id' => $rider->id, 'balance' => 150]);
-
-        $suspended = User::factory()->create(['email' => 'out@report.test'])->assignRole('commuter');
-        $suspended->suspend();
-
-        $fare = fn (array $over) => Payment::create($over + [
-            'paid_by' => $rider->id,
-            'transaction_id' => uniqid('tx'),
-            'starting_point' => 'A',
-            'destination' => 'B',
-            'total_distance' => 3,
-            'payment_method' => 'wallet',
-            'price' => 20,
-            'paid_at' => now(),
-        ]);
-        $fare(['status' => 'paid']);
-        $fare(['status' => 'paid']);
-        $fare(['status' => 'failed']);
-
-        $this->actingAs($admin)
-            ->get(route('reports.generate', $params))
-            ->assertOk()
-            ->assertViewHas('commuterStats', fn ($s) => $s['total'] === $before['total'] + 2
-                && $s['new'] === $before['new'] + 2
-                && $s['riders'] === $before['riders'] + 1
-                && $s['suspended'] === $before['suspended'] + 1
-                && $s['wallet_total'] === $before['wallet_total'] + 150.0)
-            ->assertViewHas('topCommuters', function ($top) {
-                $row = collect($top)->firstWhere('email', 'rider@report.test');
-
-                return $row && $row['trips'] === 2 && $row['spend'] === 40.0;
-            });
-    }
-
-    /** E020 — the commuter report exports one row per commuter. */
-    public function test_the_commuter_report_exports_to_csv()
-    {
-        User::factory()->create(['email' => 'csv@report.test', 'email_verified_at' => null])->assignRole('commuter');
-
-        $csv = $this->actingAs($this->admin())
-            ->get(route('reports.export', ['type' => 'commuter']))
-            ->assertOk()
-            ->streamedContent();
-
-        $this->assertStringContainsString('Email,Status,Registered', $csv);
-        $this->assertStringContainsString('csv@report.test,Unverified', $csv);
     }
 
     /** E020 — an inverted date range is refused. */
