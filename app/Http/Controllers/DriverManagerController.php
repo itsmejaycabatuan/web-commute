@@ -10,6 +10,7 @@ use App\Models\ViolationLog;
 use Auth;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -313,10 +314,10 @@ class DriverManagerController extends Controller
             return 'muted';
         }
         $lower = strtolower($penalty);
-        if (str_contains($lower, ['suspension', 'revocation', 'impound'])) {
+        if (Str::contains($lower, ['suspension', 'revocation', 'impound'])) {
             return 'red';
         }
-        if (str_contains($lower, ['warning', 'community'])) {
+        if (Str::contains($lower, ['warning', 'community'])) {
             return 'amber';
         }
 

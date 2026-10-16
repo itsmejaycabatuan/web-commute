@@ -186,10 +186,13 @@ class DriverControllerTest extends TestCase
             'user_id' => $user->id,
             'vc_id' => $code->id,
             'violation_fine' => 500.00,
+            'additional_penalties' => 'Suspension: 7 days',
         ]);
 
         $response = $this->actingAs($user)->get(route('driver.violations'));
 
-        $this->assertTrue($response->getStatusCode() > 0 || true); // Violations route check
+        // A penalty text used to crash the page (str_contains() with an array).
+        $response->assertOk();
+        $this->assertSame('red', $response->viewData('violations')->first()['penaltyColor']);
     }
 }

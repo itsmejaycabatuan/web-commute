@@ -583,8 +583,10 @@ class PaymentController extends Controller
 
         return view('admin.fares.transactions', [
             'allTransactions' => $query->latest()->paginate(5),
-            'totalRevenue' => Payment::sum('price'),
-            'activeUsersCount' => Payment::distinct('paid_by')->count(),
+            // The list shows every attempt, but the money figures count settled ones only.
+            'totalRevenue' => Payment::settled()->sum('price'),
+            'settledCount' => Payment::settled()->count(),
+            'activeUsersCount' => Payment::settled()->distinct()->count('paid_by'),
         ]);
     }
 

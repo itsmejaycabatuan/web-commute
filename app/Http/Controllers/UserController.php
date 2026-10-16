@@ -184,13 +184,13 @@ class UserController extends Controller
         $totalDistance = number_format($distance, 1);
 
         if ($role == 'admin') {
-            $totalRevenue = Payment::sum('price');
+            $totalRevenue = Payment::settled()->sum('price');
             $totalFundsAdded = TopupHistory::sum('amount_added');
-            $activeUsersCount = Payment::distinct('paid_by')->count();
-            $recentFares = Payment::with('user')->latest()->take(5)->get();
+            $activeUsersCount = Payment::settled()->distinct()->count('paid_by');
+            $recentFares = Payment::settled()->with('user')->latest()->take(5)->get();
             $recentTopups = TopupHistory::with('user')->latest()->take(5)->get();
-            $revenueByDay = Payment::where('created_at', '>=', now()->subDays(7))
-                ->selectRaw('DATE(created_at) as date, SUM(price) as total')
+            $revenueByDay = Payment::settled()->where('paid_at', '>=', now()->subDays(7))
+                ->selectRaw('DATE(paid_at) as date, SUM(price) as total')
                 ->groupBy('date')->orderBy('date')->pluck('total', 'date')->toArray();
 
             $topupsByDay = TopupHistory::where('created_at', '>=', now()->subDays(7))

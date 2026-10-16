@@ -10,7 +10,6 @@ use App\Http\Controllers\MaintenanceManagerController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PusherController;
 use App\Http\Controllers\ReportController;
-use App\Http\Controllers\RouteController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserPreferenceController;
@@ -199,8 +198,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/reports', [ReportController::class, 'generate'])->name('reports.generate');
         Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
-
-        Route::resource('routes', RouteController::class);
     });
 
     Route::middleware('role:driver_manager')->group(function () {

@@ -289,6 +289,45 @@ class UcnStaffRegressionTest extends TestCase
         $this->assertSame('Baldwin Mendoza', $violations->first()['driverName']);
     }
 
+    /** A violation with penalty text must render in the log, not crash the page. */
+    public function test_the_violation_log_renders_violations_that_carry_a_penalty()
+    {
+        $manager = $this->driverManager();
+
+        $driverUser = User::factory()->create()->assignRole('driver');
+        $driverUser->markEmailAsVerified();
+        Driver::factory()->create(['user_id' => $driverUser->id]);
+
+        $code = ViolationCode::create([
+            'code' => 'PEN-1',
+            'violation_name' => 'Penalised',
+            'first_offense' => 100,
+            'second_offense' => 200,
+            'third_offense' => 300,
+            'fourth_offense' => 400,
+            'is_revoked' => 0,
+        ]);
+
+        foreach (['Suspension: 7 days', 'Warning', 'Community service', 'N/A'] as $penalty) {
+            ViolationLog::create([
+                'user_id' => $driverUser->id,
+                'vc_id' => $code->id,
+                'violation_instance' => '1',
+                'violation_fine' => 100,
+                'additional_penalties' => $penalty,
+                'date_of_violation' => now()->toDateString(),
+                'time_of_violation' => '08:00:00',
+                'place_of_violation' => 'EDSA',
+                'remarks' => 'Test violation',
+            ]);
+        }
+
+        $response = $this->actingAs($manager)->get(route('driver-manager.violations-log'));
+
+        $response->assertOk();
+        $this->assertCount(4, $response->viewData('violations'));
+    }
+
     // ─────────────────────────── E015 — Manage Vehicles ───────────────────────────
 
     /** E015 E4 — a driver cannot be assigned to a vehicle under maintenance. */

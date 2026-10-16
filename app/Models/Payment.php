@@ -80,6 +80,15 @@ class Payment extends Model
         return $this->status === self::STATUS_PAID;
     }
 
+    /**
+     * Payments that actually collected money. Revenue figures must use this:
+     * pending, failed and cancelled gateway payments carry a price but no cash.
+     */
+    public function scopeSettled($query)
+    {
+        return $query->where('status', self::STATUS_PAID);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'paid_by');

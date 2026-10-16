@@ -331,6 +331,39 @@ class UcnSuspensionAndMaintenanceLogTest extends TestCase
         $this->assertEquals(3000.0, (float) $logs->first()->cost);
     }
 
+    public function test_the_maintenance_log_page_renders_when_the_logs_span_several_pages()
+    {
+        $vehicle = Vehicle::factory()->create();
+        $task = MaintenanceTask::create([
+            'tasks_performed' => 'Oil Change',
+            'miles_between_service' => 5000,
+            'months_between_service' => 6,
+        ]);
+
+        foreach (range(1, 12) as $i) {
+            VehicleMaintenanceLog::create($this->serviceLogPayload([
+                'vehicle_id' => $vehicle->id,
+                'maintenance_task_id' => $task->id,
+                'mileage_at_service' => 1000 * $i,
+                'invoice_number' => "PAGE-{$i}",
+            ]));
+        }
+
+        $manager = $this->maintenanceManager();
+
+        // The pagination links used to point at a view that does not exist.
+        $first = $this->actingAs($manager)
+            ->get(route('maintenance-manager.maintenance-logs', ['vehicle' => $vehicle->id]));
+        $first->assertOk();
+        $this->assertCount(10, $first->viewData('logs'));
+        $first->assertSee('page=2', false);
+
+        $second = $this->actingAs($manager)
+            ->get(route('maintenance-manager.maintenance-logs', ['vehicle' => $vehicle->id, 'page' => 2]));
+        $second->assertOk();
+        $this->assertCount(2, $second->viewData('logs'));
+    }
+
     public function test_a_vehicle_with_service_logs_is_preserved()
     {
         $vehicle = Vehicle::factory()->create();

@@ -11,10 +11,10 @@ class AdminController extends Controller
     {
         activity()->event('Dashboard')->log('Action performed: dashboard');
 
-        $totalRevenue = Payment::sum('price');
+        $totalRevenue = Payment::settled()->sum('price');
         $totalFundsAdded = TopupHistory::sum('amount_added');
-        $activeUsersCount = Payment::distinct('paid_by')->count();
-        $recentFares = Payment::with('user')->latest()->take(5)->get();
+        $activeUsersCount = Payment::settled()->distinct()->count('paid_by');
+        $recentFares = Payment::settled()->with('user')->latest()->take(5)->get();
         $recentTopups = TopupHistory::with('user')->latest()->take(5)->get();
 
         return view('admin.dashboard', [

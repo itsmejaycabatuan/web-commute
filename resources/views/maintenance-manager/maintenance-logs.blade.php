@@ -622,7 +622,7 @@
                     </span>
                 </div>
                 @if ($logs->hasPages())
-                    <div class="flex gap-1">{{ $logs->links('maintenance-manager.partials.pagination') }}</div>
+                    <div class="flex gap-1">{{ $logs->links('vendor.pagination.custom') }}</div>
                 @endif
             </div>
         </div>

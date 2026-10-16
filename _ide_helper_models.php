@@ -240,36 +240,6 @@ namespace App\Models{
 
 namespace App\Models{
 /**
- * App\Models\Route
- *
- * @property int $id
- * @property string $starting_point
- * @property string $destination
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @method static \Illuminate\Database\Eloquent\Builder|Route newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Route newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Route query()
- * @method static \Illuminate\Database\Eloquent\Builder|Route whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Route whereDestination($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Route whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Route whereStartingPoint($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Route whereUpdatedAt($value)
- * @property string $code
- * @property string $name
- * @property string $description
- * @property string $total_distance
- * @method static \Illuminate\Database\Eloquent\Builder|Route whereCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Route whereDescription($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Route whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Route whereTotalDistance($value)
- * @mixin \Eloquent
- */
-	class Route extends \Eloquent {}
-}
-
-namespace App\Models{
-/**
  * App\Models\TimeKeeping
  *
  * @property int $id

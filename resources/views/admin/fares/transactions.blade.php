@@ -92,7 +92,7 @@
                     $allTransactions instanceof \Illuminate\Pagination\LengthAwarePaginator
                         ? $allTransactions->total()
                         : count($allTransactions);
-                $avgFare = $totalTxCount > 0 ? $totalRevenue / $totalTxCount : 0;
+                $avgFare = ($settledCount ?? 0) > 0 ? $totalRevenue / $settledCount : 0;
             @endphp
 
             <!-- ══════════ STAT CARDS ══════════ -->

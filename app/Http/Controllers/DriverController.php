@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class DriverController extends Controller
@@ -337,10 +338,10 @@ class DriverController extends Controller
             return 'muted';
         }
         $lower = strtolower($penalty);
-        if (str_contains($lower, ['suspension', 'revocation', 'impound'])) {
+        if (Str::contains($lower, ['suspension', 'revocation', 'impound'])) {
             return 'red';
         }
-        if (str_contains($lower, ['warning', 'community'])) {
+        if (Str::contains($lower, ['warning', 'community'])) {
             return 'amber';
         }
 
