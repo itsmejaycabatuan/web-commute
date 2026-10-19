@@ -83,7 +83,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "585314b6635d2cd2",
@@ -189,5 +190,28 @@
     }
   },
   "active": "9f89179a0caa52b5",
-  "lastOpenFiles": []
+  "lastOpenFiles": [
+    "UCN/UCN_SC_E021_Share_Vehicle_Location.md",
+    "UCN/UCN_SC_E020_View_System_Reports.md",
+    "UCN/UCN_SC_E019_Manage_Fare_Rates.md",
+    "UCN/UCN_SC_E018_Manage_Commuters.md",
+    "UCN/UCN_SC_E017_Manage_Maintenance_Tasks.md",
+    "UCN/UCN_SC_E016_Manage_Maintenance_Schedule.md",
+    "UCN/UCN_SC_E015_Manage_Vehicles.md",
+    "UCN/UCN_SC_E014_Manage_Violations.md",
+    "UCN/UCN_SC_E013_Manage_Timekeeping.md",
+    "UCN/UCN_SC_E012_Manage_Drivers.md",
+    "UCN/UCN_SC_E011_Reset_Password.md",
+    "UCN/UCN_SC_E010_Clock_Out.md",
+    "UCN/UCN_SC_E009_Clock_In.md",
+    "UCN/UCN_SC_E008_Change_Password.md",
+    "UCN/UCN_SC_E007_View_Payment_History.md",
+    "UCN/UCN_SC_E006_Pay_Fare.md",
+    "UCN/UCN_SC_E005_Topup_Balance.md",
+    "UCN/UCN_SC_E004_Plan_Trip.md",
+    "UCN/UCN_SC_E003_Track_PUJ.md",
+    "UCN/UCN_SC_E002_Create_Account.md",
+    "UCN/UCN_SC_E001_Login.md",
+    "MANUAL_TEST_CHECKLIST.md"
+  ]
 }

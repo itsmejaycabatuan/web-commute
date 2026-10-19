@@ -361,9 +361,11 @@
                 <a href="#services" onclick="closeMobileMenu()"
                     class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Services</a>
                 <a href="#audience" onclick="closeMobileMenu()"
-                    class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Who It's For</a>
+                    class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Who It's
+                    For</a>
                 <a href="#get-started" onclick="closeMobileMenu()"
-                    class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Get Started</a>
+                    class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Get
+                    Started</a>
             </div>
         </nav>
 
@@ -474,7 +476,7 @@
                 </div>
                 <div class="w-px h-6 sm:h-8 md:h-10 bg-white/10"></div>
                 <div>
-                    <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">3</p>
+                    <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">Many</p>
                     <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-400 mt-0.5 sm:mt-1">Ways
                         to Pay</p>
                 </div>
@@ -524,7 +526,8 @@
                 Payments</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver Reports</span>
+                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver
+                Reports</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-pink-500"></i> Fare Calculator</span>
@@ -538,7 +541,8 @@
                 Payments</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver Reports</span>
+                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver
+                Reports</span>
             <!-- Duplicate for seamless loop -->
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
@@ -550,7 +554,8 @@
                 Payments</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver Reports</span>
+                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver
+                Reports</span>
             <span
                 class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
                     class="fa-solid fa-circle text-[2px] sm:text-[3px] text-pink-500"></i> Fare Calculator</span>
@@ -781,7 +786,8 @@
                     class="glass-card p-5 sm:p-6 md:p-7 lg:p-10 rounded-xl sm:rounded-2xl md:rounded-[2rem] flex flex-col items-center text-center relative group reveal reveal-delay-1">
                     <div
                         class="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-600/5 border border-blue-500/20 flex items-center justify-center mb-3 sm:mb-4 md:mb-5 group-hover:border-blue-500/50 group-hover:scale-105 transition-all duration-500">
-                        <i class="fa-solid fa-person-walking text-base sm:text-lg md:text-xl lg:text-2xl text-blue-400"></i>
+                        <i
+                            class="fa-solid fa-person-walking text-base sm:text-lg md:text-xl lg:text-2xl text-blue-400"></i>
                     </div>
 
                     <p
