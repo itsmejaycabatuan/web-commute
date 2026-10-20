@@ -241,3 +241,11 @@ Still worth a look: users have no `name` column, so commuters are identified by 
 - [x] Lists show 10 per page with a pager: PUJ Drivers, PUJ Commuters, Vehicles, Violation Codes (in the browser) and Violations Log, Maintenance Tasks, a driver's own Violations, a commuter's trips and top-ups on the admin detail page (from the server).
 - [x] Admin: Fare Transactions → a row → *View Full Receipt* opens `payment/receipt/{id}` with the commuter e-mail, status and *Back to Transactions*; `/transactions/receipt/…` is 404.
 - [x] Toasts look the same (light card) in light and dark mode.
+
+## 9. Third test round
+
+- [x] A pending GCash/Maya payment older than 12 hours turns *cancelled* the next time payment history, the admin ledger or its checkout page is opened (`php artisan payments:expire-pending` does the same).
+- [x] Vehicles → Add / Edit: the *Assigned Driver* list shows only approved, non-suspended drivers who hold no other vehicle; editing a vehicle keeps its own driver selectable.
+- [x] Select boxes look the same everywhere (same chevron, padding, readable option list in dark mode): staff, vehicles, violations, filters.
+- [x] Every add/edit modal (including *Add Staff*) shows a spinner on its button and a "Saving…" overlay when the request takes more than a moment.
+

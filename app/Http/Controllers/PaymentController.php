@@ -33,6 +33,7 @@ class PaymentController extends Controller
     {
         activity()->event('Index')->log('Action performed: index');
         // dd($request);
+        Payment::expireStale();
         $user = Auth::user();
         $userId = $user->id;
         $balance = $this->walletFor($userId)->balance;
@@ -246,6 +247,7 @@ class PaymentController extends Controller
      */
     public function returned(Request $request)
     {
+        Payment::expireStale();
         $payment = Payment::where('paid_by', Auth::id())
             ->where('transaction_id', (string) $request->query('ref'))
             ->first();
@@ -416,6 +418,7 @@ class PaymentController extends Controller
     public function history(Request $request)
     {
         activity()->event('History')->log('Action performed: history');
+        Payment::expireStale();
         $userId = Auth::user()->id;
         $query = Payment::where('paid_by', $userId);
         $balance = $this->walletFor($userId)->balance;
@@ -618,6 +621,7 @@ class PaymentController extends Controller
     public function showTransactions(Request $request)
     {
         activity()->event('Showtransactions')->log('Action performed: showTransactions');
+        Payment::expireStale();
 
         $filters = $request->validate([
             'search' => 'nullable|string|max:100',

@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')->hourly();
         $schedule->command("auth:clear-resets")->everyFifteenMinutes();
         $schedule->command('vehicle:offline-check')->everyMinute();
+        $schedule->command('payments:expire-pending')->hourly();
     }
 
     /**

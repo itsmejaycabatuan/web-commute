@@ -21,7 +21,20 @@ class VehicleController extends Controller
         activity()->event('Index')->log('Action performed: index');
         $vehicles = Vehicle::with('driver')->latest()->get()->map(fn ($vehicle) => $this->formatVehicle($vehicle));
 
-        $drivers = Driver::orderBy('name')->get();
+        // Only drivers who can actually drive: approved and not suspended. The page
+        // further hides the ones already assigned to another vehicle.
+        $drivers = Driver::where('is_approved', true)
+            ->where('is_rejected', false)
+            ->where('is_suspended', false)
+            ->orderBy('name')
+            ->with('user:id,email')
+            ->get()
+            ->map(fn (Driver $d) => [
+                'id' => $d->id,
+                'name' => $d->name,
+                'email' => $d->user?->email,
+                'driver_code' => $d->driver_code,
+            ]);
 
         return view('maintenance-manager.vehicles', compact('vehicles', 'drivers'));
     }
@@ -187,6 +200,25 @@ class VehicleController extends Controller
         if (! in_array($status, self::ASSIGNABLE_STATUSES, true)) {
             throw ValidationException::withMessages([
                 'driver_id' => 'A driver cannot be assigned to a vehicle with a '.strtolower((string) $status).' status.',
+            ]);
+        }
+
+        $driver = Driver::find($driverId);
+
+        if ($driver && (! $driver->is_approved || $driver->is_rejected || $driver->isSuspended())) {
+            throw ValidationException::withMessages([
+                'driver_id' => 'Only an approved driver who is not suspended can be assigned to a vehicle.',
+            ]);
+        }
+
+        // One vehicle per driver.
+        $held = Vehicle::where('driver_id', $driverId)
+            ->when($vehicle, fn ($q) => $q->where('id', '!=', $vehicle->id))
+            ->exists();
+
+        if ($held) {
+            throw ValidationException::withMessages([
+                'driver_id' => 'That driver is already assigned to another vehicle.',
             ]);
         }
     }

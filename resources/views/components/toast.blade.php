@@ -165,6 +165,42 @@
         }
     }
 
+    /* ── Select components ──
+       One look for every <select> in the app: no native arrow squeezed against the
+       edge, the same chevron and right padding everywhere, readable option lists
+       in both themes. !important because pages style selects in many different
+       ways (Tailwind utilities, .form-input, .form-select). */
+    select:not([multiple]):not([size]) {
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        appearance: none !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: right .875rem center !important;
+        background-size: .75rem !important;
+        padding-right: 2.25rem !important;
+        text-overflow: ellipsis;
+        cursor: pointer;
+    }
+
+    .dark select:not([multiple]):not([size]) {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+    }
+
+    select:disabled {
+        cursor: not-allowed;
+    }
+
+    select option {
+        background: #ffffff;
+        color: #1e293b;
+    }
+
+    .dark select option {
+        background: #111111;
+        color: #ffffff;
+    }
+
     /* ── Field-level validation (AppForms) ── */
     .app-field-error {
         margin: .3rem 0 0;
@@ -432,6 +468,20 @@
         function setBusy(form, submitter, busy) {
             form.classList.toggle('is-submitting', busy);
             form.__busy = busy;
+
+            // A visible "working" state: spinner on the button and, if the request
+            // takes more than a moment, the blocking overlay. A request that ends
+            // in success keeps the overlay until the page refreshes.
+            if (window.AppLoading) {
+                if (busy) {
+                    AppLoading.button(submitter, true);
+                    AppLoading.show(form.getAttribute('data-loading-text') || 'Saving\u2026', 250);
+                } else {
+                    AppLoading.button(submitter, false);
+                    if (!form.__succeeded) AppLoading.hide();
+                }
+            }
+
             if (!submitter) return;
             if (busy) {
                 submitter.__wasDisabled = submitter.disabled;
@@ -524,6 +574,7 @@
 
             // Success: let the page react, then refresh so every list is current
             // and every modal is closed.
+            form.__succeeded = true;
             form.dispatchEvent(new CustomEvent('ajax-form:success', { bubbles: true, detail: data }));
             queue(data.message || 'Saved.', data.type || 'success');
 
@@ -558,6 +609,7 @@
             }
 
             clearErrors(form);
+            form.__succeeded = false;
             setBusy(form, submitter, true);
 
             submit(form, submitter).finally(function () {

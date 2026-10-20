@@ -73,6 +73,7 @@
 4. If the status is set to **maintenance** or **disposed**: the vehicle is **removed from the live tracking map immediately** and **any assigned driver is detached**.
 5. A vehicle with preventive-maintenance records is never erased: it is kept with status **disposed**, and its maintenance records remain available for auditing.
 6. A vehicle that still has a driver cannot be deleted: the driver must be unassigned first.
+7. The *Assigned Driver* list offers only **approved, non-suspended** drivers who do **not already hold another vehicle** (the vehicle being edited keeps its own driver). The server enforces the same: one vehicle per driver.
 
 ---
 

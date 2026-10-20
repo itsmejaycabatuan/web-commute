@@ -1112,7 +1112,7 @@
                                 <select x-model="editForm.driver_id" :disabled="editForm.status !== 'active'"
                                     class="form-input form-select w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                                     <option value="">— No Driver Assigned —</option>
-                                    <template x-for="d in drivers" :key="d.id">
+                                    <template x-for="d in availableDrivers" :key="d.id">
                                         <option :value="String(d.id)" x-text="d.name + ' (' + d.email + ')'">
                                         </option>
                                     </template>
@@ -1309,6 +1309,15 @@
                 },
 
                 // ── Computed ──
+                // Drivers who can still be assigned: not already holding another vehicle
+                // (the vehicle being edited keeps its own driver in the list).
+                get availableDrivers() {
+                    const taken = new Set(this.vehicles
+                        .filter(v => v.driver_id && String(v.id) !== String(this.editId))
+                        .map(v => String(v.driver_id)));
+                    return this.drivers.filter(d => !taken.has(String(d.id)));
+                },
+
                 get hasActiveFilters() {
                     return this.search.length > 0 || this.statusFilter || this.fuelFilter || this.assignmentFilter ||
                         this.sortBy !== 'newest';

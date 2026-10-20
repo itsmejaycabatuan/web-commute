@@ -184,7 +184,7 @@
                                     </td>
                                     <td class="px-4 sm:px-6 py-3.5">
                                         <span
-                                            class="text-[10px] font-bold text-gray-500 dark:text-[#888]">{{ $tx->created_at->format('M j, Y') }}</span>
+                                            class="text-[10px] font-bold text-gray-500 dark:text-[#888] whitespace-nowrap">{{ $tx->created_at->format('M j, Y') }}</span>
                                         <p class="text-[8px] text-gray-400 dark:text-[#444]">
                                             {{ $tx->created_at->format('g:i A') }}</p>
                                     </td>

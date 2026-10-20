@@ -121,6 +121,15 @@ gateway-specific field.
 **Wallet** payments are unaffected — they settle internally and never touch the
 gateway.
 
+### Pending payments expire after 12 hours
+
+A gateway payment still `pending` 12 hours after it was started is closed as
+`cancelled` ("Expired: not completed within 12 hours"; nothing was charged), so it
+does not sit in the ledger forever. This runs hourly (`payments:expire-pending`,
+needs the usual `php artisan schedule:run` cron) and also whenever a payment list,
+the ledger or a checkout page is opened, so it works without cron. A webhook that
+arrives later for a genuinely paid session still settles the payment.
+
 ### The sandbox checkout page
 
 PayMongo's **test-mode** hosted checkout shows *Authorize / Fail / Expire test

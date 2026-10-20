@@ -496,8 +496,8 @@
 
         // ── Public API ─────────────────────────────────────────────────
         window.AppLoading = {
-            show: function(text) {
-                showOverlay(text || 'Processing…');
+            show: function(text, delay) {
+                showOverlay(text || 'Processing…', delay);
             },
             hide: hideOverlay,
             start: showBar,

@@ -82,6 +82,27 @@ class Payment extends Model
         self::STATUS_CANCELLED,
     ];
 
+    /** A gateway payment still pending after this many hours is closed as expired. */
+    public const PENDING_TTL_HOURS = 12;
+
+    /**
+     * Close every payment that has been pending for longer than the limit: the
+     * gateway's checkout session is long dead, so it must not sit in the ledger as
+     * "pending" forever. They become `cancelled` (nothing was charged). Called from
+     * the hourly schedule and, so it also works without a cron job, whenever a
+     * payment list or checkout page is opened.
+     */
+    public static function expireStale(): int
+    {
+        return static::where('status', self::STATUS_PENDING)
+            ->where('created_at', '<', now()->subHours(self::PENDING_TTL_HOURS))
+            ->update([
+                'status' => self::STATUS_CANCELLED,
+                'failed_at' => now(),
+                'failure_message' => 'Expired: not completed within '.self::PENDING_TTL_HOURS.' hours.',
+            ]);
+    }
+
     public function isSettled(): bool
     {
         return $this->status === self::STATUS_PAID;
