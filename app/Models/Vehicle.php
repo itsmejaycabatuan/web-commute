@@ -27,8 +27,6 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read Driver|null $driver
  * @property-read mixed $driver_name
- * @property-read Collection<int, VehicleMaintenanceLog> $maintenanceLogs
- * @property-read int|null $maintenance_logs_count
  * @property-read Collection<int, PreventiveMaintenance> $preventiveMaintenances
  * @property-read int|null $preventive_maintenances_count
  * @method static \\Illuminate\\Database\\Eloquent\\Builder|Vehicle newModelQuery()
@@ -93,10 +91,5 @@ class Vehicle extends Model
     public function preventiveMaintenances()
     {
         return $this->hasMany(PreventiveMaintenance::class);
-    }
-
-    public function maintenanceLogs()
-    {
-        return $this->hasMany(VehicleMaintenanceLog::class);
     }
 }

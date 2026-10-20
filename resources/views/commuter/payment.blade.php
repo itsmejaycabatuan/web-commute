@@ -170,7 +170,6 @@
 
 <body class="antialiased flex items-center justify-center p-3 sm:p-5 lg:p-6 overflow-x-hidden">
 
-    @include('components.flash')
 
     <!-- Decorative orbs -->
     <div
@@ -262,6 +261,23 @@
                     </div>
                 </div>
             </div>
+
+            @if ($inFlightPayment ?? null)
+                <!-- A gateway payment for this very trip is still open -->
+                <div role="status"
+                    class="mb-5 p-3.5 rounded-xl border border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                    <p class="text-[11px] font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-hourglass-half text-[10px]"></i>
+                        A payment for this trip is already in progress
+                    </p>
+                    <p class="text-[10px] mt-1 leading-relaxed opacity-90">Finish it in the checkout window, or check
+                        where it stands before paying again so you are not charged twice.</p>
+                    <a href="{{ route('payment.returned', ['ref' => $inFlightPayment->transaction_id]) }}"
+                        class="inline-flex items-center gap-1.5 mt-2 text-[10px] font-bold uppercase tracking-widest underline">
+                        <i class="fa-solid fa-rotate text-[9px]"></i> Check payment status
+                    </a>
+                </div>
+            @endif
 
             <!-- Payment Form -->
             <form action="{{ route('payment.process') }}" method="POST" id="payment-form"
@@ -392,6 +408,37 @@
         </div>
     </div>
 
+    <script>
+        /* One submission per page view. A double click used to send the payment
+           twice, and Back from the gateway restored this page with a button stuck
+           on "Processing" and no explanation. */
+        (function () {
+            var form = document.getElementById('payment-form');
+            if (!form) return;
+            var submitted = false;
+
+            form.addEventListener('submit', function (e) {
+                if (submitted) {
+                    e.preventDefault();
+                    if (window.Toast) Toast.show('Your payment is already being processed. Please wait…', 'info');
+                    return;
+                }
+                submitted = true;
+            });
+
+            window.addEventListener('pageshow', function (e) {
+                var cameBack = e.persisted ||
+                    (performance.getEntriesByType('navigation')[0] || {}).type === 'back_forward';
+                if (!cameBack) return;
+
+                if (window.AppLoading) AppLoading.reset();
+                submitted = false;
+                if (window.Toast && (e.persisted ? true : false)) {
+                    Toast.show('You came back before the payment finished. Check your payment history before paying again.', 'warning');
+                }
+            });
+        })();
+    </script>
 </body>
 
 </html>

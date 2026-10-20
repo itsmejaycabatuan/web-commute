@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $wallet_id
  * @property string $amount_added
  * @property string $payment_method
+ * @property string $status
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\User $user
@@ -37,8 +38,27 @@ class TopupHistory extends Model
         'user_id',
         'wallet_id',
         'amount_added',
-        'payment_method'
+        'payment_method',
+        'status',
     ];
+
+    /** Top-up lifecycle states. Only a completed top-up adds money to a wallet. */
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_FAILED = 'failed';
+    public const STATUS_CANCELLED = 'cancelled';
+
+    public const STATUSES = [
+        self::STATUS_COMPLETED,
+        self::STATUS_PENDING,
+        self::STATUS_FAILED,
+        self::STATUS_CANCELLED,
+    ];
+
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', self::STATUS_COMPLETED);
+    }
 
     public function user() {
         return $this->belongsTo(User::class);

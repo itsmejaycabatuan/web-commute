@@ -113,7 +113,7 @@ The Admin deletes or suspends their own account. System refuses with *"You canno
 ## Known Gaps / Notes
 
 - **Suspension has no expiry and no automatic reactivation**, and there is no reason field or note recorded (unlike the driver suspension, which takes an optional reason).
-- **A suspended commuter is not force-logged-out**; an already-open session keeps working until it expires. Only sign-in is blocked.
+- **A suspended commuter is signed out on their next request** (`account.active` middleware), not only refused at sign-in.
 - **There is no password reset from this screen** — the admin sets a password directly, and the commuter is not notified.
 - The details page (A5) exposes fare and top-up totals but offers no link to the individual receipts.
 - The commuter list is not paginated and loads every commuter with their fare counts and wallet balances.

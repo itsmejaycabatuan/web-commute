@@ -9,7 +9,7 @@
 | **Goal**               | Allow the Maintenance Manager to add, edit or delete the maintenance tasks / services used across the fleet. |
 | **Trigger**           | Maintenance Manager selects the **"Maintenance Tasks"** item on the sidebar (`GET /maintenance-tasks`). |
 | **Preconditions**     | 1. Maintenance Manager is authenticated and registered to the system.<br>2. Maintenance task data exists in the database. |
-| **Supporting Actors** | Maintenance task, Preventive maintenance, Vehicle maintenance log                             |
+| **Supporting Actors** | Maintenance task, Preventive maintenance                                                       |
 
 > **Corrections vs. the original narrative**
 > - The sidebar item is **"Maintenance Tasks"** (plural), not *"Maintenance Task"*.
@@ -79,7 +79,7 @@ The insert/update/delete fails at the database level. System cancels the operati
 ## Known Gaps / Notes
 
 - **Task names are not unique** — the same task can be added twice and will then appear twice on every vehicle's schedule.
-- **Deleting a task cascades** to its preventive-maintenance rows and to the service logs that reference it, so historical cost/km figures for that task disappear from the fleet analytics.
+- **Deleting a task cascades** to its preventive-maintenance rows, so the cost/km figures for that task disappear from the fleet analytics.
 - **Intervals are optional**, so a task without `miles_between_service` / `months_between_service` produces no projected due date.
 - There is no deactivation: a task in use must be deleted (with the data loss above) or left in place.
 - The task list is not paginated.

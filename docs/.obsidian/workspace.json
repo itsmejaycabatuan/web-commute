@@ -191,6 +191,7 @@
   },
   "active": "9f89179a0caa52b5",
   "lastOpenFiles": [
+    "MANUAL_TEST_CHECKLIST.md",
     "UCN/UCN_SC_E021_Share_Vehicle_Location.md",
     "UCN/UCN_SC_E020_View_System_Reports.md",
     "UCN/UCN_SC_E019_Manage_Fare_Rates.md",
@@ -211,7 +212,6 @@
     "UCN/UCN_SC_E004_Plan_Trip.md",
     "UCN/UCN_SC_E003_Track_PUJ.md",
     "UCN/UCN_SC_E002_Create_Account.md",
-    "UCN/UCN_SC_E001_Login.md",
-    "MANUAL_TEST_CHECKLIST.md"
+    "UCN/UCN_SC_E001_Login.md"
   ]
 }

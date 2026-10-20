@@ -250,12 +250,12 @@
 
 <body class="antialiased text-gray-900 dark:text-white">
 
-    @include('components.flash')
 
     <!-- ══════════ HEADER ══════════ -->
     <header
         class="fixed top-3 left-3 right-3 sm:top-5 sm:left-5 sm:right-5 z-50 flex items-center justify-between gap-2 sm:gap-3 pointer-events-none">
-        <div class="glass-panel p-2.5 sm:p-3.5 rounded-2xl pointer-events-auto flex items-center gap-2 sm:gap-3 min-w-0">
+        <div
+            class="glass-panel p-2.5 sm:p-3.5 rounded-2xl pointer-events-auto flex items-center gap-2 sm:gap-3 min-w-0">
             <a href="{{ route('profile') }}"
                 class="header-btn w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 border border-gray-200 dark:border-[#1e1e1e] bg-white dark:bg-[#111] transition cursor-pointer">
                 <i class="fa-solid fa-arrow-left text-[13px] sm:text-[11px] text-gray-500 dark:text-[#666]"></i>
@@ -439,7 +439,7 @@
 
                 <!-- ══════════ SECTION: SECURITY ══════════ -->
                 <div id="section-security" class="settings-section hidden">
-                    <form action="{{ route('profile.update') }}" method="POST">
+                    <form action="{{ route('profile.update') }}" method="POST" data-ajax novalidate>
                         @csrf @method('PUT')
 
                         <div class="glass-card p-5 sm:p-6 rounded-[1.5rem]">
@@ -473,11 +473,6 @@
                                             <i class="fa-solid fa-eye text-[12px]"></i>
                                         </button>
                                     </div>
-                                    @error('current_password')
-                                        <p class="text-[10px] text-red-400 mt-1 ml-1 flex items-center gap-1.5">
-                                            <i class="fa-solid fa-circle-exclamation text-[9px]"></i> {{ $message }}
-                                        </p>
-                                    @enderror
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -495,12 +490,6 @@
                                                 <i class="fa-solid fa-eye text-[12px]"></i>
                                             </button>
                                         </div>
-                                        @error('password')
-                                            <p class="text-[10px] text-red-400 mt-1 ml-1 flex items-center gap-1.5">
-                                                <i class="fa-solid fa-circle-exclamation text-[9px]"></i>
-                                                {{ $message }}
-                                            </p>
-                                        @enderror
                                     </div>
                                     <div class="space-y-1.5">
                                         <label
@@ -571,6 +560,43 @@
                             <button type="submit"
                                 class="bg-blue-600 text-white w-full sm:w-auto px-6 py-3 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-blue-500 transition shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-check text-[10px]"></i> Update Password
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Sign out of other devices -->
+                    <form action="{{ route('settings.logout-others') }}" method="POST" data-ajax novalidate
+                        class="glass-card p-5 sm:p-6 rounded-[1.5rem] mt-4">
+                        @csrf
+                        <div class="flex items-center gap-2.5 mb-4">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/15 flex items-center justify-center">
+                                <i class="fa-solid fa-laptop text-[11px] text-amber-500"></i>
+                            </div>
+                            <div>
+                                <span
+                                    class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">Sign
+                                    out of other devices</span>
+                                <p class="text-[9px] text-gray-300 dark:text-[#444]">Ends every other active session
+                                    for your account. This device stays signed in.</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row sm:items-start gap-3">
+                            <div class="flex-1 space-y-1.5">
+                                <label
+                                    class="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] ml-1">Confirm
+                                    with your password</label>
+                                <div class="relative">
+                                    <i
+                                        class="fa-solid fa-shield absolute left-4 top-1/2 -translate-y-1/2 text-[12px] text-gray-300 dark:text-[#444]"></i>
+                                    <input type="password" name="current_password" placeholder="Current password"
+                                        autocomplete="current-password"
+                                        class="form-input w-full rounded-xl pl-11 pr-4 py-3 text-[14px]">
+                                </div>
+                            </div>
+                            <button type="submit"
+                                class="sm:mt-[26px] bg-amber-600 text-white w-full sm:w-auto px-6 py-3 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-amber-500 transition shadow-lg shadow-amber-600/20 active:scale-[0.98] flex items-center justify-center gap-2 shrink-0">
+                                <i class="fa-solid fa-right-from-bracket text-[10px]"></i> Sign out others
                             </button>
                         </div>
                     </form>

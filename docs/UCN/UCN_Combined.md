@@ -28,9 +28,9 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 | UCN_SC_E022 | Driver Registration | Guest | [Driver Registration](#ucn_sc_e022--driver-registration) |
 | UCN_SC_E023 | Driver Dashboard Views | Driver | [Driver Dashboard Views](#ucn_sc_e023--driver-dashboard-views) |
 | UCN_SC_E024 | Admin Violation Code Management | Driver Manager | [Admin Violation Code Management](#ucn_sc_e024--admin-violation-code-management) |
-| UCN_SC_E025 | Vehicle Maintenance Log CRUD | Maintenance Manager | [Vehicle Maintenance Log CRUD](#ucn_sc_e025--vehicle-maintenance-log-crud) |
 | UCN_SC_E026 | Profile and Dashboard Views | All authenticated roles | [Profile and Dashboard Views](#ucn_sc_e026--profile-and-dashboard-views) |
 | UCN_SC_E027 | Account Deletion | Authenticated user | [Account Deletion](#ucn_sc_e027--account-deletion) |
+| UCN_SC_E028 | Manage Staff Accounts | Admin | [Manage Staff Accounts](#ucn_sc_e028--manage-staff-accounts) |
 
 > **Numbering note.** E011–E020 were reconciled against the implementation. Two sheets previously
 > carried a duplicate identifier — *Manage Violations* shared `UCN_SC_E013` with *Manage Timekeeping*
@@ -49,9 +49,8 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 | **Gateway** | Optional PayMongo integration for GCash/Maya fares. Disabled by default; enabled with sandbox test keys — see `docs/PAYMONGO_SETUP.md`. |
 | **Timekeeping record** | One row per driver per day, holding `time_in`, `time_out`, `hours_worked` and `overtime_hours`. |
 | **Suspension** | A flag that locks an account out of signing in without deleting it. Commuters carry `users.is_suspended` (UCN_SC_E018 A4); drivers carry `drivers.is_suspended` (UCN_SC_E012 A5), which additionally blocks clock-in and location broadcast and releases any assigned vehicle. |
-| **Vehicle status** | `active` (roadworthy, may carry a driver), `inactive`, `maintenance` (out of service, off the live map) or `disposed` (retired, kept for auditing). Only `active` / `inactive` may hold a driver — UCN_SC_E015. |
-| **Preventive maintenance** | The *schedule* record: the last service performed for a (vehicle, task) pair and the interval used to project the next due date/odometer. UCN_SC_E016. |
-| **Service log** | The *history* record: one row per service actually performed, holding vehicle, task, service date, odometer, cost, invoice and remarks. Written both by the vehicle-log page and by logging a scheduled service. UCN_SC_E016. |
+| **Vehicle status** | `active` (in service, the only status that may carry a driver and broadcast a location), `inactive`, `maintenance` (out of service, off the live map) or `disposed` (retired, kept for auditing) — UCN_SC_E015. |
+| **Preventive maintenance** | The maintenance record for a (vehicle, task) pair: the last service's date, odometer and cost, and the interval used to project the next due date/odometer. UCN_SC_E016. |
 | **PUJ** | Public Utility Vehicle. On the map, a PUJ marker is a **roadworthy** vehicle (status `active`/`inactive`) with a location reported in the last 5 minutes. |
 | **Privacy radius** | 200 m. Guest/commuter coordinates are randomly obfuscated within this radius. |
 
@@ -516,7 +515,7 @@ Guest has used all 3 daily fare calculations. The System displays the limit moda
 
 **A4 – Admin monitors top-ups**
 1. Admin opens `/topups`.
-2. System lists all commuters' top-ups with the same search/filter options and a grand total.
+2. System lists **every** top-up — completed, pending, failed and cancelled — with a **Status** column, and filters by *search, payment status, payment method, date range and amount range*. The "funds added" total counts **completed** top-ups only. The list shows 10 per page.
 
 ---
 
@@ -760,7 +759,7 @@ No fare rates are published for the current fare table, so the fare cannot be pr
 
 **A3 – Filter by date range**
 1. The commuter picks a **Quick Range** (7 / 30 / 90 days) or types an explicit `from_date` / `to_date`, then clicks **"Apply Filters"**.
-2. System filters on `whereDate('paid_at', ...)` and shows only transactions inside that period. **"Clear Filters"** restores the full list.
+2. System filters on `whereDate('paid_at', ...)` and shows only transactions inside that period. The commuter's history lists 10 receipts per page and its "total spent" counts settled fares only. **"Clear Filters"** restores the full list.
 
 **A4 – Search by transaction ID**
 1. The commuter types into the search field (placeholder: *"Transaction ID or destination"*) and applies.
@@ -845,9 +844,9 @@ The requested receipt id does not exist, or belongs to another commuter. System 
 | 1   | User navigates to Settings (`/settings`) and opens the **Security** section. | System displays the **Change Password** form: *Current Password*, *New Password*, *Confirm New Password*.                                                          |
 | 2   | User enters their current password.                        | *(no system response — client-side field masking only)*                                                                                                           |
 | 3   | User enters the new password and confirms it.              | *(no system response — client-side field masking only)*                                                                                                           |
-| 4   | User clicks **"Update Password"**.                         | System validates the request server-side: `current_password` **required** and must match the stored hash (`current_password` rule); `password` **required, string, min 8, confirmed**. |
+| 4   | User clicks **"Update Password"**.                         | System validates the request server-side: `current_password` **required** and must match the stored hash (`current_password` rule); `password` **required, string, min 8, confirmed, different from the current password** (*"The new password must be different from your current password."*). |
 | 5   |                                                                | System **hashes** the new password (`Hash::make`) and updates the user record.                                                                                     |
-| 6   |                                                                | For staff roles, System **invalidates all other active sessions/tokens** (`Auth::logoutOtherDevices`), keeping only the current device signed in. (Commuters do not invalidate other sessions.) |
+| 6   |                                                                | For staff roles, System **invalidates all other active sessions/tokens** (`Auth::logoutOtherDevices`), keeping only the current device signed in. With database sessions the other sessions are also deleted outright. |
 | 7   |                                                                | System displays the success message *"Password changed successfully."*                                                                                             |
 
 > Steps 2–3 have no system response by design; those cells are intentionally left blank rather than filled with "makes the input".
@@ -1246,14 +1245,14 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 
 **A1 – Add a Driver**
 1. In the list, the actor clicks **"Add Driver"**.
-2. System displays the **Add Driver** modal: *Driver Code, Name, Email, Password, Confirm Password, License Number, License Code, Expiration Date, Contact Info, License Image*.
+2. System displays the **Add Driver** modal: *Name, Email, Password, Confirm Password, License Number, License Code, Expiration Date, Contact Info, License Image*. The **driver code is not typed in**: it is generated automatically (`DRV-000001`, `DRV-000002`, …).
 3. Driver Manager inputs all required fields and clicks **"Create Driver"**.
-4. System validates: `driver_code`, `name`, `license_number`, `license_code`, `expiration_date`, `contact_info`, `license_image` **required**; `email` **required, email, unique:users**; `password` **required, min 8, confirmed**; `license_image` **image, max 2048**; `license_number` **unique:drivers** (E2).
-5. System stores the licence image (`storage/app/public/licenses`), creates the **User** (email verified immediately, role `driver`), creates the **Driver** profile with `is_approved = 1`, and redirects with *"Driver account created."*
+4. System validates: `name`, `license_number`, `license_code`, `expiration_date`, `contact_info`, `license_image` **required**; `email` **required, email, unique:users**; `password` **required, min 8, confirmed**; `license_image` **image, max 2048**; `license_number` **unique:drivers** (E2).
+5. System stores the licence image (`storage/app/public/licenses`), creates the **User** (email verified immediately, role `driver`), creates the **Driver** profile with `is_approved = 1` and a generated driver code, and confirms *"Driver account created."* A validation failure keeps the modal open and shows each message under its own field.
 
 **A2 – Edit a Driver**
 1. In the list, the actor clicks the edit icon on a driver row.
-2. System displays the editable **Driver** form (name, licence fields, contact, driver code) together with the stored licence image.
+2. System displays the editable **Driver** form (name, licence fields, contact; the driver code is shown read-only) together with the stored licence image. The edit icon is **not offered for a pending registration** — a pending driver can only be approved or rejected (A6), and the server refuses the update with *"This driver is still pending approval…"*.
 3. Driver Manager updates the fields and clicks **"Save Changes"**.
 4. System validates the same field set as A1 (ignoring the current row for uniqueness), optionally replaces the licence image, updates the record and confirms *"Driver updated."*
 
@@ -1261,15 +1260,16 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 1. In the list, the actor clicks the delete icon on a driver row.
 2. System displays a confirmation dialog ("Delete Driver?").
 3. Driver Manager confirms with **"Delete"**.
-4. System deletes the **User** and the **Driver** record and confirms *"Driver removed."* — unless E8 applies.
+4. System deletes the **User** and the **Driver** record and confirms *"Driver removed."* — unless E8 applies. A driver who holds a vehicle shows a lock instead of the delete icon.
 
 **A4 – View Driver Details**
 1. In the list, the actor clicks the ID-card icon on a driver row.
 2. System displays a read-only modal with the driver's identity, licence data and expiry.
 3. From that modal the actor may jump straight into A2 (**"Edit"**).
+4. The list has a **License** column: a badge reads *Valid*, *Expires in N days* (30 days or fewer) or *Expired*, with the expiry date below it, and the **License Expiring** / **License Expired** filter chips narrow the list. The driver sees the same warning on their own dashboard.
 
 **A5 – Suspend / Reactivate a Driver**
-1. In the list, the actor clicks the suspend icon (or *reactivate* when the driver is already suspended).
+1. In the list, the actor clicks the suspend icon (or *reactivate* when the driver is already suspended). Only an **approved** driver can be suspended — the icon is not shown for a pending or rejected registration and the server refuses it. A suspension also takes effect on a session that is already open: the driver's next request signs them out.
 2. System displays a confirmation dialog: suspending states that the driver *"will not be able to sign in, clock in or broadcast a location, and is detached from any assigned vehicle"*; an optional **Reason** field is provided.
 3. Driver Manager confirms.
 4. System sets `is_suspended`, records `suspended_at` and the reason, moves the driver `status` to **suspended**, **detaches any assigned vehicle**, logs the action and confirms *"Driver suspended. They can no longer sign in."*
@@ -1278,7 +1278,7 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 **A6 – Approve or Reject a Driver Application**
 1. A **pending** driver row shows a **"Review"** button instead of the ID-card icon.
 2. Driver Manager opens the review modal (identity fields next to the licence image) and chooses **"Approve"** or **"Reject"**.
-3. System validates the approve payload (`license_number` unique, `license_code`, `expiration_date`, `driver_code`), sets `is_approved = 1` and confirms *"Driver approved. They can sign in now."*, or sets `is_rejected = 1` and confirms *"Driver registration rejected. They cannot sign in until you approve them again."*
+3. System validates the approve payload (`license_number` unique, `license_code`, `expiration_date`), assigns the generated driver code when the driver has none yet, sets `is_approved = 1` and confirms *"Driver approved. They can sign in now."*, or sets `is_rejected = 1` and confirms *"Driver registration rejected. They cannot sign in until you approve them again."*
 
 ---
 
@@ -1327,7 +1327,7 @@ The driver is already in that state. System refuses with *"This driver is alread
 
 - **Drivers added by an admin are approved immediately** (`is_approved = true`), so the approve/reject flow effectively applies only to self-registered drivers (UCN_SC_E002).
 - **Suspension has no expiry and no auto-reactivation** — it must be lifted manually.
-- **A suspended driver is not force-logged-out**; an already-open session keeps working until it expires. Only sign-in, clock-in and location broadcast are blocked.
+- **A suspended driver is signed out on their next request**: the `account.active` middleware re-checks the account on every authenticated request, ends the session and sends the driver to the login page (JSON calls get a 403 with the redirect). Sign-in, clock-in, status changes and location broadcast are all refused.
 - **There is no "un-approve"** — the reverse of approve is commented out in the controller.
 - Deleting a driver does not remove the uploaded licence image from storage when it was stored on disk.
 - The list is not paginated; it loads every driver.
@@ -1344,7 +1344,7 @@ The driver is already in that state. System refuses with *"This driver is alread
 | View | `resources/views/admin/drivers/index.blade.php` |
 | Menu | `config/menu.php` — *PUJ Drivers* (admin), *Drivers* (driver_manager) |
 | Middleware | `auth`, `verified`, `role:admin|driver_manager` |
-| Tests | `tests/Feature/UcnStaffRegressionTest.php`, `tests/Feature/UcnSuspensionAndMaintenanceLogTest.php` |
+| Tests | `tests/Feature/UcnStaffRegressionTest.php`, `tests/Feature/UcnSuspensionTest.php` |
 | Related | UCN_SC_E002 (driver self-registration), UCN_SC_E009/E010 (clock in / out), UCN_SC_E013 (timekeeping), UCN_SC_E014 (violations), UCN_SC_E015 (vehicles) |
 
 ---
@@ -1490,7 +1490,7 @@ The shift being written shares part of the day with an entry that already exists
 
 **A1 – Create a Violation Code**
 1. In the code list, the Driver Manager clicks **"Add Code"**.
-2. System displays the code form: *Code*, *Violation Name*, *First*, *Second*, *Third*, *Fourth+* offense amounts and a *Revocation* flag.
+2. System displays the code form: *Code*, *Violation Name*, *First*, *Second*, *Third*, *Fourth+* offense amounts.
 3. Driver Manager fills the form and clicks **"Create Code"**.
 4. System validates all fields **required** and `code` **unique** (E2), stores the row and confirms *"Violation code successfully added!"*
 
@@ -1516,7 +1516,7 @@ The shift being written shares part of the day with an entry that already exists
 1. In the log, the Driver Manager clicks **"New Entry"**.
 2. System displays the violation form: *Driver*, *Violation Code*, *Offense Instance*, *Fine*, *Place of Violation*, *Date*, *Time*, *Remarks*.
 3. Driver Manager fills the form and clicks **"Save Entry"**.
-4. System validates `user_id`, `vc_id`, `violation_instance` **required, integer, min 1**, `violation_fine` **numeric, min 0**, `place_of_violation`, `date_of_violation` **date, not in the future** (E6), `time_of_violation`, `remarks`, stores the row and confirms *"Violation logged!"*
+4. System validates `user_id`, `vc_id`, `violation_instance` **required, integer, min 1**, `violation_fine` **numeric, min 0**, `place_of_violation`, `date_of_violation` **date, not in the future** (E6), `time_of_violation`, stores the row and confirms *"Violation logged!"* `remarks` is **optional** (the column is nullable), in the single and in the bulk form. On a validation error the modal stays open and each message appears under its own input (for the bulk form, under the field of the failing entry); on success the modal closes, the page refreshes and a toast confirms.
 
 **A6 – Log Multiple Violations (Bulk Add)**
 1. In the log, the Driver Manager clicks **"Bulk Add"**.
@@ -1595,14 +1595,16 @@ At least one violation log references the code. System refuses the deletion with
 | **Use_Case_ID**       | UCN_SC_E015                                                                                               |
 | **Use Case Name**     | Manage Vehicles                                                                                           |
 | **Primary Actor**     | Maintenance Manager (`role:maintenance_manager`)                                                          |
-| **Secondary Actor**   | System / Admin (read-only role boundaries)                                                                |
+| **Secondary Actor**   | Admin (`role:admin`) — may use the same page; System                                                       |
 | **Goal**               | Allow the Maintenance Manager to review, add, edit or delete the vehicles in the fleet.                    |
 | **Trigger**           | Maintenance Manager selects the **"Vehicles"** item on the sidebar (`GET /vehicles`).                       |
 | **Preconditions**     | 1. Maintenance Manager is authenticated and has fleet-management permissions.<br>2. Vehicle records exist in the system. |
 | **Supporting Actors** | Vehicle record, Driver record, Timekeeping record, Live map                                              |
 
 > **Corrections vs. the original narrative**
-> - **The vehicle page is restricted to the `maintenance_manager` role.** It used to sit in the shared authenticated group, so any signed-in role (commuter, driver, …) could open it; the routes now carry `role:maintenance_manager`.
+> - **The vehicle page is restricted to the `maintenance_manager` and `admin` roles.** It used to sit in the shared authenticated group, so any signed-in role (commuter, driver, …) could open it; the routes now carry `role:maintenance_manager|admin` and the admin menu has a *Vehicles* item.
+> - **Only an `active` vehicle can carry a driver.** *Inactive*, *maintenance* and *disposed* units cannot be assigned (the driver select is disabled in the form), and moving a vehicle to any of them releases its driver.
+> - **An assigned vehicle cannot be deleted** (the delete icon is locked and the server answers 409): unassign the driver first.
 > - **E3 (cannot dispose an active vehicle)** and **E4 (cannot assign an under-maintenance vehicle)** were not enforced in the original narrative and are now blocked by the controller.
 > - The postcondition *"removed from the live tracking map"* is now implemented: the map endpoint filters on vehicle status, so a unit set to **maintenance** or **disposed** drops off immediately instead of lingering until its last GPS ping ages out.
 > - The postcondition *"marked Disposed, historical logs preserved"* is enforced by refusing to hard-delete a vehicle that has service history (E6).
@@ -1659,7 +1661,8 @@ At least one violation log references the code. System refuses the deletion with
 2. The vehicle record in the database has been updated (`vehicles`).
 3. The system notifies the Maintenance Manager with a success message.
 4. If the status is set to **maintenance** or **disposed**: the vehicle is **removed from the live tracking map immediately** and **any assigned driver is detached**.
-5. A vehicle with service history is never erased: it is kept with status **disposed**, and its trip and maintenance logs remain available for auditing.
+5. A vehicle with preventive-maintenance records is never erased: it is kept with status **disposed**, and its maintenance records remain available for auditing.
+6. A vehicle that still has a driver cannot be deleted: the driver must be unassigned first.
 
 ---
 
@@ -1674,8 +1677,8 @@ The plate number already exists. System rejects the request with *"The plate num
 **E3 – Cannot Dispose Active Vehicle**
 The Maintenance Manager tries to set the status to **disposed** while the assigned driver has an open timekeeping row for today (i.e. they are still clocked into the unit). System rejects the request on *status* with *"Cannot dispose a vehicle that a driver is currently clocked into. Clock the driver out first."* The vehicle keeps its previous status and driver.
 
-**E4 – Assigning an Under-Maintenance Vehicle**
-The Maintenance Manager tries to assign a driver to a vehicle whose status is **maintenance** or **disposed**. System rejects the request on *driver_id* with *"A driver cannot be assigned to a vehicle with a … status."* Keeping the vehicle's *existing* driver while changing the status out of service is allowed — the driver is simply detached when the status is saved.
+**E4 – Assigning an Out-of-Service Vehicle**
+The Maintenance Manager tries to assign a driver to a vehicle whose status is **inactive**, **maintenance** or **disposed**. System rejects the request on *driver_id* with *"A driver cannot be assigned to a vehicle with a … status."* Keeping the vehicle's *existing* driver while changing the status out of service is allowed — the driver is simply detached when the status is saved.
 
 **E5 – Missing Required Fields**
 Any required field is empty or out of range (year, status, acquisition date). System lists the offending fields and performs no write.
@@ -1725,14 +1728,14 @@ Vehicle issues (E3/E4 map removal, driver detachment, disposal guards) are now e
 | **Goal**               | Allow the Maintenance Manager to review the preventive-maintenance schedule of a vehicle and log a service against it. |
 | **Trigger**           | Maintenance Manager selects the **"Preventive Maintenance"** item on the sidebar (`GET /preventive-maintenance`). |
 | **Preconditions**     | 1. Maintenance Manager is authenticated and registered to the system.<br>2. Vehicle records exist in the system.<br>3. Maintenance task data exists in the database. |
-| **Supporting Actors** | Vehicle, Maintenance task, Preventive maintenance record, Vehicle maintenance log                            |
+| **Supporting Actors** | Vehicle, Maintenance task, Preventive maintenance record                                                       |
 
 > **Corrections vs. the original narrative**
 > - **The identifier changed**: the original sheet was numbered `UCN_SC_E015`, which collided with *Manage Vehicles*. The maintenance schedule is now **UCN_SC_E016**.
 > - The page does **not** show a "list of maintenance services to be logged"; it is a per-vehicle schedule board: a vehicle picker plus one card per maintenance task showing *last serviced*, *odometer*, *cost* and the computed **next due date / next due odometer**.
 > - The buttons are **"Log"** (or **"Update"** once logged) per task card and **"Save Log"** in the modal — not *"Log button"* / *"Save Log button"* on a list row.
 > - **E2 (invalid odometer reading)** is now enforced: a reading lower than the last recorded one for that vehicle is rejected.
-> - Logging a scheduled service now also writes a **service-log record** (`vehicle_maintenance_logs`), which is what the fleet cost/kilometre analytics and the reports read.
+> - The separate *vehicle maintenance log* (UCN_SC_E025) was **retired**: the preventive-maintenance record now holds each service's date, odometer and cost, and the fleet cost/kilometre analytics and the reports read it directly.
 
 ---
 
@@ -1756,13 +1759,9 @@ Vehicle issues (E3/E4 map removal, driver detachment, disposal guards) are now e
 3. Maintenance Manager fills the fields and clicks **"Save Log"**.
 4. System validates `vehicle_id` **required, exists**, `task_id` **required, exists**, `last_service_odo` **required, integer, min 0**, `last_service_date` **required, date**, `last_service_cost` **required, numeric, min 0**, `comments` **nullable**.
 5. System checks the odometer against the last reading recorded for that vehicle (E2), then **upserts** the `preventive_maintenances` row for *(vehicle, task)*.
-6. System **writes the matching service log** (`vehicle_maintenance_logs`: vehicle, task, service date, odometer, cost, remarks) so the history and cost analytics stay complete, and confirms *"Preventive maintenance logged successfully!"*
+6. System confirms *"Preventive maintenance logged successfully!"*
 
-**A2 – View the Maintenance Logs**
-1. In the Preventive Maintenance Page, the Maintenance Manager selects **"Maintenance Logs"** on the sidebar (`GET /maintenance-logs`).
-2. System redirects to the maintenance logs page, showing the recorded service logs — optionally narrowed to a single vehicle via the vehicle selector.
-
-**A3 – Log a Service for a Different Vehicle**
+**A2 – Log a Service for a Different Vehicle**
 1. The Maintenance Manager uses the **vehicle picker** at the top of the page.
 2. System reloads the schedule for the newly selected vehicle, keeping the same table rows and picking that vehicle's own logged values.
 3. Steps 4–6 of A1 then apply to the newly selected vehicle.
@@ -1772,10 +1771,10 @@ Vehicle issues (E3/E4 map removal, driver detachment, disposal guards) are now e
 ### Postconditions
 
 1. The Maintenance Manager has reviewed the schedule and/or logged a service.
-2. The service record in the database has been written (`preventive_maintenances` and `vehicle_maintenance_logs`).
+2. The service record in the database has been written (`preventive_maintenances`).
 3. The system notifies the Maintenance Manager with a success message.
 4. The task card now shows the new last-service values and recalculates the next due date and odometer from the task's `miles_between_service` / `months_between_service`.
-5. The service log is immediately visible on the Maintenance Logs page and in the fleet cost-per-kilometre analytics shown on the dashboard.
+5. The service is immediately visible in the dashboard's *Service History* tab and in the fleet cost-per-kilometre analytics.
 
 ---
 
@@ -1797,9 +1796,8 @@ The insert or update fails at the database level. System cancels the operation a
 
 ### Known Gaps / Notes
 
-- **The odometer check compares against the preventive schedule only**, not against mileage recorded elsewhere (for example on the vehicle maintenance log page), so a reading can still be lower than a mileage entry made on the other page.
 - **The summary is per vehicle, per calendar year** — there is no cross-vehicle roll-up page and no year picker (the current year is always used).
-- **The schedule is per task, not per service**: logging a task again **overwrites** that task's last-service row and appends a new service log, so repeated logging accumulates history in the log but not in the schedule.
+- **The schedule is per task, not per service**: logging a task again **overwrites** that task's last-service row, so only the most recent service per task is kept.
 - **Next-due values are computed on the fly** in the view; nothing is persisted, so changing a task's interval retroactively changes every vehicle's projected due date.
 - The vehicle picker falls back to the first vehicle when the requested one no longer exists, and renders an empty board when the fleet is empty.
 - There is no notification when a task becomes overdue.
@@ -1810,13 +1808,13 @@ The insert or update fails at the database level. System cancels the operation a
 
 | Element | Location |
 |---|---|
-| Routes | `routes/web.php` — `maintenance-manager.preventive-maintenance` (`GET /preventive-maintenance`), `maintenance-manager.preventive-maintenance.store` (`POST /preventive-maintenance`), `maintenance-manager.maintenance-logs` (`GET /maintenance-logs`), all inside `role:maintenance_manager` |
-| Controller | `app/Http/Controllers/MaintenanceManagerController.php::preventiveMaintenance()`, `preventiveMaintenanceStore()`, `maintenanceLogs()` |
-| Models | `app/Models/PreventiveMaintenance.php`, `app/Models/VehicleMaintenanceLog.php`, `app/Models/MaintenanceTask.php` |
-| View | `maintenance-manager/preventive-maintenance.blade.php`, `maintenance-manager/maintenance-logs.blade.php` |
-| Menu | `config/menu.php` — *Preventive Maintenance*, *Maintenance Logs* (maintenance_manager) |
+| Routes | `routes/web.php` — `maintenance-manager.preventive-maintenance` (`GET /preventive-maintenance`), `maintenance-manager.preventive-maintenance.store` (`POST /preventive-maintenance`), all inside `role:maintenance_manager` |
+| Controller | `app/Http/Controllers/MaintenanceManagerController.php::preventiveMaintenance()`, `preventiveMaintenanceStore()` |
+| Models | `app/Models/PreventiveMaintenance.php`, `app/Models/MaintenanceTask.php` |
+| View | `maintenance-manager/preventive-maintenance.blade.php` |
+| Menu | `config/menu.php` — *Preventive Maintenance* (maintenance_manager) |
 | Middleware | `auth`, `verified`, `role:maintenance_manager` |
-| Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_an_odometer_reading_below_the_last_recorded_one_is_rejected`, `test_an_odometer_reading_above_the_last_recorded_one_is_accepted`), `tests/Feature/UcnSuspensionAndMaintenanceLogTest.php` (`test_logging_a_scheduled_service_also_writes_a_service_log`) |
+| Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_an_odometer_reading_below_the_last_recorded_one_is_rejected`, `test_an_odometer_reading_above_the_last_recorded_one_is_accepted`), `tests/Feature/BugFixRegressionTest.php` (`test_logging_a_preventive_service_feeds_the_fleet_summary`) |
 | Related | UCN_SC_E015 (Manage Vehicles), UCN_SC_E017 (Manage Maintenance Tasks), UCN_SC_E020 (System Reports — maintenance report) |
 
 ---
@@ -1832,7 +1830,7 @@ The insert or update fails at the database level. System cancels the operation a
 | **Goal**               | Allow the Maintenance Manager to add, edit or delete the maintenance tasks / services used across the fleet. |
 | **Trigger**           | Maintenance Manager selects the **"Maintenance Tasks"** item on the sidebar (`GET /maintenance-tasks`). |
 | **Preconditions**     | 1. Maintenance Manager is authenticated and registered to the system.<br>2. Maintenance task data exists in the database. |
-| **Supporting Actors** | Maintenance task, Preventive maintenance, Vehicle maintenance log                             |
+| **Supporting Actors** | Maintenance task, Preventive maintenance                                                       |
 
 > **Corrections vs. the original narrative**
 > - The sidebar item is **"Maintenance Tasks"** (plural), not *"Maintenance Task"*.
@@ -1902,7 +1900,7 @@ The insert/update/delete fails at the database level. System cancels the operati
 ### Known Gaps / Notes
 
 - **Task names are not unique** — the same task can be added twice and will then appear twice on every vehicle's schedule.
-- **Deleting a task cascades** to its preventive-maintenance rows and to the service logs that reference it, so historical cost/km figures for that task disappear from the fleet analytics.
+- **Deleting a task cascades** to its preventive-maintenance rows, so the cost/km figures for that task disappear from the fleet analytics.
 - **Intervals are optional**, so a task without `miles_between_service` / `months_between_service` produces no projected due date.
 - There is no deactivation: a task in use must be deleted (with the data loss above) or left in place.
 - The task list is not paginated.
@@ -2038,7 +2036,7 @@ The Admin deletes or suspends their own account. System refuses with *"You canno
 ### Known Gaps / Notes
 
 - **Suspension has no expiry and no automatic reactivation**, and there is no reason field or note recorded (unlike the driver suspension, which takes an optional reason).
-- **A suspended commuter is not force-logged-out**; an already-open session keeps working until it expires. Only sign-in is blocked.
+- **A suspended commuter is signed out on their next request** (`account.active` middleware), not only refused at sign-in.
 - **There is no password reset from this screen** — the admin sets a password directly, and the commuter is not notified.
 - The details page (A5) exposes fare and top-up totals but offers no link to the individual receipts.
 - The commuter list is not paginated and loads every commuter with their fare counts and wallet balances.
@@ -2174,7 +2172,7 @@ No file was selected, or the selected file is not a PDF. System rejects the uplo
 | **Goal**               | Allow the Admin to review the system reports for a selected report type and date range, and to export the result. |
 | **Trigger**           | Admin clicks the **"Reports & Analytics"** item on the sidebar (`GET /reports`).                        |
 | **Preconditions**     | 1. Admin is authenticated and registered to the system.<br>2. Enough data has been generated throughout the system for the selected report type. |
-| **Supporting Actors** | Payments, top-ups, drivers + timekeeping, preventive maintenance and service logs                       |
+| **Supporting Actors** | Payments, top-ups, drivers + timekeeping, preventive maintenance records                       |
 
 > **Corrections vs. the original narrative**
 > - The sidebar item is **"Reports & Analytics"**, not *"Reports & Analytics button"* phrased as *"the 'Reports & Analytics' button"* — the wording matched, but the item is only present on the Admin menu.
@@ -2286,7 +2284,7 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 | 2   | The browser obtains a position fix.                                     | *(no system response — the fix is read client-side)*                                                                                                                                               |
 | 3   |                                                                          | The browser **throttles to one broadcast every 2 seconds** and POSTs `{ vehicle_id, user_id, latitude, longitude, speed, accuracy, timestamp }` to `/track/vehicle/broadcast` with the CSRF token.     |
 | 4   |                                                                          | System validates the payload: `vehicle_id` **required, string**, `user_id` **required, integer**, `latitude` / `longitude` **required, numeric**, `speed` / `accuracy` **nullable, numeric**, `timestamp` **nullable, integer**. |
-| 5   |                                                                          | System resolves the actor and refuses the request unless they are signed in (**E2**), hold the `driver` role and have a driver profile (**E2**), are not suspended (**E4**), and the vehicle is assigned to them (**E3**). |
+| 5   |                                                                          | System resolves the actor and refuses the request unless they are signed in (**E2**), hold the `driver` role and have a driver profile (**E2**), are not suspended (**E4**), and the vehicle is assigned to them **and is `active`** (**E3**). A driver with no vehicle, or whose vehicle is inactive / under maintenance, is refused with 403 and the browser stops sharing immediately. |
 | 6   |                                                                          | System checks whether a row for `(vehicle_id, timestamp)` already exists. If it does, it makes no write and answers `{ success: true, duplicate: true }` (**A1**).              |
 | 7   |                                                                          | System upserts the current position into `vehicle_locations` (`user_id`, `latitude`, `longitude`, `speed`, `accuracy`, `last_update = now`) and marks the vehicle `is_active = true`.       |
 | 8   |                                                                          | System **fires `LocationUpdated`**, which obfuscates the coordinates to a random point within a **200 m radius** and publishes `{ vehicleId, lat, lng, privacy_radius, speed, accuracy, timestamp, user_id }` on the Pusher channel `vehicle-locations` as `vehicle-location-updated`. **The exact coordinates are never published.** |
@@ -2375,7 +2373,7 @@ The queued retry payload is missing a required key. `RetryBroadcastLocation` ret
 | Scheduler | `app/Console/Commands/VehicleOfflineCheck.php` — `vehicle:offline-check`, every minute (`app/Console/Kernel.php`) |
 | Dev markers | `app/Http/Controllers/DevMarkerController.php`, routes `driver.dev.*` |
 | Client | `resources/views/map.blade.php` — `broadcastDriverLocation()`, 2-second throttle, broadcast only when the actor is a driver with an assigned vehicle |
-| Tests | `tests/Feature/VehicleTrackingControllerTest.php`, `tests/Feature/UcnSuspensionAndMaintenanceLogTest.php::test_a_suspended_driver_cannot_broadcast_a_location` |
+| Tests | `tests/Feature/VehicleTrackingControllerTest.php`, `tests/Feature/UcnSuspensionTest.php::test_a_suspended_driver_cannot_broadcast_a_location` |
 | Related | UCN_SC_E003 (Track PUJ — the read side), UCN_SC_E009/E010 (clock in / out), UCN_SC_E012 (Manage Drivers — suspension), UCN_SC_E015 (Manage Vehicles — status drives map visibility) |
 
 ---
@@ -2407,7 +2405,7 @@ The queued retry payload is missing a required key. `RetryBroadcastLocation` ret
 | 6   |                                                                                   | System creates a **User** record with the supplied email, a bcrypt‑hashed password, and sets `email_verified_at` to the current timestamp (email considered verified).                               |
 | 7   |                                                                                   | System creates a linked **Driver** record associated with the new user, persisting the name, contact information, and the stored license‑image path.                                                   |
 | 8   |                                                                                   | If both User and Driver records are created successfully, the System assigns the **driver** role to the user and fires a `Registered` event.                                                       |
-| 9   |                                                                                   | System redirects the guest to the login page (`/login`) with a success message: *“Driver registration submitted. Please wait for admin approval before signing in.”*                                    |
+| 9   |                                                                                   | System redirects the guest to the login page (`/login`), which opens a **"You're registered!"** dialog: *the driver account was submitted successfully and an administrator must approve it before the guest can sign in.* A driver code (`DRV-######`) is generated for the new profile.                                    |
 
 ---
 
@@ -2611,7 +2609,7 @@ Any other unhandled exception results in a 500 error page (or the Laravel defaul
 | **Use Case Name**     | Admin Violation Code Management                                                                                                                  |
 | **Primary Actor**     | Driver Manager (authenticated user holding the `driver_manager` role)                                                                            |
 | **Secondary Actor**   | System                                                                                                                                           |
-| **Goal**              | Allow an authorized user to create, view, edit, and delete violation codes (traffic offenses) that define fines and revocation rules.         |
+| **Goal**              | Allow an authorized user to create, view, edit, and delete violation codes (traffic offenses) that define the fines for each offense level.         |
 | **Trigger**           | User navigates to `/driver-manager/violation-codes` to view the list, or submits the form to add, edit, or delete a code.                     |
 | **Preconditions**     | 1. User is authenticated and logged in.<br>2. User holds the `driver_manager` role (the route group is `role:driver_manager`).<br>3. System is operational. |
 | **Supporting Actors** | `ViolationCode` model                                                                                                                            |
@@ -2623,8 +2621,8 @@ Any other unhandled exception results in a 500 error page (or the Laravel defaul
 | #   | Actor's Action                                                                    | System Response                                                                                                                                                                                           |
 | --- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | User opens the sidebar and selects **Violation Codes** (or navigates to `/driver-manager/violation-codes`). | System authenticates the user, verifies the `driver_manager` role, fetches all `ViolationCode` records, and returns the `driver-manager.violation-codes` view. |
-| 2   |                                                                                   | The view renders a table listing each violation code with columns: **Code**, **Violation Name**, **1st Offense (₱)**, **2nd Offense (₱)**, **3rd Offense (₱)**, **4th+ Offense (₱)**, **Revocation?**, and **Actions** (Edit / Delete). A form at the top allows adding a new code. |
-| 3   | To add a new code, the user fills in the form fields (Code, Name, fines for each offense level, Revocation toggle) and clicks **Add Code**. | System validates the request: `code` required, string, max 255, unique; `name` required, string, max 255; each fine (`first`, `second`, `third`, `fourth_plus`) required, numeric, min 0; `is_revocation` required, boolean. On success, a new `ViolationCode` record is created and the user is redirected back with a success flash (“Violation code successfully added!”). |
+| 2   |                                                                                   | The view renders a table listing each violation code with columns: **Code**, **Violation Name**, **1st Offense (₱)**, **2nd Offense (₱)**, **3rd Offense (₱)**, **4th+ Offense (₱)**, and **Actions** (Edit / Delete). A form at the top allows adding a new code. |
+| 3   | To add a new code, the user fills in the form fields (Code, Name, fines for each offense level) and clicks **Add Code**. | System validates the request: `code` required, string, max 255, unique; `name` required, string, max 255; each fine (`first`, `second`, `third`, `fourth_plus`) required, numeric, min 0. On success, a new `ViolationCode` record is created and the user is redirected back with a success flash (“Violation code successfully added!”). |
 | 4   | To edit an existing code, the user clicks the **Edit** button for a row, which populates the form with that code’s current values. After modifying the desired fields and clicking **Update Code**, System validates (same rules as creation, with the `unique` rule ignoring the current ID), updates the record, and returns a success flash (“Violation code successfully updated!”). |
 | 5   | To delete a code, the user clicks the **Delete** button for a row. System first checks whether the code is referenced by any `ViolationLog` (i.e., in use). If referenced, deletion is blocked and an error flash is shown (“This violation code is in use by existing violation logs and cannot be deleted.”). If not referenced, the `ViolationCode` record is deleted and a success flash is shown (“Violation code successfully deleted!”). |
 | 6   | After any successful add/edit/delete operation, the page refreshes (or the list is updated via AJAX) to reflect the current set of violation codes. |
@@ -2687,7 +2685,7 @@ A PDO exception occurs during any database interaction. System logs the exceptio
 ### Known Gaps / Notes
 
 - Fine amounts are stored as plain numbers (no currency formatting) in the database; the view prefixes them with “₱” for display.
-- The `is_revocation` column is a boolean; when true, the “4th+ Offense” column shows the label **Revocation** instead of a numeric fine.
+- Violation codes carry **no license-revocation flag** (the feature was removed together with the `is_revoked` column); the 4th+ offense is always a fine.
 - The UI includes a **Bulk Add** modal that allows entering multiple codes at once; each row is validated individually before insertion.
 - The `code` field is limited to 255 characters and is expected to be a short identifier (e.g., “UV01”, “Speeding”).
 - Deletion is prohibited only when the code is referenced by `violation_logs`; there is no cascade‑delete or soft‑delete mechanism.
@@ -2705,119 +2703,6 @@ A PDO exception occurs during any database interaction. System logs the exceptio
 | View | `resources/views/driver-manager/violation-codes.blade.php` |
 | Model | `App\Models\ViolationCode` |
 | Related UCNs | UCN_SC_E014 (Manage Violations – view logs), UCN_SC_E012 (Manage Drivers – approval/reject) |
-
----
-
-## UCN_SC_E025 — Vehicle Maintenance Log CRUD
-
-| Field                 | Value                                                                                                                                            |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Use_Case_ID**       | UCN SC E025                                                                                                                                      |
-| **Use Case Name**     | Vehicle Maintenance Log CRUD                                                                                                                     |
-| **Primary Actor**     | Maintenance Manager (authenticated user holding the `maintenance_manager` role)                                                                  |
-| **Secondary Actor**   | System                                                                                                                                           |
-| **Goal**              | Allow a maintenance manager to create, view, edit, and delete maintenance service logs for vehicles in the fleet.                               |
-| **Trigger**           | User navigates to `/maintenance-manager/vehicle-maintenance-log` to view the logs, or submits the form to add, edit, or delete a log.         |
-| **Preconditions**     | 1. User is authenticated and logged in.<br>2. User holds the `maintenance_manager` role.<br>3. System is operational.<br>4. At least one vehicle exists in the fleet (otherwise the view shows empty states). |
-| **Supporting Actors** | `VehicleMaintenanceLog` model, `Vehicle` model, `MaintenanceTask` model                                                                          |
-
----
-
-### MAIN FLOW
-
-| #   | Actor's Action                                                                    | System Response                                                                                                                                                                                           |
-| --- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | User navigates to `/maintenance-manager/vehicle-maintenance-log` (the page is not exposed in the sidebar menu; it is reached by URL). | System authenticates the user, verifies the `maintenance_manager` role, fetches the list of vehicles (with driver) and the selected vehicle (via query param `vehicle_id` or the first vehicle), loads the maintenance logs for that vehicle (with eager‑loaded `maintenanceTask`), calculates summary statistics (total cost, total services, latest odometer, cost per km), and returns the `maintenance-manager.vehicle-maintenance-log` view. |
-| 2   |                                                                                   | The view renders three main sections: **Fleet Information & Cost Summary** (vehicle details, total costs, cost/km summary), **Maintenance Guide & Log Button** (external guide link and a “Log New Service” button), and the **Log Table** (listing all maintenance logs for the selected vehicle). |
-| 3   | To add a new log, the user clicks the **Log New Service** button (or the “Log first service” placeholder when the table is empty). A modal appears. | The modal contains a form with fields: Vehicle (dropdown, pre‑selected), Maintenance Task (dropdown), Service Date (date picker), Mileage at Service (number), Performed By (text), Cost (number), Invoice Number (optional text), Remarks (optional text). The user fills in the required fields and clicks **Log New Service** (or **Create Code** in the modal). |
-| 4   |                                                                                   | System validates the input: `vehicle_id` required, exists; `maintenance_task_id` required, exists; `service_date` required, date; `mileage_at_service` required, integer, min 0; `performed_by` required, string, max 255; `cost` required, numeric, min 0; `invoice_number` nullable, string, max 100; `remarks` nullable, string, max 500. On success, a new `VehicleMaintenanceLog` record is created and the modal closes; the table updates (via page reload) to show the new log. A success flash is shown: *“Maintenance info logged!”*. |
-| 5   | To edit an existing log, the user clicks the **Edit** button on a table row. A modal appears pre‑filled with that log’s data. | The user modifies any fields and clicks **Update** (the modal’s submit button). System validates the same rules as creation (with the ID included). On success, the record is updated, the modal closes, the table reloads to reflect the changes, and a success flash appears: *“Maintenance log updated!”*. |
-| 6   | To delete a log, the user clicks the **Delete** (trash) button on a table row. A JavaScript `confirm()` prompt appears; if confirmed, a DELETE request is sent. | System checks that the `VehicleMaintenanceLog` record exists, then calls `$log->delete()`. On success, the table removes the row (via reload) and a success flash appears: *“Maintenance log deleted.”*. No further confirmation is needed beyond the JS prompt. |
-| 7   | After any successful add/edit/delete operation, the user may optionally change the selected vehicle via the dropdown in the Fleet Information section; the table and summary update accordingly. | System receives the new `vehicle_id` query parameter, repeats steps 1‑2 for the newly selected vehicle, and updates the view. |
-
----
-
-### Alternate Flow
-
-**A1 – Unauthenticated access**
-1. An unauthenticated user tries to access `/maintenance-manager/vehicle-maintenance-log` or submit to the store/update/delete endpoints.
-2. The `auth` middleware redirects the user to the login page (`/login`).
-
-**A2 – Invalid role**
-1. An authenticated user lacking the `maintenance_manager` role attempts to access the URL or submit to the store/update/delete endpoints.
-2. The `role:maintenance_manager` middleware returns a 403 error (“Unauthorized.”).
-
-**A3 – Validation failure (store/update)**
-1. The user submits a form with missing required fields, invalid date, negative mileage or cost, etc.
-2. Server‑side validation returns HTTP 422 with field‑specific error messages (e.g., *“The service date field must be a date.”*, *“The cost field must be at least 0.”*). The modal remains open with errors displayed and the previously entered values retained.
-
-**A4 – Edit/delete on non‑existent log**
-1. The user attempts to edit or delete a log whose ID no longer exists (e.g., deleted by another user concurrently).
-2. The route‑model binding (`VehicleMaintenanceLog $log`) results in a model not found exception, leading to a 404 error page.
-
-**A5 – Database error during CRUD operation**
-1. A PDO exception occurs while inserting, updating, or deleting a `VehicleMaintenanceLog`.
-2. System logs the exception, returns a generic error view or flashes *“An error occurred while processing the maintenance log. Please try again later.”* and leaves the database unchanged.
-
-**A6 – Selected vehicle has no logs**
-1. The user selects a vehicle that has no maintenance logs recorded.
-2. The table shows an empty state with a placeholder message (“No maintenance logs recorded yet.”) and a button to log the first service.
-
----
-
-### Postconditions
-
-- After a successful **add**, the `vehicle_maintenance_logs` table contains a new row with the submitted attributes, linked to the selected vehicle and maintenance task.
-- After a successful **edit**, the existing row’s columns are updated to the new values.
-- After a successful **delete**, the row is removed from the `vehicle_maintenance_logs` table.
-- The summary statistics (total cost, total services, latest odometer, cost per km) are recalculated based on the current set of logs for the selected vehicle.
-- The user sees appropriate success or error messages via session flash.
-- No unintended side‑effects on other tables (e.g., `Vehicle`, `MaintenanceTask` remain unchanged unless cascades are defined).
-
----
-
-### Exceptions
-
-**E1 – Validation error**
-One or more input fields fail the rules defined in `vehicleLogStore` or `vehicleLogUpdate`. System redirects back to the form (HTTP 422 only for JSON requests) with field‑specific messages.
-
-**E2 – Related model not found**
-The submitted `vehicle_id` or `maintenance_task_id` does not exist in the respective tables. System returns a validation error (`exists` rule fails).
-
-**E3 – Log not found (edit/delete)**
-The `VehicleMaintenanceLog` ID supplied in the route does not exist. System throws a model‑not‑found exception, leading to a 404 response.
-
-**E4 – Database query/write failure**
-A PDO exception occurs during any database interaction. System logs the exception and shows a generic error message.
-
-**E5 – Unexpected server error**
-Any other unhandled exception results in a 500 error page.
-
----
-
-### Known Gaps / Notes
-
-- The page is **not linked from the maintenance-manager sidebar**; it is reachable only by entering `/maintenance-manager/vehicle-maintenance-log` directly. The sidebar exposes *Preventive Maintenance*, *Maintenance Tasks* and *Maintenance Logs* instead.
-- The per-vehicle summary on this page is computed **inline** in `MaintenanceManagerController::vehicleLog()` (total cost, total services, latest odometer, cost per km). The maintenance-manager **dashboard** uses `App\Services\FleetMaintenanceService` (`summaryFor()` / `emptySummary()`) instead, so the two summaries are calculated by different code paths.
-- The `mileage_at_service` and `cost` fields are stored as plain numbers; the view formats mileage as an integer and cost with two decimal places and the “₱” prefix.
-- The `maintenance_task_id` foreign key links to the `maintenance_tasks` table (managed via UCN_SC_E017). If a task is deleted, existing logs will retain a dangling foreign key unless the database is set to `ON DELETE SET NULL` or cascades are applied.
-- The UI uses Alpine.js for modal interactions and table row highlighting, but all persistence is performed via standard POST/PUT/DELETE requests to the Laravel backend.
-- No pagination is applied; the table assumes a modest number of logs per vehicle (typically under a few dozen). For fleets with extensive history, pagination would be needed.
-- The `remarks` field is optional and can contain free‑form text; the UI highlights if the remark contains the word “warranty” (case‑insensitive) with a badge.
-- Deletion is immediate and irreversible; there is no soft‑delete or trash bin.
-
----
-
-### Implementation References
-
-| Element | Location |
-|---|---|
-| Routes | `routes/web.php` — `GET /maintenance-manager/vehicle-maintenance-log` (`maintenance-manager.vehicle-maintenance-log`), `POST /maintenance-manager/vehicle-maintenance-log` (`maintenance-manager.vehicle-maintenance-log.store`), `PATCH /maintenance-manager/vehicle-maintenance-log/{log}` (`maintenance-manager.vehicle-maintenance-log.update`), `DELETE /maintenance-manager/vehicle-maintenance-log/{log}` (`maintenance-manager.vehicle-maintenance-log.destroy`) (all inside `role:maintenance_manager`) |
-| Controller | `app/Http/Controllers/MaintenanceManagerController.php::vehicleLog()`, `vehicleLogStore()`, `vehicleLogUpdate()`, `vehicleLogDelete()` |
-| View | `resources/views/maintenance-manager/vehicle-maintenance-log.blade.php` |
-| Models | `App\Models\VehicleMaintenanceLog`, `App\Models\Vehicle`, `App\Models\MaintenanceTask` |
-| Service | `App\Services\FleetMaintenanceService` (used for summary) |
-| Related UCNs | UCN_SC_E016 (Manage Maintenance Schedule – full‑page log), UCN_SC_E017 (Manage Maintenance Tasks), UCN_SC_E012 (Manage Drivers – vehicle assignment), UCN_SC_E015 (Manage Vehicles – fleet list) |
 
 ---
 
@@ -2880,7 +2765,7 @@ The dashboard aggregates role‑specific widgets. The flow differs by role; each
 | --- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Authenticated maintenance‑manager navigates to `/dashboard`.                      | System verifies the `maintenance_manager` role, loads all `Vehicle` records (with driver), all `Driver` records, and the fleet maintenance summary for a selected vehicle (via query param `vehicle_id` or first vehicle). |
 | 2   |                                                                                   | System returns the `maintenance-manager.dashboard` view with the data (vehicles, drivers, selected vehicle, and summary from `FleetMaintenanceService`). |
-| 3   |                                                                                   | The view shows: **Fleet Information** (plate, year, brand/model, driver), **Cost Summary** (total cost, total services, avg cost/service, cost/km), **Maintenance Guide** (external link), and a button to log a new service (which opens the vehicle maintenance log form – see UCN_SC_E025). |
+| 3   |                                                                                   | The view shows: **Fleet Information** (plate, year, brand/model, driver), **Cost Summary** (total cost, total services, avg cost/service, cost/km) and a **Service History** tab, all derived from the preventive-maintenance records (UCN_SC_E016). |
 
 ---
 
@@ -2940,7 +2825,7 @@ Any other unhandled exception results in a 500 error page.
 - The `/profile` endpoint currently only serves commuter users; staff profile information is viewable via the `/settings` route (see UCN_SC_E008 for password change, but other profile fields like email are edited there). A dedicated staff profile page does not exist in the current codebase.
 - The `/dashboard` endpoint is strictly for staff roles; commuters are expected to use the map (`/map`) as their main interface (documented in UCN_SC_E003). This separation is intentional in the product design.
 - Dashboard widgets are refreshed only on page load; there is no auto‑reload or polling for live updates.
-- The maintenance‑manager dashboard summary is computed by `App\Services\FleetMaintenanceService` (`summaryFor()` / `emptySummary()`); the per-vehicle maintenance-log page (UCN_SC_E025) computes an equivalent summary inline, so the two are not guaranteed to agree.
+- The maintenance‑manager dashboard summary is computed by `App\Services\FleetMaintenanceService` (`summaryFor()` / `emptySummary()`), reading each vehicle's preventive-maintenance records.
 - All monetary values are stored as plain numbers in the database; views format them with the “₱” prefix and two decimal places where appropriate.
 - The dashboard does not expose sensitive raw data (e.g., full payment details) beyond what is necessary for the summary widgets.
 - Error handling for missing relationships (e.g., a driver without a vehicle) gracefully shows placeholders like “—” or “Unassigned”.
@@ -3035,7 +2920,7 @@ Any other exception in the `destroy` method results in a 500 error page.
 - For a production‑ready implementation, consider adding explicit cleanup (e.g., deleting related records first) or using database cascades to avoid data inconsistency.
 - The action is immediate and irreversible; there is no confirmation step beyond the browser’s `confirm()` dialog.
 - After deletion, the user must register anew if they wish to use the system again.
-- The route `/delete-account` is not grouped under any middleware besides `auth`; it is accessible to any authenticated user regardless of role.
+- The route `/delete-account` is not grouped under any role middleware; it is accessible to any authenticated user regardless of role. A **driver who still holds a vehicle cannot delete their account** — they are told to ask the maintenance manager to unassign it first.
 - Success message is flashed via the session and displayed on the subsequent login page load.
 
 ---
@@ -3048,3 +2933,98 @@ Any other exception in the `destroy` method results in a 500 error page.
 | Controller | `app/Http/Controllers/UserController.php::destroy()` |
 | Model | `App\Models\User` |
 | Related UCNs | UCN_SC_E001 (Login – for post‑deletion login), UCN_SC_E002 (Create Account – for re‑registration), UCN_SC_E008 (Change Password – shows that account modification is possible) |
+
+---
+
+## UCN_SC_E028 — Manage Staff Accounts
+
+| Field                 | Value                                                                                                   |
+| --------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Use_Case_ID**       | UCN_SC_E028                                                                                             |
+| **Use Case Name**     | Manage Staff Accounts                                                                                   |
+| **Primary Actor**     | Admin (`role:admin`)                                                                                    |
+| **Secondary Actor**   | System                                                                                                  |
+| **Goal**               | Allow the Admin to create, view, edit, suspend and delete the back-office staff accounts: **Driver Managers** and **Maintenance Managers**. |
+| **Trigger**           | Admin clicks the **"Staff"** item on the sidebar (`GET /staff`).                                        |
+| **Preconditions**     | 1. Admin is authenticated and registered to the system.                                                  |
+| **Supporting Actors** | User record, role assignment (Spatie permission), Activity log                                          |
+
+> **Scope.** Only accounts holding the `driver_manager` or `maintenance_manager` role are reachable here. Admin accounts, commuters (UCN_SC_E018) and drivers (UCN_SC_E012) have their own screens; asking this controller to act on any of them answers 404.
+
+---
+
+## MAIN FLOW
+
+| #   | Actor's Action                                              | System Response                                                                                                  |
+| --- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| 1   | Admin clicks **"Staff"** on the sidebar.                    | System verifies the `admin` role and shows the staff list, **10 accounts per page**, with the count of staff and of suspended accounts. |
+| 2   | Admin may search by e-mail and filter by **role** and **status** (*Active / Suspended*), then press **Filter**. | System narrows the list; the filters survive paging. **Clear** restores the full list. |
+
+---
+
+## Alternate Flow
+
+**A1 – Add a Staff Account**
+1. Admin clicks **"Add Staff"**. System displays the modal: *Email, Role, Password, Confirm Password*.
+2. Admin submits. System validates `email` **required, email, unique:users**, `role` **in `driver_manager, maintenance_manager`**, `password` **required, min 8, confirmed**.
+3. System creates the user (e-mail marked verified — staff are created by an admin, not by e-mail sign-up), assigns the role, logs *Create Staff* and confirms *"Staff account created."*
+
+**A2 – Edit a Staff Account**
+1. Admin clicks the edit icon. The modal opens pre-filled with the e-mail and role.
+2. Admin changes the e-mail and/or role and optionally sets a new password (blank keeps the current one).
+3. System validates as in A1 (e-mail unique ignoring the current row), updates the user, **replaces the role** and confirms *"Staff account updated."*
+
+**A3 – Suspend / Reactivate a Staff Account**
+1. Admin clicks the suspend icon (or *reactivate*) and confirms.
+2. System sets or clears `is_suspended`; a suspended account is **signed out on its next request** (see UCN_SC_E012 notes on `account.active`) and cannot sign in. Confirms *"… has been suspended."* / *"… has been reactivated."*
+
+**A4 – Delete a Staff Account**
+1. Admin clicks the delete icon and confirms *"Delete staff account?"*.
+2. System deletes the user, logs *Delete Staff* and confirms *"Staff account removed."*
+
+---
+
+## Exceptions
+
+**E1 – Validation Error**
+Any rule above fails. The **modal stays open**, each message is shown **under its own input** and an error toast reads *"Please correct the highlighted fields and try again."* Nothing is stored.
+
+**E2 – Own Account**
+The Admin tries to suspend or delete their own account. System refuses with *"You cannot suspend/delete your own account."*
+
+**E3 – Not a Staff Account**
+The target user holds neither staff role. System answers 404.
+
+**E4 – Database Error**
+The write fails. System cancels, logs the exception and shows *"A database error occurred. …"*
+
+**E5 – Not an Admin**
+Any other role (or a guest) is refused (403 / redirect to login).
+
+---
+
+## Postconditions
+
+1. The staff account has been created, changed, suspended or removed, and the list shows the new state after the page refreshes.
+2. A success toast confirms the action.
+
+---
+
+## Known Gaps / Notes
+
+- Admin accounts cannot be created or removed from this screen.
+- Deleting a staff account is a hard delete; there is no undo.
+- A staff member holds exactly one of the two roles; changing the role removes the old one.
+
+---
+
+## Implementation References
+
+| Element | Location |
+|---|---|
+| Routes | `routes/web.php` — `staff.index`, `staff.store`, `staff.update`, `staff.suspension`, `staff.destroy`, inside `role:admin` |
+| Controller | `app/Http/Controllers/Admin/StaffController.php` |
+| View | `resources/views/admin/staff/index.blade.php` |
+| Menu | `config/menu.php` — *Staff* (admin) |
+| Tests | `tests/Feature/BugFixRegressionTest.php` (staff tests), `tests/Feature/RouteProtectionTest.php` |
+| Related | UCN_SC_E012 (Manage Drivers), UCN_SC_E018 (Manage Commuters) |

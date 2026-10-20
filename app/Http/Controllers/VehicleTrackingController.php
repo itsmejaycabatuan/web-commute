@@ -85,6 +85,15 @@ class VehicleTrackingController extends Controller
             ], 403);
         }
 
+        // A vehicle that is inactive, under maintenance or disposed is out of
+        // service: its driver does not appear on the live map.
+        if ($vehicle->status !== 'active') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This vehicle is not in service.',
+            ], 403);
+        }
+
         $duplicate = false;
 
         if (! empty($validated['timestamp'])) {

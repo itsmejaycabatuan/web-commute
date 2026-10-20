@@ -137,7 +137,6 @@
 <body class="antialiased" x-data=>
 
     <div x-data="{ showLogoutModal: false }" @resize.window="if(window.innerWidth >= 768) open = true">
-        @include('components.flash')
         <x-layout.sidebar />
         <main :class="$store.sidebar.open ? 'md:ml-72' : 'md:ml-20'"
             class="sidebar-transition pt-4 sm:pt-8 pr-3 sm:pr-8 pb-8 pl-3 sm:pl-8 min-h-screen mb-20 md:mb-12">

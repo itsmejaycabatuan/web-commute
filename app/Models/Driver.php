@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\Driver
@@ -56,6 +57,9 @@ class Driver extends Model
 {
     use HasFactory;
 
+    /** A licence this close to its expiry date is flagged as expiring. */
+    public const LICENSE_EXPIRING_DAYS = 30;
+
     protected $fillable = [
         'user_id',
         'driver_code',
@@ -82,6 +86,64 @@ class Driver extends Model
         'is_suspended' => 'boolean',
         'suspended_at' => 'datetime',
     ];
+
+    /**
+     * The driver code is generated, never typed in: DRV-000001, DRV-000002, ...
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (Driver $driver) {
+            if (blank($driver->driver_code)) {
+                $driver->driver_code = static::nextDriverCode();
+            }
+        });
+    }
+
+    public static function nextDriverCode(): string
+    {
+        $highest = static::query()
+            ->where('driver_code', 'like', 'DRV-%')
+            ->pluck('driver_code')
+            ->map(fn ($code) => (int) substr($code, 4))
+            ->max() ?? 0;
+
+        return 'DRV-'.str_pad((string) ($highest + 1), 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Registered, but an administrator has neither approved nor rejected the
+     * account yet. A pending driver can only be approved or rejected.
+     */
+    public function isPending(): bool
+    {
+        return ! $this->is_approved && ! $this->is_rejected;
+    }
+
+    /**
+     * Days left on the licence: negative once it has expired, null when no
+     * expiry date is on file.
+     */
+    public function licenseDaysRemaining(): ?int
+    {
+        if (! $this->expiration_date) {
+            return null;
+        }
+
+        return (int) now()->startOfDay()->diffInDays(Carbon::parse($this->expiration_date)->startOfDay(), false);
+    }
+
+    /** 'expired' | 'expiring' (within 30 days) | 'valid' | 'unknown' */
+    public function licenseState(): string
+    {
+        $days = $this->licenseDaysRemaining();
+
+        return match (true) {
+            $days === null => 'unknown',
+            $days < 0 => 'expired',
+            $days <= self::LICENSE_EXPIRING_DAYS => 'expiring',
+            default => 'valid',
+        };
+    }
 
     public function user()
     {

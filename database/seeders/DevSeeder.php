@@ -15,7 +15,6 @@ use App\Models\User;
 use App\Models\UserPreference;
 use App\Models\Vehicle;
 use App\Models\VehicleLocation;
-use App\Models\VehicleMaintenanceLog;
 use App\Models\ViolationCode;
 use App\Models\ViolationLog;
 use App\Models\Wallet;
@@ -417,18 +416,17 @@ class DevSeeder extends Seeder
     private function violationCodes(): void
     {
         $codes = [
-            ['UV02', 'Reckless Driving', 2000, 5000, 10000, 10000, true],
-            ['UV03', 'Overloading', 1500, 3000, 5000, 5000, false],
-            ['UV04', 'Operating Without Franchise', 5000, 10000, 15000, 20000, true],
-            ['UV05', 'Failure to Display Fare Matrix', 500, 1000, 1500, 2000, false],
-            ['UV06', 'Refusal to Convey Passenger', 1000, 2000, 3000, 4000, false],
+            ['UV02', 'Reckless Driving', 2000, 5000, 10000, 10000],
+            ['UV03', 'Overloading', 1500, 3000, 5000, 5000],
+            ['UV04', 'Operating Without Franchise', 5000, 10000, 15000, 20000],
+            ['UV05', 'Failure to Display Fare Matrix', 500, 1000, 1500, 2000],
+            ['UV06', 'Refusal to Convey Passenger', 1000, 2000, 3000, 4000],
         ];
 
-        foreach ($codes as [$code, $name, $a, $b, $c, $d, $revokes]) {
+        foreach ($codes as [$code, $name, $a, $b, $c, $d]) {
             ViolationCode::updateOrCreate(['code' => $code], [
                 'violation_name' => $name,
                 'first_offense' => $a, 'second_offense' => $b, 'third_offense' => $c, 'fourth_offense' => $d,
-                'is_revoked' => $revokes,
             ]);
         }
     }
@@ -456,7 +454,7 @@ class DevSeeder extends Seeder
             ],
             'carlos.bautista@example.com' => [
                 ['UV02', 1, 12, '23:20:00', 'Mactan Bridge', 'Suspension: 30 days', 'Racing another vehicle.'],
-                ['UV02', 2, 4, '21:55:00', 'Cebu South Coastal Road', 'Revocation review', 'Repeat offence.'],
+                ['UV02', 2, 4, '21:55:00', 'Cebu South Coastal Road', 'Suspension: 60 days', 'Repeat offence.'],
             ],
         ];
 
@@ -522,7 +520,6 @@ class DevSeeder extends Seeder
 
         foreach ($history as $plate => $services) {
             $vehicle = Vehicle::where('plate_number', $plate)->firstOrFail();
-            $hasLogs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)->exists();
 
             foreach ($services as [$name, $month, $day, $odo, $cost, $by, $invoice, $remarks]) {
                 $date = now()->setDate($year, $month, $day)->startOfDay();
@@ -530,7 +527,7 @@ class DevSeeder extends Seeder
                     continue;
                 }
 
-                $schedule = PreventiveMaintenance::updateOrCreate(
+                PreventiveMaintenance::updateOrCreate(
                     ['vehicle_id' => $vehicle->id, 'task_id' => $task($name)],
                     [
                         'last_service_odo' => $odo,
@@ -540,19 +537,6 @@ class DevSeeder extends Seeder
                     ]
                 );
 
-                if (! $hasLogs) {
-                    VehicleMaintenanceLog::create([
-                        'maintenance_id' => $schedule->id,
-                        'vehicle_id' => $vehicle->id,
-                        'maintenance_task_id' => $task($name),
-                        'service_date' => $date->toDateString(),
-                        'mileage_at_service' => $odo,
-                        'performed_by' => $by,
-                        'cost' => $cost,
-                        'invoice_number' => $invoice,
-                        'remarks' => $remarks,
-                    ]);
-                }
             }
         }
     }

@@ -744,7 +744,7 @@
                     <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">PUJ Maintenance Records</h4>
                     <p
                         class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
-                        Preventive maintenance schedules and service logs for every vehicle, with due dates, odometer
+                        Preventive maintenance records for every vehicle, with service dates, odometer
                         readings and costs on record.
                     </p>
                     <a

@@ -18,11 +18,22 @@
         body {
             margin: 0;
             padding: 0;
-            height: 100%;
             width: 100%;
             font-family: 'Inter', sans-serif;
             overflow-x: hidden;
             background-color: #f8fafc;
+        }
+
+        /* A fixed 100% height with a centred column clipped the top of a tall
+           receipt (the "Back to History" link) on short screens. The page now
+           grows with its content and the column centres through auto margins,
+           which can never push content above the top edge. */
+        html {
+            height: 100%;
+        }
+
+        body {
+            min-height: 100%;
         }
 
         .dark html,
@@ -82,11 +93,10 @@
 </head>
 
 <body
-    class="antialiased flex flex-col items-center justify-center p-3 sm:p-5 lg:p-6 text-slate-900 dark:text-white">
+    class="antialiased flex flex-col items-center p-3 sm:p-5 lg:p-6 text-slate-900 dark:text-white">
 
-    @include('components.flash')
 
-    <div class="w-full max-w-md mb-5 sm:mb-8 flex items-center justify-between">
+    <div class="w-full max-w-md mt-auto mb-5 sm:mb-8 flex items-center justify-between">
         <a href="{{ route('payment.history') }}"
             class="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/40 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-2 py-1">
             <i class="fa-solid fa-arrow-left"></i> Back to History
@@ -176,7 +186,7 @@
         </div>
     </div>
 
-    <div class="mt-5 sm:mt-8 w-full max-w-md">
+    <div class="mt-5 sm:mt-8 mb-auto w-full max-w-md">
         <button onclick="downloadReceipt()"
             class="w-full bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white font-bold py-4 px-6 rounded-2xl text-[11px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3">
             <i class="fa-solid fa-download text-blue-600 dark:text-blue-400"></i>

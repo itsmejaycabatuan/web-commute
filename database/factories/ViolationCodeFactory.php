@@ -15,7 +15,6 @@ class ViolationCodeFactory extends Factory
             'first_offense' => fake()->randomFloat(2, 100, 5000),
             'second_offense' => fake()->randomFloat(2, 100, 5000),
             'third_offense' => fake()->randomFloat(2, 100, 5000),
-            'is_revoked' => 0,
         ];
     }
 }

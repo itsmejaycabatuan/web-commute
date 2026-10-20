@@ -37,7 +37,7 @@
 
 **A1 – Create a Violation Code**
 1. In the code list, the Driver Manager clicks **"Add Code"**.
-2. System displays the code form: *Code*, *Violation Name*, *First*, *Second*, *Third*, *Fourth+* offense amounts and a *Revocation* flag.
+2. System displays the code form: *Code*, *Violation Name*, *First*, *Second*, *Third*, *Fourth+* offense amounts.
 3. Driver Manager fills the form and clicks **"Create Code"**.
 4. System validates all fields **required** and `code` **unique** (E2), stores the row and confirms *"Violation code successfully added!"*
 
@@ -63,7 +63,7 @@
 1. In the log, the Driver Manager clicks **"New Entry"**.
 2. System displays the violation form: *Driver*, *Violation Code*, *Offense Instance*, *Fine*, *Place of Violation*, *Date*, *Time*, *Remarks*.
 3. Driver Manager fills the form and clicks **"Save Entry"**.
-4. System validates `user_id`, `vc_id`, `violation_instance` **required, integer, min 1**, `violation_fine` **numeric, min 0**, `place_of_violation`, `date_of_violation` **date, not in the future** (E6), `time_of_violation`, `remarks`, stores the row and confirms *"Violation logged!"*
+4. System validates `user_id`, `vc_id`, `violation_instance` **required, integer, min 1**, `violation_fine` **numeric, min 0**, `place_of_violation`, `date_of_violation` **date, not in the future** (E6), `time_of_violation`, stores the row and confirms *"Violation logged!"* `remarks` is **optional** (the column is nullable), in the single and in the bulk form. On a validation error the modal stays open and each message appears under its own input (for the bulk form, under the field of the failing entry); on success the modal closes, the page refreshes and a toast confirms.
 
 **A6 – Log Multiple Violations (Bulk Add)**
 1. In the log, the Driver Manager clicks **"Bulk Add"**.

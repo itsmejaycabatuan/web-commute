@@ -48,15 +48,15 @@ class MobileLayoutTest extends TestCase
         return $user;
     }
 
-    /** 1. Flash messages live above the nav bar, drawer, sheets and modals. */
-    public function test_flash_message_renders_on_the_topmost_layer()
+    /** 1. Toasts live above the nav bar, drawer, sheets and modals. */
+    public function test_toast_renders_the_flash_on_the_topmost_layer()
     {
         session()->flash('success', 'Saved!');
 
-        $html = view('components.flash', ['errors' => new ViewErrorBag])->render();
+        $html = view('components.toast', ['errors' => new ViewErrorBag])->render();
 
-        $this->assertStringContainsString('data-flash-message', $html);
-        $this->assertStringContainsString('z-[9999]', $html);
+        $this->assertStringContainsString('Saved!', $html);
+        $this->assertStringContainsString('z-index: 2147483000', $html);
         $this->assertStringNotContainsString('id="flash-message"', $html, 'duplicate ids are invalid HTML');
     }
 

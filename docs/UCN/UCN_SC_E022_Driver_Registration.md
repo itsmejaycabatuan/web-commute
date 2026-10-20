@@ -25,7 +25,7 @@
 | 6   |                                                                                   | System creates a **User** record with the supplied email, a bcrypt‑hashed password, and sets `email_verified_at` to the current timestamp (email considered verified).                               |
 | 7   |                                                                                   | System creates a linked **Driver** record associated with the new user, persisting the name, contact information, and the stored license‑image path.                                                   |
 | 8   |                                                                                   | If both User and Driver records are created successfully, the System assigns the **driver** role to the user and fires a `Registered` event.                                                       |
-| 9   |                                                                                   | System redirects the guest to the login page (`/login`) with a success message: *“Driver registration submitted. Please wait for admin approval before signing in.”*                                    |
+| 9   |                                                                                   | System redirects the guest to the login page (`/login`), which opens a **"You're registered!"** dialog: *the driver account was submitted successfully and an administrator must approve it before the guest can sign in.* A driver code (`DRV-######`) is generated for the new profile.                                    |
 
 ---
 

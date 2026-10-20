@@ -75,6 +75,13 @@ class Payment extends Model
     public const STATUS_FAILED = 'failed';
     public const STATUS_CANCELLED = 'cancelled';
 
+    public const STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_PAID,
+        self::STATUS_FAILED,
+        self::STATUS_CANCELLED,
+    ];
+
     public function isSettled(): bool
     {
         return $this->status === self::STATUS_PAID;

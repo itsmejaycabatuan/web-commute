@@ -390,22 +390,6 @@
                 </p>
             </div>
 
-            @if (session('success'))
-                <div
-                    class="mb-5 px-4 py-3 rounded-xl border border-emerald-500/15 bg-emerald-500/5 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0"><i
-                            class="fa-solid fa-check text-[8px] text-emerald-400"></i></div>
-                    <span class="text-[11px] text-emerald-400 font-medium">{{ session('success') }}</span>
-                </div>
-            @endif
-            @if (session('error'))
-                <div class="mb-5 px-4 py-3 rounded-xl border border-red-500/15 bg-red-500/5 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center shrink-0"><i
-                            class="fa-solid fa-xmark text-[8px] text-red-400"></i></div>
-                    <span class="text-[11px] text-red-400 font-medium">{{ session('error') }}</span>
-                </div>
-            @endif
-
             <!-- ══════════ TABLE CARD ══════════ -->
             <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] overflow-hidden">
                 <div class="p-4 sm:p-5 border-b border-[#1e1e1e]">
@@ -697,7 +681,7 @@
                         </button>
                     </div>
                     <form method="POST" action="{{ route('driver-manager.violations-log.store') }}"
-                        class="space-y-4">
+                        class="space-y-4" data-ajax novalidate>
                         @csrf
                         <div>
                             <label
@@ -710,10 +694,6 @@
                                     <option :value="d.id" x-text="d.name + ' — ' + d.license"></option>
                                 </template>
                             </select>
-                            @error('user_id')
-                                <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                            @enderror
                         </div>
                         <div x-show="selectedDriver" x-cloak
                             class="p-3 rounded-xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]">
@@ -726,8 +706,9 @@
                                 </div>
                                 <span class="text-[7px] sm:text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-md"
                                     :class="selectedDriver.isExpired ? 'bg-red-500/10 text-red-400 border border-red-500/15' :
+                                        selectedDriver.licenseState === 'expiring' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/15' :
                                         'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'"
-                                    x-text="selectedDriver.isExpired ? 'Expired' : 'Valid'"></span>
+                                    x-text="selectedDriver.isExpired ? 'Expired' : (selectedDriver.licenseState === 'expiring' ? 'Expiring soon' : 'Valid')"></span>
                             </div>
                         </div>
                         <div>
@@ -742,10 +723,6 @@
                                     </option>
                                 </template>
                             </select>
-                            @error('vc_id')
-                                <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                            @enderror
                         </div>
                         <div>
                             <label
@@ -759,10 +736,6 @@
                                 <option value="3">3rd Offense</option>
                                 <option value="4">4th+ Offense</option>
                             </select>
-                            @error('violation_instance')
-                                <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                            @enderror
                         </div>
                         <input type="hidden" name="violation_fine" :value="form.violationFine">
                         <div x-show="form.violationFine > 0"
@@ -783,10 +756,6 @@
                             <input type="text" name="place_of_violation" x-model="form.location"
                                 value="{{ old('place_of_violation') }}" placeholder="e.g., Marikina City"
                                 class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition">
-                            @error('place_of_violation')
-                                <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                            @enderror
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
@@ -797,10 +766,6 @@
                                     value="{{ old('date_of_violation') }}"
                                     max="{{ now()->toDateString() }}"
                                     class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition">
-                                @error('date_of_violation')
-                                    <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                            class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                                @enderror
                             </div>
                             <div>
                                 <label
@@ -809,10 +774,6 @@
                                 <input type="time" name="time_of_violation" x-model="form.time"
                                     value="{{ old('time_of_violation') }}"
                                     class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition">
-                                @error('time_of_violation')
-                                    <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                            class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                                @enderror
                             </div>
                         </div>
                         <div>
@@ -862,59 +823,8 @@
                     </div>
                     <div class="px-6 sm:px-8 pb-4 overflow-y-auto flex-1">
                         <form id="bulkViolationForm" method="POST"
-                            action="{{ route('driver-manager.violations-log.store-bulk') }}" class="space-y-5">
+                            action="{{ route('driver-manager.violations-log.store-bulk') }}" class="space-y-5" data-ajax novalidate>
                             @csrf
-                            @if ($errors->has('user_id') || $errors->has('violations'))
-                                <div class="p-4 rounded-xl bg-red-500/5 border border-red-500/15">
-                                    <div class="flex items-center gap-2 mb-2.5">
-                                        <div class="w-5 h-5 rounded-md bg-red-500/10 flex items-center justify-center">
-                                            <i class="fa-solid fa-circle-exclamation text-[7px] text-red-400"></i>
-                                        </div>
-                                        <span
-                                            class="text-[8px] font-bold uppercase tracking-[0.15em] text-red-400">Please
-                                            fix the following</span>
-                                    </div>
-                                    <ul class="space-y-1.5">
-                                        @if ($errors->has('user_id'))
-                                            <li class="text-[9px] text-red-400/80 flex items-start gap-2"><span
-                                                    class="text-red-500/50 mt-0.5">·</span>{{ $errors->first('user_id') }}
-                                            </li>
-                                        @endif
-                                        @foreach ($errors->get('violations') as $key => $messages)
-                                            @php
-                                                $rowNum = is_int($key) ? $key + 1 : $key;
-                                                $fieldLabel = '';
-                                                if (str_contains($key, 'vc_id')) {
-                                                    $fieldLabel = 'Violation Type';
-                                                } elseif (str_contains($key, 'violation_instance')) {
-                                                    $fieldLabel = 'Offense';
-                                                } elseif (str_contains($key, 'violation_fine')) {
-                                                    $fieldLabel = 'Fine';
-                                                } elseif (str_contains($key, 'place_of_violation')) {
-                                                    $fieldLabel = 'Location';
-                                                } elseif (str_contains($key, 'date_of_violation')) {
-                                                    $fieldLabel = 'Date';
-                                                } elseif (str_contains($key, 'time_of_violation')) {
-                                                    $fieldLabel = 'Time';
-                                                } elseif (str_contains($key, 'remarks')) {
-                                                    $fieldLabel = 'Remarks';
-                                                } else {
-                                                    $fieldLabel = $key;
-                                                }
-                                            @endphp
-                                            @foreach ($messages as $message)
-                                                <li class="text-[9px] text-red-400/80 flex items-start gap-2"><span
-                                                        class="text-red-500/50 mt-0.5">·</span><span><span
-                                                            class="font-bold text-red-400">Entry #{{ $rowNum }}
-                                                            ({{ $fieldLabel }})
-                                                            :</span> {{ $message }}</span>
-                                                </li>
-                                            @endforeach
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
-
                             <div
                                 class="p-4 rounded-xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]">
                                 <label
@@ -940,8 +850,9 @@
                                     <span class="text-[7px] sm:text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-md"
                                         :class="bulk.selectedDriver.isExpired ?
                                             'bg-red-500/10 text-red-400 border border-red-500/15' :
+                                            bulk.selectedDriver.licenseState === 'expiring' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/15' :
                                             'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'"
-                                        x-text="bulk.selectedDriver.isExpired ? 'Expired' : 'Valid'"></span>
+                                        x-text="bulk.selectedDriver.isExpired ? 'Expired' : (bulk.selectedDriver.licenseState === 'expiring' ? 'Expiring soon' : 'Valid')"></span>
                                 </div>
                             </div>
 

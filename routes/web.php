@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CommuterController;
 use App\Http\Controllers\Admin\DriverApprovalController;
+use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\DevMarkerController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\DriverManagerController;
@@ -37,18 +38,21 @@ Route::get('/', function (Request $request) {
     return view('home');
 })->name('home');
 
-Route::get('/pusher', [PusherController::class, 'index'])->name('pusher.index');
-Route::post('/fire-event', [PusherController::class, 'fireEvent'])->name('fire.event');
+// Development-only tooling: signed-in admins on a local install, nobody else.
+Route::middleware(['auth', 'verified', 'account.active', 'role:admin', 'env.local'])->group(function () {
+    Route::get('/pusher', [PusherController::class, 'index'])->name('pusher.index');
+    Route::post('/fire-event', [PusherController::class, 'fireEvent'])->name('fire.event');
+
+    Route::post('/driver/dev/markers', [DevMarkerController::class, 'store'])->name('driver.dev.add-marker');
+    Route::post('/driver/dev/markers/{marker}/toggle', [DevMarkerController::class, 'toggle'])->name('driver.dev.toggle-marker');
+    Route::delete('/driver/dev/markers/{marker}', [DevMarkerController::class, 'remove'])->name('driver.dev.remove-marker');
+    Route::delete('/driver/dev/markers', [DevMarkerController::class, 'clear'])->name('driver.dev.clear-markers');
+});
 
 Route::post('/track/vehicle/broadcast', [VehicleTrackingController::class, 'broadcastLocation'])->name('vehicle.broadcast');
 Route::get('/track/vehicles/active', [VehicleTrackingController::class, 'getActiveVehicles']);
 
-Route::post('/driver/dev/markers', [DevMarkerController::class, 'store'])->name('driver.dev.add-marker');
-Route::post('/driver/dev/markers/{marker}/toggle', [DevMarkerController::class, 'toggle'])->name('driver.dev.toggle-marker');
-Route::delete('/driver/dev/markers/{marker}', [DevMarkerController::class, 'remove'])->name('driver.dev.remove-marker');
-Route::delete('/driver/dev/markers', [DevMarkerController::class, 'clear'])->name('driver.dev.clear-markers');
-
-Route::get('/map', [UserController::class, 'map'])->name('map')->middleware(['auth', 'verified']);
+Route::get('/map', [UserController::class, 'map'])->name('map')->middleware(['auth', 'verified', 'account.active']);
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', function () {
@@ -132,15 +136,16 @@ Route::post('/logout', [UserController::class, 'logout'])->name('users.logout')-
 Route::post('/webhooks/paymongo', [PaymentController::class, 'webhook'])
     ->name('paymongo.webhook');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
 
     Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
 
     Route::get('/profile', [UserController::class, 'profile'])->name('profile');
     Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
 
-    // UCN_SC_E015 — vehicle administration belongs to the Maintenance Manager.
-    Route::middleware('role:maintenance_manager')->group(function () {
+    // UCN_SC_E015 — vehicle administration belongs to the Maintenance Manager;
+    // the Admin may use the same page.
+    Route::middleware('role:maintenance_manager|admin')->group(function () {
         Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
         Route::post('/vehicles', [VehicleController::class, 'store'])->name('vehicles.store');
         Route::patch('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
@@ -191,6 +196,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/commuters/{user}', [CommuterController::class, 'destroy'])->name('commuters.destroy');
         Route::get('/commuters', [CommuterController::class, 'index'])->name('commuters.index');
 
+        // Staff accounts (Driver Managers and Maintenance Managers).
+        Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+        Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
+        Route::put('/staff/{user}', [StaffController::class, 'update'])->name('staff.update');
+        Route::patch('/staff/{user}/suspension', [StaffController::class, 'toggleSuspension'])->name('staff.suspension');
+        Route::delete('/staff/{user}', [StaffController::class, 'destroy'])->name('staff.destroy');
+
         Route::get('/fare/{id}', [FareController::class, 'view'])->name('fares.view');
         Route::get('/fares', [FareController::class, 'index'])->name('fares.index');
         Route::put('/fare/upload', [FareController::class, 'upload'])->name('fares.upload');
@@ -215,16 +227,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:maintenance_manager')->group(function () {
         Route::get('/preventive-maintenance', [MaintenanceManagerController::class, 'preventiveMaintenance'])->name('maintenance-manager.preventive-maintenance');
         Route::post('/preventive-maintenance', [MaintenanceManagerController::class, 'preventiveMaintenanceStore'])->name('maintenance-manager.preventive-maintenance.store');
-        Route::get('/maintenance-logs', [MaintenanceManagerController::class, 'maintenanceLogs'])->name('maintenance-manager.maintenance-logs');
         Route::get('/maintenance-tasks', [MaintenanceManagerController::class, 'maintenanceTasks'])->name('maintenance-manager.maintenance-tasks');
         Route::post('/maintenance-tasks', [MaintenanceManagerController::class, 'maintenanceTasksStore'])->name('maintenance-manager.maintenance-tasks.store');
         Route::put('/maintenance-tasks/{task}', [MaintenanceManagerController::class, 'maintenanceTasksUpdate'])->name('maintenance-manager.maintenance-tasks.update');
         Route::delete('/maintenance-tasks/{task}', [MaintenanceManagerController::class, 'maintenanceTasksDestroy'])->name('maintenance-manager.maintenance-tasks.destroy');
-        Route::get('/vehicle-maintenance-log', [MaintenanceManagerController::class, 'vehicleLog'])->name('maintenance-manager.vehicle-maintenance-log');
-        Route::post('/vehicle-maintenance-log', [MaintenanceManagerController::class, 'vehicleLogStore'])->name('maintenance-manager.vehicle-maintenance-log.store');
-        Route::patch('/vehicle-maintenance-log/{log}', [MaintenanceManagerController::class, 'vehicleLogUpdate'])->name('maintenance-manager.vehicle-maintenance-log.update');
-        Route::delete('/vehicle-maintenance-log/{log}', [MaintenanceManagerController::class, 'vehicleLogDelete'])->name('maintenance-manager.vehicle-maintenance-log.destroy');
-        
     });
 
     Route::middleware(['role:driver', 'driver.approved'])->group(function () {

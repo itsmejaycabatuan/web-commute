@@ -178,7 +178,6 @@
 }"
     @keydown.escape="if(showModal) closeModal(); if(showDeleteModal) showDeleteModal = false">
 
-    @include('components.flash')
     <x-layout.sidebar />
 
     <main :class="$store.sidebar.open ? 'md:ml-72' : 'md:ml-20'"
@@ -449,9 +448,9 @@
                 <form
                     x-bind:action="editMode ? '{{ route('maintenance-manager.maintenance-tasks.update', '') }}/' + editId :
                         '{{ route('maintenance-manager.maintenance-tasks.store') }}'"
-                    method="POST" class="space-y-4">
+                    method="POST" class="space-y-4" data-ajax novalidate>
                     @csrf
-                    <input type="hidden" name="_method" x-bind:value="editMode ? 'PUT' : ''">
+                    <input type="hidden" name="_method" x-bind:value="editMode ? 'PUT' : 'POST'">
 
                     <div>
                         <label class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Task
@@ -547,7 +546,7 @@
                             class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">Cancel</button>
 
                         <!-- Dynamic Form Action -->
-                        <form :action="deleteUrl" method="POST" class="flex-1">
+                        <form :action="deleteUrl" method="POST" class="flex-1" data-ajax novalidate>
                             @csrf @method('DELETE')
                             <button type="submit"
                                 class="w-full py-3 rounded-xl bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 transition active:scale-[0.98] shadow-lg shadow-red-600/10">Delete</button>

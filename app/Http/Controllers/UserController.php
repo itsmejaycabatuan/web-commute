@@ -104,7 +104,8 @@ class UserController extends Controller
                 'recentReceipts' => $recentReceipts,
                 'todayRecord' => $todayRecord,
                 'driverStatus' => $driverStatus,
-                'driverVehicleId' => $driver->vehicle->first()?->id,
+                // Only an active vehicle can be driven (and broadcast) live.
+                'driverVehicleId' => $driver->vehicle()->where('status', 'active')->first()?->id,
             ]);
         }
 
@@ -185,7 +186,7 @@ class UserController extends Controller
 
         if ($role == 'admin') {
             $totalRevenue = Payment::settled()->sum('price');
-            $totalFundsAdded = TopupHistory::sum('amount_added');
+            $totalFundsAdded = TopupHistory::completed()->sum('amount_added');
             $activeUsersCount = Payment::settled()->distinct()->count('paid_by');
             $recentFares = Payment::settled()->with('user')->latest()->take(5)->get();
             $recentTopups = TopupHistory::with('user')->latest()->take(5)->get();
@@ -193,7 +194,7 @@ class UserController extends Controller
                 ->selectRaw('DATE(paid_at) as date, SUM(price) as total')
                 ->groupBy('date')->orderBy('date')->pluck('total', 'date')->toArray();
 
-            $topupsByDay = TopupHistory::where('created_at', '>=', now()->subDays(7))
+            $topupsByDay = TopupHistory::completed()->where('created_at', '>=', now()->subDays(7))
                 ->selectRaw('DATE(created_at) as date, SUM(amount_added) as total')
                 ->groupBy('date')->orderBy('date')->pluck('total', 'date')->toArray();
 
@@ -377,7 +378,10 @@ class UserController extends Controller
         activity()->event('Updateprofile')->log('Action performed: updateProfile');
         $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'min:8', 'confirmed'],
+            'password' => ['required', 'min:8', 'confirmed', 'different:current_password'],
+        ], [
+            'current_password.current_password' => 'The current password is incorrect.',
+            'password.different' => 'The new password must be different from your current password.',
         ]);
 
         $user = $request->user();
@@ -385,6 +389,9 @@ class UserController extends Controller
         $user->update([
             'password' => Hash::make($request->password),
         ]);
+
+        // A changed password signs the account out everywhere else.
+        $user->forgetOtherSessions($request->session()->getId());
 
         activity()->event('Profile Update')->log('User update profile success.');
 
@@ -466,6 +473,12 @@ class UserController extends Controller
     {
         activity()->event('Destroy')->log('Action performed: destroy');
         $userId = Auth::user()->id;
+
+        // A driver who still holds a vehicle cannot remove their account: the
+        // vehicle must be released by the Maintenance Manager first.
+        if (Driver::where('user_id', $userId)->whereHas('vehicle')->exists()) {
+            return back()->with('error', 'You are still assigned to a vehicle. Ask the maintenance manager to unassign it before deleting your account.');
+        }
 
         Auth::logout();
         $request->session()->invalidate();

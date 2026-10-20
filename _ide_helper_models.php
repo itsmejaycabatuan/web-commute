@@ -230,8 +230,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereUpdatedAt($value)
  * @property int $vehicle_id
  * @property-read \App\Models\Vehicle $vehicle
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleMaintenanceLog> $vehicleMaintenanceLog
- * @property-read int|null $vehicle_maintenance_log_count
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereVehicleId($value)
  * @mixin \Eloquent
  */
@@ -408,8 +406,6 @@ namespace App\Models{
  * @property Carbon|null $updated_at
  * @property-read Driver|null $driver
  * @property-read mixed $driver_name
- * @property-read Collection<int, VehicleMaintenanceLog> $maintenanceLogs
- * @property-read int|null $maintenance_logs_count
  * @property-read Collection<int, PreventiveMaintenance> $preventiveMaintenances
  * @property-read int|null $preventive_maintenances_count
  * @method static \Illuminate\Database\Eloquent\Builder|Vehicle newModelQuery()
@@ -496,51 +492,6 @@ namespace App\Models{
  * @mixin \Eloquent
  */
 	class VehicleLocationHistory extends \Eloquent {}
-}
-
-namespace App\Models{
-/**
- * App\Models\VehicleMaintenanceLog
- *
- * @property int $id
- * @property int $fleet_id
- * @property int $maintenance_task_id
- * @property Carbon|null $service_date
- * @property int|null $mileage_at_service
- * @property string|null $performed_by
- * @property string|null $cost
- * @property string|null $invoice_number
- * @property string|null $remarks
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @property-read FleetInventory $fleet
- * @property-read MaintenanceTask $maintenanceTask
- * @property-read Vehicle|null $vehicle
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog query()
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereCost($value)
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereFleetId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereInvoiceNumber($value)
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereMaintenanceTaskId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereMileageAtService($value)
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog wherePerformedBy($value)
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereRemarks($value)
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereServiceDate($value)
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereUpdatedAt($value)
- * @property int $maintenance_id
- * @property-read mixed $comments
- * @property-read mixed $last_service_cost
- * @property-read mixed $last_service_date
- * @property-read mixed $last_service_odo
- * @property-read mixed $maintenance_task
- * @property-read \App\Models\PreventiveMaintenance $preventiveMaintenance
- * @method static \Illuminate\Database\Eloquent\Builder|VehicleMaintenanceLog whereMaintenanceId($value)
- * @mixin \Eloquent
- */
-	class VehicleMaintenanceLog extends \Eloquent {}
 }
 
 namespace App\Models{

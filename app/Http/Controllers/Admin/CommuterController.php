@@ -166,7 +166,7 @@ class CommuterController extends Controller
             'trips' => $user->payment()->latest('paid_at')->get(),
             // Payment History — wallet top-ups/reloads made by this commuter.
             'topups' => $user->topupHistories()->latest()->get(),
-            'totalToppedUp' => (float) $user->topupHistories()->sum('amount_added'),
+            'totalToppedUp' => (float) $user->topupHistories()->completed()->sum('amount_added'),
         ]);
     }
 

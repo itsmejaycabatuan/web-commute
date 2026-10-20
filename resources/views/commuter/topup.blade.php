@@ -195,7 +195,6 @@
 
 <body class="antialiased text-slate-900 dark:text-white">
 
-    @include('components.flash')
 
     <!-- ══════════ HEADER ══════════ -->
     <header

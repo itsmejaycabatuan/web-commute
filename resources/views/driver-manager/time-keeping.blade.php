@@ -131,9 +131,8 @@
 </head>
 
 @php
-    // ── If your controller passes a paginator, unwrap it here.
-    //    For full client-side filtering across ALL records,
-    //    change your controller to return ALL entries (no ->paginate()).
+    // The controller returns the entries (not a paginator): filtering and the
+    // 10-per-page paging both happen in the browser. A paginator is still unwrapped.
     $rawEntries =
         $entries instanceof \Illuminate\Pagination\LengthAwarePaginator ? $entries->getCollection() : collect($entries);
 
@@ -218,26 +217,6 @@
                     shift records logged
                 </p>
             </div>
-
-            @if (session('success'))
-                <div
-                    class="mb-5 px-4 py-3 rounded-xl border border-emerald-500/15 bg-emerald-500/5 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-check text-[8px] text-emerald-500 dark:text-emerald-400"></i>
-                    </div>
-                    <span
-                        class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">{{ session('success') }}</span>
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="mb-5 px-4 py-3 rounded-xl border border-red-500/15 bg-red-500/5 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-xmark text-[8px] text-red-500 dark:text-red-400"></i>
-                    </div>
-                    <span class="text-[11px] text-red-600 dark:text-red-400 font-medium">{{ session('error') }}</span>
-                </div>
-            @endif
 
             <!-- ══════════ TABLE CARD ══════════ -->
             <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] overflow-hidden">
@@ -515,7 +494,7 @@
                     </div>
 
                     <form method="POST" action="{{ route('driver-manager.time-keeping.store') }}"
-                        @submit.prevent="syncAndSubmit($event)" class="space-y-4">
+                        @submit="syncForm()" class="space-y-4" data-ajax novalidate>
 
                         @csrf
                         <input type="hidden" name="is_leave" :value="form.is_leave">
@@ -534,22 +513,12 @@
                                         <option :value="d.id" x-text="d.name"></option>
                                     </template>
                                 </select>
-                                @error('driver_id')
-                                    <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                                    </p>
-                                @enderror
                             </div>
                             <div>
                                 <label
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Date</label>
                                 <input type="date" name="date" x-model="form.date"
                                     class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
-                                @error('date')
-                                    <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                                    </p>
-                                @enderror
                             </div>
                         </div>
 
@@ -590,11 +559,6 @@
                                 </label>
                                 <input type="time" name="time_in" x-model="form.time_in"
                                     class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-emerald-600 dark:text-emerald-400 font-mono font-semibold focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
-                                @error('time_in')
-                                    <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                                    </p>
-                                @enderror
                             </div>
                             <div>
                                 <label
@@ -603,11 +567,6 @@
                                 </label>
                                 <input type="time" name="time_out" x-model="form.time_out"
                                     class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-amber-600 dark:text-amber-400 font-mono font-semibold focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
-                                @error('time_out')
-                                    <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                                    </p>
-                                @enderror
                             </div>
                         </div>
 
@@ -718,7 +677,7 @@
                     entries,
                     filter: 'all',
                     currentPage: 1,
-                    perPage: 15,
+                    perPage: 10,
 
                     // Modal
                     showModal: false,
@@ -852,7 +811,8 @@
                         return ot > 0 ? ot : '0';
                     },
 
-                    syncAndSubmit(event) {
+                    // Runs just before the ajax form posts: leave entries carry no times.
+                    syncForm() {
                         this.form.is_leave = this.isLeave ? '1' : '0';
                         if (this.isLeave) {
                             this.form.time_in = '';
@@ -861,7 +821,6 @@
                             this.form.sick = '0';
                             this.form.vacation = '0';
                         }
-                        event.target.submit();
                     }
                 };
             });

@@ -155,26 +155,6 @@
                 </p>
             </div>
 
-            @if (session('success'))
-                <div
-                    class="mb-5 px-4 py-3 rounded-xl border border-emerald-500/15 bg-emerald-500/5 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-check text-[8px] text-emerald-500 dark:text-emerald-400"></i>
-                    </div>
-                    <span
-                        class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">{{ session('success') }}</span>
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="mb-5 px-4 py-3 rounded-xl border border-red-500/15 bg-red-500/5 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-xmark text-[8px] text-red-500 dark:text-red-400"></i>
-                    </div>
-                    <span class="text-[11px] text-red-600 dark:text-red-400 font-medium">{{ session('error') }}</span>
-                </div>
-            @endif
-
             <!-- ══════════ TABLE CARD ══════════ -->
             <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] overflow-hidden">
 
@@ -406,7 +386,7 @@
                     </button>
                 </div>
 
-                <form action="{{ route('commuters.store') }}" method="POST" class="space-y-4">
+                <form action="{{ route('commuters.store') }}" method="POST" class="space-y-4" data-ajax novalidate>
                     @csrf
                     <input type="hidden" name="_form_type" value="create">
 
@@ -415,11 +395,6 @@
                             class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Email</label>
                         <input type="email" name="email" value="{{ old('email', '') }}" required
                             class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
-                        @error('email')
-                            <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                            </p>
-                        @enderror
                     </div>
 
                     <div>
@@ -428,11 +403,6 @@
                         <input type="password" name="password" required
                             class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                             placeholder="Minimum 8 characters">
-                        @error('password')
-                            <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                            </p>
-                        @enderror
                     </div>
 
                     <div>
@@ -493,7 +463,7 @@
                     </button>
                 </div>
 
-                <form method="POST" :action="'/commuters/' + (selectedUser?.id || '')" class="space-y-4">
+                <form method="POST" :action="'/commuters/' + (selectedUser?.id || '')" class="space-y-4" data-ajax novalidate>
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="_form_type" value="edit">
@@ -504,11 +474,6 @@
                             class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Email</label>
                         <input type="email" name="email" :value="selectedUser?.email" required
                             class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
-                        @error('email')
-                            <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                            </p>
-                        @enderror
                     </div>
 
                     <div>
@@ -518,11 +483,6 @@
                         <input type="password" name="password"
                             class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                             placeholder="Leave blank to keep current">
-                        @error('password')
-                            <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                            </p>
-                        @enderror
                     </div>
 
                     <div>
@@ -609,7 +569,7 @@
                             Cancel
                         </button>
                         <form method="POST" :action="'/commuters/' + (selectedUser?.id || '') + '/suspension'"
-                            class="flex-1">
+                            class="flex-1" data-ajax novalidate>
                             @csrf
                             @method('PATCH')
                             <button type="submit"
@@ -657,7 +617,7 @@
                             class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-900 dark:text-white text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">
                             Cancel
                         </button>
-                        <form method="POST" :action="'/commuters/' + (selectedUser?.id || '')" class="flex-1">
+                        <form method="POST" :action="'/commuters/' + (selectedUser?.id || '')" class="flex-1" data-ajax novalidate>
                             @csrf
                             @method('DELETE')
                             <button type="submit"

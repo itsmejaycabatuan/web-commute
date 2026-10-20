@@ -117,17 +117,6 @@
                 </p>
             </div>
 
-            @if (session('success'))
-                <div
-                    class="mb-5 px-4 py-3 rounded-xl border border-emerald-500/15 bg-emerald-500/5 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-check text-[8px] text-emerald-500 dark:text-emerald-400"></i>
-                    </div>
-                    <span
-                        class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">{{ session('success') }}</span>
-                </div>
-            @endif
-
             <!-- ══════════ TABS ══════════ -->
             <div class="flex items-center gap-1 mb-6 p-1 bg-gray-100 dark:bg-[#111] rounded-xl w-fit">
                 <button @click="activeTab = 'account'"
@@ -179,24 +168,19 @@
 
                     <!-- Form -->
                     <div class="px-6 sm:px-8 py-6 sm:py-8">
-                        <form action="{{ route('settings.update') }}" method="POST" class="space-y-5">
+                        <form action="{{ route('settings.update') }}" method="POST" class="space-y-5" data-ajax novalidate>
                             @csrf
                             @method('PUT')
 
                             <div class="max-w-md">
                                 <label
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">
-                                    Email <span class="text-red-500 dark:text-red-400">*</span>
+                                    Email @unless (Auth::user()->hasRole('driver'))<span class="text-red-500 dark:text-red-400">*</span>@endunless
                                 </label>
                                 <input type="email" name="email" value="{{ old('email', Auth::user()->email) }}"
-                                    required
+                                    @if (Auth::user()->hasRole('driver')) readonly disabled @endif
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                     placeholder="Email address">
-                                @error('email')
-                                    <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                                    </p>
-                                @enderror
                             </div>
 
                             <!-- Read-only info -->
@@ -227,12 +211,20 @@
                                 </div>
                             </div>
 
-                            <div class="pt-2">
-                                <button type="submit"
-                                    class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-[10px] font-bold uppercase tracking-widest text-white transition active:scale-[0.98]">
-                                    Save Changes
-                                </button>
-                            </div>
+                            @if (Auth::user()->hasRole('driver'))
+                                <p class="max-w-md text-[10px] text-gray-400 dark:text-[#555] flex items-start gap-2">
+                                    <i class="fa-solid fa-lock text-[9px] mt-0.5"></i>
+                                    Your email address was verified when your driver account was approved, so it can
+                                    only be changed by an administrator.
+                                </p>
+                            @else
+                                <div class="pt-2">
+                                    <button type="submit"
+                                        class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-[10px] font-bold uppercase tracking-widest text-white transition active:scale-[0.98]">
+                                        Save Changes
+                                    </button>
+                                </div>
+                            @endif
                         </form>
                     </div>
                 </div>
@@ -258,7 +250,7 @@
 
                     <!-- Form -->
                     <div class="px-6 sm:px-8 py-6 sm:py-8">
-                        <form action="{{ route('settings.password') }}" method="POST" class="space-y-5 max-w-md">
+                        <form action="{{ route('settings.password') }}" method="POST" class="space-y-5 max-w-md" data-ajax novalidate>
                             @csrf
                             @method('PUT')
 
@@ -277,11 +269,6 @@
                                             class="text-[10px]"></i>
                                     </button>
                                 </div>
-                                @error('current_password')
-                                    <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                                    </p>
-                                @enderror
                             </div>
 
                             <div>
@@ -300,11 +287,6 @@
                                             class="text-[10px]"></i>
                                     </button>
                                 </div>
-                                @error('password')
-                                    <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                                    </p>
-                                @enderror
                             </div>
 
                             <div>
@@ -357,8 +339,12 @@
                                 <p class="text-[9px] text-gray-400 dark:text-[#444] mt-0.5">This will invalidate all
                                     active sessions except your current one.</p>
                             </div>
-                            <form action="{{ route('settings.logout-others') }}" method="POST" class="shrink-0">
+                            <form action="{{ route('settings.logout-others') }}" method="POST" class="shrink-0 flex flex-col sm:flex-row gap-2"
+                                data-ajax novalidate>
                                 @csrf
+                                <input type="password" name="current_password" placeholder="Current password"
+                                    autocomplete="current-password"
+                                    class="px-3 py-2 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none">
                                 <button type="submit"
                                     class="px-4 py-2 rounded-xl bg-red-500/5 border border-red-500/15 hover:bg-red-500/10 hover:border-red-500/25 text-[9px] font-bold uppercase tracking-widest text-red-600 dark:text-red-400 transition">
                                     Sign Out Others

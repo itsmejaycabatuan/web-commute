@@ -34,8 +34,6 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereUpdatedAt($value)
  * @property int $vehicle_id
  * @property-read \App\Models\Vehicle $vehicle
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleMaintenanceLog> $vehicleMaintenanceLog
- * @property-read int|null $vehicle_maintenance_log_count
  * @method static \Illuminate\Database\Eloquent\Builder|PreventiveMaintenance whereVehicleId($value)
  * @mixin \Eloquent
  */
@@ -65,10 +63,5 @@ class PreventiveMaintenance extends Model
     public function maintenanceTask()
     {
         return $this->belongsTo(MaintenanceTask::class, 'task_id');
-    }
-
-    public function vehicleMaintenanceLog()
-    {
-        return $this->hasMany(VehicleMaintenanceLog::class, 'maintenance_id');
     }
 }

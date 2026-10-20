@@ -28,9 +28,9 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 | UCN_SC_E022 | Driver Registration | Guest | [UCN_SC_E022_Driver_Registration.md](UCN_SC_E022_Driver_Registration.md) |
 | UCN_SC_E023 | Driver Dashboard Views | Driver | [UCN_SC_E023_Driver_Dashboard_Views.md](UCN_SC_E023_Driver_Dashboard_Views.md) |
 | UCN_SC_E024 | Admin Violation Code Management | Driver Manager | [UCN_SC_E024_Admin_Violation_Code_Management.md](UCN_SC_E024_Admin_Violation_Code_Management.md) |
-| UCN_SC_E025 | Vehicle Maintenance Log CRUD | Maintenance Manager | [UCN_SC_E025_Vehicle_Maintenance_Log_CRUD.md](UCN_SC_E025_Vehicle_Maintenance_Log_CRUD.md) |
 | UCN_SC_E026 | Profile and Dashboard Views | All authenticated roles | [UCN_SC_E026_Profile_and_Dashboard.md](UCN_SC_E026_Profile_and_Dashboard.md) |
 | UCN_SC_E027 | Account Deletion | Authenticated user | [UCN_SC_E027_Account_Deletion.md](UCN_SC_E027_Account_Deletion.md) |
+| UCN_SC_E028 | Manage Staff Accounts | Admin | [UCN_SC_E028_Manage_Staff_Accounts.md](UCN_SC_E028_Manage_Staff_Accounts.md) |
 
 > **Numbering note.** E011–E020 were reconciled against the implementation. Two sheets previously
 > carried a duplicate identifier — *Manage Violations* shared `UCN_SC_E013` with *Manage Timekeeping*
@@ -49,9 +49,8 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 | **Gateway** | Optional PayMongo integration for GCash/Maya fares. Disabled by default; enabled with sandbox test keys — see `docs/PAYMONGO_SETUP.md`. |
 | **Timekeeping record** | One row per driver per day, holding `time_in`, `time_out`, `hours_worked` and `overtime_hours`. |
 | **Suspension** | A flag that locks an account out of signing in without deleting it. Commuters carry `users.is_suspended` (UCN_SC_E018 A4); drivers carry `drivers.is_suspended` (UCN_SC_E012 A5), which additionally blocks clock-in and location broadcast and releases any assigned vehicle. |
-| **Vehicle status** | `active` (roadworthy, may carry a driver), `inactive`, `maintenance` (out of service, off the live map) or `disposed` (retired, kept for auditing). Only `active` / `inactive` may hold a driver — UCN_SC_E015. |
-| **Preventive maintenance** | The *schedule* record: the last service performed for a (vehicle, task) pair and the interval used to project the next due date/odometer. UCN_SC_E016. |
-| **Service log** | The *history* record: one row per service actually performed, holding vehicle, task, service date, odometer, cost, invoice and remarks. Written both by the vehicle-log page and by logging a scheduled service. UCN_SC_E016. |
+| **Vehicle status** | `active` (in service, the only status that may carry a driver and broadcast a location), `inactive`, `maintenance` (out of service, off the live map) or `disposed` (retired, kept for auditing) — UCN_SC_E015. |
+| **Preventive maintenance** | The maintenance record for a (vehicle, task) pair: the last service's date, odometer and cost, and the interval used to project the next due date/odometer. UCN_SC_E016. |
 | **PUJ** | Public Utility Vehicle. On the map, a PUJ marker is a **roadworthy** vehicle (status `active`/`inactive`) with a location reported in the last 5 minutes. |
 | **Privacy radius** | 200 m. Guest/commuter coordinates are randomly obfuscated within this radius. |
 

@@ -179,7 +179,6 @@
 
 <body class="antialiased text-gray-900 dark:text-white bg-white dark:bg-[#050505]" x-data="summaryApp()" x-cloak>
 
-    @include('components.flash')
     <x-layout.sidebar />
 
     <main :class="$store.sidebar.open ? 'md:ml-72' : 'md:ml-20'"
@@ -492,7 +491,7 @@
                             <button @click="activeTab = 'log'"
                                 :class="activeTab === 'log' ? 'tab-active' : 'tab-inactive'"
                                 class="pb-3 px-3 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.12em] transition-all whitespace-nowrap">
-                                <i class="fa-solid fa-list-check mr-1.5 text-[7px]"></i>Maint. Log
+                                <i class="fa-solid fa-list-check mr-1.5 text-[7px]"></i>Service History
                             </button>
                         </div>
 
@@ -981,7 +980,7 @@
                         </div>
 
                         <!-- ─────────────────────────────────── -->
-                        <!-- TAB: VEHICLE MAINTENANCE LOG        -->
+                        <!-- TAB: SERVICE HISTORY                -->
                         <!-- ─────────────────────────────────── -->
                         <div x-show="activeTab === 'log'" x-transition:enter="transition ease-out duration-200"
                             x-transition:enter-start="opacity-0 -translate-y-2"
@@ -996,8 +995,8 @@
                                                 class="fa-solid fa-list-check text-[8px] text-emerald-500 dark:text-emerald-400"></i>
                                         </div>
                                         <span
-                                            class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555]">Maintenance
-                                            Log</span>
+                                            class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555]">Service
+                                            History</span>
                                     </div>
                                     <span
                                         class="text-[7px] text-gray-400 dark:text-[#333] uppercase tracking-widest font-bold">{{ $allLogs->count() }}
@@ -1060,10 +1059,10 @@
                                                             </div>
                                                             <p
                                                                 class="text-[10px] sm:text-[11px] text-gray-400 dark:text-[#444] font-medium">
-                                                                No maintenance logs recorded yet</p>
+                                                                No services recorded yet</p>
                                                             <p
                                                                 class="text-[8px] text-gray-300 dark:text-[#333] mt-0.5">
-                                                                Logs will appear here once preventive maintenance is
+                                                                Services appear here once preventive maintenance is
                                                                 logged</p>
                                                         </div>
                                                     </td>

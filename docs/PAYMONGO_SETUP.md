@@ -121,6 +121,25 @@ gateway-specific field.
 **Wallet** payments are unaffected — they settle internally and never touch the
 gateway.
 
+### The sandbox checkout page
+
+PayMongo's **test-mode** hosted checkout shows *Authorize / Fail / Expire test
+payment* buttons instead of a normal "cancel" link, and it does **not** send the
+browser back to SmartCommute after *Fail* or *Expire*. That page is PayMongo's and
+cannot be changed from this app. What the app does to cover it:
+
+- the failure or expiry reaches us through the webhook (`payment.failed`, or a
+  session that expires), which marks the payment `failed` / `cancelled`;
+- the commuter can press the browser's back button or open **Payment History**,
+  where the attempt shows with its real status and nothing was charged;
+- the checkout page shows a *payment already in progress* notice, with a *Check
+  payment status* link, if the commuter comes back to the same trip while a payment
+  is still pending, and a repeated submission is answered with the existing
+  payment instead of opening a second checkout.
+
+In live mode the commuter sees the real bank / e-wallet screens and PayMongo
+redirects to the success / cancel URLs as described above.
+
 ---
 
 ## Configuration safety rail

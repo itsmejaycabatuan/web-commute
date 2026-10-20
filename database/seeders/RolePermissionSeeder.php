@@ -104,7 +104,6 @@ class RolePermissionSeeder extends Seeder
             'second_offense' => '1000',
             'third_offense' => '1000',
             'fourth_offense' => '1000',
-            'is_revoked' => false,
         ]);
 
         // Assign Roles to users here

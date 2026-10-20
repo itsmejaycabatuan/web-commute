@@ -16,7 +16,6 @@ use Illuminate\Support\Carbon;
  * @property string $second_offense
  * @property string $third_offense
  * @property string|null $fourth_offense
- * @property int $is_revoked
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @method static \Illuminate\Database\Eloquent\Builder|ViolationCode newModelQuery()
@@ -27,7 +26,6 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder|ViolationCode whereFirstOffense($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ViolationCode whereFourthOffense($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ViolationCode whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|ViolationCode whereIsRevoked($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ViolationCode whereSecondOffense($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ViolationCode whereThirdOffense($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ViolationCode whereUpdatedAt($value)
@@ -45,6 +43,5 @@ class ViolationCode extends Model
         'second_offense',
         'third_offense',
         'fourth_offense',
-        'is_revoked',
     ];
 }

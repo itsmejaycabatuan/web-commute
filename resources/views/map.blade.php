@@ -2079,7 +2079,6 @@
 
 <body class="antialiased">
 
-    @include('components.flash')
 
     <header
         class="fixed top-4 left-4 right-4 sm:top-5 sm:left-5 sm:right-5 z-50 flex flex-col sm:flex-row justify-between items-center sm:items-center gap-3 pointer-events-none">
@@ -5648,7 +5647,7 @@ sim._lastEtaUpdate = null;
             // Only the assigned driver ever broadcasts. Guests, commuters and
             // managers may share their own position for the ETA feature, but that
             // is never published to the vehicle-locations channel.
-            const isBroadcastingDriver = (userRole === 'driver' && !!userId && !!driverVehicleId);
+            let isBroadcastingDriver = (userRole === 'driver' && !!userId && !!driverVehicleId);
 
             // ── Broadcast driver GPS updates → LocationUpdated event ──
             let lastBroadcastAt = 0;
@@ -5683,6 +5682,22 @@ sim._lastEtaUpdate = null;
                     })
                     .catch(function(err) {
                         console.warn('Location broadcast failed:', err.message);
+                    })
+                    .then(function(res) {
+                        // The server refused (vehicle unassigned or taken out of
+                        // service, driver suspended): stop sharing at once.
+                        if (res && res.status === 403) {
+                            isBroadcastingDriver = false;
+                            stopGPSTracking(true);
+                            if (gpsIndicator) gpsIndicator.className = 'w-2 h-2 bg-amber-500 rounded-full dot-pulse';
+                            if (gpsStatusText) {
+                                gpsStatusText.textContent = 'GPS: Not broadcasting';
+                                gpsStatusText.className = 'text-[10px] text-amber-400';
+                            }
+                            res.json().catch(function() { return {}; }).then(function(body) {
+                                if (window.Toast) Toast.show('Location sharing stopped. ' + (body.message || ''), 'warning');
+                            });
+                        }
                     });
             }
 

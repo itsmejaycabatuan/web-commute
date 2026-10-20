@@ -11,6 +11,7 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken;
 use Spatie\Permission\Models\Permission;
@@ -155,6 +156,23 @@ class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
     public function preference()
     {
         return $this->hasOne(UserPreference::class);
+    }
+
+    /**
+     * End every session this account has open except the one in use now. Only
+     * the database session driver keeps sessions per user, so any other driver
+     * has nothing to remove here.
+     */
+    public function forgetOtherSessions(?string $keepSessionId): int
+    {
+        if (config('session.driver') !== 'database') {
+            return 0;
+        }
+
+        return DB::table(config('session.table', 'sessions'))
+            ->where('user_id', $this->id)
+            ->when($keepSessionId, fn ($query) => $query->where('id', '!=', $keepSessionId))
+            ->delete();
     }
 
     /**

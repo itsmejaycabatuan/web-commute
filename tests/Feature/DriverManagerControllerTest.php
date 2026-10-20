@@ -132,7 +132,6 @@ class DriverManagerControllerTest extends TestCase
             'second' => 200,
             'third' => 300,
             'fourth_plus' => 400,
-            'is_revocation' => 0,
         ];
     }
 

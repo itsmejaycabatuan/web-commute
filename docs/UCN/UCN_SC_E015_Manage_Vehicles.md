@@ -5,14 +5,16 @@
 | **Use_Case_ID**       | UCN_SC_E015                                                                                               |
 | **Use Case Name**     | Manage Vehicles                                                                                           |
 | **Primary Actor**     | Maintenance Manager (`role:maintenance_manager`)                                                          |
-| **Secondary Actor**   | System / Admin (read-only role boundaries)                                                                |
+| **Secondary Actor**   | Admin (`role:admin`) — may use the same page; System                                                       |
 | **Goal**               | Allow the Maintenance Manager to review, add, edit or delete the vehicles in the fleet.                    |
 | **Trigger**           | Maintenance Manager selects the **"Vehicles"** item on the sidebar (`GET /vehicles`).                       |
 | **Preconditions**     | 1. Maintenance Manager is authenticated and has fleet-management permissions.<br>2. Vehicle records exist in the system. |
 | **Supporting Actors** | Vehicle record, Driver record, Timekeeping record, Live map                                              |
 
 > **Corrections vs. the original narrative**
-> - **The vehicle page is restricted to the `maintenance_manager` role.** It used to sit in the shared authenticated group, so any signed-in role (commuter, driver, …) could open it; the routes now carry `role:maintenance_manager`.
+> - **The vehicle page is restricted to the `maintenance_manager` and `admin` roles.** It used to sit in the shared authenticated group, so any signed-in role (commuter, driver, …) could open it; the routes now carry `role:maintenance_manager|admin` and the admin menu has a *Vehicles* item.
+> - **Only an `active` vehicle can carry a driver.** *Inactive*, *maintenance* and *disposed* units cannot be assigned (the driver select is disabled in the form), and moving a vehicle to any of them releases its driver.
+> - **An assigned vehicle cannot be deleted** (the delete icon is locked and the server answers 409): unassign the driver first.
 > - **E3 (cannot dispose an active vehicle)** and **E4 (cannot assign an under-maintenance vehicle)** were not enforced in the original narrative and are now blocked by the controller.
 > - The postcondition *"removed from the live tracking map"* is now implemented: the map endpoint filters on vehicle status, so a unit set to **maintenance** or **disposed** drops off immediately instead of lingering until its last GPS ping ages out.
 > - The postcondition *"marked Disposed, historical logs preserved"* is enforced by refusing to hard-delete a vehicle that has service history (E6).
@@ -69,7 +71,8 @@
 2. The vehicle record in the database has been updated (`vehicles`).
 3. The system notifies the Maintenance Manager with a success message.
 4. If the status is set to **maintenance** or **disposed**: the vehicle is **removed from the live tracking map immediately** and **any assigned driver is detached**.
-5. A vehicle with service history is never erased: it is kept with status **disposed**, and its trip and maintenance logs remain available for auditing.
+5. A vehicle with preventive-maintenance records is never erased: it is kept with status **disposed**, and its maintenance records remain available for auditing.
+6. A vehicle that still has a driver cannot be deleted: the driver must be unassigned first.
 
 ---
 
@@ -84,8 +87,8 @@ The plate number already exists. System rejects the request with *"The plate num
 **E3 – Cannot Dispose Active Vehicle**
 The Maintenance Manager tries to set the status to **disposed** while the assigned driver has an open timekeeping row for today (i.e. they are still clocked into the unit). System rejects the request on *status* with *"Cannot dispose a vehicle that a driver is currently clocked into. Clock the driver out first."* The vehicle keeps its previous status and driver.
 
-**E4 – Assigning an Under-Maintenance Vehicle**
-The Maintenance Manager tries to assign a driver to a vehicle whose status is **maintenance** or **disposed**. System rejects the request on *driver_id* with *"A driver cannot be assigned to a vehicle with a … status."* Keeping the vehicle's *existing* driver while changing the status out of service is allowed — the driver is simply detached when the status is saved.
+**E4 – Assigning an Out-of-Service Vehicle**
+The Maintenance Manager tries to assign a driver to a vehicle whose status is **inactive**, **maintenance** or **disposed**. System rejects the request on *driver_id* with *"A driver cannot be assigned to a vehicle with a … status."* Keeping the vehicle's *existing* driver while changing the status out of service is allowed — the driver is simply detached when the status is saved.
 
 **E5 – Missing Required Fields**
 Any required field is empty or out of range (year, status, acquisition date). System lists the offending fields and performs no write.

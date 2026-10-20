@@ -399,22 +399,6 @@
                 </p>
             </div>
 
-            @if (session('success'))
-                <div
-                    class="mb-5 px-4 py-3 rounded-xl border border-emerald-500/15 bg-emerald-500/5 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0"><i
-                            class="fa-solid fa-check text-[8px] text-emerald-400"></i></div>
-                    <span class="text-[11px] text-emerald-400 font-medium">{{ session('success') }}</span>
-                </div>
-            @endif
-            @if (session('error'))
-                <div class="mb-5 px-4 py-3 rounded-xl border border-red-500/15 bg-red-500/5 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center shrink-0"><i
-                            class="fa-solid fa-xmark text-[8px] text-red-400"></i></div>
-                    <span class="text-[11px] text-red-400 font-medium">{{ session('error') }}</span>
-                </div>
-            @endif
-
             <!-- ══════════ TABLE CARD ══════════ -->
             <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] overflow-hidden">
                 <div class="p-4 sm:p-5 border-b border-[#1e1e1e]">
@@ -473,11 +457,8 @@
                                             class="text-[10px] font-bold text-[#555] font-mono"
                                             x-text="'₱' + Number(item.third_offense).toLocaleString()"></span></td>
                                     <td class="px-4 sm:px-6 py-3 text-right">
-                                        <template x-if="item.is_revoked"><span
-                                                class="text-[7px] sm:text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-400 border border-red-500/15">Revocation</span></template>
-                                        <template x-if="!item.is_revoked"><span
-                                                class="text-[10px] font-bold text-[#888] font-mono"
-                                                x-text="'₱' + Number(item.fourth_offense).toLocaleString()"></span></template>
+                                        <span class="text-[10px] font-bold text-[#888] font-mono"
+                                            x-text="'₱' + Number(item.fourth_offense).toLocaleString()"></span>
                                     </td>
                                     <td class="px-4 sm:px-6 py-3">
                                         <div class="flex items-center gap-1.5 justify-center">
@@ -558,7 +539,7 @@
                             <i class="fa-solid fa-xmark text-[10px] text-gray-500 dark:text-[#555]"></i>
                         </button>
                     </div>
-                    <form method="POST" id="violationForm" class="space-y-4">
+                    <form method="POST" id="violationForm" class="space-y-4" data-ajax novalidate>
                         @csrf
                         <template x-if="isEditing">@method('PUT')</template>
                         <input type="hidden" name="id" :value="form.id">
@@ -570,10 +551,6 @@
                                 <input type="text" name="code" x-model="form.code" maxlength="10"
                                     class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white font-mono font-bold focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition"
                                     placeholder="UV06">
-                                @error('code')
-                                    <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                            class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                                @enderror
                             </div>
                             <div>
                                 <label
@@ -583,10 +560,6 @@
                                 <input type="text" name="name" x-model="form.name"
                                     class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition"
                                     placeholder="e.g. Beating the Red Light">
-                                @error('name')
-                                    <p class="mt-1.5 text-[9px] text-red-400 flex items-center gap-1.5"><i
-                                            class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                                @enderror
                             </div>
                         </div>
                         <div>
@@ -612,36 +585,11 @@
                             </div>
                         </div>
                         <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <label class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">4th+
-                                    Offense Penalty</label>
-                                <div class="flex items-center gap-2.5">
-                                    <span class="text-[9px] font-bold"
-                                        :class="form.is_revocation ? 'text-red-400' : 'text-[#333]'">License
-                                        Revocation</span>
-                                    <!-- FIXED: Toggle Switch -->
-                                    <div class="relative flex items-center justify-center w-9 h-5 rounded-full cursor-pointer transition"
-                                        :class="form.is_revocation ? 'bg-red-600' : 'bg-gray-200 dark:bg-[#222]'"
-                                        @click="form.is_revocation = !form.is_revocation">
-                                        <div class="absolute left-0.5 w-4 h-4 rounded-full transition"
-                                            :class="form.is_revocation ? 'translate-x-4 bg-white' :
-                                                'translate-x-0 bg-gray-400 dark:bg-[#555]'">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- FIXED: 4th Offense Input -->
-                            <div x-show="!form.is_revocation" x-transition><input type="number" name="fourth_plus"
-                                    x-model="form.fourth_plus" min="0" step="100"
-                                    class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white font-mono text-right focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition"
-                                    placeholder="10,000"></div>
-                            <input type="hidden" name="is_revocation" :value="form.is_revocation ? '1' : '0'">
-                            <div x-show="form.is_revocation" x-transition
-                                class="flex items-center gap-3 p-3.5 rounded-xl bg-red-500/5 border border-red-500/15">
-                                <i class="fa-solid fa-triangle-exclamation text-red-400 text-[10px]"></i>
-                                <span class="text-[10px] text-red-400/80 font-medium">Driver's license will be revoked
-                                    on the 4th offense</span>
-                            </div>
+                            <label class="block mb-2 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">4th+
+                                Offense Fine (₱)</label>
+                            <input type="number" name="fourth_plus" x-model="form.fourth_plus" min="0" step="100"
+                                class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white font-mono text-right focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition"
+                                placeholder="10,000">
                         </div>
                         <div class="flex gap-2.5 pt-1">
                             <!-- FIXED: Cancel Button -->
@@ -695,7 +643,7 @@
                             <!-- FIXED: Cancel Button -->
                             <button @click="closeDeleteModal()"
                                 class="flex-1 py-3 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-[#222] transition">Cancel</button>
-                            <form method="POST" id="deleteForm" class="flex-1">
+                            <form method="POST" id="deleteForm" class="flex-1" data-ajax novalidate>
                                 @csrf @method('DELETE')
                                 <button type="submit"
                                     class="w-full py-3 rounded-xl bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 transition active:scale-[0.98] shadow-lg shadow-red-600/10">Delete</button>
@@ -736,20 +684,20 @@
                     </div>
                     <div class="px-6 sm:px-8 pb-2 shrink-0">
                         <div class="grid gap-1.5 items-center text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]"
-                            style="grid-template-columns: 28px 90px 1fr 75px 75px 75px 80px 40px 32px;">
+                            style="grid-template-columns: 28px 90px 1fr 75px 75px 75px 80px 32px;">
                             <span class="text-center">#</span><span>Code</span><span>Name</span><span
                                 class="text-right">1st</span><span class="text-right">2nd</span><span
-                                class="text-right">3rd</span><span class="text-right">4th+</span><span
-                                class="text-center">Rev</span><span></span>
+                                class="text-right">3rd</span><span class="text-right">4th+</span><span></span>
                         </div>
                     </div>
                     <div id="bulkRowsContainer" class="overflow-y-auto flex-1 px-6 sm:px-8 pb-2">
                         <div class="space-y-1">
                             <template x-for="(row, idx) in bulkRows" :key="idx">
+                              <div>
                                 <!-- FIXED: Row Wrapper -->
                                 <div class="grid gap-1.5 items-center rounded-lg px-1.5 py-1.5 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#151515] transition"
                                     :class="row._error ? '!border-red-500/30 !bg-red-500/5' : ''"
-                                    style="grid-template-columns: 28px 90px 1fr 75px 75px 75px 80px 40px 32px;">
+                                    style="grid-template-columns: 28px 90px 1fr 75px 75px 75px 80px 32px;">
                                     <span class="text-[#222] text-[10px] font-mono text-center select-none"
                                         x-text="idx + 1"></span>
 
@@ -771,24 +719,9 @@
                                     <input type="number" x-model="row.third" min="0" step="100"
                                         class="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[9px] text-gray-900 dark:text-white font-mono text-right focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition"
                                         placeholder="0">
-                                    <div class="relative">
-                                        <input type="number" x-show="!row.is_revocation" x-model="row.fourth_plus"
-                                            min="0" step="100" x-transition
-                                            class="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[9px] text-gray-900 dark:text-white font-mono text-right focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition"
-                                            placeholder="0">
-                                        <div x-show="row.is_revocation" x-transition
-                                            class="flex items-center justify-center h-[30px] rounded-lg border border-red-500/15 bg-red-500/5">
-                                            <span
-                                                class="text-[8px] font-bold uppercase tracking-wider text-red-400">Rev</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex justify-center">
-                                        <!-- FIXED: REV Toggle Button -->
-                                        <button type="button" @click="row.is_revocation = !row.is_revocation"
-                                            class="text-[8px] font-black px-2 py-1 rounded-md transition-all tracking-wider select-none"
-                                            :class="row.is_revocation ? 'bg-red-500/15 text-red-400 border border-red-500/25' :
-                                                'bg-gray-100 dark:bg-[#1a1a1a] text-gray-400 dark:text-[#333] border border-gray-200 dark:border-[#222] hover:border-gray-300 dark:hover:border-[#333] hover:text-gray-600 dark:hover:text-[#555]'">REV</button>
-                                    </div>
+                                    <input type="number" x-model="row.fourth_plus" min="0" step="100"
+                                        class="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[9px] text-gray-900 dark:text-white font-mono text-right focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition"
+                                        placeholder="0">
                                     <div class="flex justify-center">
                                         <button type="button" @click="removeBulkRow(idx)"
                                             :class="bulkRows.length <= 1 ? 'opacity-20 pointer-events-none' : ''"
@@ -796,6 +729,9 @@
                                                 class="fa-solid fa-xmark text-[8px]"></i></button>
                                     </div>
                                 </div>
+                                <p x-show="row._error && row._message" x-text="row._message"
+                                    class="app-field-error ml-8 mb-1"></p>
+                              </div>
                             </template>
                         </div>
                     </div>
@@ -891,8 +827,7 @@
                     first: '',
                     second: '',
                     third: '',
-                    fourth_plus: '',
-                    is_revocation: false
+                    fourth_plus: ''
                 },
                 deleteTarget: null,
                 bulkRows: [],
@@ -911,8 +846,8 @@
                         second: '0',
                         third: '0',
                         fourth_plus: '0',
-                        is_revocation: false,
-                        _error: false
+                        _error: false,
+                        _message: ''
                     };
                 },
 
@@ -925,8 +860,7 @@
                         first: '0',
                         second: '0',
                         third: '0',
-                        fourth_plus: '0',
-                        is_revocation: false
+                        fourth_plus: '0'
                     };
                     document.getElementById('violationForm').action = '{{ route('violation-codes.store') }}';
                     this.showModal = true;
@@ -940,8 +874,7 @@
                         first: item.first_offense,
                         second: item.second_offense,
                         third: item.third_offense,
-                        fourth_plus: item.fourth_offense || '',
-                        is_revocation: !!item.is_revoked
+                        fourth_plus: item.fourth_offense || ''
                     };
                     document.getElementById('violationForm').action = '{{ route('violation-codes.update', ':id') }}'
                         .replace(':id', item.id);
@@ -994,9 +927,13 @@
                 async submitBulk() {
                     this.bulkRows.forEach(r => {
                         r._error = !r.code.trim() || !r.name.trim();
+                        r._message = r._error ? 'Enter both a code and a violation name.' : '';
                     });
                     const validRows = this.bulkRows.filter(r => r.code.trim() && r.name.trim());
-                    if (validRows.length === 0) return;
+                    if (validRows.length === 0) {
+                        Toast.show('Fill in at least one row with a code and a name.', 'error');
+                        return;
+                    }
                     this.bulkSubmitting = true;
                     this.bulkSubmittedCount = 0;
                     this.bulkTotalCount = validRows.length;
@@ -1013,28 +950,35 @@
                         fd.append('first', row.first || '0');
                         fd.append('second', row.second || '0');
                         fd.append('third', row.third || '0');
-                        fd.append('fourth_plus', row.is_revocation ? '0' : (row.fourth_plus || '0'));
-                        fd.append('is_revocation', row.is_revocation ? '1' : '0');
+                        fd.append('fourth_plus', row.fourth_plus || '0');
                         try {
                             const res = await fetch('{{ route('violation-codes.store') }}', {
                                 method: 'POST',
                                 body: fd,
                                 headers: {
+                                    'Accept': 'application/json',
                                     'X-Requested-With': 'XMLHttpRequest'
                                 }
                             });
+                            const data = await res.json().catch(() => ({}));
                             if (!res.ok) {
-                                const t = await res.text().catch(() => '');
-                                throw new Error(t || 'Server error');
+                                const first = data.errors ? Object.values(data.errors)[0][0] : null;
+                                throw new Error(first || data.message || 'Server error');
                             }
+                            row._done = true;
                             this.bulkSubmittedCount++;
                         } catch (e) {
+                            // Keep the modal open on the row that failed, with the reason under it;
+                            // rows that were already created are taken out of the list.
+                            row._error = true;
+                            row._message = e.message;
+                            this.bulkRows = this.bulkRows.filter(r => !r._done);
                             this.bulkSubmitting = false;
-                            alert('Failed at "' + row.code + ' — ' + row.name + '". Stopped at ' + this
-                                .bulkSubmittedCount + ' of ' + this.bulkTotalCount + '.');
+                            Toast.show('Could not add "' + row.code + '": ' + e.message, 'error');
                             return;
                         }
                     }
+                    Toast.queue(validRows.length + (validRows.length === 1 ? ' violation code' : ' violation codes') + ' added.', 'success');
                     window.location.reload();
                 }
             };

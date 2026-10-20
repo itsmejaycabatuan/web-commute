@@ -19,12 +19,6 @@ class MaintenanceManagerControllerTest extends TestCase
         Role::firstOrCreate(['name' => 'maintenance_manager']);
     }
 
-    public function test_maintenance_logs_route_responds()
-    {
-        $response = $this->get(route('maintenance-manager.maintenance-logs'));
-        $this->assertTrue($response->getStatusCode() > 0);
-    }
-
     public function test_maintenance_tasks_route_responds()
     {
         $response = $this->get(route('maintenance-manager.maintenance-tasks'));
@@ -59,22 +53,6 @@ class MaintenanceManagerControllerTest extends TestCase
     public function test_preventive_maintenance_route_responds()
     {
         $response = $this->get(route('maintenance-manager.preventive-maintenance'));
-        $this->assertTrue($response->getStatusCode() > 0);
-    }
-
-    public function test_vehicle_maintenance_log_route_responds()
-    {
-        $response = $this->get(route('maintenance-manager.vehicle-maintenance-log'));
-        $this->assertTrue($response->getStatusCode() > 0);
-    }
-
-    public function test_vehicle_maintenance_log_store_route_responds()
-    {
-        $response = $this->withoutMiddleware([VerifyCsrfToken::class])
-            ->post(route('maintenance-manager.vehicle-maintenance-log.store'), [
-                'vehicle_id' => 1,
-                'notes' => 'Test maintenance',
-            ]);
         $this->assertTrue($response->getStatusCode() > 0);
     }
 

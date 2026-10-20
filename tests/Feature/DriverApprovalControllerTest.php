@@ -62,7 +62,6 @@ class DriverApprovalControllerTest extends TestCase
         $this->actAsAdmin()
             ->withoutMiddleware(VerifyCsrfToken::class)
             ->post(route('drivers.store'), [
-                'driver_code' => 'DRV-001',
                 'name' => 'John Doe',
                 'email' => 'driver@test.com',
                 'password' => 'password123',
@@ -82,6 +81,9 @@ class DriverApprovalControllerTest extends TestCase
             'is_approved' => 1,
         ]);
 
+        // The driver code is generated, never typed in.
+        $this->assertMatchesRegularExpression('/^DRV-\d{6}$/', $user->driver->driver_code);
+
         $this->assertTrue($user->hasRole('driver'));
         Storage::disk('public')->assertExists('licenses/' . $file->hashName());
     }
@@ -97,7 +99,7 @@ class DriverApprovalControllerTest extends TestCase
 
             // FIX: Removed 'license_image' because controller didn't validate it in the original snippet.
             // If you added validation to the controller, add it back here.
-            ->assertSessionHasErrors(['name', 'driver_code', 'password', 'license_number', 'license_code', 'expiration_date', 'contact_info', 'license_image']);
+            ->assertSessionHasErrors(['name', 'password', 'license_number', 'license_code', 'expiration_date', 'contact_info', 'license_image']);
     }
 
     public function test_edit_returns_404_if_driver_not_found()
@@ -126,7 +128,6 @@ class DriverApprovalControllerTest extends TestCase
                 'license_code' => 'NON-PRO',
                 'expiration_date' => '2026-01-01',
                 'contact_info' => '09189999999',
-                'driver_code' => 'DRV-UPD',
                 'is_approved' => '1',
                 'is_rejected' => '0',
                 'license_image' => $newFile,
@@ -156,7 +157,6 @@ class DriverApprovalControllerTest extends TestCase
                 'license_number' => $driver->license_number,
                 'license_code' => $driver->license_code,
                 'expiration_date' => $driver->expiration_date,
-                'driver_code' => $driver->driver_code,
             ]);
 
         $this->assertDatabaseHas('drivers', [
@@ -177,7 +177,6 @@ class DriverApprovalControllerTest extends TestCase
                 'license_number' => $driver->license_number,
                 'license_code' => $driver->license_code,
                 'expiration_date' => $driver->expiration_date,
-                'driver_code' => $driver->driver_code,
             ])
             ->assertRedirect()
             ->assertSessionHas('error', 'This driver is already approved.');

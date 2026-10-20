@@ -40,14 +40,11 @@ class DriverApprovalController extends Controller
                 'users.email',
             ])
             ->addSelect(DB::raw('CASE WHEN drivers.license_image_data IS NOT NULL AND LENGTH(drivers.license_image_data) > 0 THEN 1 ELSE 0 END as has_license_in_db'))
+            ->addSelect(DB::raw('(SELECT COUNT(*) FROM vehicles WHERE vehicles.driver_id = drivers.id) as vehicles_count'))
             ->orderByDesc('drivers.created_at')
             ->get()
-            ->sortBy(fn(Driver $d) => match ($d->license_status) {
-                'pending' => 0,
-                'rejected' => 1,
-                'approved' => 2,
-                default => 3,
-            })
+            // Pending registrations first, then rejected, then approved drivers.
+            ->sortBy(fn (Driver $d) => $d->isPending() ? 0 : ($d->is_rejected ? 1 : 2))
             ->values();
 
         return view('admin.drivers.index', compact('drivers'));
@@ -61,7 +58,6 @@ class DriverApprovalController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'driver_code' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
@@ -91,7 +87,6 @@ class DriverApprovalController extends Controller
                     'license_image_path' => $path,
                     'license_image_data' => null,
                     'license_image_mime' => null,
-                    'driver_code' => $validated['driver_code'],
                     'expiration_date' => $validated['expiration_date'],
                     'license_number' => $validated['license_number'],
                     'is_approved' => true,
@@ -130,13 +125,18 @@ class DriverApprovalController extends Controller
             return back()->with('error', 'Driver not found.');
         }
 
+        // A registration that is still waiting for approval can only be approved
+        // or rejected, not edited.
+        if ($driver->isPending()) {
+            return back()->with('error', 'This driver is still pending approval. Approve or reject the registration first.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'license_number' => 'required|string|max:255|unique:drivers,license_number,'.$driver->id,
             'license_code' => 'required|string|max:255',
             'expiration_date' => 'required|date',
             'contact_info' => 'required|string|max:255',
-            'driver_code' => 'required|string|max:255',
             'is_approved' => 'in:0,1',
             'is_rejected' => 'in:0,1',
             // E7 — the replacement licence image must be an image of at most 2 MB.
@@ -224,6 +224,17 @@ class DriverApprovalController extends Controller
             return back()->with('error', 'Driver not found.');
         }
 
+        // Only an approved driver can be suspended; a pending or rejected
+        // registration has nothing to suspend.
+        if (! $driver->isSuspended() && ! $driver->is_approved) {
+            return back()->with(
+                'error',
+                $driver->isPending()
+                    ? 'This driver is still pending approval. Approve or reject the registration first.'
+                    : 'Only an approved driver can be suspended.'
+            );
+        }
+
         $validated = $request->validate([
             'suspension_reason' => 'nullable|string|max:255',
         ]);
@@ -262,7 +273,6 @@ class DriverApprovalController extends Controller
             'license_number' => 'required|string|max:255|unique:drivers,license_number,'.$driver->id,
             'license_code' => 'required|string|max:255',
             'expiration_date' => 'required|date',
-            'driver_code' => 'required|string|max:255',
         ]);
 
         if ($driver->is_approved) {
@@ -278,7 +288,7 @@ class DriverApprovalController extends Controller
                 'license_number' => $validated['license_number'],
                 'license_code' => $validated['license_code'],
                 'expiration_date' => $validated['expiration_date'],
-                'driver_code' => $validated['driver_code'],
+                'driver_code' => $driver->driver_code ?: Driver::nextDriverCode(),
             ]);
         } catch (QueryException $e) {
             report($e);

@@ -6,7 +6,6 @@ use App\Models\Driver;
 use App\Models\Payment;
 use App\Models\PreventiveMaintenance;
 use App\Models\TopupHistory;
-use App\Models\VehicleMaintenanceLog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -91,7 +90,7 @@ class ReportController extends Controller
             // 1. Calculate Stats
             $data['financialStats'] = [
                 'total_revenue' => Payment::whereBetween('paid_at', [$start, $end])->sum('price'),
-                'total_topups' => TopupHistory::whereBetween('created_at', [$start, $end])->sum('amount_added'),
+                'total_topups' => TopupHistory::completed()->whereBetween('created_at', [$start, $end])->sum('amount_added'),
                 'tx_count' => Payment::whereBetween('paid_at', [$start, $end])->count(),
             ];
 
@@ -176,9 +175,8 @@ class ReportController extends Controller
             // 2. Overdue: Scheduled date has passed
             $data['maintStats']['overdue'] = PreventiveMaintenance::where('last_service_date', '<', $now)->count();
 
-            // 3. Completed: Count actual work logs created within the selected date range
-            // (Since 'PreventiveMaintenance' is the schedule, 'VehicleMaintenanceLog' is the history)
-            $data['maintStats']['completed'] = VehicleMaintenanceLog::whereBetween('created_at', [$start, $end])->count();
+            // 3. Completed: services recorded within the selected date range
+            $data['maintStats']['completed'] = PreventiveMaintenance::whereBetween('created_at', [$start, $end])->count();
 
             // 4. Upcoming Schedule (For the table)
             // Get scheduled items where the due date is >= now (Pending) or < now (Overdue)
@@ -213,8 +211,7 @@ class ReportController extends Controller
             'financial' => Payment::whereBetween('paid_at', [$start, $end])->count() === 0
                 && TopupHistory::whereBetween('created_at', [$start, $end])->count() === 0,
             'driver' => Driver::count() === 0,
-            'maintenance' => PreventiveMaintenance::count() === 0
-                && VehicleMaintenanceLog::whereBetween('created_at', [$start, $end])->count() === 0,
+            'maintenance' => PreventiveMaintenance::count() === 0,
             default => true,
         };
     }
@@ -270,7 +267,7 @@ class ReportController extends Controller
                 }
 
                 // Get Topups
-                $topups = TopupHistory::whereBetween('created_at', [$start, $end])
+                $topups = TopupHistory::completed()->whereBetween('created_at', [$start, $end])
                     ->with('user:id,email')
                     ->get();
 

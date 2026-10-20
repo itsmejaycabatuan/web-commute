@@ -191,7 +191,6 @@
 }"
     :class="showModal ? 'overflow-hidden' : ''">
 
-    @include('components.flash')
     <x-layout.sidebar />
 
     <main :class="$store.sidebar.open ? 'md:ml-72' : 'md:ml-20'"
@@ -570,7 +569,7 @@
                 x-transition:leave="transition ease-in duration-200"
                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                 x-transition:leave-end="opacity-0 scale-95 translate-y-2" method="POST"
-                action="{{ route('maintenance-manager.preventive-maintenance.store') }}" @click.stop
+                action="{{ route('maintenance-manager.preventive-maintenance.store') }}" @click.stop data-ajax novalidate
                 class="relative w-full max-w-lg glass-panel rounded-[2rem] flex flex-col max-h-[90vh] overflow-hidden modal-panel">
                 @csrf
                 <input type="hidden" name="vehicle_id" x-model="form.vehicle_id">

@@ -56,12 +56,24 @@ class PaymentController extends Controller
             activity()->event('Index')->log('Fare pricing unavailable, using submitted figure.');
         }
 
+        // Coming back from the gateway's checkout page (browser Back) lands here
+        // again with the same trip: say so instead of silently offering a second
+        // payment for it.
+        $inFlight = Payment::where('paid_by', $userId)
+            ->where('status', Payment::STATUS_PENDING)
+            ->where('starting_point', $request->pickup)
+            ->where('destination', $request->destination)
+            ->where('created_at', '>=', now()->subMinutes(30))
+            ->latest()
+            ->first();
+
         return view('commuter.payment', [
             'pickup' => $request->pickup,
             'destination' => $request->destination,
             'distance' => $request->distance,
             'price' => $price,
             'balance' => $balance,
+            'inFlightPayment' => $inFlight,
         ]);
     }
 
@@ -87,8 +99,10 @@ class PaymentController extends Controller
         // E3 - Already Paid / duplicate submission guard.
         // The transaction id is minted server-side when the checkout page is
         // rendered, so a double-click or refresh replays the same id.
-        if (Payment::where('paid_by', $userId)->where('transaction_id', $transactionId)->exists()) {
-            return back()->with('error', 'This fare has already been paid. Please wait a moment before retrying.');
+        $existing = Payment::where('paid_by', $userId)->where('transaction_id', $transactionId)->first();
+
+        if ($existing) {
+            return $this->replayedPayment($existing);
         }
 
         // The fare is RE-PRICED server-side from the published rate table; the
@@ -149,6 +163,26 @@ class PaymentController extends Controller
         }
 
         return back()->with('error', 'There was a problem trying to process the payment');
+    }
+
+    /**
+     * The same transaction id was submitted again (double click, Back button,
+     * refresh). Tell the commuter where that payment actually stands instead of
+     * charging again or showing a generic error.
+     */
+    protected function replayedPayment(Payment $payment): \Illuminate\Http\RedirectResponse
+    {
+        return match ($payment->status) {
+            Payment::STATUS_PAID => redirect()
+                ->route('payment.showReceipt', $payment->id)
+                ->with('warning', 'This fare has already been paid. Here is your receipt.'),
+            Payment::STATUS_PENDING => redirect()
+                ->route('payment.returned', ['ref' => $payment->transaction_id])
+                ->with('warning', 'This payment is already being processed. Please wait for the confirmation.'),
+            default => redirect()
+                ->route('payment.history')
+                ->with('error', 'That payment did not go through and nothing was charged. Start a new payment to try again.'),
+        };
     }
 
     /**
@@ -406,9 +440,11 @@ class PaymentController extends Controller
         });
 
         // DB-level sum instead of collecting all records
-        $totalSpent = Payment::where('paid_by', $userId)->sum('price');
+        // Only settled fares were actually charged.
+        $totalSpent = Payment::settled()->where('paid_by', $userId)->sum('price');
 
-        $recentReceipts = $query->orderBy('paid_at', 'desc')->paginate(4)->withQueryString();
+        // Pending / failed attempts have no paid_at: sort them by when they were started.
+        $recentReceipts = $query->orderByRaw('COALESCE(paid_at, created_at) DESC')->paginate(10)->withQueryString();
 
         return view('commuter.paymenthistory', [
             'recentReceipts' => $recentReceipts,
@@ -520,6 +556,7 @@ class PaymentController extends Controller
                 'wallet_id' => $wallet->id,
                 'amount_added' => $amount,
                 'payment_method' => $request->{'payment-method'},
+                'status' => TopupHistory::STATUS_COMPLETED,
             ]);
 
             return back()->with('success', 'Successfully topped up!');
@@ -560,33 +597,49 @@ class PaymentController extends Controller
         ]);
     }
 
+    /**
+     * Admin ledger of every fare payment attempt - pending, paid, failed and
+     * cancelled - narrowed by the filters below. The money figures count settled
+     * payments only.
+     */
     public function showTransactions(Request $request)
     {
         activity()->event('Showtransactions')->log('Action performed: showTransactions');
-        $query = Payment::with('user'); // Ensure the relationship is defined in Transaction model
 
-        // dd($query->latest()->paginate(15));
+        $filters = $request->validate([
+            'search' => 'nullable|string|max:100',
+            'status' => 'nullable|in:'.implode(',', Payment::STATUSES),
+            'method' => 'nullable|in:'.implode(',', self::SELF_SERVICE_FARE_METHODS),
+            'from_date' => 'nullable|date',
+            'to_date' => 'nullable|date|after_or_equal:from_date',
+            'min_amount' => 'nullable|numeric|min:0',
+            'max_amount' => 'nullable|numeric|min:0',
+        ]);
 
-        if ($request->filled('search')) {
-            $query->whereHas('user', function ($q) use ($request) {
-                $q->where('email', 'like', "%{$request->search}%");
-            })->orWhere('transaction_id', 'like', "%{$request->search}%");
-        }
-
-        if ($request->filled('from_date')) {
-            $query->whereDate('created_at', '>=', $request->from_date);
-        }
-
-        if ($request->filled('to_date')) {
-            $query->whereDate('created_at', '<=', $request->to_date);
-        }
+        $query = Payment::with('user')
+            ->when($filters['search'] ?? null, function ($q, $term) {
+                $q->where(function ($sub) use ($term) {
+                    $sub->where('transaction_id', 'like', "%{$term}%")
+                        ->orWhere('destination', 'like', "%{$term}%")
+                        ->orWhereHas('user', fn ($u) => $u->where('email', 'like', "%{$term}%"));
+                });
+            })
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
+            ->when($filters['method'] ?? null, fn ($q, $method) => $q->where('payment_method', $method))
+            ->when($filters['from_date'] ?? null, fn ($q, $date) => $q->whereDate('created_at', '>=', $date))
+            ->when($filters['to_date'] ?? null, fn ($q, $date) => $q->whereDate('created_at', '<=', $date))
+            ->when(isset($filters['min_amount']), fn ($q) => $q->where('price', '>=', $filters['min_amount']))
+            ->when(isset($filters['max_amount']), fn ($q) => $q->where('price', '<=', $filters['max_amount']));
 
         return view('admin.fares.transactions', [
-            'allTransactions' => $query->latest()->paginate(5),
+            'allTransactions' => $query->latest()->paginate(10)->withQueryString(),
+            'statuses' => Payment::STATUSES,
+            'methods' => self::SELF_SERVICE_FARE_METHODS,
             // The list shows every attempt, but the money figures count settled ones only.
             'totalRevenue' => Payment::settled()->sum('price'),
             'settledCount' => Payment::settled()->count(),
             'activeUsersCount' => Payment::settled()->distinct()->count('paid_by'),
+            'statusCounts' => Payment::selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total', 'status'),
         ]);
     }
 
@@ -609,30 +662,45 @@ class PaymentController extends Controller
         ]);
     }
 
+    /**
+     * Admin ledger of every wallet top-up, whatever its payment status. The
+     * "funds added" figure counts completed top-ups only.
+     */
     public function showTopupsAdmin(Request $request)
     {
         activity()->event('Showtopupsadmin')->log('Action performed: showTopupsAdmin');
 
-        $query = TopupHistory::with('user');
-        $total = TopupHistory::sum('amount_added');
+        $filters = $request->validate([
+            'search' => 'nullable|string|max:100',
+            'status' => 'nullable|in:'.implode(',', TopupHistory::STATUSES),
+            'method' => 'nullable|string|max:50',
+            'from_date' => 'nullable|date',
+            'to_date' => 'nullable|date|after_or_equal:from_date',
+            'min_amount' => 'nullable|numeric|min:0',
+            'max_amount' => 'nullable|numeric|min:0',
+        ]);
 
-        if ($request->filled('search')) {
-            $query->whereHas('user', function ($q) use ($request) {
-                $q->where('email', 'like', "%{$request->search}%");
-            })->orWhere('id', 'like', "%{$request->search}%");
-        }
-
-        if ($request->filled('from_date')) {
-            $query->whereDate('created_at', '>=', $request->from_date);
-        }
-
-        if ($request->filled('to_date')) {
-            $query->whereDate('created_at', '<=', $request->to_date);
-        }
+        $query = TopupHistory::with('user')
+            ->when($filters['search'] ?? null, function ($q, $term) {
+                $q->where(function ($sub) use ($term) {
+                    $sub->where('id', 'like', "%{$term}%")
+                        ->orWhereHas('user', fn ($u) => $u->where('email', 'like', "%{$term}%"));
+                });
+            })
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
+            ->when($filters['method'] ?? null, fn ($q, $method) => $q->where('payment_method', $method))
+            ->when($filters['from_date'] ?? null, fn ($q, $date) => $q->whereDate('created_at', '>=', $date))
+            ->when($filters['to_date'] ?? null, fn ($q, $date) => $q->whereDate('created_at', '<=', $date))
+            ->when(isset($filters['min_amount']), fn ($q) => $q->where('amount_added', '>=', $filters['min_amount']))
+            ->when(isset($filters['max_amount']), fn ($q) => $q->where('amount_added', '<=', $filters['max_amount']));
 
         return view('admin.topups', [
-            'totalFundsAdded' => $total,
-            'transactions' => $query->latest()->paginate(5),
+            'totalFundsAdded' => TopupHistory::completed()->sum('amount_added'),
+            'completedCount' => TopupHistory::completed()->count(),
+            'transactions' => $query->latest()->paginate(10)->withQueryString(),
+            'statuses' => TopupHistory::STATUSES,
+            'methods' => TopupHistory::distinct()->orderBy('payment_method')->pluck('payment_method'),
+            'statusCounts' => TopupHistory::selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total', 'status'),
         ]);
     }
 }

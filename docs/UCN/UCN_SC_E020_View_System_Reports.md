@@ -9,7 +9,7 @@
 | **Goal**               | Allow the Admin to review the system reports for a selected report type and date range, and to export the result. |
 | **Trigger**           | Admin clicks the **"Reports & Analytics"** item on the sidebar (`GET /reports`).                        |
 | **Preconditions**     | 1. Admin is authenticated and registered to the system.<br>2. Enough data has been generated throughout the system for the selected report type. |
-| **Supporting Actors** | Payments, top-ups, drivers + timekeeping, preventive maintenance and service logs                       |
+| **Supporting Actors** | Payments, top-ups, drivers + timekeeping, preventive maintenance records                       |
 
 > **Corrections vs. the original narrative**
 > - The sidebar item is **"Reports & Analytics"**, not *"Reports & Analytics button"* phrased as *"the 'Reports & Analytics' button"* — the wording matched, but the item is only present on the Admin menu.

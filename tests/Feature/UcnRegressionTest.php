@@ -127,9 +127,12 @@ class UcnRegressionTest extends TestCase
         $this->actingAs($user)->withoutMiddleware(VerifyCsrfToken::class)
             ->post(route('payment.process'), $this->farePayload());
 
+        // The replay is not charged again: the commuter is taken to the receipt
+        // of the payment that already went through, with a message saying so.
         $this->actingAs($user)->withoutMiddleware(VerifyCsrfToken::class)
             ->post(route('payment.process'), $this->farePayload())
-            ->assertSessionHas('error');
+            ->assertRedirect(route('payment.showReceipt', Payment::where('paid_by', $user->id)->value('id')))
+            ->assertSessionHas('warning');
 
         $this->assertSame(1, Payment::where('paid_by', $user->id)->count());
         $this->assertEquals(482.0, (float) Wallet::where('user_id', $user->id)->value('balance'));

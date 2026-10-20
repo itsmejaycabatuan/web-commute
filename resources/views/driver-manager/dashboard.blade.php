@@ -351,21 +351,6 @@
             <div class="max-w-7xl mx-auto">
 
                 <!-- Flash Messages -->
-                @if (session('success'))
-                    <div
-                        class="mb-4 sm:mb-6 px-3.5 sm:px-4 py-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-emerald-400 text-[10px] sm:text-[11px] font-medium flex items-center gap-2">
-                        <i class="fa-solid fa-circle-check text-[9px] sm:text-[10px]"></i>
-                        {{ session('success') }}
-                    </div>
-                @endif
-                @if (session('error'))
-                    <div
-                        class="mb-4 sm:mb-6 px-3.5 sm:px-4 py-3 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 text-[10px] sm:text-[11px] font-medium flex items-center gap-2">
-                        <i class="fa-solid fa-circle-exclamation text-[9px] sm:text-[10px]"></i>
-                        {{ session('error') }}
-                    </div>
-                @endif
-
                 <!-- ── Mobile: Identity Card ── -->
                 <div class="lg:hidden mb-5">
                     <div class="glass-card p-4 rounded-[1.25rem]">

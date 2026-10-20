@@ -73,7 +73,7 @@ Any other exception in the `destroy` method results in a 500 error page.
 - For a production‑ready implementation, consider adding explicit cleanup (e.g., deleting related records first) or using database cascades to avoid data inconsistency.
 - The action is immediate and irreversible; there is no confirmation step beyond the browser’s `confirm()` dialog.
 - After deletion, the user must register anew if they wish to use the system again.
-- The route `/delete-account` is not grouped under any middleware besides `auth`; it is accessible to any authenticated user regardless of role.
+- The route `/delete-account` is not grouped under any role middleware; it is accessible to any authenticated user regardless of role. A **driver who still holds a vehicle cannot delete their account** — they are told to ask the maintenance manager to unassign it first.
 - Success message is flashed via the session and displayed on the subsequent login page load.
 
 ---

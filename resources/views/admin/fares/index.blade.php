@@ -120,26 +120,6 @@
                 </p>
             </div>
 
-            @if (session('success'))
-                <div
-                    class="mb-5 px-4 py-3 rounded-xl border border-emerald-500/15 bg-emerald-500/5 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-check text-[8px] text-emerald-500 dark:text-emerald-400"></i>
-                    </div>
-                    <span
-                        class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">{{ session('success') }}</span>
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="mb-5 px-4 py-3 rounded-xl border border-red-500/15 bg-red-500/5 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-xmark text-[8px] text-red-500 dark:text-red-400"></i>
-                    </div>
-                    <span class="text-[11px] text-red-600 dark:text-red-400 font-medium">{{ session('error') }}</span>
-                </div>
-            @endif
-
             @if ($errors->any())
                 <div
                     class="mb-5 px-4 py-3 rounded-xl border border-red-500/15 bg-red-500/5 flex items-start gap-3">
@@ -229,7 +209,7 @@
                     </button>
 
                     <form method="POST" action="{{ route('fares.upload') }}" enctype="multipart/form-data"
-                        class="flex items-center gap-2">
+                        class="flex items-center gap-2" data-ajax novalidate>
                         @csrf
                         @method('PUT')
                         <input type="file" name="fare" id="fare">
@@ -247,7 +227,7 @@
             </div>
 
             <!-- ══════════ RATES TABLE ══════════ -->
-            <form action="{{ route('fares.bulk-update') }}" method="POST">
+            <form action="{{ route('fares.bulk-update') }}" method="POST" data-ajax novalidate>
                 @csrf
                 @method('PUT')
 

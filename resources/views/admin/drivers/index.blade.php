@@ -95,7 +95,9 @@
                                 ? true
                                 : this.filter === 'suspended'
                                     ? d.is_suspended
-                                    : d.status === this.filter;
+                                    : (this.filter === 'expiring' || this.filter === 'expired')
+                                        ? d.license_state === this.filter
+                                        : d.status === this.filter;
                             return matchSearch && matchFilter;
                         });
                     },
@@ -311,6 +313,9 @@
                         : $d->expiration_date->format('M d, Y'))
                     : '',
                 'driver_code' => $d->driver_code ?? '',
+                'license_state' => $d->licenseState(),
+                'license_days' => $d->licenseDaysRemaining(),
+                'has_vehicle' => (int) ($d->vehicles_count ?? 0) > 0,
                 'is_approved' => $d->is_approved,
                 'is_rejected' => $d->is_rejected,
                 'is_suspended' => (bool) $d->is_suspended,
@@ -337,7 +342,6 @@
 
     <div x-data="driverReview()" @keydown.escape.window="closeAllModals()">
 
-        @include('components.flash')
         <x-layout.sidebar />
 
         <main :class="$store.sidebar.open ? 'md:ml-72' : 'md:ml-20'"
@@ -381,26 +385,6 @@
                     registered driver accounts
                 </p>
             </div>
-
-            @if (session('success'))
-                <div
-                    class="mb-5 px-4 py-3 rounded-xl border border-emerald-500/15 bg-emerald-500/5 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-check text-[8px] text-emerald-500 dark:text-emerald-400"></i>
-                    </div>
-                    <span
-                        class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">{{ session('success') }}</span>
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="mb-5 px-4 py-3 rounded-xl border border-red-500/15 bg-red-500/5 flex items-center gap-3">
-                    <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-xmark text-[8px] text-red-500 dark:text-red-400"></i>
-                    </div>
-                    <span class="text-[11px] text-red-600 dark:text-red-400 font-medium">{{ session('error') }}</span>
-                </div>
-            @endif
 
             <!-- ══════════ TABLE CARD ══════════ -->
             <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] overflow-hidden">
@@ -461,6 +445,20 @@
                                 class="px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest border transition">
                                 Suspended
                             </button>
+                            <button @click="filter = 'expiring'"
+                                :class="filter === 'expiring' ?
+                                    'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' :
+                                    'bg-gray-50 dark:bg-[#111] text-gray-500 dark:text-[#555] border-gray-200 dark:border-[#1e1e1e] hover:border-gray-300 dark:hover:border-[#333] hover:text-gray-700 dark:hover:text-[#888]'"
+                                class="px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest border transition">
+                                License Expiring
+                            </button>
+                            <button @click="filter = 'expired'"
+                                :class="filter === 'expired' ?
+                                    'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20' :
+                                    'bg-gray-50 dark:bg-[#111] text-gray-500 dark:text-[#555] border-gray-200 dark:border-[#1e1e1e] hover:border-gray-300 dark:hover:border-[#333] hover:text-gray-700 dark:hover:text-[#888]'"
+                                class="px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest border transition">
+                                License Expired
+                            </button>
                         </div>
                         <span class="text-[8px] font-bold text-gray-400 dark:text-[#333] uppercase tracking-widest"
                             x-text="filteredDrivers.length + ' of ' + drivers.length"></span>
@@ -476,6 +474,7 @@
                                 <th class="px-4 sm:px-6 py-3 font-bold w-12">#</th>
                                 <th class="px-4 sm:px-6 py-3 font-bold">Driver</th>
                                 <th class="px-4 sm:px-6 py-3 font-bold">Status</th>
+                                <th class="px-4 sm:px-6 py-3 font-bold">License</th>
                                 <th class="px-4 sm:px-6 py-3 font-bold">Registered</th>
                                 <th class="px-4 sm:px-6 py-3 font-bold text-right">Actions</th>
                             </tr>
@@ -499,7 +498,7 @@
                                                 <p class="text-[10px] sm:text-[11px] font-bold text-gray-700 dark:text-[#ccc] truncate max-w-[200px]"
                                                     x-text="driver.email"></p>
                                                 <p class="text-[7px] text-gray-400 dark:text-[#444] font-bold uppercase truncate max-w-[200px]"
-                                                    x-text="driver.name || 'No name set'"></p>
+                                                    x-text="(driver.name || 'No name set') + (driver.driver_code ? ' · ' + driver.driver_code : '')"></p>
                                             </div>
                                         </div>
                                     </td>
@@ -519,6 +518,33 @@
                                         <template x-if="driver.status === 'pending' && !driver.is_suspended">
                                             <span
                                                 class="text-[7px] sm:text-[8px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/15 px-1.5 py-0.5 rounded-md font-bold uppercase">Pending</span>
+                                        </template>
+                                    </td>
+                                    <td class="px-4 sm:px-6 py-3">
+                                        <template x-if="!driver.expiration_date">
+                                            <span class="text-[10px] font-bold text-gray-400 dark:text-[#333]">—</span>
+                                        </template>
+                                        <template x-if="driver.expiration_date">
+                                            <div>
+                                                <span
+                                                    class="text-[7px] sm:text-[8px] border px-1.5 py-0.5 rounded-md font-bold uppercase inline-flex items-center gap-1"
+                                                    :class="{
+                                                        'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/15': driver.license_state === 'expired',
+                                                        'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/15': driver.license_state === 'expiring',
+                                                        'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/15': driver.license_state === 'valid',
+                                                    }">
+                                                    <i class="fa-solid text-[6px]"
+                                                        :class="driver.license_state === 'valid' ? 'fa-check' : 'fa-triangle-exclamation'"></i>
+                                                    <span
+                                                        x-text="driver.license_state === 'expired'
+                                                            ? 'Expired'
+                                                            : driver.license_state === 'expiring'
+                                                                ? (driver.license_days === 0 ? 'Expires today' : 'Expires in ' + driver.license_days + (driver.license_days === 1 ? ' day' : ' days'))
+                                                                : 'Valid'"></span>
+                                                </span>
+                                                <p class="text-[8px] text-gray-400 dark:text-[#444] mt-0.5"
+                                                    x-text="driver.expiration_formatted"></p>
+                                            </div>
                                         </template>
                                     </td>
                                     <td class="px-4 sm:px-6 py-3">
@@ -544,27 +570,41 @@
                                                 </button>
                                             </template>
 
-                                            <button @click="openSuspend(driver)"
-                                                class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-200 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] flex items-center justify-center transition group"
-                                                :title="driver.is_suspended ? 'Reactivate' : 'Suspend'">
+                                            {{-- A registration that is still pending can only be reviewed
+                                                 (approved / rejected): no suspend, no edit. Only an approved
+                                                 driver can be suspended, and a suspended one reactivated. --}}
+                                            <template x-if="driver.status === 'approved' || driver.is_suspended">
+                                                <button @click="openSuspend(driver)"
+                                                    class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-200 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] flex items-center justify-center transition group"
+                                                    :title="driver.is_suspended ? 'Reactivate' : 'Suspend'">
+                                                    <i class="fa-solid text-[8px] transition"
+                                                        :class="driver.is_suspended
+                                                            ? 'fa-play text-emerald-500/60 group-hover:text-emerald-500 dark:group-hover:text-emerald-400'
+                                                            : 'fa-ban text-orange-500/60 group-hover:text-orange-500 dark:group-hover:text-orange-400'"></i>
+                                                </button>
+                                            </template>
+
+                                            <template x-if="driver.status !== 'pending'">
+                                                <button @click="openEdit(driver)"
+                                                    class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-200 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] flex items-center justify-center transition group"
+                                                    title="Edit">
+                                                    <i
+                                                        class="fa-solid fa-pen text-[8px] text-gray-400 dark:text-[#444] group-hover:text-gray-900 dark:group-hover:text-white transition"></i>
+                                                </button>
+                                            </template>
+
+                                            {{-- A driver who holds a vehicle cannot be deleted. --}}
+                                            <button @click="driver.has_vehicle ? Toast.show('This driver is assigned to a vehicle. Unassign the vehicle first.', 'error') : openDelete(driver)"
+                                                class="w-8 h-8 rounded-lg border flex items-center justify-center transition group"
+                                                :class="driver.has_vehicle
+                                                    ? 'bg-gray-100 dark:bg-[#111] border-gray-200 dark:border-[#1e1e1e] opacity-50 cursor-not-allowed'
+                                                    : 'bg-red-500/5 border-red-500/10 hover:bg-red-500/10 hover:border-red-500/20'"
+                                                :title="driver.has_vehicle ? 'Assigned to a vehicle - cannot be deleted' : 'Delete'"
+                                                :aria-disabled="driver.has_vehicle">
                                                 <i class="fa-solid text-[8px] transition"
-                                                    :class="driver.is_suspended
-                                                        ? 'fa-play text-emerald-500/60 group-hover:text-emerald-500 dark:group-hover:text-emerald-400'
-                                                        : 'fa-ban text-orange-500/60 group-hover:text-orange-500 dark:group-hover:text-orange-400'"></i>
-                                            </button>
-
-                                            <button @click="openEdit(driver)"
-                                                class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-200 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] flex items-center justify-center transition group"
-                                                title="Edit">
-                                                <i
-                                                    class="fa-solid fa-pen text-[8px] text-gray-400 dark:text-[#444] group-hover:text-gray-900 dark:group-hover:text-white transition"></i>
-                                            </button>
-
-                                            <button @click="openDelete(driver)"
-                                                class="w-8 h-8 rounded-lg bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 hover:border-red-500/20 flex items-center justify-center transition group"
-                                                title="Delete">
-                                                <i
-                                                    class="fa-solid fa-trash text-[8px] text-red-500/40 group-hover:text-red-500 dark:group-hover:text-red-400 transition"></i>
+                                                    :class="driver.has_vehicle
+                                                        ? 'fa-lock text-gray-400 dark:text-[#444]'
+                                                        : 'fa-trash text-red-500/40 group-hover:text-red-500 dark:group-hover:text-red-400'"></i>
                                             </button>
                                         </div>
                                     </td>
@@ -574,7 +614,7 @@
                             <!-- Empty: no drivers -->
                             <template x-if="drivers.length === 0">
                                 <tr>
-                                    <td colspan="5" class="py-12 sm:py-16">
+                                    <td colspan="6" class="py-12 sm:py-16">
                                         <div class="flex flex-col items-center justify-center">
                                             <div
                                                 class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center mb-3">
@@ -596,7 +636,7 @@
                             <!-- Empty: no search results -->
                             <template x-if="drivers.length > 0 && filteredDrivers.length === 0">
                                 <tr>
-                                    <td colspan="5" class="py-12 sm:py-16">
+                                    <td colspan="6" class="py-12 sm:py-16">
                                         <div class="flex flex-col items-center justify-center">
                                             <div
                                                 class="w-12 h-12 rounded-xl bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center mb-3">
@@ -653,13 +693,8 @@
 
                 <div class="px-6 sm:px-8 pb-6 sm:pb-8 modal-scroll overflow-y-auto" style="max-height: 75vh;">
                     <form action="{{ route('drivers.store') }}" method="POST" enctype="multipart/form-data"
-                        class="space-y-4">
+                        class="space-y-4" data-ajax novalidate>
                         @csrf
-
-                        <input type="hidden" name="_form_type" value="add">
-
-                        <button type="submit" x-ref="realRejectButton" :formaction="reviewRejectUrl"
-                            class="hidden"></button>
 
                         <div class="flex items-center gap-3 !mb-4">
                             <div class="flex-1 h-px bg-gray-200 dark:bg-[#1e1e1e]"></div>
@@ -676,10 +711,6 @@
                             <input type="email" name="email" value="{{ old('email') }}"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                 placeholder="driver@email.com">
-                            @error('email')
-                                <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5"><i
-                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                            @enderror
                         </div>
 
                         <!-- Password Field with Toggle -->
@@ -698,10 +729,6 @@
                                         class="text-[10px]"></i>
                                 </button>
                             </div>
-                            @error('password')
-                                <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5"><i
-                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                            @enderror
                         </div>
 
                         <!-- Confirm Password Field with Toggle -->
@@ -738,10 +765,6 @@
                             <input type="text" name="name" value="{{ old('name') }}"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                 placeholder="Full name">
-                            @error('name')
-                                <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5"><i
-                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                            @enderror
                         </div>
 
                         <!-- NEW CONTACT INFO FIELD -->
@@ -753,10 +776,6 @@
                             <input type="text" name="contact_info" value="{{ old('contact_info') }}"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                 placeholder="Phone number or email">
-                            @error('contact_info')
-                                <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5"><i
-                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                            @enderror
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
@@ -767,11 +786,6 @@
                                 <input type="text" name="license_number" value="{{ old('license_number') }}"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                     placeholder="S45-98-765432">
-                                @error('license_number')
-                                    <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                                    </p>
-                                @enderror
                             </div>
                             <div>
                                 <label
@@ -780,11 +794,6 @@
                                 <input type="text" name="license_code" value="{{ old('license_code') }}"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                     placeholder="A, B, C">
-                                @error('license_code')
-                                    <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                                    </p>
-                                @enderror
                             </div>
                         </div>
 
@@ -795,24 +804,16 @@
                                     Date <span class="text-red-500 dark:text-red-400">*</span></label>
                                 <input type="date" name="expiration_date" value="{{ old('expiration_date') }}"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
-                                @error('expiration_date')
-                                    <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                                    </p>
-                                @enderror
                             </div>
                             <div>
                                 <label
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Driver
-                                    Code <span class="text-red-500 dark:text-red-400">*</span></label>
-                                <input type="text" name="driver_code" value="{{ old('driver_code') }}"
-                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                    placeholder="Unique ID">
-                                @error('driver_code')
-                                    <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}
-                                    </p>
-                                @enderror
+                                    Code</label>
+                                <div
+                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-[#0a0a0a] border border-dashed border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-400 dark:text-[#444] flex items-center gap-2">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-[8px]"></i>
+                                    <span>Auto-generated (DRV-######)</span>
+                                </div>
                             </div>
                         </div>
 
@@ -823,10 +824,6 @@
                             <input type="file" name="license_image" accept="image/jpg,image/jpeg,image/png"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-500 dark:text-[#444] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
                             <p class="mt-1.5 text-[8px] text-gray-400 dark:text-[#333]">JPG, JPEG, or PNG. Max 4MB.</p>
-                            @error('license_image')
-                                <p class="mt-1 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5"><i
-                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                            @enderror
                         </div>
 
                         <div class="flex gap-2.5 pt-2">
@@ -1110,10 +1107,10 @@
                 </div>
 
                 <div class="px-6 sm:px-8 pb-6 sm:pb-8 modal-scroll overflow-y-auto" style="max-height: 75vh;">
-                    <form :action="editUpdateUrl" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    <form :action="editUpdateUrl" method="POST" enctype="multipart/form-data" class="space-y-4"
+                        data-ajax novalidate>
                         @csrf
                         @method('PUT')
-                        <input type="hidden" name="_form_type" value="edit">
 
                         <div>
                             <label
@@ -1131,10 +1128,6 @@
                             <input type="text" name="contact_info" :value="editContactInfo"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
                                 placeholder="Phone number or email">
-                            @error('contact_info')
-                                <p class="mt-1.5 text-[9px] text-red-500 dark:text-red-400 flex items-center gap-1.5"><i
-                                        class="fa-solid fa-circle-exclamation text-[7px]"></i> {{ $message }}</p>
-                            @enderror
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
@@ -1167,10 +1160,10 @@
                             <div>
                                 <label
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Driver
-                                    Code <span class="text-red-500 dark:text-red-400">*</span></label>
-                                <input type="text" name="driver_code" :value="editDriverCode"
-                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                    placeholder="Unique ID">
+                                    Code</label>
+                                <div
+                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-[#0a0a0a] border border-dashed border-gray-200 dark:border-[#1e1e1e] text-[11px] font-mono text-gray-500 dark:text-[#555]"
+                                    x-text="editDriverCode || 'Auto-generated'"></div>
                             </div>
                         </div>
 
@@ -1234,7 +1227,7 @@
                             undone</p>
                     </div>
 
-                    <form :action="deleteUrl" method="POST" class="space-y-2.5">
+                    <form :action="deleteUrl" method="POST" class="space-y-2.5" data-ajax>
                         @csrf
                         @method('DELETE')
 
@@ -1290,8 +1283,12 @@
 
                 <!-- Main Form Wrapper -->
                 <!-- We use one form to ensure inputs are submitted with whichever button is clicked -->
-                <form method="POST" class="flex flex-col h-full">
+                <form method="POST" class="flex flex-col h-full" data-ajax novalidate>
                     @csrf
+
+                    {{-- The reject confirmation clicks this: same fields, different endpoint. --}}
+                    <button type="submit" x-ref="realRejectButton" :formaction="reviewRejectUrl"
+                        class="hidden" tabindex="-1" aria-hidden="true"></button>
 
                     <!-- Body -->
                     <div class="flex-1 overflow-y-auto px-6 sm:px-8 py-6 sm:py-8 modal-scroll">
@@ -1364,13 +1361,13 @@
                                             </div>
                                         </div>
 
-                                        <!-- Driver Code Input (Added for completeness based on your previous logic) -->
+                                        <!-- Driver code: generated, not typed in -->
                                         <div class="flex flex-col gap-1">
                                             <label
                                                 class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Driver
                                                 Code</label>
-                                            <input type="text" name="driver_code" x-model="reviewDriverCode"
-                                                class="w-full px-3 py-2 rounded-lg bg-white dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] font-mono text-gray-900 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                                            <div class="w-full px-3 py-2 rounded-lg bg-gray-100 dark:bg-[#0a0a0a] border border-dashed border-gray-200 dark:border-[#1e1e1e] text-[11px] font-mono text-gray-500 dark:text-[#555]"
+                                                x-text="reviewDriverCode || 'Generated on approval'"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -1534,7 +1531,7 @@
                     </template>
                 </p>
 
-                <form :action="suspendUrl" method="POST" class="text-left">
+                <form :action="suspendUrl" method="POST" class="text-left" data-ajax>
                     @csrf
                     @method('PATCH')
 

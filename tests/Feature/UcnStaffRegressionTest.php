@@ -179,7 +179,6 @@ class UcnStaffRegressionTest extends TestCase
                 'second' => 200,
                 'third' => 300,
                 'fourth_plus' => 400,
-                'is_revocation' => 0,
             ]);
 
         $response->assertSessionHasErrors('code');
@@ -260,7 +259,6 @@ class UcnStaffRegressionTest extends TestCase
                 'second_offense' => 200,
                 'third_offense' => 300,
                 'fourth_offense' => 400,
-                'is_revoked' => 0,
             ]);
         });
 
@@ -305,7 +303,6 @@ class UcnStaffRegressionTest extends TestCase
             'second_offense' => 200,
             'third_offense' => 300,
             'fourth_offense' => 400,
-            'is_revoked' => 0,
         ]);
 
         foreach (['Suspension: 7 days', 'Warning', 'Community service', 'N/A'] as $penalty) {
@@ -325,7 +322,8 @@ class UcnStaffRegressionTest extends TestCase
         $response = $this->actingAs($manager)->get(route('driver-manager.violations-log'));
 
         $response->assertOk();
-        $this->assertCount(4, $response->viewData('violations'));
+        // The page also lists whatever else is in the database; count this driver's rows.
+        $this->assertCount(4, $response->viewData('violations')->where('driverId', $driverUser->id));
     }
 
     // ─────────────────────────── E015 — Manage Vehicles ───────────────────────────

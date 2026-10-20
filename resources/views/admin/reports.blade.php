@@ -127,17 +127,6 @@
             </form>
         </div>
 
-        @if (session('error'))
-            <!-- E2 — Data Aggregation Timeout -->
-            <div
-                class="mb-5 px-4 py-3 rounded-xl border border-red-500/15 bg-red-500/5 flex items-center gap-3">
-                <div class="w-6 h-6 rounded-md bg-red-500/10 flex items-center justify-center shrink-0">
-                    <i class="fa-solid fa-clock text-[8px] text-red-500 dark:text-red-400"></i>
-                </div>
-                <span class="text-[11px] text-red-600 dark:text-red-400 font-medium">{{ session('error') }}</span>
-            </div>
-        @endif
-
         @isset($reportEmpty)
             @if ($reportEmpty)
                 <!-- E3 — No Data Found -->

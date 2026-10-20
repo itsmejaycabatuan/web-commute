@@ -465,6 +465,18 @@
                                 </div>
                             </div>
 
+                            @if (in_array($driver->licenseState(), ['expired', 'expiring'], true))
+                                <div role="alert"
+                                    class="flex items-start gap-2.5 p-3 rounded-xl border {{ $driver->licenseState() === 'expired' ? 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400' }}">
+                                    <i class="fa-solid fa-triangle-exclamation text-[10px] mt-0.5"></i>
+                                    <p class="text-[10px] font-semibold leading-relaxed">
+                                        {{ $driver->licenseState() === 'expired'
+                                            ? 'Your driver\'s license has expired. Contact the administrator to renew it.'
+                                            : 'Your driver\'s license is expiring soon. Renew it before it lapses.' }}
+                                    </p>
+                                </div>
+                            @endif
+
                             <div class="grid grid-cols-2 gap-2">
                                 <div
                                     class="p-2.5 sm:p-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e]">
@@ -480,10 +492,24 @@
                                     <p
                                         class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] mb-0.5">
                                         Expires</p>
+                                    @php
+                                        $licenseState = $driver->licenseState();
+                                        $licenseDays = $driver->licenseDaysRemaining();
+                                    @endphp
                                     <p
-                                        class="text-[10px] sm:text-[11px] font-bold @if ($driver->expiration_date && \Carbon\Carbon::parse($driver->expiration_date)->isPast()) text-red-500 dark:text-red-400 @else text-gray-600 dark:text-[#888] @endif">
+                                        class="text-[10px] sm:text-[11px] font-bold @if ($licenseState === 'expired') text-red-500 dark:text-red-400 @elseif ($licenseState === 'expiring') text-amber-500 dark:text-amber-400 @else text-gray-600 dark:text-[#888] @endif">
                                         {{ $driver->expiration_date ? \Carbon\Carbon::parse($driver->expiration_date)->format('M d, Y') : 'N/A' }}
                                     </p>
+                                    @if ($licenseState === 'expired')
+                                        <span
+                                            class="inline-flex items-center gap-1 mt-1 text-[7px] sm:text-[8px] bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/15 px-1.5 py-0.5 rounded-md font-bold uppercase"><i
+                                                class="fa-solid fa-triangle-exclamation text-[6px]"></i> Expired</span>
+                                    @elseif ($licenseState === 'expiring')
+                                        <span
+                                            class="inline-flex items-center gap-1 mt-1 text-[7px] sm:text-[8px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/15 px-1.5 py-0.5 rounded-md font-bold uppercase"><i
+                                                class="fa-solid fa-triangle-exclamation text-[6px]"></i>
+                                            {{ $licenseDays === 0 ? 'Expires today' : 'Expires in ' . $licenseDays . ($licenseDays === 1 ? ' day' : ' days') }}</span>
+                                    @endif
                                 </div>
                             </div>
 

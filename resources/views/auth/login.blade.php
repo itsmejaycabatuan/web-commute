@@ -130,6 +130,29 @@
 <body
     class="flex relative justify-center items-center p-3 sm:p-4 md:p-6 min-h-[100svh] login-bg font-sans text-white overflow-x-hidden">
 
+    @if (session('driver_registered'))
+        <div id="driver-registered-modal" role="dialog" aria-modal="true" aria-labelledby="driver-registered-title"
+            class="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm">
+            <div
+                class="modal-animate w-full max-w-[280px] sm:max-w-sm p-5 sm:p-8 text-center text-gray-900 bg-white rounded-2xl sm:rounded-3xl shadow-2xl">
+                <div class="flex justify-center mb-4 sm:mb-5">
+                    <div
+                        class="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-emerald-50">
+                        <i class="text-2xl sm:text-3xl text-emerald-500 fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+                <h3 id="driver-registered-title" class="text-base sm:text-lg font-bold tracking-tight">You're
+                    registered!</h3>
+                <p class="mt-1.5 sm:mt-2 text-xs sm:text-sm text-gray-400 leading-relaxed">Your driver account was
+                    submitted successfully. Please wait for an administrator to approve it before you sign in.</p>
+                <button type="button" onclick="document.getElementById('driver-registered-modal').remove()"
+                    class="py-2.5 sm:py-3 mt-4 sm:mt-6 w-full text-[10px] sm:text-xs font-bold tracking-widest text-white uppercase bg-gray-900 rounded-xl transition hover:bg-gray-800 active:scale-[0.98]">
+                    OK
+                </button>
+            </div>
+        </div>
+    @endif
+
     @if (session('driver_pending'))
         <div id="driver-pending-modal" role="dialog" aria-modal="true"
             class="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm">
@@ -310,17 +333,6 @@
                 eyeIcon.classList.remove('fa-eye-slash');
                 eyeIcon.classList.add('fa-eye');
             }
-        }
-
-        // Auto-dismiss flash
-        const flash = document.getElementById('login-flash-success');
-        if (flash) {
-            setTimeout(() => {
-                flash.style.transition = 'all 0.4s ease';
-                flash.style.opacity = '0';
-                flash.style.transform = 'translate(-50%, -20px)';
-                setTimeout(() => flash.remove(), 400);
-            }, 3500);
         }
     </script>
 </body>

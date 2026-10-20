@@ -44,7 +44,7 @@
 
 **A4 – Admin monitors top-ups**
 1. Admin opens `/topups`.
-2. System lists all commuters' top-ups with the same search/filter options and a grand total.
+2. System lists **every** top-up — completed, pending, failed and cancelled — with a **Status** column, and filters by *search, payment status, payment method, date range and amount range*. The "funds added" total counts **completed** top-ups only. The list shows 10 per page.
 
 ---
 

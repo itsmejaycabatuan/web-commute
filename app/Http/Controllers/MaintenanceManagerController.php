@@ -7,11 +7,9 @@ use App\Models\MaintenanceTask;
 use App\Models\PreventiveMaintenance;
 use App\Models\User;
 use App\Models\Vehicle;
-use App\Models\VehicleMaintenanceLog;
 use Auth;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class MaintenanceManagerController extends Controller
@@ -75,31 +73,15 @@ class MaintenanceManagerController extends Controller
             ]);
         }
 
-        // E4 — Database error: the schedule row and its service-log record are
-        // written together or not at all, and the Maintenance Manager is told.
+        // E4 — Database error: nothing is stored and the Maintenance Manager is told.
         try {
-            DB::transaction(function () use ($validated) {
-                $maintenance = PreventiveMaintenance::updateOrCreate(
-                    [
-                        'vehicle_id' => $validated['vehicle_id'],
-                        'task_id' => $validated['task_id'],
-                    ],
-                    $validated
-                );
-
-                // Logging a scheduled service also writes the service-log record the
-                // fleet cost/kilometre analytics read.
-                VehicleMaintenanceLog::create([
-                    'maintenance_id' => $maintenance->id,
+            PreventiveMaintenance::updateOrCreate(
+                [
                     'vehicle_id' => $validated['vehicle_id'],
-                    'maintenance_task_id' => $validated['task_id'],
-                    'service_date' => $validated['last_service_date'],
-                    'mileage_at_service' => (int) $validated['last_service_odo'],
-                    'performed_by' => 'Preventive Maintenance',
-                    'cost' => $validated['last_service_cost'],
-                    'remarks' => $validated['comments'] ?? null,
-                ]);
-            });
+                    'task_id' => $validated['task_id'],
+                ],
+                $validated
+            );
         } catch (QueryException $e) {
             return $this->writeFailed($e, 'The scheduled service was not saved.');
         }
@@ -108,7 +90,7 @@ class MaintenanceManagerController extends Controller
     }
 
     /**
-     * UCN_SC_E016 E4 / E017 E3 / E025 E4 — a failed write is logged, cancelled
+     * UCN_SC_E016 E4 / E017 E3 — a failed write is logged, cancelled
      * and reported back to the Maintenance Manager instead of a raw 500 page.
      */
     private function writeFailed(QueryException $e, string $detail)
@@ -118,26 +100,6 @@ class MaintenanceManagerController extends Controller
         return back()
             ->withInput()
             ->with('error', 'A database error occurred. '.$detail);
-    }
-
-    public function maintenanceLogs()
-    {
-        activity()->event('Maintenancelogs')->log('Action performed: maintenanceLogs');
-        $vehicleOptions = Vehicle::orderBy('plate_number')
-            ->get()
-            ->mapWithKeys(fn($v) => [
-                $v->id => $v->plate_number . ' — ' . $v->brand . ' ' . $v->model,
-            ])
-            ->toArray();
-
-        $logs = VehicleMaintenanceLog::with(['vehicle', 'maintenanceTask'])
-            ->when(request('vehicle'), fn ($q, $vehicle) => $q->where('vehicle_id', $vehicle))
-            ->orderByDesc('service_date')
-            ->orderByDesc('id')
-            ->paginate(10)
-            ->withQueryString();
-
-        return view('maintenance-manager.maintenance-logs', compact('logs', 'vehicleOptions'));
     }
 
     public function maintenanceTasks()
@@ -209,122 +171,6 @@ class MaintenanceManagerController extends Controller
         return back()->with('success', 'Task successfully deleted!');
     }
 
-    public function vehicleLog(Request $request)
-    {
-        activity()->event('Vehiclelog')->log('Action performed: vehicleLog');
-        $vehicles = Vehicle::with('driver')
-            ->orderBy('plate_number')
-            ->get();
-
-        if ($vehicles->isEmpty()) {
-            return view('maintenance-manager.vehicle-maintenance-log', [
-                'vehicles' => collect(),
-                'vehicle' => null,
-                'maintenanceTasks' => collect(),
-                'logs' => collect(),
-                'totalCost' => 0,
-                'totalServices' => 0,
-                'latestOdometer' => 0,
-                'costPerMile' => 0,
-            ]);
-        }
-
-        $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
-        $vehicle = $vehicles->firstWhere('id', $selectedId) ?? $vehicles->first();
-        $vehicle->load('driver');
-
-        $logs = VehicleMaintenanceLog::where('vehicle_id', $vehicle->id)
-            ->with('maintenanceTask')
-            ->orderByDesc('service_date')
-            ->get();
-
-        $logs->transform(function ($log) {
-            $log->service_date_formatted = $log->service_date?->format('Y-m-d');
-
-            return $log;
-        });
-
-        $totalCost = $logs->sum('cost');
-        $totalServices = $logs->count();
-        $latestOdometer = $logs->first()?->mileage_at_service ?? 0;
-        $costPerMile = $latestOdometer > 0 ? round($totalCost / $latestOdometer, 2) : 0;
-
-        $maintenanceTasks = MaintenanceTask::orderBy('tasks_performed')->get();
-
-        return view('maintenance-manager.vehicle-maintenance-log', compact(
-            'vehicles',
-            'vehicle',
-            'maintenanceTasks',
-            'logs',
-            'totalCost',
-            'totalServices',
-            'latestOdometer',
-            'costPerMile'
-        ));
-    }
-
-    public function vehicleLogStore(Request $request)
-    {
-        activity()->event('Vehiclelogstore')->log('Action performed: vehicleLogStore');
-        $validated = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'maintenance_task_id' => 'required|exists:maintenance_tasks,id',
-            'service_date' => 'required|date',
-            'mileage_at_service' => 'required|integer|min:0',
-            'performed_by' => 'required|string|max:255',
-            'cost' => 'required|numeric|min:0',
-            'invoice_number' => 'nullable|string|max:100',
-            'remarks' => 'nullable|string|max:500',
-        ]);
-
-        try {
-            VehicleMaintenanceLog::create($validated);
-        } catch (QueryException $e) {
-            return $this->writeFailed($e, 'The maintenance log was not saved.');
-        }
-
-        return back()->with('success', 'Maintenance info logged!');
-    }
-
-    public function vehicleLogUpdate(Request $request, VehicleMaintenanceLog $log)
-    {
-        activity()->event('Vehiclelogupdate')->log('Action performed: vehicleLogUpdate');
-        $validated = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'maintenance_task_id' => 'required|exists:maintenance_tasks,id',
-            'service_date' => 'required|date',
-            'mileage_at_service' => 'required|integer|min:0',
-            'performed_by' => 'required|string|max:255',
-            'cost' => 'required|numeric|min:0',
-            'invoice_number' => 'nullable|string|max:100',
-            'remarks' => 'nullable|string|max:500',
-        ]);
-
-        try {
-            $log->update($validated);
-        } catch (QueryException $e) {
-            return $this->writeFailed($e, 'The maintenance log was not updated.');
-        }
-
-        return back()->with('success', 'Maintenance log updated!');
-    }
-
-    public function vehicleLogDelete(VehicleMaintenanceLog $log)
-    {
-        activity()->event('Vehiclelogdelete')->log('Action performed: vehicleLogDelete');
-        try {
-            $log->delete();
-        } catch (QueryException $e) {
-            return $this->writeFailed($e, 'The maintenance log was not deleted.');
-        }
-
-        return back()->with('success', 'Maintenance log deleted.');
-    }
-
-    /**
-     * The full-page fleet maintenance log: the same summary the maintenance
-     * manager dashboard shows, on its own page (UCN_SC_E016 A4).
-     */
     public function profile()
     {
         activity()->event('Profile')->log('Action performed: profile');

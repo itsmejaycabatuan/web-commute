@@ -25,6 +25,13 @@ class SettingsController extends Controller
     public function update(Request $request)
     {
         activity()->event('Update')->log('Action performed: update');
+
+        // A driver's e-mail address is part of the account the administrator
+        // approved, so only an administrator can change it.
+        if (Auth::user()->hasRole('driver')) {
+            return back()->with('error', 'Drivers cannot change their email address. Contact the administrator.');
+        }
+
         $request->validate([
             'email' => 'required|email|max:255|unique:users,email,' . Auth::id(),
         ]);
@@ -39,7 +46,10 @@ class SettingsController extends Controller
         activity()->event('Updatepassword')->log('Action performed: updatePassword');
         $request->validate([
             'current_password' => 'required|current_password',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8|confirmed|different:current_password',
+        ], [
+            'current_password.current_password' => 'The current password is incorrect.',
+            'password.different' => 'The new password must be different from your current password.',
         ]);
 
         try {
@@ -55,6 +65,7 @@ class SettingsController extends Controller
             // it must be handed the NEW plaintext — passing the old one would
             // throw (the record has already changed) or revert the change.
             Auth::logoutOtherDevices($request->password);
+            Auth::user()->forgetOtherSessions($request->session()->getId());
         } catch (\Exception $e) {
             activity()->event('Updatepassword')->log('Database error during password change.');
 
@@ -64,13 +75,36 @@ class SettingsController extends Controller
         return back()->with('success', 'Password changed successfully.');
     }
 
+    /**
+     * Sign the account out everywhere except the device it is used on now.
+     *
+     * The current password is required so a hijacked session cannot be used to
+     * lock the real owner out. With database sessions the other sessions are
+     * removed outright; logoutOtherDevices() additionally invalidates any
+     * remember-me cookie.
+     */
     public function logoutOtherDevices(Request $request)
     {
         activity()->event('Logoutotherdevices')->log('Action performed: logoutOtherDevices');
-        Auth::logoutOtherDevices($request->password());
 
-        return back()->with('success', 'All other sessions have been terminated.');
+        $request->validate([
+            'current_password' => 'required|current_password',
+        ], [
+            'current_password.current_password' => 'The current password is incorrect.',
+        ]);
+
+        $user = Auth::user();
+
+        try {
+            Auth::logoutOtherDevices($request->current_password);
+
+            $user->forgetOtherSessions($request->session()->getId());
+        } catch (\Exception $e) {
+            report($e);
+
+            return back()->with('error', 'Other devices could not be signed out. Please try again later.');
+        }
+
+        return back()->with('success', 'You have been signed out of all other devices.');
     }
-
-
 }

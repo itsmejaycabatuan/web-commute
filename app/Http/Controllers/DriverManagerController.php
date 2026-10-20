@@ -27,9 +27,12 @@ class DriverManagerController extends Controller
                 'name' => "{$driver->name}",
             ]);
 
+        // The page filters and pages (10 per page) in the browser, so it needs the
+        // entries themselves rather than a single server-side page of them.
         $entries = TimeKeeping::with('driver.user')
             ->latest()
-            ->paginate(10);
+            ->limit(1000)
+            ->get();
 
         return view('driver-manager.time-keeping', compact('drivers', 'entries'));
     }
@@ -171,6 +174,7 @@ class DriverManagerController extends Controller
                                     : 'N/A',
                 'email' => $u->email,
                 'contactInfo' => $u->driver->contact_info ?? 'N/A',
+                'licenseState' => $u->driver->licenseState(),
             ]);
 
         // Violation codes — unchanged
@@ -250,7 +254,16 @@ class DriverManagerController extends Controller
             'place_of_violation' => 'required|string|max:255',
             'date_of_violation' => 'required|date|before_or_equal:today',
             'time_of_violation' => 'required',
-            'remarks' => 'required|string|max:500',
+            'remarks' => 'nullable|string|max:500',
+        ], [
+            'user_id.required' => 'Select a driver.',
+            'user_id.exists' => 'Select a driver from the list.',
+            'vc_id.required' => 'Select the violation type.',
+            'violation_instance.required' => 'Select the offense.',
+            'place_of_violation.required' => 'Enter where it happened.',
+            'date_of_violation.required' => 'Enter the date.',
+            'date_of_violation.before_or_equal' => 'The date cannot be in the future.',
+            'time_of_violation.required' => 'Enter the time.',
         ]);
 
         try {
@@ -265,7 +278,7 @@ class DriverManagerController extends Controller
     public function storeViolationLogBulk(Request $request)
     {
         activity()->event('Storeviolationlogbulk')->log('Action performed: storeViolationLogBulk');
-        $validator = $request->validate([
+        $request->validate([
             'user_id' => 'required|exists:users,id',
             'violations' => 'required|array|min:1',
             'violations.*.vc_id' => 'required|exists:violation_codes,id',
@@ -275,14 +288,17 @@ class DriverManagerController extends Controller
             'violations.*.date_of_violation' => 'required|date|before_or_equal:today',
             'violations.*.time_of_violation' => 'required',
             'violations.*.remarks' => 'nullable|string|max:500',
+        ], [
+            'violations.*.vc_id.required' => 'Select the violation type.',
+            'violations.*.violation_instance.required' => 'Select the offense.',
+            'violations.*.place_of_violation.required' => 'Enter where it happened.',
+            'violations.*.date_of_violation.required' => 'Enter the date.',
+            'violations.*.date_of_violation.before_or_equal' => 'The date cannot be in the future.',
+            'violations.*.time_of_violation.required' => 'Enter the time.',
+            'user_id.required' => 'Select a driver.',
+            'user_id.exists' => 'Select a driver from the list.',
+            'violations.required' => 'Add at least one violation entry.',
         ]);
-
-        if (! $validator) {
-            return redirect()->route('driver-manager.violations-log.index')
-                ->withErrors($validator)
-                ->withInput()
-                ->with('bulk_validation_failed', true);
-        }
 
         // All-or-nothing: a failure part-way through stores none of the entries.
         try {
@@ -314,7 +330,7 @@ class DriverManagerController extends Controller
             return 'muted';
         }
         $lower = strtolower($penalty);
-        if (Str::contains($lower, ['suspension', 'revocation', 'impound'])) {
+        if (Str::contains($lower, ['suspension', 'impound'])) {
             return 'red';
         }
         if (Str::contains($lower, ['warning', 'community'])) {
@@ -367,7 +383,6 @@ class DriverManagerController extends Controller
             'second' => 'required|numeric|min:0',
             'third' => 'required|numeric|min:0',
             'fourth_plus' => 'required|numeric|min:0',
-            'is_revocation' => 'required',
         ], $this->violationCodeMessages());
 
         try {
@@ -378,7 +393,6 @@ class DriverManagerController extends Controller
                 'second_offense' => $request->second,
                 'third_offense' => $request->third,
                 'fourth_offense' => $request->fourth_plus,
-                'is_revoked' => $request->is_revocation,
             ]);
         } catch (QueryException $e) {
             return $this->writeFailed($e, 'The violation code was not added.');
@@ -402,7 +416,6 @@ class DriverManagerController extends Controller
             'second' => 'required|numeric|min:0',
             'third' => 'required|numeric|min:0',
             'fourth_plus' => 'required|numeric|min:0',
-            'is_revocation' => 'required',
         ], $this->violationCodeMessages());
 
         // UCN_SC_E024 E1 — no such violation code: error flash, nothing changes.
@@ -420,7 +433,6 @@ class DriverManagerController extends Controller
                 'second_offense' => $request->second,
                 'third_offense' => $request->third,
                 'fourth_offense' => $request->fourth_plus,
-                'is_revoked' => $request->is_revocation,
             ]);
         } catch (QueryException $e) {
             return $this->writeFailed($e, 'The violation code was not updated.');

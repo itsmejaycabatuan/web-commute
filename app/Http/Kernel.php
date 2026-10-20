@@ -60,6 +60,7 @@ class Kernel extends HttpKernel
             EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
             StartSession::class,
+            \App\Http\Middleware\JsonFlashRedirect::class,
             // \Illuminate\Session\Middleware\AuthenticateSession::class,
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
@@ -95,5 +96,6 @@ class Kernel extends HttpKernel
         'role_or_permission' => RoleOrPermissionMiddleware::class,
         'env.local' => LocalEnvOnly::class,
         'driver.approved' => \App\Http\Middleware\EnsureDriverApproved::class,
+        'account.active' => \App\Http\Middleware\EnsureAccountActive::class,
     ];
 }

@@ -11,10 +11,10 @@ use Illuminate\Validation\ValidationException;
 class VehicleController extends Controller
 {
     /**
-     * A vehicle may only carry a driver while it is roadworthy. Maintenance and
-     * disposed units are out of service (UCN_SC_E015 E4).
+     * A vehicle may only carry a driver while it is in service. Inactive,
+     * maintenance and disposed units are out of service (UCN_SC_E015 E4).
      */
-    private const ASSIGNABLE_STATUSES = ['active', 'inactive'];
+    private const ASSIGNABLE_STATUSES = ['active'];
 
     public function index()
     {
@@ -133,9 +133,20 @@ class VehicleController extends Controller
     {
         activity()->event('Destroy')->log('Action performed: destroy');
 
+        // A vehicle that still has a driver cannot be removed: unassign it first.
+        if ($vehicle->driver_id) {
+            $message = 'This vehicle is assigned to a driver and cannot be deleted. Unassign the driver first.';
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], 409);
+            }
+
+            return back()->with('error', $message);
+        }
+
         // Postcondition: a unit that has a service history is marked Disposed
-        // instead of being erased, so trip and maintenance logs stay auditable.
-        if ($vehicle->maintenanceLogs()->exists() || $vehicle->preventiveMaintenances()->exists()) {
+        // instead of being erased, so its maintenance records stay auditable.
+        if ($vehicle->preventiveMaintenances()->exists()) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'This vehicle has maintenance records and cannot be deleted. Mark its status as Disposed instead.',
@@ -158,8 +169,8 @@ class VehicleController extends Controller
     }
 
     /**
-     * E4 — Assigning an under-maintenance vehicle: a driver may only be assigned
-     * to a roadworthy unit.
+     * E4 — Assigning an out-of-service vehicle: a driver may only be assigned
+     * to an active unit.
      */
     private function assertDriverAssignable(?string $status, ?int $driverId, ?Vehicle $vehicle = null): void
     {

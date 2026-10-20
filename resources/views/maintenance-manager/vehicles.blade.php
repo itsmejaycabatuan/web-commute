@@ -601,10 +601,16 @@
                                                     class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 dark:text-[#555] hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 transition-all"
                                                     title="Edit"><i
                                                         class="fa-solid fa-pen-to-square text-[9px]"></i></button>
-                                                <button @click="openDeleteModal(v.id, v.plate_number)"
-                                                    class="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 dark:text-[#555] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10 transition-all"
-                                                    title="Delete">
-                                                    <i class="fa-solid fa-trash-can text-[9px]"></i>
+                                                <button
+                                                    @click="v.driver_id ? showToast('This vehicle is assigned to ' + (v.driver_name || 'a driver') + '. Unassign the driver before deleting it.', 'error') : openDeleteModal(v.id, v.plate_number)"
+                                                    class="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                                                    :class="v.driver_id
+                                                        ? 'text-gray-300 dark:text-[#333] cursor-not-allowed'
+                                                        : 'text-gray-400 dark:text-[#555] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/10'"
+                                                    :title="v.driver_id ? 'Assigned to a driver - cannot be deleted' : 'Delete'"
+                                                    :aria-disabled="!!v.driver_id">
+                                                    <i class="fa-solid text-[9px]"
+                                                        :class="v.driver_id ? 'fa-lock' : 'fa-trash-can'"></i>
                                                 </button>
                                             </div>
                                         </td>
@@ -999,6 +1005,7 @@
                                         <input type="text" x-model="editForm.vin"
                                             placeholder="Vehicle Identification Number"
                                             class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold font-mono uppercase">
+<p x-show="editErrors.vin" x-text="[].concat(editErrors.vin || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
                                     </div>
                                 </div>
                             </div>
@@ -1036,6 +1043,7 @@
                                         <input type="number" x-model="editForm.year" placeholder="2024"
                                             min="1900" max="2099"
                                             class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold font-mono">
+<p x-show="editErrors.year" x-text="[].concat(editErrors.year || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
                                     </div>
                                     <div>
                                         <label
@@ -1050,6 +1058,7 @@
                                             <option value="Hybrid">Hybrid</option>
                                             <option value="LPG">LPG</option>
                                         </select>
+<p x-show="editErrors.fuel_type" x-text="[].concat(editErrors.fuel_type || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-3 mt-3">
@@ -1060,6 +1069,7 @@
                                         <input type="number" x-model="editForm.tank_capacity" placeholder="60"
                                             min="0" step="0.1"
                                             class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold font-mono">
+<p x-show="editErrors.tank_capacity" x-text="[].concat(editErrors.tank_capacity || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
                                     </div>
                                     <div>
                                         <label
@@ -1067,6 +1077,7 @@
                                         <input type="text" x-model="editForm.location"
                                             placeholder="e.g. Main Garage"
                                             class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold">
+<p x-show="editErrors.location" x-text="[].concat(editErrors.location || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
                                     </div>
                                     <div>
                                         <label
@@ -1097,14 +1108,16 @@
                                     class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3 flex items-center gap-2">
                                     <i class="fa-solid fa-user text-[7px]"></i> Driver Assignment
                                 </p>
-                                <select x-model="editForm.driver_id"
-                                    class="form-input form-select w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold cursor-pointer">
+                                <select x-model="editForm.driver_id" :disabled="editForm.status !== 'active'"
+                                    class="form-input form-select w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                                     <option value="">— No Driver Assigned —</option>
                                     <template x-for="d in drivers" :key="d.id">
                                         <option :value="String(d.id)" x-text="d.name + ' (' + d.email + ')'">
                                         </option>
                                     </template>
                                 </select>
+<p x-show="!editForm.status || editForm.status === 'active' ? false : true" class="mt-1.5 text-[9px] font-semibold text-gray-400 dark:text-[#555]">A driver can only be assigned to an active vehicle.</p>
+<p x-show="editErrors.driver_id" x-text="[].concat(editErrors.driver_id || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
                             </div>
 
                             <!-- Status -->
@@ -1152,6 +1165,7 @@
                                         Disposed
                                     </button>
                                 </div>
+<p x-show="editErrors.status" x-text="[].concat(editErrors.status || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
                             </div>
                         </div>
 
@@ -1226,44 +1240,6 @@
                             </button>
                         </div>
                     </div>
-                </div>
-            </template>
-
-            <!-- ══════════ TOAST NOTIFICATION ══════════ -->
-            <template x-teleport="body">
-                <div x-show="toast.show" x-cloak
-                    class="fixed bottom-6 right-6 z-[200] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-2xl border"
-                    :class="toast.type === 'success' ?
-                        'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20' :
-                        toast.type === 'error' ?
-                        'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20' :
-                        'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20'"
-                    x-transition:enter="transition ease-out duration-300"
-                    x-transition:enter-start="opacity-0 translate-y-3 scale-95"
-                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                    x-transition:leave="transition ease-in duration-200"
-                    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                    x-transition:leave-end="opacity-0 translate-y-3 scale-95" style="display: none;">
-                    <div class="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
-                        :class="toast.type === 'success' ?
-                            'bg-emerald-500/15' :
-                            toast.type === 'error' ?
-                            'bg-rose-500/15' :
-                            'bg-blue-500/15'">
-                        <i class="text-[10px]"
-                            :class="toast.type === 'success' ?
-                                'fa-solid fa-check text-emerald-600 dark:text-emerald-400' :
-                                toast.type === 'error' ?
-                                'fa-solid fa-xmark text-rose-600 dark:text-rose-400' :
-                                'fa-solid fa-info text-blue-600 dark:text-blue-400'"></i>
-                    </div>
-                    <span class="text-[10px] font-bold"
-                        :class="toast.type === 'success' ?
-                            'text-emerald-700 dark:text-emerald-300' :
-                            toast.type === 'error' ?
-                            'text-rose-700 dark:text-rose-300' :
-                            'text-blue-700 dark:text-blue-300'"
-                        x-text="toast.message"></span>
                 </div>
             </template>
 
@@ -1445,6 +1421,13 @@
                     this.showViewModal = true;
                 },
 
+                init() {
+                    // A vehicle that is not active cannot carry a driver.
+                    this.$watch('editForm.status', status => {
+                        if (status !== 'active') this.editForm.driver_id = '';
+                    });
+                },
+
                 openAddModal() {
                     this.editMode = 'add';
                     this.editId = null;
@@ -1581,14 +1564,7 @@
                 },
 
                 showToast(message, type = 'success') {
-                    this.toast = {
-                        show: true,
-                        message,
-                        type
-                    };
-                    setTimeout(() => {
-                        this.toast.show = false;
-                    }, 3500);
+                    Toast.show(message, type);
                 },
             };
         }

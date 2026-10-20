@@ -93,7 +93,7 @@ class DriverController extends Controller
 
         return redirect()
             ->route('login')
-            ->with('success', 'Driver registration submitted. Please wait for admin approval before signing in.');
+            ->with('driver_registered', true);
     }
 
     public function index()
@@ -338,7 +338,7 @@ class DriverController extends Controller
             return 'muted';
         }
         $lower = strtolower($penalty);
-        if (Str::contains($lower, ['suspension', 'revocation', 'impound'])) {
+        if (Str::contains($lower, ['suspension', 'impound'])) {
             return 'red';
         }
         if (Str::contains($lower, ['warning', 'community'])) {
