@@ -184,12 +184,9 @@
         class="sidebar-transition pt-8 pr-4 sm:pr-8 pb-8 pl-4 sm:pl-8 min-h-screen mb-12">
 
         @php
-            $totalTasks = $tasks->count();
-            $withMiles = $tasks->whereNotNull('miles_between_service')->where('miles_between_service', '>', 0)->count();
-            $withMonths = $tasks
-                ->whereNotNull('months_between_service')
-                ->where('months_between_service', '>', 0)
-                ->count();
+            $totalTasks = $stats['total'];
+            $withMiles = $stats['withMiles'];
+            $withMonths = $stats['withMonths'];
         @endphp
 
         <!-- ── Mobile: Identity Card ── -->
@@ -388,6 +385,11 @@
                     </tbody>
                 </table>
             </div>
+            @if ($tasks->hasPages())
+                <div class="px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-[#1e1e1e]">
+                    {{ $tasks->links('vendor.pagination.custom') }}
+                </div>
+            @endif
             @if ($tasks->isNotEmpty())
                 <div
                     class="px-4 sm:px-6 py-3 border-t border-gray-200 dark:border-[#1e1e1e] bg-gray-50 dark:bg-[#111] flex flex-col sm:flex-row justify-between gap-2">

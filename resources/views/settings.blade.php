@@ -454,7 +454,7 @@
                 Alpine.store('sidebar').isDark = isDark;
             }
 
-            fetch('{{ route('settings.update.theme') }}', {
+            fetch('{{ route('settings.update.theme', [], false) }}', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -523,7 +523,7 @@
             }
 
             // Save to server
-            fetch('{{ route('settings.update.fontsize') }}', {
+            fetch('{{ route('settings.update.fontsize', [], false) }}', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

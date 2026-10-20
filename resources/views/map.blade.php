@@ -867,6 +867,50 @@
             animation: pulse-blue-glow 2s ease-in-out infinite;
         }
 
+        /* Marker colour follows the driver's availability toggle:
+           green = available (active), red = unavailable (inactive), blue = unknown. */
+        .custom-vehicle-marker.vehicle-status-active {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6), 0 0 40px rgba(16, 185, 129, 0.2);
+        }
+
+        .custom-vehicle-marker.vehicle-status-inactive {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.55), 0 0 40px rgba(239, 68, 68, 0.2);
+        }
+
+        .bus-pulse.vehicle-status-active {
+            animation-name: pulse-green-glow;
+        }
+
+        .bus-pulse.vehicle-status-inactive {
+            animation-name: pulse-red-glow;
+        }
+
+        @keyframes pulse-green-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.6), 0 0 40px rgba(16, 185, 129, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(16, 185, 129, 0.8), 0 0 60px rgba(16, 185, 129, 0.3), 0 0 0 12px rgba(16, 185, 129, 0);
+            }
+        }
+
+        @keyframes pulse-red-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(239, 68, 68, 0.55), 0 0 40px rgba(239, 68, 68, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(239, 68, 68, 0.75), 0 0 60px rgba(239, 68, 68, 0.3), 0 0 0 12px rgba(239, 68, 68, 0);
+            }
+        }
+
         @keyframes pulse-blue-glow {
 
             0%,
@@ -4380,7 +4424,7 @@ sim._lastEtaUpdate = null;
                     '<div class="pp-status">' +
                     '<span class="dot" style="background:' + statusColor + ';"></span>' +
                     '<span style="color:' + statusColor + ';">' + esc(statusText) + '</span>' +
-                    '<span class="lbl">Vehicle status</span>' +
+                    '<span class="lbl">Driver status</span>' +
                     '</div>' +
                     etaSection +
                     '</div>';
@@ -5411,10 +5455,26 @@ sim._lastEtaUpdate = null;
             // One renderer for BOTH sources (Echo event + REST poll) so a vehicle can
             // never end up with two markers, and so a dropped websocket event heals
             // itself on the next poll.
-            function createVehicleElement() {
+            // The driver's availability toggle: 'active' = available, anything else
+            // that is known = unavailable, otherwise no colour override.
+            function statusClass(status) {
+                if (status === 'active') return 'vehicle-status-active';
+                if (status && status !== 'unknown') return 'vehicle-status-inactive';
+                return '';
+            }
+
+            function applyMarkerStatus(el, status) {
+                if (!el) return;
+                el.classList.remove('vehicle-status-active', 'vehicle-status-inactive');
+                const cls = statusClass(status);
+                if (cls) el.classList.add(cls);
+            }
+
+            function createVehicleElement(status) {
                 const el = document.createElement('div');
                 el.className = 'custom-vehicle-marker bus-pulse';
                 el.innerHTML = '<i class="fa-solid fa-bus"></i>';
+                applyMarkerStatus(el, status);
                 return el;
             }
 
@@ -5443,6 +5503,7 @@ sim._lastEtaUpdate = null;
                     if (v.route_name || v.route) out.route = v.route_name || v.route;
                     if (v.privacy_radius) out.privacy_radius = v.privacy_radius;
                     if (v.last_update) out.last_update = v.last_update;
+                    if (v.driver_status) out.driver_status = v.driver_status;
                     return out;
                 };
 
@@ -5494,12 +5555,18 @@ sim._lastEtaUpdate = null;
                         // Smooth move instead of teleporting
                         const m = window.echoMarkers[id];
                         m.setLngLat([v.lng, v.lat]);
+                        applyMarkerStatus(m.getElement(), v.driver_status);
                         if (window.echoPopups[id]) {
+                            const previous = window.echoPopups[id].data || {};
                             window.echoPopups[id].data = v;
                             window.echoPopups[id].popup.setLngLat([v.lng, v.lat]);
+                            // The driver toggled their availability: refresh the popup text.
+                            if (previous.driver_status !== v.driver_status) {
+                                window.echoPopups[id].popup.setHTML(canSeeFullInfo ? window.createDriverPopup(v) : window.createPrivacyPopup(v));
+                            }
                         }
                     } else {
-                        const el = createVehicleElement();
+                        const el = createVehicleElement(v.driver_status);
                         const popup = new maplibregl.Popup({
                                 className: 'puj-popup',
                                 offset: 18,
@@ -5556,7 +5623,8 @@ sim._lastEtaUpdate = null;
                             lat: e.lat,
                             lng: e.lng,
                             privacy_radius: e.privacy_radius || window.PRIVACY_RADIUS,
-                            last_update: e.timestamp || new Date().toISOString()
+                            last_update: e.timestamp || new Date().toISOString(),
+                            driver_status: e.driver_status
                         }], { partial: true });
                     });
             }

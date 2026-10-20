@@ -22,7 +22,7 @@
 | 3   | Guest clicks the "Log in" button.        | System validates the credentials server-side (`required`, `email`, `required`).                                                                                                |
 | 4   |                                          | System regenerates the session ID (session-fixation guard) and creates a secure session token.                                                                                 |
 | 5   |                                          | System checks email verification status.<br>• Verified → System redirects the guest to the map as an authenticated user.<br>• Not verified → see **E2 – Email Not Confirmed**. |
-| 6   |                                          | System shows a "Logged in Successfully!" toast and records a `Log In` activity-log entry.                                                                                      |
+| 6   |                                          | System shows a "Logged in Successfully!" toast and records a `Log In` activity-log entry. A **driver** whose licence is expiring (30 days or fewer) or expired also gets a **warning toast at every sign-in** — *"Your driver's license expires in N days (date)…"* or *"…expired on date. Contact the administrator to renew it."*                                                                                      |
 
 ---
 

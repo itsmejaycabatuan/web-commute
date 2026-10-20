@@ -592,7 +592,14 @@ class UserController extends Controller
 
         activity()->event('Log In')->log('User login success.');
 
-        return redirect()->route('map')->with('success', 'Logged in Successfully!');
+        $response = redirect()->route('map')->with('success', 'Logged in Successfully!');
+
+        // A driver is reminded at every sign-in while their licence is expiring or expired.
+        if ($notice = $user->driver?->licenseNotice()) {
+            $response->with('warning', $notice);
+        }
+
+        return $response;
     }
 
     public function logout(Request $request)

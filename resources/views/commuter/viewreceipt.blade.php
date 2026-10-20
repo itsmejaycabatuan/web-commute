@@ -97,9 +97,9 @@
 
 
     <div class="w-full max-w-md mt-auto mb-5 sm:mb-8 flex items-center justify-between">
-        <a href="{{ route('payment.history') }}"
+        <a href="{{ $backUrl ?? route('payment.history') }}"
             class="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/40 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-2 py-1">
-            <i class="fa-solid fa-arrow-left"></i> Back to History
+            <i class="fa-solid fa-arrow-left"></i> {{ $backLabel ?? 'Back to History' }}
         </a>
     </div>
 
@@ -143,7 +143,7 @@
                     <div>
                         <p
                             class="text-[9px] uppercase text-slate-400 dark:text-white/30 font-black tracking-widest mb-1">
-                            Date Processed</p>
+                            {{ ($status ?? 'paid') === 'paid' ? 'Date Processed' : 'Date Started' }}</p>
                         <p class="text-xs font-bold text-slate-700 dark:text-white/80">{{ $paidAt }}</p>
                     </div>
                     <div class="sm:text-right">
@@ -163,9 +163,19 @@
                         <p
                             class="text-[9px] uppercase text-slate-400 dark:text-white/30 font-black tracking-widest mb-1">
                             Verified Status</p>
+                        @php($receiptStatus = $status ?? 'paid')
                         <span
-                            class="text-[9px] bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-md font-black uppercase tracking-tighter">Settled</span>
+                            class="text-[9px] border px-2 py-0.5 rounded-md font-black uppercase tracking-tighter {{ $receiptStatus === 'paid' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' : ($receiptStatus === 'pending' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20') }}">{{ $receiptStatus === 'paid' ? 'Settled' : $receiptStatus }}</span>
                     </div>
+                    @if ($commuterEmail ?? null)
+                        <div class="sm:col-span-2">
+                            <p
+                                class="text-[9px] uppercase text-slate-400 dark:text-white/30 font-black tracking-widest mb-1">
+                                Commuter</p>
+                            <p class="text-xs font-bold break-anywhere text-slate-700 dark:text-white/80">
+                                {{ $commuterEmail }}</p>
+                        </div>
+                    @endif
                 </div>
 
                 <div
@@ -173,7 +183,7 @@
                     <div class="min-w-0">
                         <p
                             class="text-[10px] font-black text-slate-400 dark:text-white/30 uppercase tracking-[0.2em] mb-1">
-                            Amount Paid</p>
+                            {{ ($status ?? 'paid') === 'paid' ? 'Amount Paid' : 'Amount' }}</p>
                         <div class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white flex items-baseline gap-1">
                             <span class="text-sm font-medium text-slate-300 dark:opacity-30">₱</span>
                             {{ number_format($price, 2) }}

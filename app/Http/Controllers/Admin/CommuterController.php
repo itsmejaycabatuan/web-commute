@@ -163,9 +163,9 @@ class CommuterController extends Controller
             'lastFare' => Payment::where('paid_by', $user->id)->latest('paid_at')->first(),
             'totalFareSpent' => (float) Payment::where('paid_by', $user->id)->sum('price'),
             // Trip History — every fare this commuter has paid, newest first.
-            'trips' => $user->payment()->latest('paid_at')->get(),
+            'trips' => $user->payment()->latest('paid_at')->paginate(10, ['*'], 'trips_page')->withQueryString(),
             // Payment History — wallet top-ups/reloads made by this commuter.
-            'topups' => $user->topupHistories()->latest()->get(),
+            'topups' => $user->topupHistories()->latest()->paginate(10, ['*'], 'topups_page')->withQueryString(),
             'totalToppedUp' => (float) $user->topupHistories()->completed()->sum('amount_added'),
         ]);
     }
@@ -177,6 +177,7 @@ class CommuterController extends Controller
     {
         return [
             'password.min' => 'Password must be at least 8 characters.',
+            'password.confirmed' => 'The password confirmation does not match.',
         ];
     }
 

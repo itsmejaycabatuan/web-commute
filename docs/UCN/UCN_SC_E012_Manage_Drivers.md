@@ -57,7 +57,7 @@
 1. In the list, the actor clicks the ID-card icon on a driver row.
 2. System displays a read-only modal with the driver's identity, licence data and expiry.
 3. From that modal the actor may jump straight into A2 (**"Edit"**).
-4. The list has a **License** column: a badge reads *Valid*, *Expires in N days* (30 days or fewer) or *Expired*, with the expiry date below it, and the **License Expiring** / **License Expired** filter chips narrow the list. The driver sees the same warning on their own dashboard.
+4. The list has a **License** column: a badge reads *Valid*, *Expires in N days* (30 days or fewer) or *Expired*, with the expiry date below it, and the **License Expiring** / **License Expired** filter chips narrow the list. The **View** modal shows the same state on its *Expires* card (red date + *Expired* badge, or amber *Expires in N days*). The driver sees the warning on their own dashboard and at every sign-in. The Add / Edit modals check the same things the registration form does while typing: e-mail format, password length (8) and confirmation, a Philippine mobile number (`+63`, `9XX XXX XXXX`, formatted as you type) and a JPG / PNG licence image of at most 2 MB; the server repeats every check.
 
 **A5 – Suspend / Reactivate a Driver**
 1. In the list, the actor clicks the suspend icon (or *reactivate* when the driver is already suspended). Only an **approved** driver can be suspended — the icon is not shown for a pending or rejected registration and the server refuses it. A suspension also takes effect on a session that is already open: the driver's next request signs them out.

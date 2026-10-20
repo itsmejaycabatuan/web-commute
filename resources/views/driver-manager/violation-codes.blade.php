@@ -436,7 +436,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-[#1a1a1a]">
-                            <template x-for="(item, index) in violations" :key="item.id">
+                            <template x-for="(item, index) in pageOf(violations)" :key="item.id">
                                 <tr class="table-row">
                                     <td class="px-4 sm:px-6 py-3">
                                         <span
@@ -499,6 +499,7 @@
                         </tbody>
                     </table>
                 </div>
+                @include('partials.client-pager', ['list' => 'violations'])
             </div>
 
             <p class="text-center text-[7px] sm:text-[8px] text-[#222] uppercase tracking-[0.2em] pt-5 sm:pt-6">
@@ -815,6 +816,7 @@
     <script>
         function violationManager() {
             return {
+                ...clientPager(),
                 violations: @json($violation_codes ?? []),
                 showModal: false,
                 showDeleteModal: false,
@@ -952,7 +954,7 @@
                         fd.append('third', row.third || '0');
                         fd.append('fourth_plus', row.fourth_plus || '0');
                         try {
-                            const res = await fetch('{{ route('violation-codes.store') }}', {
+                            const res = await fetch('{{ route('violation-codes.store', [], false) }}', {
                                 method: 'POST',
                                 body: fd,
                                 headers: {

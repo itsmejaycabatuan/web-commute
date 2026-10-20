@@ -207,8 +207,9 @@ class DriverManagerController extends Controller
             ->latest();
 
         $violations = $violationQuery
-            ->get()
-            ->map(function ($v) {
+            ->paginate(10)
+            ->withQueryString()
+            ->through(function ($v) {
                 $driver = $v->user?->driver;
 
                 return [

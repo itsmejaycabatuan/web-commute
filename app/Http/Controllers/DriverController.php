@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -33,13 +34,14 @@ class DriverController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'contact_info' => 'required|string|max:255',
+            'contact_info' => ['required', 'string', 'max:255', 'regex:/^(?:\+?63|0)?\s?9\d{2}\s?\d{3}\s?\d{4}$/'],
             'password' => 'required|string|min:8',
             'confirm-password' => 'required|same:password',
             'terms' => 'accepted',
             'license_image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ], [
             'password.min' => 'The password field must be at least 8 characters.',
+            'contact_info.regex' => 'Enter a valid Philippine mobile number (e.g. 917 123 4567).',
             'confirm-password.same' => 'The password confirmation does not match.',
             'license_image.mimes' => 'The license image must be an image of type jpg, jpeg, png.',
         ]);
@@ -328,8 +330,20 @@ class DriverController extends Controller
             });
 
         $totalFines = $violations->sum('fine');
+        $totalViolations = $violations->count();
+        $latestViolation = $violations->first();
 
-        return view('driver.violations', compact('violations', 'totalFines'));
+        // The record is paged 10 at a time; the totals above describe all of it.
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $violations = new LengthAwarePaginator(
+            $violations->forPage($page, 10)->values(),
+            $totalViolations,
+            10,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
+        return view('driver.violations', compact('violations', 'totalFines', 'totalViolations', 'latestViolation'));
     }
 
     private function getPenaltyColor($penalty)

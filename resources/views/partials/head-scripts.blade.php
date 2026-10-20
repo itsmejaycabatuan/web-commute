@@ -81,7 +81,7 @@
     function setFontSize(size) {
         const dbValue = applyFontSize(size, false);
 
-        fetch('{{ route('settings.update.fontsize') }}', {
+        fetch('{{ route('settings.update.fontsize', [], false) }}', {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -156,7 +156,7 @@
                 }, 400);
 
                 this.syncing = true;
-                fetch('{{ route('settings.update.theme') }}', {
+                fetch('{{ route('settings.update.theme', [], false) }}', {
                         method: 'PATCH',
                         headers: {
                             'Content-Type': 'application/json',
@@ -184,7 +184,7 @@
                 localStorage.setItem('font-size-db', dbValue);
 
                 this.syncing = true;
-                fetch('{{ route('settings.update.fontsize') }}', {
+                fetch('{{ route('settings.update.fontsize', [], false) }}', {
                         method: 'PATCH',
                         headers: {
                             'Content-Type': 'application/json',

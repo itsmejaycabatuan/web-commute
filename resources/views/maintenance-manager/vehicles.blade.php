@@ -517,7 +517,7 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
-                                <template x-for="(v, index) in filtered" :key="v.id">
+                                <template x-for="(v, index) in pageOf(filtered)" :key="v.id">
                                     <tr class="table-row group">
                                         <td
                                             class="px-4 sm:px-6 py-3.5 sticky left-0 z-10 bg-white dark:bg-[#161616] group-hover:bg-gray-50 dark:group-hover:bg-[#1a1a1a] transition-colors">
@@ -619,6 +619,7 @@
                             </tbody>
                         </table>
                     </div>
+                    @include('partials.client-pager', ['list' => 'filtered'])
 
                     <!-- Empty State -->
                     <div x-show="filtered.length === 0" x-cloak class="py-10 sm:py-12">
@@ -1251,6 +1252,7 @@
     <script>
         function vehicleManagementApp() {
             return {
+                ...clientPager(),
                 // ── Data ──
                 vehicles: JSON.parse(document.getElementById('vehicles-data').textContent),
                 drivers: @json($drivers ?? []),
@@ -1422,6 +1424,9 @@
                 },
 
                 init() {
+                    ['search', 'statusFilter', 'fuelFilter', 'assignmentFilter', 'sortBy'].forEach(key =>
+                        this.$watch(key, () => this.page = 1));
+
                     // A vehicle that is not active cannot carry a driver.
                     this.$watch('editForm.status', status => {
                         if (status !== 'active') this.editForm.driver_id = '';
@@ -1482,8 +1487,8 @@
 
                     try {
                         const url = this.editMode === 'add' ?
-                            '{{ route('vehicles.store') }}' :
-                            '{{ route('vehicles.update', ':id') }}'.replace(':id', this.editId);
+                            '{{ route('vehicles.store', [], false) }}' :
+                            '{{ route('vehicles.update', ':id', false) }}'.replace(':id', this.editId);
 
                         const method = this.editMode === 'add' ? 'POST' : 'PATCH';
 
@@ -1535,7 +1540,7 @@
                     this.deleteSubmitting = true;
 
                     try {
-                        const url = '{{ route('vehicles.destroy', ':id') }}'.replace(':id', this.deleteId);
+                        const url = '{{ route('vehicles.destroy', ':id', false) }}'.replace(':id', this.deleteId);
 
                         const response = await fetch(url, {
                             method: 'DELETE',

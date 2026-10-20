@@ -865,7 +865,7 @@
             localStorage.setItem('color-theme', theme);
             updateThemeUI(isDark);
 
-            fetch('{{ route('settings.update.theme') }}', {
+            fetch('{{ route('settings.update.theme', [], false) }}', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -956,7 +956,7 @@
             localStorage.setItem('font-size', size);
 
             // Save to server
-            fetch('{{ route('settings.update.fontsize') }}', {
+            fetch('{{ route('settings.update.fontsize', [], false) }}', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

@@ -105,9 +105,16 @@ class MaintenanceManagerController extends Controller
     public function maintenanceTasks()
     {
         activity()->event('Maintenancetasks')->log('Action performed: maintenanceTasks');
-        $tasks = MaintenanceTask::all();
+        $tasks = MaintenanceTask::orderBy('tasks_performed')->paginate(10)->withQueryString();
 
-        return view('maintenance-manager.maintenance-tasks', compact('tasks'));
+        // The summary cards describe the whole catalogue, not just this page.
+        $stats = [
+            'total' => MaintenanceTask::count(),
+            'withMiles' => MaintenanceTask::where('miles_between_service', '>', 0)->count(),
+            'withMonths' => MaintenanceTask::where('months_between_service', '>', 0)->count(),
+        ];
+
+        return view('maintenance-manager.maintenance-tasks', compact('tasks', 'stats'));
     }
 
     public function maintenanceTasksStore(Request $request)

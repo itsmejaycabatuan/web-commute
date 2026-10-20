@@ -166,7 +166,6 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
 
     Route::get('/topups', [PaymentController::class, 'showTopupsAdmin'])->name('admin.topups')->middleware('role:admin');
     Route::get('/transactions', [PaymentController::class, 'showTransactions'])->name('faretransactions')->middleware('role:admin');
-    Route::get('/transactions/receipt/{id}', [PaymentController::class, 'showReceiptAdmin'])->name('admin.receipt.show')->middleware('role:admin');
 
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');

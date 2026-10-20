@@ -164,7 +164,7 @@
                                 paid</p>
                         </div>
                     </div>
-                    <span class="text-[10px] font-bold text-gray-300 dark:text-[#333]">{{ $trips->count() }}
+                    <span class="text-[10px] font-bold text-gray-300 dark:text-[#333]">{{ $trips->total() }}
                         trips</span>
                 </div>
                 <div class="overflow-x-auto">
@@ -238,6 +238,11 @@
                         </tbody>
                     </table>
                 </div>
+                @if ($trips->hasPages())
+                    <div class="px-5 py-4 border-t border-gray-100 dark:border-[#1e1e1e]">
+                        {{ $trips->links('vendor.pagination.custom') }}
+                    </div>
+                @endif
             </div>
 
             <!-- ══════════ PAYMENT HISTORY ══════════ -->
@@ -324,6 +329,11 @@
                         </tbody>
                     </table>
                 </div>
+                @if ($topups->hasPages())
+                    <div class="px-5 py-4 border-t border-gray-100 dark:border-[#1e1e1e]">
+                        {{ $topups->links('vendor.pagination.custom') }}
+                    </div>
+                @endif
             </div>
         </div>
     </main>

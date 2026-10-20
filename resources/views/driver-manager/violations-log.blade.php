@@ -386,7 +386,7 @@
                         class="text-red-400">Log</span></h1>
                 <p class="text-[11px] text-[#555] mt-1 flex items-center gap-2">
                     <i class="fa-solid fa-list-check text-[9px] text-red-400"></i>
-                    <span class="text-[#888] font-bold">{{ count($violations) }}</span> violation records logged
+                    <span class="text-[#888] font-bold">{{ $violations->total() }}</span> violation records logged
                 </p>
             </div>
 
@@ -420,7 +420,7 @@
                     </form>
                     <div class="flex items-center justify-between">
                         <span
-                            class="text-[8px] font-bold text-[#333] uppercase tracking-widest">{{ count($violations) }}
+                            class="text-[8px] font-bold text-[#333] uppercase tracking-widest">{{ $violations->total() }}
                             entries</span>
                         <div class="flex items-center gap-2">
                             <button @click="openBulkModal()"
@@ -646,6 +646,11 @@
                         </tbody>
                     </table>
                 </div>
+                @if ($violations->hasPages())
+                    <div class="px-4 sm:px-6 py-4 border-t border-gray-200 dark:border-[#1e1e1e]">
+                        {{ $violations->links('vendor.pagination.custom') }}
+                    </div>
+                @endif
             </div>
 
             <p class="text-center text-[7px] sm:text-[8px] text-[#222] uppercase tracking-[0.2em] pt-5 sm:pt-6">

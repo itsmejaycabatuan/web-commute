@@ -33,7 +33,10 @@ class LocationUpdated implements ShouldBroadcast
 
     public $userId;
 
-    public function __construct($trackingId, $latitude, $longitude, $speed, $accuracy, $userId)
+    /** The driver's availability (active / inactive), so the live marker can reflect it. */
+    public $driverStatus;
+
+    public function __construct($trackingId, $latitude, $longitude, $speed, $accuracy, $userId, $driverStatus = null)
     {
         $private = LocationPrivacy::obfuscate($latitude, $longitude);
 
@@ -46,6 +49,7 @@ class LocationUpdated implements ShouldBroadcast
         $this->accuracy = $accuracy;
         $this->timestamp = now()->toDateTimeString();
         $this->userId = $userId;
+        $this->driverStatus = $driverStatus;
     }
 
     public function broadcastOn()
@@ -70,6 +74,7 @@ class LocationUpdated implements ShouldBroadcast
             'accuracy' => $this->accuracy,
             'timestamp' => $this->timestamp,
             'user_id' => $this->userId,
+            'driver_status' => $this->driverStatus,
         ];
     }
 }

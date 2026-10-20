@@ -160,6 +160,7 @@ class StaffController extends Controller
     {
         return [
             'password.min' => 'Password must be at least 8 characters.',
+            'password.confirmed' => 'The password confirmation does not match.',
             'role.in' => 'Choose Driver Manager or Maintenance Manager.',
         ];
     }

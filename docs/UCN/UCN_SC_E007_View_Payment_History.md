@@ -37,7 +37,7 @@
 
 **A3 – Filter by date range**
 1. The commuter picks a **Quick Range** (7 / 30 / 90 days) or types an explicit `from_date` / `to_date`, then clicks **"Apply Filters"**.
-2. System filters on `whereDate('paid_at', ...)` and shows only transactions inside that period. The commuter's history lists 10 receipts per page and its "total spent" counts settled fares only. **"Clear Filters"** restores the full list.
+2. System filters on `whereDate('paid_at', ...)` and shows only transactions inside that period. A receipt opens at `payment/receipt/{id}`. The **same route** serves the Admin from the fare-transactions ledger (any payment, whatever its status, with the commuter's e-mail and a *Back to Transactions* link); the old `transactions/receipt/{id}` route and view were removed. The commuter's history lists 10 receipts per page and its "total spent" counts settled fares only. **"Clear Filters"** restores the full list.
 
 **A4 – Search by transaction ID**
 1. The commuter types into the search field (placeholder: *"Transaction ID or destination"*) and applies.

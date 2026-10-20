@@ -13,6 +13,8 @@ Re-running the seeder is safe: it never duplicates rows. It resets the seeded ac
 
 **Login is throttled to 5 attempts per minute.** If you see "Too many attempts" (429), wait a minute.
 
+**Behind ngrok / a reverse proxy:** the app trusts `X-Forwarded-*`, so URLs use the tunnel's https address. Forms and fetch calls also post to the page's own origin, so add/edit modals work through the tunnel.
+
 ## Test accounts (password for all: `admin123`)
 
 | Role | Email | State to test with |
@@ -69,11 +71,11 @@ Log in as `commuter@gmail.com` unless noted.
 - [x] Active drivers appear on the map. The seeded pings last only 5 minutes, so re-run the seeder or broadcast from a driver (§3).
 
 **Pay a fare**
-- [ ] Wallet payment succeeds, the balance drops by exactly the fare, and the receipt opens.
+- [x] Wallet payment succeeds, the balance drops by exactly the fare, and the receipt opens.
 - [x] Refreshing the receipt does **not** charge again.
-- [ ] Double-clicking Pay sends one request. Re-submitting a payment that already went through opens its receipt with "This fare has already been paid"; re-submitting a pending GCash/Maya payment opens the "Confirming your payment" screen with a warning; going Back from the PayMongo checkout shows a "payment already in progress" notice with a *Check payment status* link.
+- [x] Double-clicking Pay sends one request. Re-submitting a payment that already went through opens its receipt with "This fare has already been paid"; re-submitting a pending GCash/Maya payment opens the "Confirming your payment" screen with a warning; going Back from the PayMongo checkout shows a "payment already in progress" notice with a *Check payment status* link.
 - [x] As `juan.delacruz@` (₱0), a Wallet payment shows "You don't have enough balance" and nothing is charged.
-- [ ] GCash or Maya redirects to the PayMongo sandbox checkout. Complete it and you get a receipt. Cancel it and you get "Payment cancelled. Nothing was charged."
+- [x] GCash or Maya redirects to the PayMongo sandbox checkout. Complete it and you get a receipt. Cancel it and you get "Payment cancelled. Nothing was charged."
 - [x] As `juan.delacruz@`, history shows paid, **pending**, **failed** and **cancelled** rows with distinct labels. Opening the pending one shows the "processing" screen and does not claim success.
 
 **History and receipts**
@@ -225,3 +227,17 @@ Found by running the seeded data through each page.
 4. **The unused Routes feature was removed.** The `routes` table is still in the database.
 
 Still worth a look: users have no `name` column, so commuters are identified by email. Check that the violations and driver-manager screens don't show "Unknown" for a name.
+
+---
+
+## 8. Second test round (Oct 2026)
+
+- [x] Through an ngrok URL: add / edit / delete in any modal works (no "Network error"), settings theme and font size save.
+- [x] Driver toggles *Available / Unavailable* on their map: within a few seconds the live marker turns green / red for a commuter and its popup reads *Available* / *Unavailable*.
+- [x] Admin Add / Edit **Commuter**, **Driver** and **Staff** modals check input while typing: bad e-mail, password under 8 characters, mismatched confirmation, a non-Philippine phone number and a PDF / oversized licence image each show a message under the field, and nothing is sent.
+- [x] The contact field in the driver modals shows a `+63` prefix and formats as `917 123 4567`.
+- [x] The **View** driver modal marks an expired licence (red date, *Expired*) and an expiring one (amber, *Expires in N days*).
+- [x] Sign in as a driver with an expiring or expired licence (`liza.mercado@`, `dante.cruz@`): a warning toast appears at **every** sign-in. A driver with a valid licence and a commuter see none.
+- [x] Lists show 10 per page with a pager: PUJ Drivers, PUJ Commuters, Vehicles, Violation Codes (in the browser) and Violations Log, Maintenance Tasks, a driver's own Violations, a commuter's trips and top-ups on the admin detail page (from the server).
+- [x] Admin: Fare Transactions → a row → *View Full Receipt* opens `payment/receipt/{id}` with the commuter e-mail, status and *Back to Transactions*; `/transactions/receipt/…` is 404.
+- [x] Toasts look the same (light card) in light and dark mode.

@@ -16,6 +16,18 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DriverApprovalController extends Controller
 {
+    /** The registration screens' wording, so the admin modals answer the same way. */
+    private function messages(): array
+    {
+        return [
+            'password.confirmed' => 'The password confirmation does not match.',
+            'password.min' => 'The password field must be at least 8 characters.',
+            'contact_info.regex' => 'Enter a valid Philippine mobile number (e.g. 917 123 4567).',
+            'license_image.mimes' => 'The license image must be an image of type jpg, jpeg, png.',
+            'license_image.max' => 'The license image may not be greater than 2 MB.',
+        ];
+    }
+
     public function index()
     {
         $drivers = Driver::join('users', 'drivers.user_id', '=', 'users.id')
@@ -64,9 +76,9 @@ class DriverApprovalController extends Controller
             'license_number' => 'required|string|max:255|unique:drivers,license_number',
             'license_code' => 'required|string|max:255',
             'expiration_date' => 'required|string|max:255',
-            'contact_info' => 'required|string|max:255',
-            'license_image' => 'required|image|max:2048',
-        ]);
+            'contact_info' => ['required', 'string', 'max:255', 'regex:/^(?:\+?63|0)?\s?9\d{2}\s?\d{3}\s?\d{4}$/'],
+            'license_image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+        ], $this->messages());
 
         $path = $request->file('license_image')->store('licenses', 'public');
 
@@ -136,12 +148,12 @@ class DriverApprovalController extends Controller
             'license_number' => 'required|string|max:255|unique:drivers,license_number,'.$driver->id,
             'license_code' => 'required|string|max:255',
             'expiration_date' => 'required|date',
-            'contact_info' => 'required|string|max:255',
+            'contact_info' => ['required', 'string', 'max:255', 'regex:/^(?:\+?63|0)?\s?9\d{2}\s?\d{3}\s?\d{4}$/'],
             'is_approved' => 'in:0,1',
             'is_rejected' => 'in:0,1',
-            // E7 — the replacement licence image must be an image of at most 2 MB.
-            'license_image' => 'nullable|image|max:2048',
-        ]);
+            // E7 — the replacement licence image must be a JPG / PNG of at most 2 MB.
+            'license_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ], $this->messages());
 
         $oldPath = $driver->license_image_path;
         $newPath = null;

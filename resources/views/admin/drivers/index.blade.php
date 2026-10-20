@@ -20,9 +20,15 @@
                 const drivers = el ? JSON.parse(el.textContent) : [];
 
                 return {
+                    ...clientPager(),
                     drivers,
                     search: '',
                     filter: 'all',
+
+                    init() {
+                        this.$watch('search', () => this.page = 1);
+                        this.$watch('filter', () => this.page = 1);
+                    },
 
                     addModal: false,
                     viewModal: false,
@@ -47,6 +53,8 @@
                     viewLicenseCode: '',
                     viewExpirationDate: '',
                     viewExpirationFormatted: '',
+                    viewLicenseState: '',
+                    viewLicenseDays: null,
                     viewDriverCode: '',
                     viewStatus: '',
                     viewHasLicense: false,
@@ -130,6 +138,8 @@
                             viewLicenseCode: d.license_code || '',
                             viewExpirationDate: d.expiration_date || '',
                             viewExpirationFormatted: d.expiration_formatted || '',
+                            viewLicenseState: d.license_state || '',
+                            viewLicenseDays: d.license_days,
                             viewDriverCode: d.driver_code || '',
                             viewStatus: d.status,
                             viewHasLicense: d.has_license,
@@ -481,11 +491,11 @@
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
 
-                            <template x-for="(driver, index) in filteredDrivers" :key="driver.id">
+                            <template x-for="(driver, index) in pageOf(filteredDrivers)" :key="driver.id">
                                 <tr class="table-row">
                                     <td class="px-4 sm:px-6 py-3">
                                         <span class="text-[10px] font-bold text-gray-400 dark:text-[#333]"
-                                            x-text="String(index + 1).padStart(2, '0')"></span>
+                                            x-text="String((page - 1) * perPage + index + 1).padStart(2, '0')"></span>
                                     </td>
                                     <td class="px-4 sm:px-6 py-3">
                                         <div class="flex items-center gap-3">
@@ -657,6 +667,7 @@
                         </tbody>
                     </table>
                 </div>
+                @include('partials.client-pager', ['list' => 'filteredDrivers'])
             </div>
         </main>
 
@@ -710,7 +721,7 @@
                                 <span class="text-red-500 dark:text-red-400">*</span></label>
                             <input type="email" name="email" value="{{ old('email') }}"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                placeholder="driver@email.com">
+                                placeholder="driver@email.com" data-rules="required|email|max:255">
                         </div>
 
                         <!-- Password Field with Toggle -->
@@ -721,7 +732,7 @@
                             <div class="relative">
                                 <input :type="showAddPassword ? 'text' : 'password'" name="password" minlength="8"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                    placeholder="Minimum 8 characters">
+                                    placeholder="Minimum 8 characters" data-rules="required|min:8">
 
                                 <button type="button" @click="showAddPassword = !showAddPassword"
                                     class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#444] hover:text-gray-900 dark:hover:text-white transition">
@@ -740,7 +751,7 @@
                                 <input :type="showAddConfirmPassword ? 'text' : 'password'"
                                     name="password_confirmation"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                    placeholder="Re-enter password">
+                                    placeholder="Re-enter password" data-rules="required|same:password">
 
                                 <button type="button" @click="showAddConfirmPassword = !showAddConfirmPassword"
                                     class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#444] hover:text-gray-900 dark:hover:text-white transition">
@@ -764,7 +775,7 @@
                                 <span class="text-red-500 dark:text-red-400">*</span></label>
                             <input type="text" name="name" value="{{ old('name') }}"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                placeholder="Full name">
+                                placeholder="Full name" data-rules="required|max:255">
                         </div>
 
                         <!-- NEW CONTACT INFO FIELD -->
@@ -773,9 +784,10 @@
                                 class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Contact
                                 Info
                                 <span class="text-red-500 dark:text-red-400">*</span></label>
-                            <input type="text" name="contact_info" value="{{ old('contact_info') }}"
-                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                placeholder="Phone number or email">
+                            <div class="relative flex"><span class="flex items-center px-3 rounded-l-xl border border-r-0 border-gray-200 dark:border-[#1e1e1e] bg-gray-100 dark:bg-[#0a0a0a] text-[11px] font-bold text-gray-400 dark:text-[#555]">+63</span><input type="tel" name="contact_info" value="{{ old('contact_info') }}"
+                                class="flex-1 min-w-0 rounded-l-none w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
+                                placeholder="9XX XXX XXXX" maxlength="12" data-rules="required|phone" data-format="phone"></div>
+<p class="mt-1.5 text-[8px] text-gray-400 dark:text-[#333]">Philippine mobile number (e.g. 917 123 4567)</p>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
@@ -785,7 +797,7 @@
                                     Number <span class="text-red-500 dark:text-red-400">*</span></label>
                                 <input type="text" name="license_number" value="{{ old('license_number') }}"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                    placeholder="S45-98-765432">
+                                    placeholder="S45-98-765432" data-rules="required|max:255">
                             </div>
                             <div>
                                 <label
@@ -793,7 +805,7 @@
                                     Code <span class="text-red-500 dark:text-red-400">*</span></label>
                                 <input type="text" name="license_code" value="{{ old('license_code') }}"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                    placeholder="A, B, C">
+                                    placeholder="A, B, C" data-rules="required|max:255">
                             </div>
                         </div>
 
@@ -803,7 +815,7 @@
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Expiration
                                     Date <span class="text-red-500 dark:text-red-400">*</span></label>
                                 <input type="date" name="expiration_date" value="{{ old('expiration_date') }}"
-                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
+                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition" data-rules="required">
                             </div>
                             <div>
                                 <label
@@ -822,7 +834,7 @@
                                 class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">License
                                 Image</label>
                             <input type="file" name="license_image" accept="image/jpg,image/jpeg,image/png"
-                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-500 dark:text-[#444] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-500 dark:text-[#444] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition" data-rules="required|image:2048">
                             <p class="mt-1.5 text-[8px] text-gray-400 dark:text-[#333]">JPG, JPEG, or PNG. Max 4MB.</p>
                         </div>
 
@@ -1047,8 +1059,20 @@
                                             <span
                                                 class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Expires</span>
                                         </div>
-                                        <p class="text-[12px] font-bold text-gray-700 dark:text-[#ccc]"
+                                        <p class="text-[12px] font-bold"
+                                            :class="viewLicenseState === 'expired' ? 'text-red-500 dark:text-red-400' :
+                                                viewLicenseState === 'expiring' ? 'text-amber-500 dark:text-amber-400' :
+                                                'text-gray-700 dark:text-[#ccc]'"
                                             x-text="viewExpirationFormatted || '—'"></p>
+                                        <span x-show="viewLicenseState === 'expired' || viewLicenseState === 'expiring'"
+                                            class="inline-flex items-center gap-1 mt-1.5 text-[7px] sm:text-[8px] border px-1.5 py-0.5 rounded-md font-bold uppercase"
+                                            :class="viewLicenseState === 'expired' ?
+                                                'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/15' :
+                                                'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/15'">
+                                            <i class="fa-solid fa-triangle-exclamation text-[6px]"></i>
+                                            <span
+                                                x-text="viewLicenseState === 'expired' ? 'Expired' : (viewLicenseDays === 0 ? 'Expires today' : 'Expires in ' + viewLicenseDays + (viewLicenseDays === 1 ? ' day' : ' days'))"></span>
+                                        </span>
                                     </div>
                                 </div>
 
@@ -1118,16 +1142,17 @@
                                 <span class="text-red-500 dark:text-red-400">*</span></label>
                             <input type="text" name="name" :value="editName"
                                 class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                placeholder="Full name">
+                                placeholder="Full name" data-rules="required|max:255">
                         </div>
 
                         <div>
                             <label
                                 class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Contact
                                 Info <span class="text-red-500 dark:text-red-400">*</span></label>
-                            <input type="text" name="contact_info" :value="editContactInfo"
-                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                placeholder="Phone number or email">
+                            <div class="relative flex"><span class="flex items-center px-3 rounded-l-xl border border-r-0 border-gray-200 dark:border-[#1e1e1e] bg-gray-100 dark:bg-[#0a0a0a] text-[11px] font-bold text-gray-400 dark:text-[#555]">+63</span><input type="tel" name="contact_info" :value="editContactInfo"
+                                class="flex-1 min-w-0 rounded-l-none w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
+                                placeholder="9XX XXX XXXX" maxlength="12" data-rules="required|phone" data-format="phone"></div>
+<p class="mt-1.5 text-[8px] text-gray-400 dark:text-[#333]">Philippine mobile number (e.g. 917 123 4567)</p>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
@@ -1137,7 +1162,7 @@
                                     Number <span class="text-red-500 dark:text-red-400">*</span></label>
                                 <input type="text" name="license_number" :value="editLicenseNumber"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                    placeholder="S45-98-765432">
+                                    placeholder="S45-98-765432" data-rules="required|max:255">
                             </div>
                             <div>
                                 <label
@@ -1145,7 +1170,7 @@
                                     Code <span class="text-red-500 dark:text-red-400">*</span></label>
                                 <input type="text" name="license_code" :value="editLicenseCode"
                                     class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                                    placeholder="A, B, C">
+                                    placeholder="A, B, C" data-rules="required|max:255">
                             </div>
                         </div>
 
@@ -1155,7 +1180,7 @@
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Expiration
                                     Date <span class="text-red-500 dark:text-red-400">*</span></label>
                                 <input type="date" name="expiration_date" :value="editExpirationDate"
-                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
+                                    class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition" data-rules="required">
                             </div>
                             <div>
                                 <label
@@ -1172,7 +1197,7 @@
                                 class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Replace
                                 License Image</label>
                             <input type="file" name="license_image" accept="image/jpg,image/jpeg,image/png"
-                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-500 dark:text-[#444] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
+                                class="w-full px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-500 dark:text-[#444] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition" data-rules="image:2048">
                             <p class="mt-1.5 text-[8px] text-gray-400 dark:text-[#333]">Leave empty to keep current
                                 image. JPG, PNG — Max 4MB.</p>
                         </div>

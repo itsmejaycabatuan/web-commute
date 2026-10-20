@@ -337,7 +337,7 @@
                         <i class="fa-solid fa-file-circle-exclamation text-[8px] text-amber-400"></i>
                         <span class="text-[10px] text-[#888] font-bold">Violation Records</span>
                         <span class="text-[#333]">•</span>
-                        <span class="font-mono text-[9px] text-[#444]">{{ count($violations) }} entries</span>
+                        <span class="font-mono text-[9px] text-[#444]">{{ $totalViolations }} entries</span>
                     </div>
                 </div>
             </div>
@@ -351,7 +351,7 @@
                         class="text-red-400">Violations</span></h1>
                 <p class="text-[11px] text-[#555] mt-1 flex items-center gap-2">
                     <i class="fa-solid fa-list-check text-[9px] text-amber-400"></i>
-                    <span class="text-[#888] font-bold">{{ count($violations) }}</span> violation records on file
+                    <span class="text-[#888] font-bold">{{ $totalViolations }}</span> violation records on file
                 </p>
             </div>
 
@@ -367,7 +367,7 @@
                         </div>
                         <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#333]">Total</span>
                     </div>
-                    <p class="text-2xl sm:text-3xl font-black">{{ count($violations) }}</p>
+                    <p class="text-2xl sm:text-3xl font-black">{{ $totalViolations }}</p>
                     <p class="text-[8px] text-[#444] mt-0.5">violation records</p>
                 </div>
 
@@ -394,10 +394,10 @@
                         </div>
                         <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#333]">Latest</span>
                     </div>
-                    @if (count($violations) > 0)
+                    @if ($totalViolations > 0)
                         <p class="text-[11px] sm:text-xs font-bold truncate">
-                            {{ $violations->first()['violationType'] }}</p>
-                        <p class="text-[8px] text-[#444] mt-0.5">{{ $violations->first()['date'] }}</p>
+                            {{ $latestViolation['violationType'] }}</p>
+                        <p class="text-[8px] text-[#444] mt-0.5">{{ $latestViolation['date'] }}</p>
                     @else
                         <p class="text-[11px] font-bold text-[#333]">None</p>
                         <p class="text-[8px] text-[#333] mt-0.5">No records yet</p>
@@ -655,8 +655,14 @@
                     </table>
                 </div>
 
+                @if ($violations->hasPages())
+                    <div class="px-4 sm:px-6 py-4 border-t border-[#1e1e1e]">
+                        {{ $violations->links('vendor.pagination.custom') }}
+                    </div>
+                @endif
+
                 <!-- ── Footer Summary ── -->
-                @if (count($violations) > 0)
+                @if ($totalViolations > 0)
                     <div class="px-4 sm:px-6 py-4 border-t border-[#1e1e1e] flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#333]">Total

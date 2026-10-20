@@ -194,7 +194,7 @@
                                     </td>
                                     <td class="px-4 sm:px-6 py-3.5 text-right">
                                         <button
-                                            @click="selectedTx = { email: '{{ $tx->user?->email ?? 'Deleted user' }}', userId: '#{{ $tx->paid_by }}', txId: '{{ $tx->transaction_id }}', date: '{{ $tx->created_at->format('M j, Y g:i A') }}', amount: '{{ number_format($tx->price, 2) }}' }; showDetailModal = true"
+                                            @click="selectedTx = {{ Illuminate\Support\Js::from(['id' => $tx->id, 'email' => $tx->user?->email ?? 'Deleted user', 'userId' => '#'.$tx->paid_by, 'txId' => $tx->transaction_id, 'date' => $tx->created_at->format('M j, Y g:i A'), 'amount' => number_format($tx->price, 2), 'status' => ucfirst((string) $tx->status), 'method' => $tx->payment_method]) }}; showDetailModal = true"
                                             class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-200 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] flex items-center justify-center transition group ml-auto"
                                             title="View details">
                                             <i
@@ -343,8 +343,7 @@
                     </div>
                 </div>
 
-                <a :href="'{{ route('admin.receipt.show', '__ID__') }}'.replace('__ID__', encodeURIComponent(selectedTx?.txId ||
-                    ''))"
+                <a :href="'{{ route('payment.showReceipt', '__ID__') }}'.replace('__ID__', encodeURIComponent(selectedTx?.id || ''))"
                     class="flex items-center justify-center gap-2 w-full mt-5 py-2.5 rounded-xl bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-200 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] text-[9px] font-bold uppercase tracking-widest text-gray-600 dark:text-[#888] hover:text-gray-900 dark:hover:text-white transition">
                     <i class="fa-solid fa-file-invoice text-[8px]"></i>
                     <span>View Full Receipt</span>

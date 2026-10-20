@@ -145,6 +145,24 @@ class Driver extends Model
         };
     }
 
+    /**
+     * The warning a driver sees at every sign-in while their licence is expiring
+     * or expired; null when there is nothing to warn about.
+     */
+    public function licenseNotice(): ?string
+    {
+        $days = $this->licenseDaysRemaining();
+        $date = $this->expiration_date ? Carbon::parse($this->expiration_date)->format('M j, Y') : null;
+
+        return match ($this->licenseState()) {
+            'expired' => "Your driver's license expired on {$date}. Contact the administrator to renew it.",
+            'expiring' => $days === 0
+                ? "Your driver's license expires today ({$date}). Renew it as soon as possible."
+                : "Your driver's license expires in {$days} ".($days === 1 ? 'day' : 'days')." ({$date}). Renew it before it lapses.",
+            default => null,
+        };
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

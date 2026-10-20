@@ -52,6 +52,7 @@
 
 <body class="antialiased text-gray-900 dark:text-white" x-data>
     <div x-data="{
+        ...clientPager(),
         search: '',
         filter: 'all',
         showAddModal: false,
@@ -63,6 +64,8 @@
         commuters: [],
 
         init() {
+            this.$watch('search', () => this.page = 1);
+            this.$watch('filter', () => this.page = 1);
             try {
                 this.commuters = JSON.parse(document.getElementById('commuters-data').textContent);
             } catch (e) {
@@ -236,11 +239,11 @@
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
 
-                            <template x-for="(commuter, index) in filteredCommuters" :key="commuter.id">
+                            <template x-for="(commuter, index) in pageOf(filteredCommuters)" :key="commuter.id">
                                 <tr class="table-row">
                                     <td class="px-4 sm:px-6 py-3">
                                         <span class="text-[10px] font-bold text-gray-400 dark:text-[#333]"
-                                            x-text="String(index + 1).padStart(2, '0')"></span>
+                                            x-text="String((page - 1) * perPage + index + 1).padStart(2, '0')"></span>
                                     </td>
                                     <td class="px-4 sm:px-6 py-3">
                                         <div class="flex items-center gap-3">
@@ -360,6 +363,7 @@
                         </tbody>
                     </table>
                 </div>
+                @include('partials.client-pager', ['list' => 'filteredCommuters'])
             </div>
         </main>
 
@@ -394,7 +398,7 @@
                         <label
                             class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Email</label>
                         <input type="email" name="email" value="{{ old('email', '') }}" required
-                            class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
+                            class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition" data-rules="required|email|max:255">
                     </div>
 
                     <div>
@@ -402,7 +406,7 @@
                             class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Password</label>
                         <input type="password" name="password" required
                             class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                            placeholder="Minimum 8 characters">
+                            placeholder="Minimum 8 characters" data-rules="required|min:8">
                     </div>
 
                     <div>
@@ -411,7 +415,7 @@
                             Password</label>
                         <input type="password" name="password_confirmation" required
                             class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                            placeholder="Re-enter password">
+                            placeholder="Re-enter password" data-rules="required|same:password">
                     </div>
 
                     <div class="pt-1 border-t border-gray-200 dark:border-[#1e1e1e]">
@@ -473,7 +477,7 @@
                         <label
                             class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Email</label>
                         <input type="email" name="email" :value="selectedUser?.email" required
-                            class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition">
+                            class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition" data-rules="required|email|max:255">
                     </div>
 
                     <div>
@@ -482,7 +486,7 @@
                             Password</label>
                         <input type="password" name="password"
                             class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                            placeholder="Leave blank to keep current">
+                            placeholder="Leave blank to keep current" data-rules="min:8">
                     </div>
 
                     <div>
@@ -491,7 +495,7 @@
                             New Password</label>
                         <input type="password" name="password_confirmation"
                             class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#333] focus:outline-none focus:border-gray-300 dark:focus:border-[#333] transition"
-                            placeholder="Re-enter new password">
+                            placeholder="Re-enter new password" data-rules="same:password">
                     </div>
 
                     <div class="pt-1 border-t border-gray-200 dark:border-[#1e1e1e]">

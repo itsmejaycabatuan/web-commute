@@ -19,9 +19,9 @@
 | --- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1   | Guest opens the map.                           | System requests device location (when permission is granted) and displays the interactive map with navigation, pitch and locate (📍) controls.                           |
 | 2   |                                                | System centres the map on the Guest's current location (zoom 15) as soon as the first position fix arrives. Until then the map opens at the default service-area centre. |
-| 3   |                                                | System fetches real-time PUJ data (initial fetch + websocket push + polling fallback) and plots the active PUJ markers on the map.                                       |
+| 3   |                                                | System fetches real-time PUJ data (initial fetch + websocket push + polling fallback) and plots the active PUJ markers on the map, coloured by the driver's availability: **green** = available, **red** = unavailable, blue = unknown. Toggling the status updates the marker and its popup within a few seconds.                                       |
 | 4   | Guest clicks a specific PUJ marker on the map. | System displays an info popup for the PUJ.                                                                                                                               |
-| 5   |                                                | **Info popup displays:** PUJ plate/route, approximate location (privacy-obfuscated, ~200 m radius), vehicle status, and ETA to the Guest's location.                     |
+| 5   |                                                | **Info popup displays:** PUJ plate/route, approximate location (privacy-obfuscated, ~200 m radius), the **driver's status** (*Available* / *Unavailable*, from the driver's own availability toggle) and ETA to the Guest's location.                     |
 
 **Marker / ETA detail**
 - Active PUJs are those with a location reported within the last **5 minutes**.

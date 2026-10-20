@@ -89,7 +89,7 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 | 3   | Guest clicks the "Log in" button.        | System validates the credentials server-side (`required`, `email`, `required`).                                                                                                |
 | 4   |                                          | System regenerates the session ID (session-fixation guard) and creates a secure session token.                                                                                 |
 | 5   |                                          | System checks email verification status.<br>• Verified → System redirects the guest to the map as an authenticated user.<br>• Not verified → see **E2 – Email Not Confirmed**. |
-| 6   |                                          | System shows a "Logged in Successfully!" toast and records a `Log In` activity-log entry.                                                                                      |
+| 6   |                                          | System shows a "Logged in Successfully!" toast and records a `Log In` activity-log entry. A **driver** whose licence is expiring (30 days or fewer) or expired also gets a **warning toast at every sign-in** — *"Your driver's license expires in N days (date)…"* or *"…expired on date. Contact the administrator to renew it."*                                                                                      |
 
 ---
 
@@ -281,9 +281,9 @@ The Guest submits more than **6 registration attempts per minute**. System block
 | --- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1   | Guest opens the map.                           | System requests device location (when permission is granted) and displays the interactive map with navigation, pitch and locate (📍) controls.                           |
 | 2   |                                                | System centres the map on the Guest's current location (zoom 15) as soon as the first position fix arrives. Until then the map opens at the default service-area centre. |
-| 3   |                                                | System fetches real-time PUJ data (initial fetch + websocket push + polling fallback) and plots the active PUJ markers on the map.                                       |
+| 3   |                                                | System fetches real-time PUJ data (initial fetch + websocket push + polling fallback) and plots the active PUJ markers on the map, coloured by the driver's availability: **green** = available, **red** = unavailable, blue = unknown. Toggling the status updates the marker and its popup within a few seconds.                                       |
 | 4   | Guest clicks a specific PUJ marker on the map. | System displays an info popup for the PUJ.                                                                                                                               |
-| 5   |                                                | **Info popup displays:** PUJ plate/route, approximate location (privacy-obfuscated, ~200 m radius), vehicle status, and ETA to the Guest's location.                     |
+| 5   |                                                | **Info popup displays:** PUJ plate/route, approximate location (privacy-obfuscated, ~200 m radius), the **driver's status** (*Available* / *Unavailable*, from the driver's own availability toggle) and ETA to the Guest's location.                     |
 
 **Marker / ETA detail**
 - Active PUJs are those with a location reported within the last **5 minutes**.
@@ -759,7 +759,7 @@ No fare rates are published for the current fare table, so the fare cannot be pr
 
 **A3 – Filter by date range**
 1. The commuter picks a **Quick Range** (7 / 30 / 90 days) or types an explicit `from_date` / `to_date`, then clicks **"Apply Filters"**.
-2. System filters on `whereDate('paid_at', ...)` and shows only transactions inside that period. The commuter's history lists 10 receipts per page and its "total spent" counts settled fares only. **"Clear Filters"** restores the full list.
+2. System filters on `whereDate('paid_at', ...)` and shows only transactions inside that period. A receipt opens at `payment/receipt/{id}`. The **same route** serves the Admin from the fare-transactions ledger (any payment, whatever its status, with the commuter's e-mail and a *Back to Transactions* link); the old `transactions/receipt/{id}` route and view were removed. The commuter's history lists 10 receipts per page and its "total spent" counts settled fares only. **"Clear Filters"** restores the full list.
 
 **A4 – Search by transaction ID**
 1. The commuter types into the search field (placeholder: *"Transaction ID or destination"*) and applies.
@@ -1266,7 +1266,7 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 1. In the list, the actor clicks the ID-card icon on a driver row.
 2. System displays a read-only modal with the driver's identity, licence data and expiry.
 3. From that modal the actor may jump straight into A2 (**"Edit"**).
-4. The list has a **License** column: a badge reads *Valid*, *Expires in N days* (30 days or fewer) or *Expired*, with the expiry date below it, and the **License Expiring** / **License Expired** filter chips narrow the list. The driver sees the same warning on their own dashboard.
+4. The list has a **License** column: a badge reads *Valid*, *Expires in N days* (30 days or fewer) or *Expired*, with the expiry date below it, and the **License Expiring** / **License Expired** filter chips narrow the list. The **View** modal shows the same state on its *Expires* card (red date + *Expired* badge, or amber *Expires in N days*). The driver sees the warning on their own dashboard and at every sign-in. The Add / Edit modals check the same things the registration form does while typing: e-mail format, password length (8) and confirmation, a Philippine mobile number (`+63`, `9XX XXX XXXX`, formatted as you type) and a JPG / PNG licence image of at most 2 MB; the server repeats every check.
 
 **A5 – Suspend / Reactivate a Driver**
 1. In the list, the actor clicks the suspend icon (or *reactivate* when the driver is already suspended). Only an **approved** driver can be suspended — the icon is not shown for a pending or rejected registration and the server refuses it. A suspension also takes effect on a session that is already open: the driver's next request signs them out.

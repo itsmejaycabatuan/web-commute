@@ -157,7 +157,8 @@ class VehicleTrackingController extends Controller
                 $validated['longitude'],
                 $validated['speed'] ?? null,
                 $validated['accuracy'] ?? null,
-                $validated['user_id']
+                $validated['user_id'],
+                $user->driver->status
             ));
 
             VehicleLocationHistory::create([
@@ -210,7 +211,7 @@ class VehicleTrackingController extends Controller
             ->unique('vehicle_id');
 
         $vehicles = $locations->map(function ($location) {
-            $vehicle = Vehicle::find($location->vehicle_id);
+            $vehicle = Vehicle::with('driver')->find($location->vehicle_id);
 
             // Guests/commuters must never receive the raw GPS coordinates
             $private = LocationPrivacy::obfuscate(
@@ -228,6 +229,9 @@ class VehicleTrackingController extends Controller
                 'privacy_radius' => $private['privacy_radius'],
                 'plate_number' => $vehicle->plate_number ?? null,
                 'route_name' => $vehicle->location ?? 'N/A',
+                // The driver's availability toggle (active / inactive): drives the
+                // marker colour and the status line in the popup.
+                'driver_status' => $vehicle?->driver?->status ?? 'unknown',
                 'speed' => $location->speed,
                 'accuracy' => $location->accuracy,
                 'last_update' => $location->last_update ? (string) $location->last_update : null,

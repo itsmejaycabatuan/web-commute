@@ -8,11 +8,15 @@ use Illuminate\Http\Request;
 class TrustProxies extends Middleware
 {
     /**
-     * The trusted proxies for this application.
+     * Trust the reverse proxy in front of the app (ngrok, a load balancer), so the
+     * request's scheme and host come from X-Forwarded-* and generated URLs match the
+     * address the browser is really using. Without this an https ngrok tunnel
+     * produced http:// form and fetch URLs, which the browser blocks as mixed
+     * content ("Network error").
      *
      * @var array<int, string>|string|null
      */
-    protected $proxies;
+    protected $proxies = '*';
 
     /**
      * The headers that should be used to detect proxies.

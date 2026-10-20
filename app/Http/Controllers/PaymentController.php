@@ -453,18 +453,27 @@ class PaymentController extends Controller
         ]);
     }
 
+    /**
+     * One receipt for everyone: a commuter sees their own, an admin may open any
+     * payment from the transactions ledger (whatever its status).
+     */
     public function showReceipt(string $id)
     {
         activity()->event('Showreceipt')->log('Action performed: showReceipt');
-        // Scoped to the authenticated commuter: a receipt must never be
-        // readable by another user who guesses/guesses the id.
-        $payment = Payment::where('id', $id)
-            ->where('paid_by', Auth::id())
+
+        $isAdmin = Auth::user()->hasRole('admin');
+
+        // A commuter's receipt is scoped to them: it must never be readable by
+        // another user who guesses the id.
+        $payment = Payment::with('user')
+            ->where('id', $id)
+            ->when(! $isAdmin, fn ($q) => $q->where('paid_by', Auth::id()))
             ->firstOrFail();
 
-        // Only a settled payment has a receipt. A pending one goes back through
-        // the gateway reconciliation; a failed or cancelled one has nothing to show.
-        if (! $payment->paid_at) {
+        // Only a settled payment has a receipt for its owner. A pending one goes
+        // back through the gateway reconciliation; a failed or cancelled one has
+        // nothing to show. An admin auditing the ledger sees every attempt.
+        if (! $payment->paid_at && ! $isAdmin) {
             if ($payment->status === 'pending') {
                 return redirect()->route('payment.returned', ['ref' => $payment->transaction_id]);
             }
@@ -479,7 +488,11 @@ class PaymentController extends Controller
             'paymentMethod' => $payment->payment_method,
             'transactionId' => $payment->transaction_id,
             'price' => $payment->price,
-            'paidAt' => $payment->paid_at->format('M d, Y h:i A'),
+            'paidAt' => ($payment->paid_at ?? $payment->created_at)->format('M d, Y h:i A'),
+            'status' => $payment->status,
+            'commuterEmail' => $isAdmin ? $payment->user?->email : null,
+            'backUrl' => $isAdmin ? route('faretransactions') : route('payment.history'),
+            'backLabel' => $isAdmin ? 'Back to Transactions' : 'Back to History',
         ]);
     }
 
@@ -640,25 +653,6 @@ class PaymentController extends Controller
             'settledCount' => Payment::settled()->count(),
             'activeUsersCount' => Payment::settled()->distinct()->count('paid_by'),
             'statusCounts' => Payment::selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total', 'status'),
-        ]);
-    }
-
-    public function showReceiptAdmin(string $id)
-    {
-        activity()->event('Showreceiptadmin')->log('Action performed: showReceiptAdmin');
-        // Laravel automatically decodes %23 back to #, so $id will be #SC-...
-        // We can safely query the database directly
-        $payment = Payment::with('user')->where('transaction_id', $id)->firstOrFail();
-
-        return view('admin.commuters.receipt', [
-            'pickup' => $payment->starting_point,
-            'destination' => $payment->destination,
-            'distance' => $payment->total_distance,
-            'paymentMethod' => $payment->payment_method,
-            'transactionId' => $payment->transaction_id,
-            'price' => $payment->price,
-            'paidAt' => $payment->paid_at,
-            'user' => $payment->user,
         ]);
     }
 

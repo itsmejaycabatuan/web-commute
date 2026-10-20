@@ -146,43 +146,6 @@
         background: rgba(59, 130, 246, .15);
     }
 
-    .dark .app-toast--success {
-        background: rgba(16, 185, 129, .12);
-        border-color: rgba(16, 185, 129, .25);
-        color: #6ee7b7;
-    }
-
-    .dark .app-toast--error {
-        background: rgba(244, 63, 94, .12);
-        border-color: rgba(244, 63, 94, .25);
-        color: #fda4af;
-    }
-
-    .dark .app-toast--warning {
-        background: rgba(245, 158, 11, .12);
-        border-color: rgba(245, 158, 11, .25);
-        color: #fcd34d;
-    }
-
-    .dark .app-toast--info {
-        background: rgba(59, 130, 246, .12);
-        border-color: rgba(59, 130, 246, .25);
-        color: #93c5fd;
-    }
-
-    /* The login / register screens are always dark. */
-    .app-toast-stack.is-dark .app-toast--success {
-        background: rgba(16, 185, 129, .16);
-        border-color: rgba(16, 185, 129, .3);
-        color: #6ee7b7;
-    }
-
-    .app-toast-stack.is-dark .app-toast--error {
-        background: rgba(244, 63, 94, .16);
-        border-color: rgba(244, 63, 94, .3);
-        color: #fda4af;
-    }
-
     @keyframes app-toast-in {
         from {
             opacity: 0;
@@ -258,11 +221,6 @@
             stack = document.createElement('div');
             stack.className = 'app-toast-stack';
             stack.setAttribute('aria-live', 'polite');
-            // Pages that never load the theme script (login, register) are dark.
-            if (!document.documentElement.classList.contains('dark') &&
-                document.body.className.indexOf('login-bg') !== -1) {
-                stack.classList.add('is-dark');
-            }
             document.body.appendChild(stack);
 
             return stack;
@@ -309,7 +267,7 @@
 
             setTimeout(function () {
                 dismiss(el);
-            }, duration || (type === 'error' ? 6000 : 4000));
+            }, duration || (type === 'error' ? 6000 : (type === 'warning' ? 10000 : 4000)));
 
             return el;
         }
@@ -415,6 +373,31 @@
             return field;
         }
 
+        /* Show (or replace) one message under a field; it clears as soon as the
+           field is edited. Used for server errors and for the client rules. */
+        function setFieldError(field, message) {
+            clearFieldError(field);
+
+            field.classList.add('app-field-invalid');
+            field.setAttribute('aria-invalid', 'true');
+
+            var p = document.createElement('p');
+            p.className = 'app-field-error';
+            p.setAttribute('role', 'alert');
+            p.textContent = message;
+            errorAnchor(field).insertAdjacentElement('afterend', p);
+            field.__errorEl = p;
+        }
+
+        function clearFieldError(field) {
+            field.classList.remove('app-field-invalid');
+            field.removeAttribute('aria-invalid');
+            if (field.__errorEl) {
+                field.__errorEl.remove();
+                field.__errorEl = null;
+            }
+        }
+
         function showErrors(form, errors) {
             clearErrors(form);
             var orphans = [];
@@ -429,25 +412,8 @@
                     return;
                 }
 
-                field.classList.add('app-field-invalid');
-                field.setAttribute('aria-invalid', 'true');
                 firstField = firstField || field;
-
-                var p = document.createElement('p');
-                p.className = 'app-field-error';
-                p.setAttribute('role', 'alert');
-                p.textContent = messages[0];
-                errorAnchor(field).insertAdjacentElement('afterend', p);
-
-                var clear = function () {
-                    field.classList.remove('app-field-invalid');
-                    field.removeAttribute('aria-invalid');
-                    p.remove();
-                    field.removeEventListener('input', clear);
-                    field.removeEventListener('change', clear);
-                };
-                field.addEventListener('input', clear);
-                field.addEventListener('change', clear);
+                setFieldError(field, messages[0]);
             });
 
             if (orphans.length) {
@@ -477,6 +443,19 @@
             }
         }
 
+        /* Always post to this site's own origin. A form action generated as an
+           absolute URL (http://localhost, or http:// behind an https tunnel such
+           as ngrok) would otherwise be a cross-origin / mixed-content request and
+           fail with a network error. */
+        function sameOrigin(url) {
+            try {
+                var u = new URL(url, window.location.href);
+                return u.pathname + u.search;
+            } catch (e) {
+                return url;
+            }
+        }
+
         function methodOf(form, formData) {
             var spoof = formData.get('_method');
             return (spoof || form.getAttribute('method') || 'POST').toUpperCase();
@@ -493,6 +472,7 @@
                 // A submit button may post the same fields somewhere else (formaction).
                 var action = (submitter && submitter.getAttribute('formaction')) ||
                     form.getAttribute('action') || window.location.href;
+                action = sameOrigin(action);
 
                 response = await fetch(action, {
                     method: 'POST', // _method is spoofed in the body when needed
@@ -567,12 +547,165 @@
             if (form.__busy) return;
 
             var submitter = e.submitter || form.querySelector('button[type="submit"], input[type="submit"]');
+
+            // Client rules first: nothing is sent while a field is obviously wrong.
+            // (The reject / delete style forms have no rules and go straight through.)
+            var firstInvalid = form.querySelector('[data-rules]') ? validateForm(form) : null;
+            if (firstInvalid) {
+                show('Please correct the highlighted fields and try again.', 'error');
+                if (firstInvalid.focus) try { firstInvalid.focus(); } catch (err) { /* ignore */ }
+                return;
+            }
+
             clearErrors(form);
             setBusy(form, submitter, true);
 
             submit(form, submitter).finally(function () {
                 setBusy(form, submitter, false);
             });
+        });
+
+
+        /* ═════════════ Client-side input rules (data-rules) ═════════════
+           The same checks the registration screens make, applied to the admin
+           modals: <input data-rules="required|email|min:8|same:password|phone|image:2048">
+           Each rule except `required` is skipped while the field is empty, so an
+           optional field only fails when something invalid was typed. The server
+           still validates everything; this just answers sooner.
+        */
+        var PH_MOBILE = /^(?:\+?63|0)?\s?9\d{2}\s?\d{3}\s?\d{4}$/;
+
+        function fieldLabel(field) {
+            return (field.getAttribute('data-label') ||
+                (field.name || 'field').replace(/\[|\]/g, ' ').replace(/[_-]+/g, ' ')).trim().toLowerCase();
+        }
+
+        function isEmpty(field) {
+            if (field.type === 'file') return !(field.files && field.files.length);
+            if (field.type === 'checkbox') return !field.checked;
+            return String(field.value || '').trim() === '';
+        }
+
+        function checkField(field) {
+            var spec = field.getAttribute('data-rules');
+            if (!spec) return '';
+
+            var rules = spec.split('|');
+            var label = fieldLabel(field);
+            var empty = isEmpty(field);
+
+            for (var i = 0; i < rules.length; i++) {
+                var parts = rules[i].split(':');
+                var rule = parts[0];
+                var arg = parts.slice(1).join(':');
+                var value = field.value;
+
+                if (rule === 'required') {
+                    if (empty) return 'The ' + label + ' field is required.';
+                    continue;
+                }
+                if (empty) continue;
+
+                if (rule === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value.trim())) {
+                    return 'Enter a valid email address.';
+                }
+                if (rule === 'min' && value.length < parseInt(arg, 10)) {
+                    return 'The ' + label + ' must be at least ' + arg + ' characters.';
+                }
+                if (rule === 'max' && value.length > parseInt(arg, 10)) {
+                    return 'The ' + label + ' may not be greater than ' + arg + ' characters.';
+                }
+                if (rule === 'same') {
+                    var other = field.form && field.form.querySelector('[name="' + cssEscape(arg) + '"]');
+                    if (other && other.value !== value) return 'The ' + label + ' does not match.';
+                }
+                if (rule === 'phone' && !PH_MOBILE.test(value.trim())) {
+                    return 'Enter a valid Philippine mobile number (e.g. 917 123 4567).';
+                }
+                if (rule === 'image') {
+                    var file = field.files && field.files[0];
+                    if (file) {
+                        if (!/^image\/(jpe?g|png)$/i.test(file.type) && !/\.(jpe?g|png)$/i.test(file.name)) {
+                            return 'The ' + label + ' must be a JPG or PNG image.';
+                        }
+                        var maxKb = parseInt(arg, 10) || 2048;
+                        if (file.size > maxKb * 1024) {
+                            return 'The ' + label + ' may not be greater than ' + (maxKb / 1024) + ' MB.';
+                        }
+                    }
+                }
+            }
+
+            return '';
+        }
+
+        function validateForm(form) {
+            var first = null;
+            form.querySelectorAll('[data-rules]').forEach(function (field) {
+                // A field hidden by x-show / x-if is not part of this submission.
+                if (field.offsetParent === null && field.type !== 'hidden') return;
+                var message = checkField(field);
+                if (message) {
+                    setFieldError(field, message);
+                    first = first || field;
+                } else {
+                    clearFieldError(field);
+                }
+            });
+            return first;
+        }
+
+        /* Philippine mobile number as typed in the registration form: 9XX XXX XXXX */
+        function formatPhone(input) {
+            var digits = input.value.replace(/\D/g, '');
+            if (digits.indexOf('63') === 0 && digits.length > 10) digits = digits.substring(2);
+            if (digits.charAt(0) === '0') digits = digits.substring(1);
+            digits = digits.substring(0, 10);
+            if (digits.length > 6) {
+                input.value = digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(6);
+            } else if (digits.length > 3) {
+                input.value = digits.slice(0, 3) + ' ' + digits.slice(3);
+            } else {
+                input.value = digits;
+            }
+        }
+
+        document.addEventListener('input', function (e) {
+            var field = e.target;
+            if (!field || !field.matches) return;
+
+            if (field.matches('[data-format="phone"]')) formatPhone(field);
+
+            // Re-check while typing only once a message is showing, so the
+            // user is not nagged before they have finished.
+            if (field.__errorEl) {
+                if (field.hasAttribute('data-rules')) {
+                    var message = checkField(field);
+                    message ? setFieldError(field, message) : clearFieldError(field);
+                } else {
+                    clearFieldError(field);
+                }
+            }
+        });
+
+        // A select / checkbox / file with a server error is cleared once changed.
+        document.addEventListener('change', function (e) {
+            var field = e.target;
+            if (field && field.__errorEl && !field.hasAttribute('data-rules')) clearFieldError(field);
+        });
+
+        document.addEventListener('focusout', function (e) {
+            var field = e.target;
+            if (!field || !field.matches || !field.matches('form[data-ajax] [data-rules]')) return;
+            var message = checkField(field);
+            message ? setFieldError(field, message) : clearFieldError(field);
+        });
+
+        document.addEventListener('change', function (e) {
+            var field = e.target;
+            if (!field || !field.matches || !field.matches('form[data-ajax] input[type="file"][data-rules]')) return;
+            var message = checkField(field);
+            message ? setFieldError(field, message) : clearFieldError(field);
         });
 
         window.AppForms = { showErrors: showErrors, clearErrors: clearErrors };

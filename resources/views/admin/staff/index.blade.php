@@ -257,7 +257,7 @@
                     <div>
                         <label class="{{ $labelClass }}">Email</label>
                         <input type="email" name="email" :value="modal === 'edit' ? selected?.email : ''"
-                            class="{{ $inputClass }}" placeholder="name@company.com" autocomplete="off">
+                            class="{{ $inputClass }}" placeholder="name@company.com" autocomplete="off" data-rules="required|email|max:255">
                     </div>
 
                     <div>
@@ -276,7 +276,7 @@
                             <input :type="showPassword ? 'text' : 'password'" name="password"
                                 class="{{ $inputClass }}"
                                 :placeholder="modal === 'add' ? 'Minimum 8 characters' : 'Leave blank to keep current'"
-                                autocomplete="new-password">
+                                autocomplete="new-password" x-bind:data-rules="modal === 'add' ? 'required|min:8' : 'min:8'">
                             <button type="button" @click="showPassword = !showPassword"
                                 class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-[#444] hover:text-gray-900 dark:hover:text-white transition">
                                 <i :class="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"
@@ -288,7 +288,7 @@
                     <div>
                         <label class="{{ $labelClass }}">Confirm password</label>
                         <input :type="showPassword ? 'text' : 'password'" name="password_confirmation"
-                            class="{{ $inputClass }}" placeholder="Re-enter password" autocomplete="new-password">
+                            class="{{ $inputClass }}" placeholder="Re-enter password" autocomplete="new-password" :data-rules="modal === 'add' ? 'required|same:password' : 'same:password'">
                     </div>
 
                     <div class="flex gap-2.5 pt-1">
