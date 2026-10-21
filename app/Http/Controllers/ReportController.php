@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Audit;
 use App\Models\Driver;
 use App\Models\Payment;
 use App\Models\PreventiveMaintenance;
@@ -238,6 +239,13 @@ class ReportController extends Controller
         $end = $request->get('end_date');
 
         $filename = "smartcommute_{$type}_report_" . now()->format('Y-m-d') . '.csv';
+
+        // Exports leave the system, so they are part of the audit trail (who exported what, when).
+        Audit::log(Audit::SYSTEM, 'report_exported', 'Exported the '.$type.' report as CSV', null, [
+            'report' => $type,
+            'from' => $start,
+            'to' => $end,
+        ]);
 
         $headers = [
             'Content-Type' => 'text/csv',

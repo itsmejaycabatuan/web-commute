@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\User;
+use App\Support\Audit;
 use App\Models\Wallet;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -16,7 +17,6 @@ class CommuterController extends Controller
 {
     public function index()
     {
-        activity()->event('Index')->log('Action performed: index');
 
         $commuters = User::role('commuter')
             ->with('wallet')
@@ -39,7 +39,7 @@ class CommuterController extends Controller
         // E3 — the account and its role are written together or not at all; the
         // Admin is told when the database refuses.
         try {
-            DB::transaction(function () use ($validated, $request) {
+            $created = DB::transaction(function () use ($validated, $request) {
                 $user = User::create([
                     'email' => $validated['email'],
                     'password' => Hash::make($validated['password']),
@@ -47,10 +47,17 @@ class CommuterController extends Controller
                 ]);
 
                 $user->syncRoles(['commuter']);
+
+                return $user;
             });
         } catch (QueryException $e) {
             return $this->writeFailed($e, 'The commuter account was not created.');
         }
+
+        Audit::log(Audit::ACCOUNT, 'created', 'Created commuter account '.$created->email, $created, [
+            'role' => 'commuter',
+            'source' => 'admin',
+        ]);
 
         return redirect()
             ->route('commuters.index')
@@ -75,6 +82,11 @@ class CommuterController extends Controller
             $user->save();
         } catch (QueryException $e) {
             return $this->writeFailed($e, 'The commuter was not updated.');
+        }
+
+        // E-mail / verification changes are recorded by the model (Audited); the password is not a model column.
+        if (! empty($validated['password'])) {
+            Audit::log(Audit::AUTH, 'password_set_by_admin', 'Admin set a new password for '.$user->email, $user);
         }
 
         return redirect()
@@ -102,15 +114,28 @@ class CommuterController extends Controller
                 ->with('error', 'Cannot delete commuter with a balance of PHP '.number_format($balance, 2).'. Settle the wallet first.');
         }
 
+        $email = $user->email;
+
         try {
-            $user->delete();
+            // A commuter with payments or top-ups is anonymised, not deleted, so the ledger survives.
+            $outcome = $user->eraseAccount();
         } catch (QueryException $e) {
             return $this->writeFailed($e, 'The commuter was not removed.');
         }
 
+        $anonymised = $outcome === 'anonymised';
+        Audit::log(Audit::ACCOUNT, $outcome, ($anonymised ? 'Anonymised commuter account ' : 'Deleted commuter account ').$email, $user, [
+            'email' => $email,
+            'role' => 'commuter',
+            'wallet_balance' => $balance,
+            'outcome' => $outcome,
+        ]);
+
         return redirect()
             ->route('commuters.index')
-            ->with('success', 'Commuter removed.');
+            ->with('success', $anonymised
+                ? 'Commuter removed. Their payments and top-ups were kept for the records.'
+                : 'Commuter removed.');
     }
 
     /**
@@ -130,6 +155,7 @@ class CommuterController extends Controller
         try {
             if ($user->isSuspended()) {
                 $user->unsuspend();
+                Audit::log(Audit::ACCOUNT, 'reactivated', 'Reactivated commuter account '.$user->email, $user);
 
                 return redirect()
                     ->route('commuters.index')
@@ -141,9 +167,7 @@ class CommuterController extends Controller
             return $this->writeFailed($e, 'The commuter account was not changed.');
         }
 
-        activity()->causedBy(auth()->user())
-            ->event('Suspend Commuter')
-            ->log('Suspended commuter: '.$user->email);
+        Audit::log(Audit::ACCOUNT, 'suspended', 'Suspended commuter account '.$user->email, $user);
 
         return redirect()
             ->route('commuters.index')

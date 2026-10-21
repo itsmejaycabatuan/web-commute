@@ -6,8 +6,10 @@ use App\Models\Driver;
 use App\Models\User;
 use App\Models\UserPreference;
 use App\Services\MenuService;
+use App\Support\Audit;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Activitylog\Models\Activity;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -18,6 +20,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot()
     {
+        // ── Audit trail: stamp IP / user agent / actor onto every activity (see App\Support\Audit) ──
+        Activity::creating(fn (Activity $activity) => Audit::enrich($activity));
+
         // ── Admin Stats Composer ──
         View::composer('admin.dashboard', function ($view) {
             if (! auth()->check() || ! auth()->user()->hasRole('admin')) {
@@ -25,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $view->with('adminStats', [
-                'total_users' => User::count(),
+                'total_users' => User::whereNull('anonymised_at')->count(),
                 'total_commuters' => User::role('commuter')->count(),
                 'total_drivers' => User::role('driver')->count(),
                 'approved_drivers' => Driver::where('is_approved', true)->count(),

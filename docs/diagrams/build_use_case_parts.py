@@ -67,9 +67,9 @@ PARTS = [
          actors={"maint": ("L", ["E015", "E016", "E017"]), "admin": ("R", ["E015"])},
          ext={}),
     dict(file="07_administration", title="Administration",
-         note="Commuter accounts, fare rates, system reports and staff accounts.",
-         groups=[("Administration", ROSE, ["E018", "E019", "E020", "E028"])],
-         actors={"admin": ("L", ["E018", "E019", "E020", "E028"])},
+         note="Commuter accounts, fare rates, system reports, staff accounts and the audit trail.",
+         groups=[("Administration", ROSE, ["E018", "E019", "E020", "E028", "E029"])],
+         actors={"admin": ("L", ["E018", "E019", "E020", "E028", "E029"])},
          ext={}),
 ]
 
@@ -79,7 +79,7 @@ OVERVIEW_PACKAGES = {  # id -> (name, colour, ids)
     "P_map": ("Map & Commuter Services", TEAL, ["E003", "E004", "E006", "E005", "E007"]),
     "P_driver": ("Driver Operations", ORANGE, ["E009", "E010", "E021", "E023"]),
     "P_dm": ("Driver Management", PURPLE, ["E013", "E014", "E024", "E012"]),
-    "P_admin": ("Administration", ROSE, ["E018", "E019", "E020", "E028"]),
+    "P_admin": ("Administration", ROSE, ["E018", "E019", "E020", "E028", "E029"]),
     "P_fleet": ("Fleet Maintenance", OLIVE, ["E015", "E016", "E017"]),
 }
 OVERVIEW_ACTORS = {

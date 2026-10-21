@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Audited;
+use App\Support\Audit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -25,6 +27,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Fare extends Model
 {
+    use Audited;
     use HasFactory;
 
     protected $fillable = [
@@ -33,5 +36,21 @@ class Fare extends Model
 
     public function rate() {
         return $this->hasMany(FareRate::class);
+    }
+
+    // Individual fare rates are written in bulk with the query builder, so the controller logs those explicitly.
+    protected function auditCategory(): string
+    {
+        return Audit::FARE;
+    }
+
+    protected function auditAttributes(): array
+    {
+        return ['location'];
+    }
+
+    protected function auditLabel(): string
+    {
+        return 'fare guide '.$this->location;
     }
 }

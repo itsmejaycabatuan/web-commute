@@ -29,7 +29,7 @@
 **A1 – Add a Staff Account**
 1. Admin clicks **"Add Staff"**. System displays the modal: *Email, Role, Password, Confirm Password*.
 2. The modal checks e-mail format, password length and confirmation while typing. Admin submits. System validates `email` **required, email, unique:users**, `role` **in `driver_manager, maintenance_manager`**, `password` **required, min 8, confirmed**.
-3. System creates the user (e-mail marked verified — staff are created by an admin, not by e-mail sign-up), assigns the role, logs *Create Staff* and confirms *"Staff account created."*
+3. System creates the user (e-mail marked verified — staff are created by an admin, not by e-mail sign-up), assigns the role, writes a `created` audit-trail entry (with the role) and confirms *"Staff account created."*
 
 **A2 – Edit a Staff Account**
 1. Admin clicks the edit icon. The modal opens pre-filled with the e-mail and role.
@@ -42,7 +42,7 @@
 
 **A4 – Delete a Staff Account**
 1. Admin clicks the delete icon and confirms *"Delete staff account?"*.
-2. System deletes the user, logs *Delete Staff* and confirms *"Staff account removed."*
+2. System deletes the user, writes a `deleted` audit-trail entry (with the email and role) and confirms *"Staff account removed."* Should the account somehow have payments or top-ups it is anonymised instead, and the entry reads `anonymised`.
 
 ---
 

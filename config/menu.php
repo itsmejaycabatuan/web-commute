@@ -34,6 +34,7 @@ return [
             ['label' => 'PUJ Drivers', 'route' => 'drivers.index', 'icon' => 'fa-id-card', 'color' => 'cyan', 'section' => null],
             ['label' => 'Vehicles', 'route' => 'vehicles.index', 'icon' => 'fa-bus', 'color' => 'cyan', 'section' => null],
             ['label' => 'Staff', 'route' => 'staff.index', 'icon' => 'fa-user-gear', 'color' => 'cyan', 'section' => null],
+            ['label' => 'Activity Log', 'route' => 'activity-log.index', 'icon' => 'fa-clipboard-list', 'color' => 'purple', 'section' => null],
             ['label' => 'Fare Rates', 'route' => 'fares.index', 'icon' => 'fa-money-bill', 'color' => 'emerald', 'section' => null],
             ['label' => 'Fare Transactions', 'route' => 'faretransactions', 'icon' => 'fa-receipt', 'color' => 'emerald', 'section' => null],
             ['label' => 'Top Ups', 'route' => 'admin.topups', 'icon' => 'fa-wallet', 'color' => 'emerald', 'section' => null],

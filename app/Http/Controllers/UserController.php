@@ -17,6 +17,7 @@ use App\Models\Vehicle;
 use App\Models\VehicleLocationHistory;
 use App\Models\ViolationLog;
 use App\Models\Wallet;
+use App\Support\Audit;
 use App\Services\FleetMaintenanceService;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\PasswordReset;
@@ -37,7 +38,6 @@ class UserController extends Controller
     public function map(Request $request)
     {
 
-        activity()->event('Map')->log('Action performed: map');
 
         $user = Auth::user();
         $rates = FareRate::get();
@@ -152,7 +152,7 @@ class UserController extends Controller
             $response = $this->renderDashboard($request, $fleet);
         } catch (QueryException $e) {
             report($e);
-            activity()->event('Dashboard')->log('Database error while building the dashboard.');
+            \Illuminate\Support\Facades\Log::error('Database error while building the dashboard.', ['area' => 'Dashboard', 'exception' => $e->getMessage()]);
 
             return redirect()->route('map')->with('error', 'The dashboard could not be loaded. Please try again later.');
         }
@@ -162,7 +162,6 @@ class UserController extends Controller
 
     private function renderDashboard(Request $request, FleetMaintenanceService $fleet)
     {
-        activity()->event('Dashboard')->log('Action performed: dashboard');
         $user = Auth::user();
         $userId = Auth::user()->id;
         $role = $user->roles->first()?->name;
@@ -344,7 +343,6 @@ class UserController extends Controller
 
     public function profile(Request $request)
     {
-        activity()->event('Profile')->log('Action performed: profile');
         $user = Auth::user();
         $userId = Auth::user()->id;
         $role = $user->roles->first()?->name;
@@ -361,7 +359,7 @@ class UserController extends Controller
             $wallet = Wallet::where('user_id', $userId)->first();
         } catch (QueryException $e) {
             report($e);
-            activity()->event('Profile')->log('Database error while building the profile.');
+            \Illuminate\Support\Facades\Log::error('Database error while building the profile.', ['area' => 'Profile', 'exception' => $e->getMessage()]);
 
             return redirect()->route('map')->with('error', 'The profile could not be loaded. Please try again later.');
         }
@@ -375,7 +373,6 @@ class UserController extends Controller
 
     public function updateProfile(Request $request)
     {
-        activity()->event('Updateprofile')->log('Action performed: updateProfile');
         $request->validate([
             'current_password' => ['required', 'current_password'],
             'password' => ['required', 'min:8', 'confirmed', 'different:current_password'],
@@ -393,7 +390,7 @@ class UserController extends Controller
         // A changed password signs the account out everywhere else.
         $user->forgetOtherSessions($request->session()->getId());
 
-        activity()->event('Profile Update')->log('User update profile success.');
+        Audit::log(Audit::AUTH, 'password_changed', 'Changed own password', $user, ['other_sessions_ended' => true], $user);
 
         return back()->with('success', 'Password successfully updated');
     }
@@ -471,8 +468,8 @@ class UserController extends Controller
      */
     public function destroy(Request $request)
     {
-        activity()->event('Destroy')->log('Action performed: destroy');
-        $userId = Auth::user()->id;
+        $user = Auth::user();
+        $userId = $user->id;
 
         // A driver who still holds a vehicle cannot remove their account: the
         // vehicle must be released by the Maintenance Manager first.
@@ -480,18 +477,35 @@ class UserController extends Controller
             return back()->with('error', 'You are still assigned to a vehicle. Ask the maintenance manager to unassign it before deleting your account.');
         }
 
+        // Money in the wallet cannot be refunded (there is no refund flow), so the account may not be
+        // removed while it holds any — the same rule the Admin is held to for a commuter (UCN_SC_E018 E8).
+        $balance = (float) ($user->wallet?->balance ?? 0);
+        if ($balance > 0) {
+            return back()->with('error', 'Your wallet still holds PHP '.number_format($balance, 2).'. Use it up before deleting your account.');
+        }
+
+        // With payments or top-ups behind it the account is anonymised, not deleted, so the ledger survives.
+        $outcome = $user->hasFinancialHistory() ? 'anonymised' : 'deleted';
+
+        // Logged BEFORE the sign-out so the entry still knows who did it; the email is kept in the
+        // properties because the account is about to lose it.
+        Audit::log(Audit::ACCOUNT, 'deleted_self', 'Deleted own account '.$user->email, $user, [
+            'email' => $user->email,
+            'role' => $user->getRoleNames()->first(),
+            'outcome' => $outcome,
+        ], $user);
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        User::destroy($userId);
+        $user->eraseAccount(); // already audited above, with the actor
 
         return redirect()->route('login')->with('success', 'Account deleted successfully.');
     }
 
     public function register(Request $request)
     {
-        activity()->event('Register')->log('Action performed: register');
 
         $request->validate([
             'email' => 'required|email|unique:users,email',
@@ -522,7 +536,7 @@ class UserController extends Controller
             });
         } catch (\Exception $e) {
             report($e);
-            activity()->event('Register')->log('Database error during registration.');
+            \Illuminate\Support\Facades\Log::error('Database error during registration.', ['area' => 'Register', 'exception' => $e->getMessage()]);
 
             throw ValidationException::withMessages([
                 'email' => 'A system error occurred while creating your account. Please try again later.',
@@ -531,6 +545,11 @@ class UserController extends Controller
 
         event(new Registered($user));
 
+        Audit::log(Audit::ACCOUNT, 'registered', 'Registered commuter account '.$user->email, $user, [
+            'role' => 'commuter',
+            'source' => 'self-registration',
+        ], $user);
+
         Auth::login($user);
 
         return redirect()->route('verification.notice')->with('success', 'Account created, please verify your email!');
@@ -538,7 +557,6 @@ class UserController extends Controller
 
     public function login(Request $request)
     {
-        activity()->event('Login')->log('Action performed: login');
 
         $validated = $request->validate([
             'email' => 'required|email',
@@ -549,7 +567,7 @@ class UserController extends Controller
             $attempted = Auth::attempt($validated, $request->has('remember'));
         } catch (\Exception $e) {
             // E1 - Database / auth provider failure: cancel the login gracefully
-            activity()->event('Login')->log('System error during login.');
+            \Illuminate\Support\Facades\Log::error('System error during login.', ['area' => 'Login', 'exception' => $e->getMessage()]);
 
             throw ValidationException::withMessages([
                 'credentials' => 'Login is unavailable right now. Please try again later.',
@@ -557,7 +575,8 @@ class UserController extends Controller
         }
 
         if (! $attempted) {
-            activity()->event('Log In')->log('User failed to login.');
+            // The email is recorded so repeated attempts on one account are visible; the password never is.
+            Audit::log(Audit::AUTH, 'login_failed', 'Failed sign-in for '.$validated['email'], null, ['email' => $validated['email']]);
 
             // E3/E4 - generic message on purpose: never reveal whether the email exists
             throw ValidationException::withMessages([
@@ -575,7 +594,7 @@ class UserController extends Controller
         // the session becomes usable, so a suspended commuter or driver is never
         // signed in.
         if ($user->isSuspended()) {
-            activity()->event('Login')->log('Suspended user attempted to log in.');
+            Audit::log(Audit::AUTH, 'login_blocked', 'Suspended account tried to sign in: '.$user->email, $user, ['reason' => 'suspended'], $user);
 
             Auth::logout();
             $request->session()->invalidate();
@@ -586,11 +605,14 @@ class UserController extends Controller
             ]);
         }
 
+        Audit::log(Audit::AUTH, 'login', 'Signed in '.$user->email, $user, [
+            'remember' => $request->has('remember'),
+            'email_verified' => $user->hasVerifiedEmail(),
+        ], $user);
+
         if (! $user->hasVerifiedEmail()) {
             return redirect()->route('verification.notice');
         }
-
-        activity()->event('Log In')->log('User login success.');
 
         $response = redirect()->route('map')->with('success', 'Logged in Successfully!');
 
@@ -604,24 +626,22 @@ class UserController extends Controller
 
     public function logout(Request $request)
     {
-        activity()->event('Logout')->log('Action performed: logout');
 
         $user = Auth::user();
 
-        activity()->event('Log Out')->log('User logout attempt.');
+        if ($user) {
+            Audit::log(Audit::AUTH, 'logout', 'Signed out '.$user->email, $user, [], $user);
+        }
 
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
-        activity()->event('Log Out')->log('A user has successfully logged out.');
 
         return redirect()->route('login')->with('success', 'Successfully Logged out!');
     }
 
     public function emailVerification()
     {
-        activity()->event('Emailverification')->log('Action performed: emailVerification');
         $userEmail = Auth::user()->email;
         Mail::to($userEmail)->send(new EmailVerification());
 
@@ -630,14 +650,12 @@ class UserController extends Controller
 
     public function forgotPassword()
     {
-        activity()->event('Forgotpassword')->log('Action performed: forgotPassword');
 
         return view('auth.forgot-password');
     }
 
     public function requestPassword(Request $request)
     {
-        activity()->event('Requestpassword')->log('Action performed: requestPassword');
         $request->validate(['email' => 'required|email']);
 
         $status = Password::sendResetLink(
@@ -649,7 +667,6 @@ class UserController extends Controller
 
     public function resetPassword(string $token, Request $request)
     {
-        activity()->event('Resetpassword')->log('Action performed: resetPassword');
         $email = $request->query('email');
 
         return view('auth.reset-password', ['token' => $token, 'email' => $email]);
@@ -657,7 +674,6 @@ class UserController extends Controller
 
     public function updatePassword(Request $request)
     {
-        activity()->event('Updatepassword')->log('Action performed: updatePassword');
         $request->validate([
             'token' => 'required',
             'email' => 'required|email',
@@ -676,7 +692,7 @@ class UserController extends Controller
 
                 $user->save();
 
-                activity()->causedBy($user)->event('Reset Password')->log('User reset password success');
+                Audit::log(Audit::AUTH, 'password_reset', 'Reset password through the emailed link', $user, [], $user);
 
                 event(new PasswordReset($user));
             }

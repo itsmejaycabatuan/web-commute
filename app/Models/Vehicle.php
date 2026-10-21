@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Audited;
+use App\Support\Audit;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -53,6 +55,7 @@ use Illuminate\Support\Carbon;
  */
 class Vehicle extends Model
 {
+    use Audited;
     use HasFactory;
 
     protected $fillable = [
@@ -91,5 +94,21 @@ class Vehicle extends Model
     public function preventiveMaintenances()
     {
         return $this->hasMany(PreventiveMaintenance::class);
+    }
+
+    // `is_active` is a heartbeat flag flipped by the scheduler and broadcasts, so it is not audited.
+    protected function auditCategory(): string
+    {
+        return Audit::FLEET;
+    }
+
+    protected function auditAttributes(): array
+    {
+        return ['driver_id', 'year', 'brand', 'model', 'plate_number', 'status', 'fuel_type', 'tank_capacity', 'vin', 'location', 'acquisition_date', 'exp_disposal_date'];
+    }
+
+    protected function auditLabel(): string
+    {
+        return 'vehicle '.($this->plate_number ?: '#'.$this->getKey());
     }
 }

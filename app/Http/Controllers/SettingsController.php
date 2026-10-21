@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -10,7 +11,6 @@ class SettingsController extends Controller
 {
     public function edit()
     {
-        activity()->event('Edit')->log('Action performed: edit');
         $user = Auth::user();
         $userId = Auth::user()->id;
         $role = $user->roles->first()->name;
@@ -24,7 +24,6 @@ class SettingsController extends Controller
 
     public function update(Request $request)
     {
-        activity()->event('Update')->log('Action performed: update');
 
         // A driver's e-mail address is part of the account the administrator
         // approved, so only an administrator can change it.
@@ -43,7 +42,6 @@ class SettingsController extends Controller
 
     public function updatePassword(Request $request)
     {
-        activity()->event('Updatepassword')->log('Action performed: updatePassword');
         $request->validate([
             'current_password' => 'required|current_password',
             'password' => 'required|string|min:8|confirmed|different:current_password',
@@ -67,10 +65,12 @@ class SettingsController extends Controller
             Auth::logoutOtherDevices($request->password);
             Auth::user()->forgetOtherSessions($request->session()->getId());
         } catch (\Exception $e) {
-            activity()->event('Updatepassword')->log('Database error during password change.');
+            \Illuminate\Support\Facades\Log::error('Database error during password change.', ['area' => 'Updatepassword', 'exception' => $e->getMessage()]);
 
             return back()->with('error', 'Password could not be changed. Please try again later.');
         }
+
+        Audit::log(Audit::AUTH, 'password_changed', 'Changed own password', Auth::user(), ['other_sessions_ended' => true]);
 
         return back()->with('success', 'Password changed successfully.');
     }
@@ -85,7 +85,6 @@ class SettingsController extends Controller
      */
     public function logoutOtherDevices(Request $request)
     {
-        activity()->event('Logoutotherdevices')->log('Action performed: logoutOtherDevices');
 
         $request->validate([
             'current_password' => 'required|current_password',
@@ -104,6 +103,8 @@ class SettingsController extends Controller
 
             return back()->with('error', 'Other devices could not be signed out. Please try again later.');
         }
+
+        Audit::log(Audit::AUTH, 'sessions_revoked', 'Signed out all other devices', $user);
 
         return back()->with('success', 'You have been signed out of all other devices.');
     }

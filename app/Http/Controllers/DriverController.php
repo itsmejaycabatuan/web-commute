@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use App\Support\Audit;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,14 +24,12 @@ class DriverController extends Controller
 {
     public function create()
     {
-        activity()->event('Create')->log('Action performed: create');
 
         return view('auth.driver.register');
     }
 
     public function store(Request $request)
     {
-        activity()->event('Store')->log('Action performed: store');
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -84,7 +83,7 @@ class DriverController extends Controller
             }
 
             report($e);
-            activity()->event('Store')->log('Error during driver registration.');
+            \Illuminate\Support\Facades\Log::error('Error during driver registration.', ['area' => 'Store', 'exception' => $e->getMessage()]);
 
             throw ValidationException::withMessages([
                 'email' => 'A system error occurred while creating your driver account. Please try again later.',
@@ -93,6 +92,12 @@ class DriverController extends Controller
 
         event(new Registered($user));
 
+        Audit::log(Audit::DRIVER, 'registered', 'Driver application submitted by '.$user->email, $user->driver()->first(), [
+            'email' => $user->email,
+            'status' => 'pending approval',
+            'source' => 'self-registration',
+        ], $user);
+
         return redirect()
             ->route('login')
             ->with('driver_registered', true);
@@ -100,7 +105,6 @@ class DriverController extends Controller
 
     public function index()
     {
-        activity()->event('Index')->log('Action performed: index');
         $userId = Auth::user()->id;
 
         $distance = VehicleLocationHistory::where('user_id', $userId)
@@ -116,7 +120,6 @@ class DriverController extends Controller
 
     public function timekeeping(Request $request)
     {
-        activity()->event('Timekeeping')->log('Action performed: timekeeping');
         $driver = Driver::where('user_id', Auth::id())->first();
 
         // UCN_SC_E023 E1 — no linked Driver record.
@@ -129,7 +132,7 @@ class DriverController extends Controller
         } catch (QueryException $e) {
             // UCN_SC_E023 E3 — log it and show no data.
             report($e);
-            activity()->event('Timekeeping')->log('Database error while loading time-keeping.');
+            \Illuminate\Support\Facades\Log::error('Database error while loading time-keeping.', ['area' => 'Timekeeping', 'exception' => $e->getMessage()]);
 
             return redirect()->route('map')->with('error', 'Time-keeping failed. Please try again later.');
         }
@@ -186,7 +189,6 @@ class DriverController extends Controller
 
     public function clockIn(Request $request)
     {
-        activity()->event('Clockin')->log('Action performed: clockIn');
         $driver = Driver::where('user_id', Auth::id())->first();
 
         if (! $driver) {
@@ -213,7 +215,7 @@ class DriverController extends Controller
                 'time_in' => now()->timezone('Asia/Manila')->format('h:i A'),
             ]);
         } catch (\Exception $e) {
-            activity()->event('Clockin')->log('Database error during clock-in.');
+            \Illuminate\Support\Facades\Log::error('Database error during clock-in.', ['area' => 'Clockin', 'exception' => $e->getMessage()]);
 
             return back()->with('error', 'Clock-in failed. Please try again later.');
         }
@@ -225,7 +227,6 @@ class DriverController extends Controller
 
     public function clockOut(Request $request)
     {
-        activity()->event('Clockout')->log('Action performed: clockOut');
         $driver = Driver::where('user_id', Auth::id())->first();
 
         if (! $driver) {
@@ -256,7 +257,7 @@ class DriverController extends Controller
                 'overtime_hours' => $overtimeHours,
             ]);
         } catch (\Exception $e) {
-            activity()->event('Clockout')->log('Database error during clock-out.');
+            \Illuminate\Support\Facades\Log::error('Database error during clock-out.', ['area' => 'Clockout', 'exception' => $e->getMessage()]);
 
             return back()->with('error', 'Clock-out failed. Please try again later.');
         }
@@ -270,7 +271,6 @@ class DriverController extends Controller
 
     public function updateStatus(Request $request)
     {
-        activity()->event('Updatestatus')->log('Action performed: updateStatus');
         $request->validate(['status' => 'required|in:active,inactive'], [
             'status.required' => 'The status field must be either active or inactive.',
             'status.in' => 'The status field must be either active or inactive.',
@@ -289,7 +289,6 @@ class DriverController extends Controller
 
     public function violations()
     {
-        activity()->event('Violations')->log('Action performed: violations');
         $userId = Auth::user()->id;
         $driver = Driver::where('user_id', $userId)->first();
 
@@ -306,7 +305,7 @@ class DriverController extends Controller
         } catch (QueryException $e) {
             // UCN_SC_E023 E3 — log it and show no data.
             report($e);
-            activity()->event('Violations')->log('Database error while loading violations.');
+            \Illuminate\Support\Facades\Log::error('Database error while loading violations.', ['area' => 'Violations', 'exception' => $e->getMessage()]);
 
             return redirect()->route('map')->with('error', 'Violations failed. Please try again later.');
         }

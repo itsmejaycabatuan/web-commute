@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Audit;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,6 @@ class StaffController extends Controller
 
     public function index(Request $request)
     {
-        activity()->event('Index')->log('Action performed: index');
 
         $search = trim((string) $request->query('search', ''));
         $role = $request->query('role');
@@ -59,7 +59,7 @@ class StaffController extends Controller
         ], $this->messages());
 
         try {
-            DB::transaction(function () use ($validated) {
+            $created = DB::transaction(function () use ($validated) {
                 $user = User::create([
                     'email' => $validated['email'],
                     'password' => Hash::make($validated['password']),
@@ -68,14 +68,16 @@ class StaffController extends Controller
                 ]);
 
                 $user->syncRoles([$validated['role']]);
+
+                return $user;
             });
         } catch (QueryException $e) {
             return $this->writeFailed($e, 'The staff account was not created.');
         }
 
-        activity()->causedBy(auth()->user())
-            ->event('Create Staff')
-            ->log('Created staff account: '.$validated['email']);
+        Audit::log(Audit::ACCOUNT, 'created', 'Created staff account '.$created->email, $created, [
+            'role' => $validated['role'],
+        ]);
 
         return redirect()->route('staff.index')->with('success', 'Staff account created.');
     }
@@ -89,6 +91,8 @@ class StaffController extends Controller
             'role' => ['required', Rule::in(array_keys(self::ROLES))],
             'password' => 'nullable|string|min:8|confirmed',
         ], $this->messages());
+
+        $oldRole = $user->getRoleNames()->first();
 
         try {
             DB::transaction(function () use ($user, $validated) {
@@ -105,6 +109,17 @@ class StaffController extends Controller
             return $this->writeFailed($e, 'The staff account was not updated.');
         }
 
+        // The e-mail change is recorded by the model (Audited); role and password are not model columns.
+        if ($oldRole !== $validated['role']) {
+            Audit::log(Audit::ACCOUNT, 'role_changed', 'Changed role of '.$user->email, $user, [
+                'old' => ['role' => $oldRole],
+                'attributes' => ['role' => $validated['role']],
+            ]);
+        }
+        if (! empty($validated['password'])) {
+            Audit::log(Audit::AUTH, 'password_set_by_admin', 'Admin set a new password for '.$user->email, $user);
+        }
+
         return redirect()->route('staff.index')->with('success', 'Staff account updated.');
     }
 
@@ -119,6 +134,7 @@ class StaffController extends Controller
         try {
             if ($user->is_suspended) {
                 $user->unsuspend();
+                Audit::log(Audit::ACCOUNT, 'reactivated', 'Reactivated staff account '.$user->email, $user);
 
                 return redirect()->route('staff.index')->with('success', $user->email.' has been reactivated.');
             }
@@ -128,9 +144,7 @@ class StaffController extends Controller
             return $this->writeFailed($e, 'The staff account was not changed.');
         }
 
-        activity()->causedBy(auth()->user())
-            ->event('Suspend Staff')
-            ->log('Suspended staff account: '.$user->email);
+        Audit::log(Audit::ACCOUNT, 'suspended', 'Suspended staff account '.$user->email, $user);
 
         return redirect()->route('staff.index')->with('success', $user->email.' has been suspended.');
     }
@@ -143,15 +157,22 @@ class StaffController extends Controller
             return redirect()->route('staff.index')->with('error', 'You cannot delete your own account.');
         }
 
+        $role = $user->getRoleNames()->first();
+
+        $email = $user->email;
+
         try {
-            $user->delete();
+            // Staff normally have no payments; if one does, the account is anonymised, not deleted.
+            $outcome = $user->eraseAccount();
         } catch (QueryException $e) {
             return $this->writeFailed($e, 'The staff account was not removed.');
         }
 
-        activity()->causedBy(auth()->user())
-            ->event('Delete Staff')
-            ->log('Deleted staff account: '.$user->email);
+        Audit::log(Audit::ACCOUNT, $outcome, ($outcome === 'anonymised' ? 'Anonymised staff account ' : 'Deleted staff account ').$email, $user, [
+            'email' => $email,
+            'role' => $role,
+            'outcome' => $outcome,
+        ]);
 
         return redirect()->route('staff.index')->with('success', 'Staff account removed.');
     }

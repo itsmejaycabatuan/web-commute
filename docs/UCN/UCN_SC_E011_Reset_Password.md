@@ -49,7 +49,7 @@
 1. The user's password has been changed and stored **hashed**.
 2. The remember token has been regenerated, invalidating persistent logins issued before the reset.
 3. The `PasswordReset` event has been dispatched, so any registered listener can invalidate other sessions.
-4. An activity-log entry has been recorded against the user.
+4. A `password_reset` audit-trail entry has been recorded against the user.
 5. The password reset token has been consumed and can no longer be replayed.
 6. The user is redirected to the login page and must authenticate with the new password.
 
@@ -80,7 +80,7 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 ## Known Gaps / Notes
 
 - **No rate limiting on the reset *request***. `POST /forgot-password` has no throttle, so an attacker can enumerate registered emails by timing the response (the response message differs between `INVALID_USER` and `RESET_LINK_SENT`).
-- **No notification to the account owner** that the password was changed — only the in-app activity log records it.
+- **No notification to the account owner** that the password was changed — only the audit trail (`password_reset` entry) records it.
 - **The reset view requires the email as a query parameter** alongside the token; a user opening the link from a different client without `?email=` is asked to supply it again.
 - No password-history or reuse prevention (see UCN_SC_E008 for the shared policy notes).
 

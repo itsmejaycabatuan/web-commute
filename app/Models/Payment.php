@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Audited;
+use App\Support\Audit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -41,6 +43,7 @@ use Illuminate\Support\Carbon;
  */
 class Payment extends Model
 {
+    use Audited;
     use HasFactory;
 
     protected $fillable = [
@@ -120,5 +123,28 @@ class Payment extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'paid_by');
+    }
+    protected function auditCategory(): string
+    {
+        return Audit::PAYMENT;
+    }
+
+    protected function auditAttributes(): array
+    {
+        return ['paid_by', 'transaction_id', 'starting_point', 'destination', 'total_distance', 'is_discounted', 'payment_method', 'price', 'status', 'paid_at', 'failed_at', 'failure_message'];
+    }
+
+    protected function auditLabel(): string
+    {
+        return 'payment '.$this->transaction_id;
+    }
+
+    protected function auditDescription(string $event): string
+    {
+        if ($event === 'updated' && $this->isDirty('status')) {
+            return 'Payment '.$this->transaction_id.' marked '.$this->status;
+        }
+
+        return ucfirst($event).' '.$this->auditLabel();
     }
 }

@@ -22,7 +22,7 @@
 | 3   | Guest clicks the "Log in" button.        | System validates the credentials server-side (`required`, `email`, `required`).                                                                                                |
 | 4   |                                          | System regenerates the session ID (session-fixation guard) and creates a secure session token.                                                                                 |
 | 5   |                                          | System checks email verification status.<br>• Verified → System redirects the guest to the map as an authenticated user.<br>• Not verified → see **E2 – Email Not Confirmed**. |
-| 6   |                                          | System shows a "Logged in Successfully!" toast and records a `Log In` activity-log entry. A **driver** whose licence is expiring (30 days or fewer) or expired also gets a **warning toast at every sign-in** — *"Your driver's license expires in N days (date)…"* or *"…expired on date. Contact the administrator to renew it."*                                                                                      |
+| 6   |                                          | System shows a "Logged in Successfully!" toast and records a `login` audit-trail entry (who, IP address, device). A failed attempt (`login_failed`, with the email tried) and a suspended account's attempt (`login_blocked`) are recorded too. A **driver** whose licence is expiring (30 days or fewer) or expired also gets a **warning toast at every sign-in** — *"Your driver's license expires in N days (date)…"* or *"…expired on date. Contact the administrator to renew it."*                                                                                      |
 
 ---
 
@@ -43,7 +43,7 @@
 
 1. Guest is now authenticated and holds the **commuter** role (role is assigned at registration, UCN_SC_E002).
 2. A session token is generated and the session ID is regenerated.
-3. A success toast is displayed and a `Log In` activity-log entry is created (the System does **not** send an email notification).
+3. A success toast is displayed and a `login` audit-trail entry is created with the user, IP address and device (the System does **not** send an email notification).
 4. System redirects the commuter to the map (`/map`, protected by `auth` + `verified` middleware).
 
 ---

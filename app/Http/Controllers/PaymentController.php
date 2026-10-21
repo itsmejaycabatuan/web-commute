@@ -31,7 +31,6 @@ class PaymentController extends Controller
 
     public function index(Request $request)
     {
-        activity()->event('Index')->log('Action performed: index');
         // dd($request);
         Payment::expireStale();
         $user = Auth::user();
@@ -54,7 +53,7 @@ class PaymentController extends Controller
         try {
             $price = $this->fares->regularFare((float) $validated['distance']);
         } catch (RuntimeException $e) {
-            activity()->event('Index')->log('Fare pricing unavailable, using submitted figure.');
+            \Illuminate\Support\Facades\Log::warning('Fare pricing unavailable, using submitted figure.', ['area' => 'Index', 'exception' => $e->getMessage()]);
         }
 
         // Coming back from the gateway's checkout page (browser Back) lands here
@@ -80,7 +79,6 @@ class PaymentController extends Controller
 
     public function process(Request $request)
     {
-        activity()->event('Process')->log('Action performed: process');
         $userId = Auth::user()->id;
         $wallet = Wallet::where('user_id', $userId)->firstOrFail();
 
@@ -111,7 +109,7 @@ class PaymentController extends Controller
         try {
             $amount = $this->fares->regularFare((float) $validated['distance']);
         } catch (RuntimeException $e) {
-            activity()->event('Process')->log('Could not price fare: '.$e->getMessage());
+            \Illuminate\Support\Facades\Log::warning('Could not price fare.', ['area' => 'Process', 'exception' => $e->getMessage()]);
 
             return back()->with('error', 'Fares are unavailable right now. Please try again later.');
         }
@@ -146,7 +144,7 @@ class PaymentController extends Controller
                 'paid_at' => now(),
             ]);
         } catch (\Exception $e) {
-            activity()->event('Process')->log('Database error during fare payment.');
+            \Illuminate\Support\Facades\Log::error('Database error during fare payment.', ['area' => 'Process', 'exception' => $e->getMessage()]);
 
             return back()->with('error', 'There was a problem trying to process the payment');
         }
@@ -209,7 +207,7 @@ class PaymentController extends Controller
                 ['transaction_id' => $transactionId, 'user_id' => (string) $userId]
             );
         } catch (RuntimeException $e) {
-            activity()->event('Process')->log('PayMongo error: '.$e->getMessage());
+            \Illuminate\Support\Facades\Log::error('PayMongo error.', ['area' => 'Process', 'exception' => $e->getMessage()]);
 
             return back()->with('error', 'The payment service is unavailable right now. Please try again.');
         }
@@ -232,7 +230,7 @@ class PaymentController extends Controller
                 'paymongo_checkout_session_id' => $session['id'],
             ]);
         } catch (\Exception $e) {
-            activity()->event('Process')->log('Database error while opening gateway payment.');
+            \Illuminate\Support\Facades\Log::error('Database error while opening gateway payment.', ['area' => 'Process', 'exception' => $e->getMessage()]);
 
             return back()->with('error', 'There was a problem starting the payment');
         }
@@ -276,7 +274,7 @@ class PaymentController extends Controller
             try {
                 $intent = $this->paymongo->retrievePaymentIntent($payment->paymongo_payment_intent_id);
             } catch (RuntimeException $e) {
-                activity()->event('Returned')->log('PayMongo lookup failed: '.$e->getMessage());
+                \Illuminate\Support\Facades\Log::warning('PayMongo lookup failed.', ['area' => 'Returned', 'exception' => $e->getMessage()]);
             }
 
             if (isset($intent)) {
@@ -417,7 +415,6 @@ class PaymentController extends Controller
 
     public function history(Request $request)
     {
-        activity()->event('History')->log('Action performed: history');
         Payment::expireStale();
         $userId = Auth::user()->id;
         $query = Payment::where('paid_by', $userId);
@@ -462,7 +459,6 @@ class PaymentController extends Controller
      */
     public function showReceipt(string $id)
     {
-        activity()->event('Showreceipt')->log('Action performed: showReceipt');
 
         $isAdmin = Auth::user()->hasRole('admin');
 
@@ -501,7 +497,6 @@ class PaymentController extends Controller
 
     public function topup()
     {
-        activity()->event('Topup')->log('Action performed: topup');
         $user = Auth::user();
         $userId = $user->id;
         $balance = $this->walletFor($userId)->balance;
@@ -528,7 +523,6 @@ class PaymentController extends Controller
 
     public function topupProcess(Request $request)
     {
-        activity()->event('Topupprocess')->log('Action performed: topupProcess');
         $userId = Auth::id();
         $wallet = Wallet::where('user_id', $userId)->firstOrFail();
         $balance = $wallet->balance;
@@ -560,7 +554,7 @@ class PaymentController extends Controller
                 'balance' => $newBalance,
             ]);
         } catch (\Exception $e) {
-            activity()->event('Topupprocess')->log('Database error during topup.');
+            \Illuminate\Support\Facades\Log::error('Database error during topup.', ['area' => 'Topupprocess', 'exception' => $e->getMessage()]);
 
             return back()->with('error', 'Top-up failed. Please try again later.');
         }
@@ -583,7 +577,6 @@ class PaymentController extends Controller
 
     public function topupHistory(Request $request)
     {
-        activity()->event('Topuphistory')->log('Action performed: topupHistory');
         $userId = Auth::user()->id;
         $query = TopupHistory::where('user_id', $userId)->with('user', 'wallet');
 
@@ -620,7 +613,6 @@ class PaymentController extends Controller
      */
     public function showTransactions(Request $request)
     {
-        activity()->event('Showtransactions')->log('Action performed: showTransactions');
         Payment::expireStale();
 
         $filters = $request->validate([
@@ -666,7 +658,6 @@ class PaymentController extends Controller
      */
     public function showTopupsAdmin(Request $request)
     {
-        activity()->event('Showtopupsadmin')->log('Action performed: showTopupsAdmin');
 
         $filters = $request->validate([
             'search' => 'nullable|string|max:100',

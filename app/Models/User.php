@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Audited;
+use App\Support\Audit;
 use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Collection;
@@ -84,10 +86,14 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
 {
+    use Audited;
     use HasApiTokens;
     use HasFactory;
     use HasRoles;
     use Notifiable;
+
+    // Creation is logged explicitly (Audit::log) so the entry can say how and by whom.
+    protected static $recordEvents = ['updated', 'deleted'];
 
     /**
      * The attributes that are mass assignable.
@@ -131,6 +137,7 @@ class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
         'email_verified_at' => 'datetime',
         'is_suspended' => 'boolean',
         'suspended_at' => 'datetime',
+        'anonymised_at' => 'datetime',
     ];
 
     public function payment()
@@ -204,5 +211,106 @@ class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
             'is_suspended' => false,
             'suspended_at' => null,
         ])->save();
+    }
+
+    // ─────────────────────────── account removal ───────────────────────────
+
+    /** The account was erased but kept as an empty shell because payments or top-ups point at it. */
+    public function isAnonymised(): bool
+    {
+        return $this->anonymised_at !== null;
+    }
+
+    /** Payments and top-ups are financial records: they must outlive the account that made them. */
+    public function hasFinancialHistory(): bool
+    {
+        return $this->payment()->exists() || $this->topupHistories()->exists();
+    }
+
+    /**
+     * Remove an account without destroying the ledger: with nothing financial attached it is deleted
+     * outright; with payments or top-ups it is anonymised instead. UCN_SC_E027 / E018 / E012 / E028.
+     *
+     * Callers audit the action themselves (they know the actor), so the model's own events are off here.
+     *
+     * @return string 'deleted' or 'anonymised'
+     */
+    public function eraseAccount(): string
+    {
+        $this->disableLogging();
+
+        if (! $this->hasFinancialHistory()) {
+            $this->delete();
+
+            return 'deleted';
+        }
+
+        $this->anonymise();
+
+        return 'anonymised';
+    }
+
+    /**
+     * Strip everything personal and everything that grants access, and keep the row so the payments,
+     * top-ups and wallet that reference it stay intact and auditable.
+     *
+     * Gone: email (replaced by a placeholder, which also frees the address), password, remember token,
+     * verification, roles, API tokens, sessions, preferences, reset links, map markers and the driver
+     * profile with its licence image. Kept: the user row (id), wallet, payments, top-ups and any
+     * violation logs. The account can never sign in again: it is suspended, has no roles and an
+     * unknown password.
+     */
+    public function anonymise(): void
+    {
+        $this->disableLogging();
+
+        DB::transaction(function () {
+            $id = $this->id;
+            $oldEmail = $this->email;
+
+            if ($driver = $this->driver()->first()) {
+                // Release the vehicle first: deleting the driver would cascade into the fleet record.
+                $driver->vehicle()->update(['driver_id' => null]);
+
+                if ($driver->license_image_path) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($driver->license_image_path);
+                }
+
+                $driver->disableLogging()->delete();
+            }
+
+            $this->tokens()->delete();
+            UserPreference::where('user_id', $id)->delete();
+            DevMarker::where('user_id', $id)->delete();
+            DB::table('password_resets')->where('email', $oldEmail)->delete();
+            DB::table(config('session.table', 'sessions'))->where('user_id', $id)->delete();
+            $this->syncRoles([]);
+
+            $this->forceFill([
+                'email' => "deleted-{$id}@deleted.invalid",
+                'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(64)),
+                'remember_token' => null,
+                'email_verified_at' => null,
+                'is_suspended' => true,
+                'suspended_at' => now(),
+                'anonymised_at' => now(),
+            ])->save();
+        });
+    }
+
+    // Creation, suspension, role changes and password changes are logged explicitly (Audit::log) because they need context a model event does not have.
+    protected function auditCategory(): string
+    {
+        return Audit::ACCOUNT;
+    }
+
+    protected function auditAttributes(): array
+    {
+        return ['email', 'email_verified_at'];
+    }
+
+    protected function auditLabel(): string
+    {
+        return 'user '.$this->email;
     }
 }

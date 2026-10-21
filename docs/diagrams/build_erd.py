@@ -41,7 +41,7 @@ SCHEMA = {
     # ---------------------------------------------------------------- identity & access
     "users": ("id", [
         "id:bigint:PK", "email:varchar:UQ", "email_verified_at:timestamp:N", "password:varchar",
-        "is_suspended:boolean", "suspended_at:timestamp:N", "remember_token:varchar:N",
+        "is_suspended:boolean", "suspended_at:timestamp:N", "anonymised_at:timestamp:N", "remember_token:varchar:N",
         "created_at:timestamp:N", "updated_at:timestamp:N"]),
     "user_preferences": ("id", [
         "id:bigint:PK", "user_id:bigint:FK", "theme:varchar", "font_size:int",
@@ -170,7 +170,7 @@ ARROW = {"1": "teetee", "01": "teeodot", "0N": "crowodot"}
 # ----------------------------------------------------------------------------- summary
 # entity key -> (title, table name, group, [columns to show], )
 SUMMARY = {
-    "users": ("User", "users", "id", ["id", "email", "password", "email_verified_at", "is_suspended"]),
+    "users": ("User", "users", "id", ["id", "email", "password", "email_verified_at", "is_suspended", "anonymised_at"]),
     "roles": ("Role", "roles (via model_has_roles)", "id", ["id", "name"]),
     "wallets": ("Wallet", "wallets", "pay", ["id", "user_id", "balance"]),
     "topup_histories": ("Top-up History", "topup_histories", "pay",

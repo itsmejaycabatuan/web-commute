@@ -16,7 +16,6 @@ class MaintenanceManagerController extends Controller
 {
     public function preventiveMaintenance(Request $request)
     {
-        activity()->event('Preventivemaintenance')->log('Action performed: preventiveMaintenance');
         $vehicles = Vehicle::with('driver')
             ->orderBy('plate_number')
             ->get();
@@ -49,7 +48,6 @@ class MaintenanceManagerController extends Controller
 
     public function preventiveMaintenanceStore(Request $request)
     {
-        activity()->event('Preventivemaintenancestore')->log('Action performed: preventiveMaintenanceStore');
         $validated = $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
             'task_id' => 'required|exists:maintenance_tasks,id',
@@ -104,7 +102,6 @@ class MaintenanceManagerController extends Controller
 
     public function maintenanceTasks()
     {
-        activity()->event('Maintenancetasks')->log('Action performed: maintenanceTasks');
         $tasks = MaintenanceTask::orderBy('tasks_performed')->paginate(10)->withQueryString();
 
         // The summary cards describe the whole catalogue, not just this page.
@@ -119,7 +116,6 @@ class MaintenanceManagerController extends Controller
 
     public function maintenanceTasksStore(Request $request)
     {
-        activity()->event('Maintenancetasksstore')->log('Action performed: maintenanceTasksStore');
         $request->validate([
             'tasks_performed' => 'required|string|max:255',
             'miles_between_service' => 'nullable|integer',
@@ -146,7 +142,6 @@ class MaintenanceManagerController extends Controller
 
     public function maintenanceTasksUpdate(Request $request, MaintenanceTask $task)
     {
-        activity()->event('Maintenancetasksupdate')->log('Action performed: maintenanceTasksUpdate');
         $request->validate([
             'tasks_performed' => 'required|string|max:255',
             'miles_between_service' => 'nullable|integer',
@@ -168,7 +163,6 @@ class MaintenanceManagerController extends Controller
 
     public function maintenanceTasksDestroy(MaintenanceTask $task)
     {
-        activity()->event('Maintenancetasksdestroy')->log('Action performed: maintenanceTasksDestroy');
         try {
             $task->delete();
         } catch (QueryException $e) {
@@ -180,7 +174,6 @@ class MaintenanceManagerController extends Controller
 
     public function profile()
     {
-        activity()->event('Profile')->log('Action performed: profile');
         $user = Auth::user();
 
         return view('driver-manager.profile', [
@@ -190,7 +183,6 @@ class MaintenanceManagerController extends Controller
 
     public function updateProfile(Request $request)
     {
-        activity()->event('Updateprofile')->log('Action performed: updateProfile');
         $request->validate([
             'current_password' => 'required',
             'password' => 'required|min:8',

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Audited;
+use App\Support\Audit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -55,7 +57,11 @@ use Illuminate\Support\Carbon;
  */
 class Driver extends Model
 {
+    use Audited;
     use HasFactory;
+
+    // Creation is logged explicitly (Audit::log) so the entry can say how and by whom.
+    protected static $recordEvents = ['updated', 'deleted'];
 
     /** A licence this close to its expiry date is flagged as expiring. */
     public const LICENSE_EXPIRING_DAYS = 30;
@@ -210,5 +216,33 @@ class Driver extends Model
             'suspension_reason' => null,
             'status' => 'inactive',
         ])->save();
+    }
+
+    // Creation and suspension are logged explicitly; availability (`status`) and the licence image columns are deliberately not audited.
+    protected function auditCategory(): string
+    {
+        return Audit::DRIVER;
+    }
+
+    protected function auditAttributes(): array
+    {
+        return ['driver_code', 'name', 'expiration_date', 'contact_info', 'license_number', 'license_code', 'license_status', 'is_approved', 'is_rejected'];
+    }
+
+    protected function auditLabel(): string
+    {
+        return 'driver '.($this->driver_code ?: '#'.$this->getKey());
+    }
+
+    protected function auditDescription(string $event): string
+    {
+        if ($event === 'updated' && $this->isDirty('is_approved') && $this->is_approved) {
+            return 'Approved '.$this->auditLabel();
+        }
+        if ($event === 'updated' && $this->isDirty('is_rejected') && $this->is_rejected) {
+            return 'Rejected '.$this->auditLabel();
+        }
+
+        return ucfirst($event).' '.$this->auditLabel();
     }
 }

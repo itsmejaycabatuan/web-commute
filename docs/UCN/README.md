@@ -31,6 +31,7 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 | UCN_SC_E026 | Profile and Dashboard Views | All authenticated roles | [UCN_SC_E026_Profile_and_Dashboard.md](UCN_SC_E026_Profile_and_Dashboard.md) |
 | UCN_SC_E027 | Account Deletion | Authenticated user | [UCN_SC_E027_Account_Deletion.md](UCN_SC_E027_Account_Deletion.md) |
 | UCN_SC_E028 | Manage Staff Accounts | Admin | [UCN_SC_E028_Manage_Staff_Accounts.md](UCN_SC_E028_Manage_Staff_Accounts.md) |
+| UCN_SC_E029 | View Activity Log | Admin | [UCN_SC_E029_View_Activity_Log.md](UCN_SC_E029_View_Activity_Log.md) |
 
 > **Numbering note.** E011–E020 were reconciled against the implementation. Two sheets previously
 > carried a duplicate identifier — *Manage Violations* shared `UCN_SC_E013` with *Manage Timekeeping*
@@ -53,6 +54,7 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 | **Preventive maintenance** | The maintenance record for a (vehicle, task) pair: the last service's date, odometer and cost, and the interval used to project the next due date/odometer. UCN_SC_E016. |
 | **PUJ** | Public Utility Vehicle. On the map, a PUJ marker is a **roadworthy** vehicle (status `active`/`inactive`) with a location reported in the last 5 minutes, coloured by its driver's availability (green available, red unavailable). |
 | **Privacy radius** | 200 m. Guest/commuter coordinates are randomly obfuscated within this radius. |
+| **Audit trail** | The `activity_log` table: who did what to which record, when and from where, with before → after values. Written after the action succeeds; page views, map polling and location broadcasts are never recorded. Read by the Admin on the Activity Log page (UCN_SC_E029). Design and event list: `docs/AUDIT_TRAIL.md`. |
 
 ## Document conventions
 

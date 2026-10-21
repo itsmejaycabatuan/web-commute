@@ -18,7 +18,7 @@
 <rect width="1420" height="1503" fill="#ffffff"/>
 <rect x="175" y="172" width="1070" height="1116" rx="10" fill="#FCFCFD" stroke="#30363d" stroke-width="2"/>
 <text x="195" y="198" class="title">SmartCommute — Web Commute System</text>
-<text x="195" y="213" class="sub">use cases UCN_SC_E001 – E028 (E025 is unassigned)</text>
+<text x="195" y="213" class="sub">use cases UCN_SC_E001 – E029 (E025 is unassigned)</text>
 <rect x="210" y="238" width="310" height="266" rx="8" fill="#E3F0FF" fill-opacity="0.45" stroke="#2F6FB5" stroke-width="1.2" stroke-dasharray="5 3"/>
 <text x="222" y="257" class="grp" fill="#2F6FB5">Account &amp; Access</text>
 <rect x="210" y="530" width="310" height="324" rx="8" fill="#DDF3EC" fill-opacity="0.45" stroke="#1F8F6B" stroke-width="1.2" stroke-dasharray="5 3"/>
@@ -27,10 +27,10 @@
 <text x="222" y="899" class="grp" fill="#C46A12">Driver Operations</text>
 <rect x="900" y="238" width="310" height="266" rx="8" fill="#EBE3FA" fill-opacity="0.45" stroke="#6B49B8" stroke-width="1.2" stroke-dasharray="5 3"/>
 <text x="912" y="257" class="grp" fill="#6B49B8">Driver Management</text>
-<rect x="900" y="530" width="310" height="266" rx="8" fill="#FBE0E3" fill-opacity="0.45" stroke="#B83A4B" stroke-width="1.2" stroke-dasharray="5 3"/>
+<rect x="900" y="530" width="310" height="324" rx="8" fill="#FBE0E3" fill-opacity="0.45" stroke="#B83A4B" stroke-width="1.2" stroke-dasharray="5 3"/>
 <text x="912" y="549" class="grp" fill="#B83A4B">Administration</text>
-<rect x="900" y="822" width="310" height="208" rx="8" fill="#F4EDC6" fill-opacity="0.45" stroke="#8A7410" stroke-width="1.2" stroke-dasharray="5 3"/>
-<text x="912" y="841" class="grp" fill="#8A7410">Fleet Maintenance</text>
+<rect x="900" y="880" width="310" height="208" rx="8" fill="#F4EDC6" fill-opacity="0.45" stroke="#8A7410" stroke-width="1.2" stroke-dasharray="5 3"/>
+<text x="912" y="899" class="grp" fill="#8A7410">Fleet Maintenance</text>
 <rect x="210" y="1172" width="1000" height="92" rx="8" fill="#ECEFF1" fill-opacity="0.45" stroke="#5F6B73" stroke-width="1.2" stroke-dasharray="5 3"/>
 <text x="222" y="1191" class="grp" fill="#5F6B73">Common Services (every authenticated user)</text>
 <rect x="500" y="14" width="160" height="58" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/>
@@ -121,31 +121,32 @@
 <line x1="1305.0" y1="380.0" x2="1190.0" y2="413.0" stroke="#6B49B8" stroke-width="1.4" />
 <line x1="1305.0" y1="380.0" x2="1190.0" y2="471.0" stroke="#6B49B8" stroke-width="1.4" />
 <g class="actor" stroke="#B83A4B" stroke-width="2" fill="#FBE0E3" stroke-linecap="round">
-<circle cx="1320" cy="653.0" r="9"/>
-<line x1="1320" y1="662.0" x2="1320" y2="690.0"/>
-<line x1="1305" y1="672.0" x2="1335" y2="672.0"/>
-<line x1="1320" y1="690.0" x2="1308" y2="708.0"/>
-<line x1="1320" y1="690.0" x2="1332" y2="708.0"/>
+<circle cx="1320" cy="682.0" r="9"/>
+<line x1="1320" y1="691.0" x2="1320" y2="719.0"/>
+<line x1="1305" y1="701.0" x2="1335" y2="701.0"/>
+<line x1="1320" y1="719.0" x2="1308" y2="737.0"/>
+<line x1="1320" y1="719.0" x2="1332" y2="737.0"/>
 </g>
-<text x="1320" y="726.0" text-anchor="middle" class="actor-label">Admin</text>
-<line x1="1305.0" y1="672.0" x2="1190.0" y2="589.0" stroke="#B83A4B" stroke-width="1.4" />
-<line x1="1305.0" y1="672.0" x2="1190.0" y2="647.0" stroke="#B83A4B" stroke-width="1.4" />
-<line x1="1305.0" y1="672.0" x2="1190.0" y2="705.0" stroke="#B83A4B" stroke-width="1.4" />
-<line x1="1305.0" y1="672.0" x2="1190.0" y2="763.0" stroke="#B83A4B" stroke-width="1.4" />
-<line x1="1305.0" y1="672.0" x2="1190.0" y2="471.0" stroke="#B83A4B" stroke-width="1.4" />
-<line x1="1305.0" y1="672.0" x2="1190.0" y2="881.0" stroke="#B83A4B" stroke-width="1.4" />
+<text x="1320" y="755.0" text-anchor="middle" class="actor-label">Admin</text>
+<line x1="1305.0" y1="701.0" x2="1190.0" y2="589.0" stroke="#B83A4B" stroke-width="1.4" />
+<line x1="1305.0" y1="701.0" x2="1190.0" y2="647.0" stroke="#B83A4B" stroke-width="1.4" />
+<line x1="1305.0" y1="701.0" x2="1190.0" y2="705.0" stroke="#B83A4B" stroke-width="1.4" />
+<line x1="1305.0" y1="701.0" x2="1190.0" y2="763.0" stroke="#B83A4B" stroke-width="1.4" />
+<line x1="1305.0" y1="701.0" x2="1190.0" y2="821.0" stroke="#B83A4B" stroke-width="1.4" />
+<line x1="1305.0" y1="701.0" x2="1190.0" y2="471.0" stroke="#B83A4B" stroke-width="1.4" />
+<line x1="1305.0" y1="701.0" x2="1190.0" y2="939.0" stroke="#B83A4B" stroke-width="1.4" />
 <g class="actor" stroke="#8A7410" stroke-width="2" fill="#F4EDC6" stroke-linecap="round">
-<circle cx="1320" cy="916.0" r="9"/>
-<line x1="1320" y1="925.0" x2="1320" y2="953.0"/>
-<line x1="1305" y1="935.0" x2="1335" y2="935.0"/>
-<line x1="1320" y1="953.0" x2="1308" y2="971.0"/>
-<line x1="1320" y1="953.0" x2="1332" y2="971.0"/>
+<circle cx="1320" cy="974.0" r="9"/>
+<line x1="1320" y1="983.0" x2="1320" y2="1011.0"/>
+<line x1="1305" y1="993.0" x2="1335" y2="993.0"/>
+<line x1="1320" y1="1011.0" x2="1308" y2="1029.0"/>
+<line x1="1320" y1="1011.0" x2="1332" y2="1029.0"/>
 </g>
-<text x="1320" y="989.0" text-anchor="middle" class="actor-label">Maintenance</text>
-<text x="1320" y="1003.0" text-anchor="middle" class="actor-label">Manager</text>
-<line x1="1305.0" y1="935.0" x2="1190.0" y2="881.0" stroke="#8A7410" stroke-width="1.4" />
-<line x1="1305.0" y1="935.0" x2="1190.0" y2="939.0" stroke="#8A7410" stroke-width="1.4" />
-<line x1="1305.0" y1="935.0" x2="1190.0" y2="997.0" stroke="#8A7410" stroke-width="1.4" />
+<text x="1320" y="1047.0" text-anchor="middle" class="actor-label">Maintenance</text>
+<text x="1320" y="1061.0" text-anchor="middle" class="actor-label">Manager</text>
+<line x1="1305.0" y1="993.0" x2="1190.0" y2="939.0" stroke="#8A7410" stroke-width="1.4" />
+<line x1="1305.0" y1="993.0" x2="1190.0" y2="997.0" stroke="#8A7410" stroke-width="1.4" />
+<line x1="1305.0" y1="993.0" x2="1190.0" y2="1055.0" stroke="#8A7410" stroke-width="1.4" />
 <line x1="710.0" y1="1360.0" x2="411.0" y2="1248.9" stroke="#5F6B73" stroke-width="1.4" />
 <line x1="710.0" y1="1360.0" x2="710.0" y2="1250.0" stroke="#5F6B73" stroke-width="1.4" />
 <line x1="710.0" y1="1360.0" x2="1009.0" y2="1248.9" stroke="#5F6B73" stroke-width="1.4" />
@@ -158,8 +159,8 @@
 <line x1="85.0" y1="701.0" x2="40.0" y2="701.0" stroke="#444" stroke-width="1.4" />
 <line x1="85.0" y1="1022.0" x2="40.0" y2="1022.0" stroke="#444" stroke-width="1.4" />
 <line x1="1335.0" y1="380.0" x2="1385.0" y2="380.0" stroke="#444" stroke-width="1.4" />
-<line x1="1335.0" y1="672.0" x2="1385.0" y2="672.0" stroke="#444" stroke-width="1.4" />
-<line x1="1335.0" y1="935.0" x2="1385.0" y2="935.0" stroke="#444" stroke-width="1.4" />
+<line x1="1335.0" y1="701.0" x2="1385.0" y2="701.0" stroke="#444" stroke-width="1.4" />
+<line x1="1335.0" y1="993.0" x2="1385.0" y2="993.0" stroke="#444" stroke-width="1.4" />
 <line x1="40.0" y1="701.0" x2="40.0" y2="1468.0" stroke="#444" stroke-width="1.4" />
 <line x1="1385.0" y1="380.0" x2="1385.0" y2="1468.0" stroke="#444" stroke-width="1.4" />
 <ellipse cx="365.0" cy="297.0" rx="135" ry="19" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/>
@@ -225,15 +226,18 @@
 <ellipse cx="1055.0" cy="763.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
 <ellipse cx="1055.0" cy="763.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
 <text x="1055.0" y="767.3" text-anchor="middle"><tspan class="uc-id">E028</tspan><tspan class="uc-name" dx="6">Manage Staff Accounts</tspan></text>
-<ellipse cx="1055.0" cy="881.0" rx="135" ry="19" fill="#fff" stroke="#8A7410" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="881.0" rx="135" ry="19" fill="#F4EDC6" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="885.3" text-anchor="middle"><tspan class="uc-id">E015</tspan><tspan class="uc-name" dx="6">Manage Vehicles</tspan></text>
+<ellipse cx="1055.0" cy="821.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="821.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="825.3" text-anchor="middle"><tspan class="uc-id">E029</tspan><tspan class="uc-name" dx="6">View Activity Log</tspan></text>
 <ellipse cx="1055.0" cy="939.0" rx="135" ry="19" fill="#fff" stroke="#8A7410" stroke-width="1.6"/>
 <ellipse cx="1055.0" cy="939.0" rx="135" ry="19" fill="#F4EDC6" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="943.3" text-anchor="middle"><tspan class="uc-id">E016</tspan><tspan class="uc-name" dx="6">Manage Maintenance Schedule</tspan></text>
+<text x="1055.0" y="943.3" text-anchor="middle"><tspan class="uc-id">E015</tspan><tspan class="uc-name" dx="6">Manage Vehicles</tspan></text>
 <ellipse cx="1055.0" cy="997.0" rx="135" ry="19" fill="#fff" stroke="#8A7410" stroke-width="1.6"/>
 <ellipse cx="1055.0" cy="997.0" rx="135" ry="19" fill="#F4EDC6" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="1001.3" text-anchor="middle"><tspan class="uc-id">E017</tspan><tspan class="uc-name" dx="6">Manage Maintenance Tasks</tspan></text>
+<text x="1055.0" y="1001.3" text-anchor="middle"><tspan class="uc-id">E016</tspan><tspan class="uc-name" dx="6">Manage Maintenance Schedule</tspan></text>
+<ellipse cx="1055.0" cy="1055.0" rx="135" ry="19" fill="#fff" stroke="#8A7410" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="1055.0" rx="135" ry="19" fill="#F4EDC6" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="1059.3" text-anchor="middle"><tspan class="uc-id">E017</tspan><tspan class="uc-name" dx="6">Manage Maintenance Tasks</tspan></text>
 <ellipse cx="365.0" cy="1231.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/>
 <ellipse cx="365.0" cy="1231.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75" stroke="none"/>
 <text x="365.0" y="1235.3" text-anchor="middle"><tspan class="uc-id">E008</tspan><tspan class="uc-name" dx="6">Change Password</tspan></text>

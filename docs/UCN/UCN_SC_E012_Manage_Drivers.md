@@ -51,7 +51,7 @@
 1. In the list, the actor clicks the delete icon on a driver row.
 2. System displays a confirmation dialog ("Delete Driver?").
 3. Driver Manager confirms with **"Delete"**.
-4. System deletes the **User** and the **Driver** record and confirms *"Driver removed."* — unless E8 applies. A driver who holds a vehicle shows a lock instead of the delete icon.
+4. System deletes the **User** and the **Driver** record and confirms *"Driver removed."* — unless E8 applies. A driver who also has payments or top-ups is **anonymised** instead: the driver profile and licence image are removed, the user becomes an anonymised shell, and the payments and top-ups are kept (an `anonymised` audit entry is written instead of `deleted`). A driver who holds a vehicle shows a lock instead of the delete icon.
 
 **A4 – View Driver Details**
 1. In the list, the actor clicks the ID-card icon on a driver row.
@@ -63,7 +63,7 @@
 1. In the list, the actor clicks the suspend icon (or *reactivate* when the driver is already suspended). Only an **approved** driver can be suspended — the icon is not shown for a pending or rejected registration and the server refuses it. A suspension also takes effect on a session that is already open: the driver's next request signs them out.
 2. System displays a confirmation dialog: suspending states that the driver *"will not be able to sign in, clock in or broadcast a location, and is detached from any assigned vehicle"*; an optional **Reason** field is provided.
 3. Driver Manager confirms.
-4. System sets `is_suspended`, records `suspended_at` and the reason, moves the driver `status` to **suspended**, **detaches any assigned vehicle**, logs the action and confirms *"Driver suspended. They can no longer sign in."*
+4. System sets `is_suspended`, records `suspended_at` and the reason, moves the driver `status` to **suspended**, **detaches any assigned vehicle**, writes a `suspended` audit-trail entry (with the reason) and confirms *"Driver suspended. They can no longer sign in."*
 5. Reactiving reverses all of it (`status` back to **inactive**) and confirms *"Driver reactivated."*
 
 **A6 – Approve or Reject a Driver Application**

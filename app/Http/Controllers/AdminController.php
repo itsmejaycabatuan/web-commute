@@ -9,7 +9,6 @@ class AdminController extends Controller
 {
     public function dashboard()
     {
-        activity()->event('Dashboard')->log('Action performed: dashboard');
 
         $totalRevenue = Payment::settled()->sum('price');
         $totalFundsAdded = TopupHistory::completed()->sum('amount_added');

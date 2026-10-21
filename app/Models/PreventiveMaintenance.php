@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Audited;
+use App\Support\Audit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -39,6 +41,7 @@ use Illuminate\Support\Carbon;
  */
 class PreventiveMaintenance extends Model
 {
+    use Audited;
     use HasFactory;
 
     protected $fillable = [
@@ -63,5 +66,19 @@ class PreventiveMaintenance extends Model
     public function maintenanceTask()
     {
         return $this->belongsTo(MaintenanceTask::class, 'task_id');
+    }
+    protected function auditCategory(): string
+    {
+        return Audit::FLEET;
+    }
+
+    protected function auditAttributes(): array
+    {
+        return ['vehicle_id', 'task_id', 'last_service_odo', 'last_service_date', 'last_service_cost', 'comments'];
+    }
+
+    protected function auditLabel(): string
+    {
+        return 'service record (vehicle #'.$this->vehicle_id.', task #'.$this->task_id.')';
     }
 }

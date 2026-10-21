@@ -1,7 +1,7 @@
 # Use-Case Diagram — SmartCommute
 
-UML use-case diagram for the whole system, built from the 27 Use Case Narratives in [`UCN/`](UCN/README.md)
-(`UCN_SC_E001` – `E028`; `E025` is unassigned in the UCN set).
+UML use-case diagram for the whole system, built from the 28 Use Case Narratives in [`UCN/`](UCN/README.md)
+(`UCN_SC_E001` – `E029`; `E025` is unassigned in the UCN set).
 
 ![SmartCommute use-case diagram](diagrams/use_case_diagram.svg)
 
@@ -22,7 +22,7 @@ do not accept SVG, so use the **PNG** (2× resolution, white background): *Inser
 | 4 | Driver Operations | E009, E010, E021, E023; Push Channel | [04_driver_operations.png](diagrams/use-case-parts/04_driver_operations.png) |
 | 5 | Driver Management | E012, E013, E014, E024; Admin shares E012 | [05_driver_management.png](diagrams/use-case-parts/05_driver_management.png) |
 | 6 | Fleet Maintenance | E015, E016, E017; Admin shares E015 | [06_fleet_maintenance.png](diagrams/use-case-parts/06_fleet_maintenance.png) |
-| 7 | Administration | E018, E019, E020, E028 | [07_administration.png](diagrams/use-case-parts/07_administration.png) |
+| 7 | Administration | E018, E019, E020, E028, E029 | [07_administration.png](diagrams/use-case-parts/07_administration.png) |
 
 SVG versions sit beside each PNG. They are regenerated with `python3 docs/diagrams/build_use_case_parts.py`, which reads
 its content from `build_use_case_diagram.py` so the pieces and the full diagram cannot drift apart.
@@ -42,7 +42,7 @@ Companion documents: [Functional Requirements](Functional_Requirements.md) ·
 | **Driver** | Primary | Authenticated user with the `driver` role, an approved `Driver` profile and (to broadcast) a staff-assigned vehicle. | `role:driver` |
 | **Driver Manager** | Primary | Back-office staff who run the driver roster, timekeeping and violations. | `role:driver_manager` |
 | **Maintenance Manager** | Primary | Back-office staff who run the fleet and preventive maintenance. | `role:maintenance_manager` |
-| **Admin** | Primary | System administrator: commuters, fare rates, reports, staff accounts; may also use the driver and vehicle pages. | `role:admin` |
+| **Admin** | Primary | System administrator: commuters, fare rates, reports, staff accounts, the activity log; may also use the driver and vehicle pages. | `role:admin` |
 | **Authenticated User** | Abstract | Generalisation of the five signed-in roles above. Holds the use cases every signed-in user has (E008, E026, E027). | — |
 | **Email Service** | Secondary (external) | Mail transport that delivers verification and password-reset links. | E002, E011 |
 | **Map & Routing Services** | Secondary (external) | OpenFreeMap tiles (MapLibre GL), Photon geocoding, OSRM routing. | E003, E004 |
@@ -82,6 +82,7 @@ Companion documents: [Functional Requirements](Functional_Requirements.md) ·
 | [E026](UCN/UCN_SC_E026_Profile_and_Dashboard.md) | Profile & Dashboard Views | | | | | | | ● |
 | [E027](UCN/UCN_SC_E027_Account_Deletion.md) | Account Deletion | | | | | | | ● |
 | [E028](UCN/UCN_SC_E028_Manage_Staff_Accounts.md) | Manage Staff Accounts | | | | | | ● | |
+| [E029](UCN/UCN_SC_E029_View_Activity_Log.md) | View Activity Log | | | | | | ● | |
 
 ## 3. Relationships between use cases
 

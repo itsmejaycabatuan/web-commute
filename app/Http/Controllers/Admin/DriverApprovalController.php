@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\User;
+use App\Support\Audit;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -85,7 +86,7 @@ class DriverApprovalController extends Controller
         // E4 — the user, driver record and role are written together or not at
         // all; the stored licence image is removed again when that fails.
         try {
-            DB::transaction(function () use ($request, $validated, $path) {
+            $created = DB::transaction(function () use ($request, $validated, $path) {
                 $user = User::create([
                     'email' => $request->email,
                     'password' => Hash::make($request->password),
@@ -105,6 +106,8 @@ class DriverApprovalController extends Controller
                 ]);
 
                 $user->syncRoles(['driver']);
+
+                return $user;
             });
         } catch (QueryException $e) {
             Storage::disk('public')->delete($path);
@@ -112,6 +115,14 @@ class DriverApprovalController extends Controller
 
             return back()->withInput()->with('error', 'A database error occurred. The driver account was not created.');
         }
+
+        $newDriver = $created->driver()->first();
+        Audit::log(Audit::DRIVER, 'created', 'Created driver account '.$created->email, $newDriver, [
+            'email' => $created->email,
+            'driver_code' => $newDriver?->driver_code,
+            'license_number' => $validated['license_number'],
+            'source' => 'admin',
+        ]);
 
         return redirect()
             ->route('drivers.index')
@@ -203,18 +214,38 @@ class DriverApprovalController extends Controller
         }
 
         $user = User::find($driver->user_id);
+        $facts = [
+            'email' => $user?->email,
+            'driver_code' => $driver->driver_code,
+            'license_number' => $driver->license_number,
+        ];
 
-        // E4 — both rows go together or neither does.
+        // E4 — both rows go together or neither does. Logged once below, so the per-model entries are off.
+        // A driver who also has payments or top-ups is anonymised instead (their driver profile is still removed).
         try {
-            DB::transaction(function () use ($user, $driver) {
-                $user?->delete();
-                $driver->delete();
+            $outcome = DB::transaction(function () use ($user, $driver) {
+                if ($user && $user->hasFinancialHistory()) {
+                    return $user->eraseAccount();
+                }
+
+                $user?->disableLogging()->delete();
+                $driver->disableLogging()->delete();
+
+                return 'deleted';
             });
         } catch (QueryException $e) {
             report($e);
 
             return back()->with('error', 'A database error occurred. The driver was not removed.');
         }
+
+        Audit::log(
+            Audit::DRIVER,
+            $outcome,
+            ($outcome === 'anonymised' ? 'Anonymised driver ' : 'Deleted driver ').($facts['driver_code'] ?: '#'.$driver->id),
+            $driver,
+            $facts + ['outcome' => $outcome]
+        );
 
         return redirect()
             ->route('drivers.index')
@@ -228,7 +259,6 @@ class DriverApprovalController extends Controller
      */
     public function toggleSuspension(string $id, Request $request)
     {
-        activity()->event('Toggledriversuspension')->log('Action performed: toggleSuspension');
 
         $driver = Driver::find($id);
 
@@ -253,17 +283,23 @@ class DriverApprovalController extends Controller
 
         if ($driver->isSuspended()) {
             $driver->unsuspend();
+            Audit::log(Audit::DRIVER, 'reactivated', 'Reactivated driver '.($driver->driver_code ?: '#'.$driver->id), $driver, [
+                'email' => $driver->user?->email,
+            ]);
 
             return redirect()
                 ->route('drivers.index')
                 ->with('success', 'Driver reactivated.');
         }
 
+        $hadVehicle = $driver->vehicle()->exists();
         $driver->suspend($validated['suspension_reason'] ?? null);
 
-        activity()->causedBy(auth()->user())
-            ->event('Suspend Driver')
-            ->log('Suspended driver: '.($driver->user?->email ?? $driver->id));
+        Audit::log(Audit::DRIVER, 'suspended', 'Suspended driver '.($driver->driver_code ?: '#'.$driver->id), $driver, [
+            'email' => $driver->user?->email,
+            'reason' => $validated['suspension_reason'] ?? null,
+            'vehicle_released' => $hadVehicle,
+        ]);
 
         return redirect()
             ->route('drivers.index')

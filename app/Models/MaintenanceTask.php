@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Audited;
+use App\Support\Audit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -27,6 +29,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class MaintenanceTask extends Model
 {
+    use Audited;
     use HasFactory;
 
     protected $fillable = [
@@ -34,4 +37,18 @@ class MaintenanceTask extends Model
         'miles_between_service',
         'months_between_service',
     ];
+    protected function auditCategory(): string
+    {
+        return Audit::FLEET;
+    }
+
+    protected function auditAttributes(): array
+    {
+        return ['tasks_performed', 'miles_between_service', 'months_between_service'];
+    }
+
+    protected function auditLabel(): string
+    {
+        return 'maintenance task '.$this->tasks_performed;
+    }
 }

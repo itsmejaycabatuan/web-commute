@@ -31,7 +31,6 @@ class VehicleTrackingController extends Controller
 
     public function broadcastLocation(Request $request)
     {
-        activity()->event('Broadcastlocation')->log('Action performed: broadcastLocation');
 
         $validated = $request->validate([
             'vehicle_id' => 'required|string',
@@ -196,7 +195,6 @@ class VehicleTrackingController extends Controller
         if (auth()->check() && auth()->user()->hasRole('driver')) {
             return response()->json(['success' => true, 'vehicles' => []]);
         }
-        activity()->event('Getactivevehicles')->log('Action performed: getActiveVehicles');
 
         // Newest update per vehicle, active in the last 5 minutes.
         // UCN_SC_E015 postcondition: a unit that is under maintenance or already

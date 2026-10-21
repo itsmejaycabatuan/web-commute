@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Audited;
+use App\Support\Audit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -41,6 +43,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ViolationLog extends Model
 {
+    use Audited;
     use HasFactory;
 
     protected $fillable = [
@@ -63,5 +66,19 @@ class ViolationLog extends Model
     public function violationCode()
     {
         return $this->belongsTo(ViolationCode::class, 'vc_id');
+    }
+    protected function auditCategory(): string
+    {
+        return Audit::VIOLATION;
+    }
+
+    protected function auditAttributes(): array
+    {
+        return ['user_id', 'vc_id', 'violation_instance', 'violation_fine', 'additional_penalties', 'date_of_violation', 'time_of_violation', 'place_of_violation', 'remarks'];
+    }
+
+    protected function auditLabel(): string
+    {
+        return 'violation #'.$this->getKey();
     }
 }

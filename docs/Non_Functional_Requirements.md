@@ -19,17 +19,17 @@ The qualities and constraints the system shall meet, alongside the behaviour in
 | Category | Met | Partial | Gap |
 |---|:-:|:-:|:-:|
 | 1 Performance & responsiveness | 5 | 2 | 0 |
-| 2 Security | 9 | 5 | 1 |
-| 3 Privacy | 2 | 1 | 3 |
+| 2 Security | 9 | 6 | 1 |
+| 3 Privacy | 2 | 3 | 2 |
 | 4 Reliability & data integrity | 7 | 4 | 0 |
 | 5 Usability | 6 | 0 | 1 |
 | 6 Compatibility & interoperability | 4 | 0 | 0 |
 | 7 Maintainability & testability | 4 | 0 | 0 |
-| 8 Auditability | 0 | 2 | 3 |
+| 8 Auditability | 6 | 0 | 0 |
 | 9 Localisation | 3 | 0 | 0 |
-| 10 Scalability & capacity | 0 | 1 | 2 |
+| 10 Scalability & capacity | 0 | 2 | 2 |
 | 11 Deployment & operations | 2 | 2 | 0 |
-| **Total (69)** | **42** | **17** | **10** |
+| **Total (73)** | **48** | **19** | **6** |
 
 ---
 
@@ -64,6 +64,7 @@ The qualities and constraints the system shall meet, alongside the behaviour in
 | NFR-SEC-13 | Developer-only features shall not exist in production. | Dev markers are compiled out outside the `local` environment. | Partial — their routes are not role-gated | E021 |
 | NFR-SEC-14 | Destructive actions shall be hard to trigger by accident. | Confirmation dialog on every delete / suspend; an Admin cannot delete or suspend themself. | Met | E012, E018, E028 |
 | NFR-SEC-15 | API tokens shall be revocable with the session. | — | Gap — Sanctum personal access tokens are not revoked by "log out other devices" | E008 |
+| NFR-SEC-16 | Data an export writes shall not run as a spreadsheet formula. | The Activity Log CSV prefixes any cell starting `=`, `+`, `-`, `@` with `'`. | Partial — the Reports CSV export (E020) writes emails and names as-is | E029, E020 |
 
 ## 3. Privacy (NFR-PRIV)
 
@@ -72,9 +73,10 @@ The qualities and constraints the system shall meet, alongside the behaviour in
 | NFR-PRIV-01 | A driver's exact position shall never be shown to other users. | Published coordinates are randomised within a **200 m** radius; the payload carries `privacy_radius`; popups say "approximate". | Met | E003, E021 |
 | NFR-PRIV-02 | The system shall collect no more personal data than needed. | Commuters give only email + password; wallet and receipts hold no card data (gateway collects it). | Met | E002, E006 |
 | NFR-PRIV-03 | Sensitive documents shall not be publicly readable. | Driver licence images are saved on the `public` disk (`storage/app/public/licenses`). | Gap — anyone who learns the path can fetch a licence image | E012, E022 |
-| NFR-PRIV-04 | Deleting an account shall remove or anonymise the person's data without losing records the business must keep. | Hard delete of the user row. Per the migrations every foreign key to `users` is `ON DELETE CASCADE`, so the wallet, **payments and top-up history**, driver profile, violation logs and location rows are deleted with it; role assignments, sessions, API tokens, reset rows and activity-log entries have no foreign key and are left behind. | Gap — financial history is erased with the account, and the leftovers are orphaned (E027 describes only the orphaning) | E027, [ERD](Entity_Relationship_Diagram.md) |
+| NFR-PRIV-04 | Deleting an account shall remove or anonymise the person's data without losing records the business must keep. | `User::eraseAccount()`: an account with no payments or top-ups is deleted; one with them is **anonymised** — email → `deleted-<id>@deleted.invalid`, password, roles, tokens, sessions, preferences, reset links, map markers, driver profile and licence image removed, suspended — and its wallet, payments and top-ups kept. Deletion is refused while the wallet holds money. | Partial — the original email stays in audit entries until they expire (365 days); a plain delete still leaves orphaned role / token rows (no personal data); no refund path for a wallet balance | E027, [ERD](Entity_Relationship_Diagram.md) |
 | NFR-PRIV-05 | Users shall be able to read the terms and privacy policy they accept. | Links exist on the registration form. | Gap — both are placeholders (`href="#"`) | E002 |
 | NFR-PRIV-06 | Users shall be told what is shared with outside services. | Pick-up / destination text and coordinates go to the geocoding and routing providers from the browser. | Partial — not disclosed anywhere in the product | E004 |
+| NFR-PRIV-07 | Personal data held in the audit trail shall be limited, access-restricted and time-boxed. | Entries hold IP address, user agent and email (never passwords or tokens); readable only by the Admin; deleted after `ACTIVITY_LOG_RETENTION_DAYS` (365). | Partial — users are not told it is kept: the privacy policy is a placeholder (NFR-PRIV-05) | E029, [AUDIT_TRAIL](AUDIT_TRAIL.md) |
 
 ## 4. Reliability & data integrity (NFR-REL)
 
@@ -86,8 +88,8 @@ The qualities and constraints the system shall meet, alongside the behaviour in
 | NFR-REL-04 | An outside failure shall not leave half-done state. | Gateway error → no payment row, no checkout session, funds kept; mail failure → no success message; routing/map failure → banner, no stale fare. | Met | E004, E006, E011 |
 | NFR-REL-05 | Location broadcasts shall be safe to retry. | Same `(vehicle, timestamp)` is a no-op; a failed write is retried once after 5 s so the last position still publishes. | Partial — the 5 s delay needs an asynchronous queue driver (the default `QUEUE_CONNECTION=sync` ignores it); the browser does not retry | E021, `.env.example` |
 | NFR-REL-06 | Stuck payments shall resolve themselves. | `pending` closed as `cancelled` after 12 hours, hourly and on page open. | Met | E006 |
-| NFR-REL-07 | Records other data depends on shall not be deletable. | Blocked: driver with a vehicle, vehicle with a driver or service history, violation code in use, commuter with a balance. | Met | E012, E014, E015, E018 |
-| NFR-REL-08 | Time-based housekeeping shall run unattended. | Scheduled: `auth:clear-resets` every 15 min, `vehicle:offline-check` every minute, `payments:expire-pending` hourly. | Met | `app/Console/Kernel.php` |
+| NFR-REL-07 | Records other data depends on shall not be deletable. | Blocked: driver with a vehicle, vehicle with a driver or service history, violation code in use, commuter with a balance, **payments and top-ups (an account that has them is anonymised; the foreign keys `RESTRICT`)**. | Met | E012, E014, E015, E018, E027 |
+| NFR-REL-08 | Time-based housekeeping shall run unattended. | Scheduled: `auth:clear-resets` every 15 min, `vehicle:offline-check` every minute, `payments:expire-pending` hourly, `activitylog:clean` daily. | Met | `app/Console/Kernel.php` |
 | NFR-REL-09 | The product shall keep working when an optional service is off. | Gateway off → declared payments; location denied → map without centring/ETA; map style down → banner; offline → polling pauses and resumes. | Met | E003, E006 |
 | NFR-REL-10 | Related writes that must agree shall be atomic. | — | Partial — clock-in/out and the driver-status update are two writes; a top-up credits the wallet before writing its history row | E005, E009, E010 |
 | NFR-REL-11 | Unexpected errors shall show a controlled message. | Most flows catch database errors and show a toast. | Partial — account deletion and a few others fall through to the default 500 page | E027 |
@@ -117,7 +119,7 @@ The qualities and constraints the system shall meet, alongside the behaviour in
 
 | ID | Requirement | Measure | Status | Source |
 |---|---|---|:-:|---|
-| NFR-MNT-01 | Behaviour shall be covered by automated tests. | 25 PHPUnit feature-test files under `tests/Feature`, including per-UCN regression suites and a 29-test PayMongo suite. | Met | `tests/Feature` |
+| NFR-MNT-01 | Behaviour shall be covered by automated tests. | 29 PHPUnit feature-test files under `tests/Feature` (374 tests), including per-UCN regression suites, a 29-test PayMongo suite and the audit-trail suites (`AuditTrailTest`, `ActivityLogPageTest`) and `AccountErasureTest`. | Met | `tests/Feature` |
 | NFR-MNT-02 | Requirements shall trace to code. | Each UCN has an *Implementation References* table (routes, controllers, services, views, models, tests). | Met | UCN sheets |
 | NFR-MNT-03 | Environment-specific behaviour shall be configuration, not code. | Env-driven: payment gateway flags and keys, mail, session, queue and broadcast drivers, bcrypt rounds. | Met | `.env.example`, `config/` |
 | NFR-MNT-04 | Code style shall be enforceable. | Laravel Pint is a dev dependency. | Met | `composer.json` |
@@ -126,11 +128,12 @@ The qualities and constraints the system shall meet, alongside the behaviour in
 
 | ID | Requirement | Measure | Status | Source |
 |---|---|---|:-:|---|
-| NFR-AUD-01 | Security-relevant actions shall be logged so that *who did what to which record* can be answered. | Spatie activity log, 105 call sites in 17 controllers: sign-in, failed and suspended sign-in, logout, password reset, suspend commuter/staff/driver, create/delete staff. Who is recorded (the signed-in user), what is mostly a generic "Action performed: <method>". | Partial — no log entry names the record it changed (`subject` unused) or the old/new values (`properties` unused); failed sign-ins record no email or IP; most rows are page views, not changes | E001, E011, E012, E028 |
-| NFR-AUD-02 | Financial and service history shall be preserved. | Payments are immutable once paid; suspended commuters keep wallet and receipts; vehicles with service history are marked *disposed*, never erased. | Partial — all of it is deleted if the owning account is deleted (NFR-PRIV-04) | E006, E015, E018, E027 |
-| NFR-AUD-03 | Report exports shall be attributable. | — | Gap — no record of who exported what | E020 |
-| NFR-AUD-04 | Account self-deletion shall leave a trace. | — | Gap — the deletion is logged by the controller but the data it removes is not archived | E027 |
-| NFR-AUD-05 | An Admin shall be able to review the audit trail without database access. | — | Gap — nothing reads `activity_log`: no page, route, menu entry or export exists | — |
+| NFR-AUD-01 | Security-relevant actions shall be logged so that *who did what to which record, when and from where* can be answered. | Audit trail (`activity_log`) via `App\Support\Audit` and the `Audited` model trait. **Who**: the signed-in user, plus a snapshot of their email and role. **What / which record**: event name, a readable description, the subject record, and old → new values for changed business fields. **From where**: IP address and user agent on every entry. Categories (`log_name`): auth, account, driver, fleet, fare, violation, timekeeping, payment, system. Covers sign-in, failed and blocked sign-in (email tried), sign-out, password changes/resets, suspend / reactivate, driver approve / reject, account create / delete, vehicle, violation, maintenance, timekeeping, fare and payment changes. | Met | E001, E011, E012, E018, E028, `tests/Feature/AuditTrailTest.php` |
+| NFR-AUD-02 | Financial and service history shall be preserved. | Payments are immutable once paid; suspended commuters keep wallet and receipts; vehicles with service history are marked *disposed*, never erased; **deleting an account anonymises it when payments or top-ups exist**, and the database refuses (`RESTRICT`) to delete a user or wallet that payments or top-ups reference. | Met | E006, E015, E018, E027, `AccountErasureTest` |
+| NFR-AUD-03 | Report exports shall be attributable. | Every CSV export of a system report (E020) and of the Activity Log writes a `report_exported` / `activity_log_exported` entry: who, what, the date range or filters, the row count. | Met | E020, E029 |
+| NFR-AUD-04 | Account self-deletion shall leave a trace. | A `deleted_self` entry (email, role, `outcome` deleted / anonymised, the acting user) is written before the sign-out, and the model's own delete event is suppressed so there is exactly one entry. | Met | E027, `AuditTrailTest`, `AccountErasureTest` |
+| NFR-AUD-05 | An Admin shall be able to review the audit trail without database access. | Admin-only, read-only *Activity Log* page: newest first, 10 per page, search, category / event / date filters, expandable before → after detail, CSV export. | Met | E029, `tests/Feature/ActivityLogPageTest.php` |
+| NFR-AUD-06 | The audit trail shall hold only what an audit needs and shall not grow without limit. | Page views, map polling, location broadcasts, availability toggles and diagnostics are **not** written (they go to `storage/logs`). Passwords, tokens and licence-image data are never stored. Entries older than `ACTIVITY_LOG_RETENTION_DAYS` (default 365) are deleted daily by `activitylog:clean`. `activitylog:purge-noise` clears the legacy "Action performed" rows. | Met | `config/activitylog.php`, `Kernel.php` |
 
 ## 9. Localisation (NFR-LOC)
 
@@ -145,14 +148,15 @@ The qualities and constraints the system shall meet, alongside the behaviour in
 | ID | Requirement | Measure | Status | Source |
 |---|---|---|:-:|---|
 | NFR-SCL-01 | Large tables shall not be loaded wholesale. | Timekeeping loads the latest 1,000 rows and the driver list loads every driver, then both filter/page in the browser. | Partial — fine at current size, will not scale | E012, E013 |
-| NFR-SCL-02 | Growing history tables shall have a retention rule. | — | Gap — `vehicle_location_histories` grows without limit (every accepted broadcast adds a row), and so does `activity_log`: every open map polls `/track/vehicles/active` every 3–10 s and every broadcasting driver posts every 2 s, and each call writes a log row | E021 |
+| NFR-SCL-02 | Growing history tables shall have a retention rule. | — | Gap — `vehicle_location_histories` grows without limit (every accepted broadcast adds a row) | E021 |
 | NFR-SCL-03 | Server-side limits shall protect shared capacity. | — | Gap — no server rate limit on the broadcast endpoint; reports run live queries with no caching | E020, E021 |
+| NFR-SCL-04 | The audit page shall stay responsive as the trail grows. | 10 entries per page; indexes on `log_name`, causer, subject and `created_at`; retention caps the table; the CSV export is capped at 10,000 rows. | Partial — free-text search (description, actor email) is a `LIKE` scan, fine at the retention size but not indexed | E029 |
 
 ## 11. Deployment & operations (NFR-OPS)
 
 | ID | Requirement | Measure | Status | Source |
 |---|---|---|:-:|---|
-| NFR-OPS-01 | Production shall run the scheduler. | The three scheduled commands (NFR-REL-08) need a cron entry for `schedule:run`. Pending payments are also closed on page open, so payments degrade gracefully without it. | Met | `Kernel.php`, E006 |
+| NFR-OPS-01 | Production shall run the scheduler. | The four scheduled commands (NFR-REL-08) need a cron entry for `schedule:run`. Pending payments are also closed on page open, so payments degrade gracefully without it. | Met | `Kernel.php`, E006 |
 | NFR-OPS-02 | Production shall use real push, mail and queue drivers. | Example env defaults to `BROADCAST_DRIVER=log`, `QUEUE_CONNECTION=sync`, `SESSION_DRIVER=file`; live tracking needs Pusher credentials and password-reset/verification need a working `MAIL_MAILER`. | Partial — defaults suit development only | `.env.example`, E011, E021 |
 | NFR-OPS-03 | The fare-guide import shall have its runtime available. | PDF extraction shells out to Python in the project virtualenv; a missing interpreter fails the upload with no fallback. | Partial — synchronous, single point of failure | E019 |
 | NFR-OPS-04 | Payment gateway keys shall match the environment. | Sandbox keys outside `production`; live keys only in `production` (enforced in code). | Met | E006, `docs/PAYMONGO_SETUP.md` |

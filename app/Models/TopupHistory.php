@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Audited;
+use App\Support\Audit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -32,6 +34,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TopupHistory extends Model
 {
+    use Audited;
     use HasFactory;
 
     protected $fillable = [
@@ -66,5 +69,19 @@ class TopupHistory extends Model
 
     public function wallet() {
         return $this->belongsTo(Wallet::class);
+    }
+    protected function auditCategory(): string
+    {
+        return Audit::PAYMENT;
+    }
+
+    protected function auditAttributes(): array
+    {
+        return ['user_id', 'wallet_id', 'amount_added', 'payment_method', 'status'];
+    }
+
+    protected function auditLabel(): string
+    {
+        return 'top-up #'.$this->getKey().' ('.number_format((float) $this->amount_added, 2).')';
     }
 }

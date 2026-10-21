@@ -18,7 +18,6 @@ class VehicleController extends Controller
 
     public function index()
     {
-        activity()->event('Index')->log('Action performed: index');
         $vehicles = Vehicle::with('driver')->latest()->get()->map(fn ($vehicle) => $this->formatVehicle($vehicle));
 
         // Only drivers who can actually drive: approved and not suspended. The page
@@ -69,7 +68,6 @@ class VehicleController extends Controller
 
     public function store(Request $request)
     {
-        activity()->event('Store')->log('Action performed: store');
         $validated = $request->validate([
             'year' => 'required|integer|min:1990|max:2030',
             'brand' => 'required|string|max:100',
@@ -106,7 +104,6 @@ class VehicleController extends Controller
 
     public function update(Request $request, Vehicle $vehicle)
     {
-        activity()->event('Update')->log('Action performed: update');
         $validated = $request->validate([
             'year' => 'required|integer|min:1990|max:2030',
             'brand' => 'required|string|max:100',
@@ -144,7 +141,6 @@ class VehicleController extends Controller
 
     public function destroy(Request $request, Vehicle $vehicle)
     {
-        activity()->event('Destroy')->log('Action performed: destroy');
 
         // A vehicle that still has a driver cannot be removed: unassign it first.
         if ($vehicle->driver_id) {

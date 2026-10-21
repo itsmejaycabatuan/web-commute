@@ -5,92 +5,92 @@
  -->
 <!-- Title: ERD Pages: 1 -->
 <svg width="1311pt" height="932pt"
- viewBox="0.00 0.00 1310.89 932.30" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(29.49 917.9)">
+ viewBox="0.00 0.00 1311.02 932.30" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(29.62 917.9)">
 <title>ERD</title>
-<polygon fill="white" stroke="transparent" points="-29.49,14.4 -29.49,-917.9 1281.4,-917.9 1281.4,14.4 -29.49,14.4"/>
+<polygon fill="white" stroke="transparent" points="-29.62,14.4 -29.62,-917.9 1281.4,-917.9 1281.4,14.4 -29.62,14.4"/>
 <!-- users&#45;&gt;roles -->
 <g id="edge15" class="edge">
 <title>users:w&#45;&gt;roles:w</title>
-<path fill="none" stroke="#444444" d="M-2.68,-682C-3.65,-689.12 -4.23,-697.59 -3.2,-705.2 -0.45,-725.51 8.97,-747.35 15.84,-761.2"/>
-<polygon fill="#444444" stroke="#444444" points="-1.25,-674.73 4.46,-666.68 -0.38,-670.32 0.49,-665.9 0.49,-665.9 0.49,-665.9 -0.38,-670.32 -3.49,-665.12 -1.25,-674.73 -1.25,-674.73"/>
-<ellipse fill="none" stroke="#444444" cx="-1.95" cy="-678.26" rx="3.6" ry="3.6"/>
-<polygon fill="#444444" stroke="#444444" points="19.25,-767.57 19.93,-777.41 21.38,-771.53 23.5,-775.5 23.5,-775.5 23.5,-775.5 21.38,-771.53 27.07,-773.59 19.25,-767.57 19.25,-767.57"/>
-<ellipse fill="none" stroke="#444444" cx="17.55" cy="-764.39" rx="3.6" ry="3.6"/>
-<text text-anchor="middle" x="-7.09" y="-726.72" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">has</text>
+<path fill="none" stroke="#444444" d="M-2.64,-681.32C-3.65,-688.61 -4.27,-697.36 -3.2,-705.2 -0.44,-725.51 8.98,-747.35 15.85,-761.2"/>
+<polygon fill="#444444" stroke="#444444" points="-1.25,-674.23 4.46,-666.18 -0.38,-669.82 0.49,-665.4 0.49,-665.4 0.49,-665.4 -0.38,-669.82 -3.48,-664.62 -1.25,-674.23 -1.25,-674.23"/>
+<ellipse fill="none" stroke="#444444" cx="-1.94" cy="-677.76" rx="3.6" ry="3.6"/>
+<polygon fill="#444444" stroke="#444444" points="19.25,-767.56 19.93,-777.41 21.38,-771.53 23.5,-775.5 23.5,-775.5 23.5,-775.5 21.38,-771.53 27.07,-773.59 19.25,-767.56 19.25,-767.56"/>
+<ellipse fill="none" stroke="#444444" cx="17.56" cy="-764.39" rx="3.6" ry="3.6"/>
+<text text-anchor="middle" x="-7.22" y="-726.24" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">has</text>
 </g>
 <!-- users&#45;&gt;wallets -->
 <g id="edge1" class="edge">
 <title>users:e&#45;&gt;wallets:w</title>
-<path fill="none" stroke="#444444" d="M162.14,-669.35C198.25,-683.33 337.01,-737.06 377.4,-752.7"/>
-<polygon fill="#444444" stroke="#444444" points="152.71,-670.52 155.96,-662.13 157.64,-662.78 154.39,-671.17 152.71,-670.52"/>
-<polyline fill="none" stroke="#444444" points="153.5,-666 157.7,-667.63 "/>
-<polygon fill="#444444" stroke="#444444" points="156.91,-672.15 160.16,-663.75 161.84,-664.4 158.59,-672.8 156.91,-672.15"/>
-<polyline fill="none" stroke="#444444" points="157.7,-667.63 161.89,-669.25 "/>
-<polygon fill="#444444" stroke="#444444" points="389.29,-752.48 386.04,-760.87 384.36,-760.22 387.61,-751.83 389.29,-752.48"/>
-<polyline fill="none" stroke="#444444" points="388.5,-757 384.3,-755.38 "/>
-<ellipse fill="none" stroke="#444444" cx="380.95" cy="-754.08" rx="3.6" ry="3.6"/>
-<text text-anchor="middle" x="259.76" y="-714.21" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">owns</text>
+<path fill="none" stroke="#444444" d="M162.14,-668.87C198.25,-682.92 337.01,-736.95 377.4,-752.68"/>
+<polygon fill="#444444" stroke="#444444" points="152.71,-670.02 155.97,-661.63 157.65,-662.29 154.38,-670.67 152.71,-670.02"/>
+<polyline fill="none" stroke="#444444" points="153.5,-665.5 157.69,-667.13 "/>
+<polygon fill="#444444" stroke="#444444" points="156.9,-671.65 160.16,-663.27 161.84,-663.92 158.58,-672.31 156.9,-671.65"/>
+<polyline fill="none" stroke="#444444" points="157.69,-667.13 161.89,-668.77 "/>
+<polygon fill="#444444" stroke="#444444" points="389.29,-752.48 386.03,-760.87 384.35,-760.21 387.62,-751.83 389.29,-752.48"/>
+<polyline fill="none" stroke="#444444" points="388.5,-757 384.31,-755.37 "/>
+<ellipse fill="none" stroke="#444444" cx="380.95" cy="-754.06" rx="3.6" ry="3.6"/>
+<text text-anchor="middle" x="259.76" y="-713.96" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">owns</text>
 </g>
 <!-- users&#45;&gt;topup_histories -->
 <g id="edge3" class="edge">
 <title>users:e&#45;&gt;topup_histories:w</title>
-<path fill="none" stroke="#444444" d="M162.81,-667.44C230.16,-677.84 642.79,-741.56 729.87,-755.01"/>
-<polygon fill="#444444" stroke="#444444" points="153.7,-670.58 155.08,-661.69 156.86,-661.96 155.48,-670.86 153.7,-670.58"/>
-<polyline fill="none" stroke="#444444" points="153.5,-666 157.95,-666.69 "/>
-<polygon fill="#444444" stroke="#444444" points="158.15,-671.27 159.52,-662.38 161.3,-662.65 159.93,-671.55 158.15,-671.27"/>
-<polyline fill="none" stroke="#444444" points="157.95,-666.69 162.39,-667.37 "/>
-<polygon fill="#444444" stroke="#444444" points="737.11,-756.13 745.38,-761.5 741.55,-756.81 746,-757.5 746,-757.5 746,-757.5 741.55,-756.81 746.62,-753.5 737.11,-756.13 737.11,-756.13"/>
-<ellipse fill="none" stroke="#444444" cx="733.55" cy="-755.58" rx="3.6" ry="3.6"/>
-<text text-anchor="middle" x="431.71" y="-714.54" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">requests</text>
+<path fill="none" stroke="#444444" d="M162.81,-666.95C230.16,-677.4 642.79,-741.47 729.87,-755"/>
+<polygon fill="#444444" stroke="#444444" points="153.7,-670.08 155.08,-661.19 156.86,-661.47 155.48,-670.36 153.7,-670.08"/>
+<polyline fill="none" stroke="#444444" points="153.5,-665.5 157.95,-666.19 "/>
+<polygon fill="#444444" stroke="#444444" points="158.15,-670.78 159.53,-661.88 161.31,-662.16 159.92,-671.05 158.15,-670.78"/>
+<polyline fill="none" stroke="#444444" points="157.95,-666.19 162.39,-666.88 "/>
+<polygon fill="#444444" stroke="#444444" points="737.11,-756.12 745.38,-761.5 741.55,-756.81 746,-757.5 746,-757.5 746,-757.5 741.55,-756.81 746.62,-753.5 737.11,-756.12 737.11,-756.12"/>
+<ellipse fill="none" stroke="#444444" cx="733.55" cy="-755.57" rx="3.6" ry="3.6"/>
+<text text-anchor="middle" x="431.71" y="-714.29" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">requests</text>
 </g>
 <!-- users&#45;&gt;payments -->
 <g id="edge4" class="edge">
 <title>users:e&#45;&gt;payments:w</title>
-<path fill="none" stroke="#444444" d="M162.52,-664.35C194.95,-658.4 305.83,-638.07 347.5,-630.43"/>
-<polygon fill="#444444" stroke="#444444" points="155.2,-670.26 153.57,-661.41 155.34,-661.09 156.97,-669.94 155.2,-670.26"/>
-<polyline fill="none" stroke="#444444" points="153.5,-666 157.93,-665.19 "/>
-<polygon fill="#444444" stroke="#444444" points="159.62,-669.45 158,-660.6 159.77,-660.28 161.39,-669.13 159.62,-669.45"/>
-<polyline fill="none" stroke="#444444" points="157.93,-665.19 162.35,-664.38 "/>
-<polygon fill="#444444" stroke="#444444" points="354.65,-629.12 364.23,-631.48 359.07,-628.31 363.5,-627.5 363.5,-627.5 363.5,-627.5 359.07,-628.31 362.77,-623.52 354.65,-629.12 354.65,-629.12"/>
-<ellipse fill="none" stroke="#444444" cx="351.11" cy="-629.77" rx="3.6" ry="3.6"/>
-<text text-anchor="middle" x="248.49" y="-649.55" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">pays</text>
+<path fill="none" stroke="#444444" d="M162.52,-663.87C194.95,-658 305.83,-637.94 347.5,-630.4"/>
+<polygon fill="#444444" stroke="#444444" points="155.19,-669.77 153.58,-660.91 155.36,-660.59 156.96,-669.45 155.19,-669.77"/>
+<polyline fill="none" stroke="#444444" points="153.5,-665.5 157.93,-664.7 "/>
+<polygon fill="#444444" stroke="#444444" points="159.62,-668.97 158.01,-660.11 159.78,-659.79 161.39,-668.65 159.62,-668.97"/>
+<polyline fill="none" stroke="#444444" points="157.93,-664.7 162.36,-663.9 "/>
+<polygon fill="#444444" stroke="#444444" points="354.64,-629.1 364.22,-631.49 359.07,-628.3 363.5,-627.5 363.5,-627.5 363.5,-627.5 359.07,-628.3 362.78,-623.51 354.64,-629.1 354.64,-629.1"/>
+<ellipse fill="none" stroke="#444444" cx="351.1" cy="-629.74" rx="3.6" ry="3.6"/>
+<text text-anchor="middle" x="248.49" y="-649.3" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">pays</text>
 </g>
 <!-- users&#45;&gt;drivers -->
 <g id="edge5" class="edge">
 <title>users:e&#45;&gt;drivers:w</title>
-<path fill="none" stroke="#444444" d="M158.86,-658.55C188.3,-617.65 330.09,-420.65 363.46,-374.29"/>
-<polygon fill="#444444" stroke="#444444" points="157.68,-667.9 150.37,-662.64 151.42,-661.18 158.73,-666.44 157.68,-667.9"/>
-<polyline fill="none" stroke="#444444" points="153.5,-666 156.13,-662.35 "/>
-<polygon fill="#444444" stroke="#444444" points="160.31,-664.25 153,-658.99 154.05,-657.53 161.36,-662.78 160.31,-664.25"/>
-<polyline fill="none" stroke="#444444" points="156.13,-662.35 158.76,-658.7 "/>
-<polygon fill="#444444" stroke="#444444" points="366.32,-362.6 373.63,-367.86 372.58,-369.32 365.27,-364.06 366.32,-362.6"/>
+<path fill="none" stroke="#444444" d="M158.86,-658.06C188.3,-617.23 330.09,-420.55 363.46,-374.27"/>
+<polygon fill="#444444" stroke="#444444" points="157.68,-667.4 150.38,-662.14 151.43,-660.68 158.73,-665.94 157.68,-667.4"/>
+<polyline fill="none" stroke="#444444" points="153.5,-665.5 156.13,-661.85 "/>
+<polygon fill="#444444" stroke="#444444" points="160.31,-663.75 153.01,-658.49 154.06,-657.03 161.36,-662.29 160.31,-663.75"/>
+<polyline fill="none" stroke="#444444" points="156.13,-661.85 158.76,-658.2 "/>
+<polygon fill="#444444" stroke="#444444" points="366.32,-362.6 373.62,-367.86 372.57,-369.32 365.27,-364.06 366.32,-362.6"/>
 <polyline fill="none" stroke="#444444" points="370.5,-364.5 367.87,-368.15 "/>
-<ellipse fill="none" stroke="#444444" cx="365.77" cy="-371.07" rx="3.6" ry="3.6"/>
-<text text-anchor="middle" x="239.47" y="-518.09" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">is profile of</text>
+<ellipse fill="none" stroke="#444444" cx="365.76" cy="-371.07" rx="3.6" ry="3.6"/>
+<text text-anchor="middle" x="239.47" y="-517.84" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">is profile of</text>
 </g>
 <!-- users&#45;&gt;violation_logs -->
 <g id="edge8" class="edge">
 <title>users:e&#45;&gt;violation_logs:w</title>
-<path fill="none" stroke="#444444" d="M157.02,-657.3C181.68,-596.33 328.58,-233.24 360.42,-154.54"/>
-<polygon fill="#444444" stroke="#444444" points="158.01,-666.85 149.67,-663.48 150.34,-661.81 158.68,-665.18 158.01,-666.85"/>
-<polyline fill="none" stroke="#444444" points="153.5,-666 155.19,-661.83 "/>
-<polygon fill="#444444" stroke="#444444" points="159.7,-662.68 151.35,-659.31 152.03,-657.64 160.37,-661.01 159.7,-662.68"/>
-<polyline fill="none" stroke="#444444" points="155.19,-661.83 156.88,-657.66 "/>
+<path fill="none" stroke="#444444" d="M157.02,-656.81C181.68,-595.9 328.58,-233.15 360.42,-154.53"/>
+<polygon fill="#444444" stroke="#444444" points="158.01,-666.35 149.67,-662.98 150.34,-661.31 158.68,-664.69 158.01,-666.35"/>
+<polyline fill="none" stroke="#444444" points="153.5,-665.5 155.19,-661.33 "/>
+<polygon fill="#444444" stroke="#444444" points="159.7,-662.18 151.36,-658.81 152.03,-657.14 160.37,-660.52 159.7,-662.18"/>
+<polyline fill="none" stroke="#444444" points="155.19,-661.33 156.88,-657.16 "/>
 <polygon fill="#444444" stroke="#444444" points="363.12,-147.84 370.25,-141.02 364.81,-143.67 366.5,-139.5 366.5,-139.5 366.5,-139.5 364.81,-143.67 362.75,-137.98 363.12,-147.84 363.12,-147.84"/>
 <ellipse fill="none" stroke="#444444" cx="361.77" cy="-151.18" rx="3.6" ry="3.6"/>
-<text text-anchor="middle" x="240.38" y="-405.85" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">is cited in</text>
+<text text-anchor="middle" x="240.38" y="-405.6" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">is cited in</text>
 </g>
 <!-- users&#45;&gt;vehicle_locations -->
 <g id="edge13" class="edge">
 <title>users:e&#45;&gt;vehicle_locations:w</title>
-<path fill="none" stroke="#444444" d="M165.1,-667.54C196.43,-671.6 285.4,-682.57 359.8,-686.2 596.83,-697.78 659.98,-684.76 890.7,-629.2 976.52,-608.53 1075.77,-571.16 1113.18,-556.57"/>
-<polygon fill="#444444" stroke="#444444" points="153.8,-670.58 154.98,-661.66 156.77,-661.89 155.59,-670.82 153.8,-670.58"/>
-<polyline fill="none" stroke="#444444" points="153.5,-666 157.96,-666.59 "/>
-<ellipse fill="none" stroke="#444444" cx="161.53" cy="-667.06" rx="3.6" ry="3.6"/>
+<path fill="none" stroke="#444444" d="M165.1,-667.08C196.43,-671.24 285.38,-682.48 359.8,-686.2 596.82,-698.06 659.98,-684.76 890.7,-629.2 976.52,-608.53 1075.77,-571.16 1113.18,-556.57"/>
+<polygon fill="#444444" stroke="#444444" points="153.79,-670.08 155,-661.16 156.78,-661.4 155.57,-670.32 153.79,-670.08"/>
+<polyline fill="none" stroke="#444444" points="153.5,-665.5 157.96,-666.11 "/>
+<ellipse fill="none" stroke="#444444" cx="161.53" cy="-666.59" rx="3.6" ry="3.6"/>
 <polygon fill="#444444" stroke="#444444" points="1120.13,-553.81 1129.99,-554.27 1124.32,-552.16 1128.5,-550.5 1128.5,-550.5 1128.5,-550.5 1124.32,-552.16 1127.01,-546.73 1120.13,-553.81 1120.13,-553.81"/>
 <ellipse fill="none" stroke="#444444" cx="1116.78" cy="-555.14" rx="3.6" ry="3.6"/>
-<text text-anchor="middle" x="628.14" y="-682.63" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">broadcasts</text>
+<text text-anchor="middle" x="628.13" y="-682.72" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">broadcasts</text>
 </g>
 <!-- wallets&#45;&gt;topup_histories -->
 <g id="edge2" class="edge">
@@ -142,14 +142,14 @@
 <!-- violation_codes&#45;&gt;violation_logs -->
 <g id="edge9" class="edge">
 <title>violation_codes:e&#45;&gt;violation_logs:w</title>
-<path fill="none" stroke="#444444" d="M149.14,-489.6C176.97,-442.21 321.88,-195.47 358.23,-133.59"/>
-<polygon fill="#444444" stroke="#444444" points="148.84,-499 141.08,-494.45 141.99,-492.89 149.75,-497.45 148.84,-499"/>
-<polyline fill="none" stroke="#444444" points="144.5,-497.5 146.78,-493.62 "/>
-<polygon fill="#444444" stroke="#444444" points="151.12,-495.12 143.35,-490.56 144.27,-489.01 152.03,-493.57 151.12,-495.12"/>
-<polyline fill="none" stroke="#444444" points="146.78,-493.62 149.06,-489.74 "/>
-<polygon fill="#444444" stroke="#444444" points="361.94,-127.26 369.99,-121.55 364.22,-123.38 366.5,-119.5 366.5,-119.5 366.5,-119.5 364.22,-123.38 363.01,-117.45 361.94,-127.26 361.94,-127.26"/>
-<ellipse fill="none" stroke="#444444" cx="360.12" cy="-130.36" rx="3.6" ry="3.6"/>
-<text text-anchor="middle" x="236.42" y="-311.44" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">classifies</text>
+<path fill="none" stroke="#444444" d="M149.34,-470.67C177.56,-425.04 320.77,-193.45 357.77,-133.62"/>
+<polygon fill="#444444" stroke="#444444" points="148.8,-480.1 141.15,-475.37 142.09,-473.84 149.75,-478.57 148.8,-480.1"/>
+<polyline fill="none" stroke="#444444" points="144.5,-478.5 146.87,-474.67 "/>
+<polygon fill="#444444" stroke="#444444" points="151.17,-476.27 143.51,-471.54 144.46,-470.01 152.11,-474.74 151.17,-476.27"/>
+<polyline fill="none" stroke="#444444" points="146.87,-474.67 149.23,-470.85 "/>
+<polygon fill="#444444" stroke="#444444" points="361.77,-127.15 369.94,-121.63 364.13,-123.33 366.5,-119.5 366.5,-119.5 366.5,-119.5 364.13,-123.33 363.06,-117.37 361.77,-127.15 361.77,-127.15"/>
+<ellipse fill="none" stroke="#444444" cx="359.87" cy="-130.22" rx="3.6" ry="3.6"/>
+<text text-anchor="middle" x="236.67" y="-301.52" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#444444">classifies</text>
 </g>
 <!-- vehicles&#45;&gt;preventive_maintenances -->
 <g id="edge10" class="edge">
@@ -190,41 +190,47 @@
 <!-- users -->
 <g id="node1" class="node">
 <title>users</title>
-<polygon fill="#eef5fd" stroke="transparent" points="0,-580 0,-702 153,-702 153,-580 0,-580"/>
-<polygon fill="#2f6fb5" stroke="transparent" points="0.5,-675 0.5,-702 153.5,-702 153.5,-675 0.5,-675"/>
-<polygon fill="none" stroke="#2f6fb5" points="0.5,-675 0.5,-702 153.5,-702 153.5,-675 0.5,-675"/>
-<text text-anchor="start" x="64.5" y="-690.2" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="white">User</text>
-<text text-anchor="start" x="67" y="-681.6" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#e6edf3">users</text>
-<polygon fill="none" stroke="#2f6fb5" points="0.5,-656 0.5,-675 26.5,-675 26.5,-656 0.5,-656"/>
-<text text-anchor="start" x="4.5" y="-663.6" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">PK</text>
-<polygon fill="none" stroke="#2f6fb5" points="26.5,-656 26.5,-675 108.5,-675 108.5,-656 26.5,-656"/>
-<text text-anchor="start" x="30.5" y="-664" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="10.00">id</text>
-<polygon fill="none" stroke="#2f6fb5" points="108.5,-656 108.5,-675 153.5,-675 153.5,-656 108.5,-656"/>
-<text text-anchor="start" x="112.5" y="-663.6" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">bigint</text>
-<polygon fill="none" stroke="#2f6fb5" points="0.5,-637 0.5,-656 26.5,-656 26.5,-637 0.5,-637"/>
-<text text-anchor="start" x="4.5" y="-644.6" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">UQ</text>
-<polygon fill="none" stroke="#2f6fb5" points="26.5,-637 26.5,-656 108.5,-656 108.5,-637 26.5,-637"/>
-<text text-anchor="start" x="30.5" y="-644" font-family="Helvetica,sans-Serif" font-size="10.00">email</text>
-<polygon fill="none" stroke="#2f6fb5" points="108.5,-637 108.5,-656 153.5,-656 153.5,-637 108.5,-637"/>
-<text text-anchor="start" x="112.5" y="-644.6" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">varchar</text>
-<polygon fill="none" stroke="#2f6fb5" points="0.5,-618 0.5,-637 26.5,-637 26.5,-618 0.5,-618"/>
-<text text-anchor="start" x="4.5" y="-625.6" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a"> </text>
-<polygon fill="none" stroke="#2f6fb5" points="26.5,-618 26.5,-637 108.5,-637 108.5,-618 26.5,-618"/>
-<text text-anchor="start" x="30.5" y="-625" font-family="Helvetica,sans-Serif" font-size="10.00">email_verified_at</text>
-<polygon fill="none" stroke="#2f6fb5" points="108.5,-618 108.5,-637 153.5,-637 153.5,-618 108.5,-618"/>
-<text text-anchor="start" x="112.5" y="-625.6" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">timestamp</text>
-<polygon fill="none" stroke="#2f6fb5" points="0.5,-599 0.5,-618 26.5,-618 26.5,-599 0.5,-599"/>
-<text text-anchor="start" x="4.5" y="-606.6" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a"> </text>
-<polygon fill="none" stroke="#2f6fb5" points="26.5,-599 26.5,-618 108.5,-618 108.5,-599 26.5,-599"/>
-<text text-anchor="start" x="30.5" y="-606" font-family="Helvetica,sans-Serif" font-size="10.00">password</text>
-<polygon fill="none" stroke="#2f6fb5" points="108.5,-599 108.5,-618 153.5,-618 153.5,-599 108.5,-599"/>
-<text text-anchor="start" x="112.5" y="-606.6" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">varchar</text>
-<polygon fill="none" stroke="#2f6fb5" points="0.5,-580 0.5,-599 26.5,-599 26.5,-580 0.5,-580"/>
-<text text-anchor="start" x="4.5" y="-587.6" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a"> </text>
-<polygon fill="none" stroke="#2f6fb5" points="26.5,-580 26.5,-599 108.5,-599 108.5,-580 26.5,-580"/>
-<text text-anchor="start" x="30.5" y="-587" font-family="Helvetica,sans-Serif" font-size="10.00">is_suspended</text>
-<polygon fill="none" stroke="#2f6fb5" points="108.5,-580 108.5,-599 153.5,-599 153.5,-580 108.5,-580"/>
-<text text-anchor="start" x="112.5" y="-587.6" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">boolean</text>
+<polygon fill="#eef5fd" stroke="transparent" points="0,-561 0,-702 153,-702 153,-561 0,-561"/>
+<polygon fill="#2f6fb5" stroke="transparent" points="0.5,-674.5 0.5,-701.5 153.5,-701.5 153.5,-674.5 0.5,-674.5"/>
+<polygon fill="none" stroke="#2f6fb5" points="0.5,-674.5 0.5,-701.5 153.5,-701.5 153.5,-674.5 0.5,-674.5"/>
+<text text-anchor="start" x="64.5" y="-689.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="white">User</text>
+<text text-anchor="start" x="67" y="-681.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#e6edf3">users</text>
+<polygon fill="none" stroke="#2f6fb5" points="0.5,-655.5 0.5,-674.5 26.5,-674.5 26.5,-655.5 0.5,-655.5"/>
+<text text-anchor="start" x="4.5" y="-663.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">PK</text>
+<polygon fill="none" stroke="#2f6fb5" points="26.5,-655.5 26.5,-674.5 108.5,-674.5 108.5,-655.5 26.5,-655.5"/>
+<text text-anchor="start" x="30.5" y="-663.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="10.00">id</text>
+<polygon fill="none" stroke="#2f6fb5" points="108.5,-655.5 108.5,-674.5 153.5,-674.5 153.5,-655.5 108.5,-655.5"/>
+<text text-anchor="start" x="112.5" y="-663.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">bigint</text>
+<polygon fill="none" stroke="#2f6fb5" points="0.5,-636.5 0.5,-655.5 26.5,-655.5 26.5,-636.5 0.5,-636.5"/>
+<text text-anchor="start" x="4.5" y="-644.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">UQ</text>
+<polygon fill="none" stroke="#2f6fb5" points="26.5,-636.5 26.5,-655.5 108.5,-655.5 108.5,-636.5 26.5,-636.5"/>
+<text text-anchor="start" x="30.5" y="-643.5" font-family="Helvetica,sans-Serif" font-size="10.00">email</text>
+<polygon fill="none" stroke="#2f6fb5" points="108.5,-636.5 108.5,-655.5 153.5,-655.5 153.5,-636.5 108.5,-636.5"/>
+<text text-anchor="start" x="112.5" y="-644.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">varchar</text>
+<polygon fill="none" stroke="#2f6fb5" points="0.5,-617.5 0.5,-636.5 26.5,-636.5 26.5,-617.5 0.5,-617.5"/>
+<text text-anchor="start" x="4.5" y="-625.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a"> </text>
+<polygon fill="none" stroke="#2f6fb5" points="26.5,-617.5 26.5,-636.5 108.5,-636.5 108.5,-617.5 26.5,-617.5"/>
+<text text-anchor="start" x="30.5" y="-624.5" font-family="Helvetica,sans-Serif" font-size="10.00">email_verified_at</text>
+<polygon fill="none" stroke="#2f6fb5" points="108.5,-617.5 108.5,-636.5 153.5,-636.5 153.5,-617.5 108.5,-617.5"/>
+<text text-anchor="start" x="112.5" y="-625.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">timestamp</text>
+<polygon fill="none" stroke="#2f6fb5" points="0.5,-598.5 0.5,-617.5 26.5,-617.5 26.5,-598.5 0.5,-598.5"/>
+<text text-anchor="start" x="4.5" y="-606.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a"> </text>
+<polygon fill="none" stroke="#2f6fb5" points="26.5,-598.5 26.5,-617.5 108.5,-617.5 108.5,-598.5 26.5,-598.5"/>
+<text text-anchor="start" x="30.5" y="-605.5" font-family="Helvetica,sans-Serif" font-size="10.00">password</text>
+<polygon fill="none" stroke="#2f6fb5" points="108.5,-598.5 108.5,-617.5 153.5,-617.5 153.5,-598.5 108.5,-598.5"/>
+<text text-anchor="start" x="112.5" y="-606.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">varchar</text>
+<polygon fill="none" stroke="#2f6fb5" points="0.5,-579.5 0.5,-598.5 26.5,-598.5 26.5,-579.5 0.5,-579.5"/>
+<text text-anchor="start" x="4.5" y="-587.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a"> </text>
+<polygon fill="none" stroke="#2f6fb5" points="26.5,-579.5 26.5,-598.5 108.5,-598.5 108.5,-579.5 26.5,-579.5"/>
+<text text-anchor="start" x="30.5" y="-586.5" font-family="Helvetica,sans-Serif" font-size="10.00">is_suspended</text>
+<polygon fill="none" stroke="#2f6fb5" points="108.5,-579.5 108.5,-598.5 153.5,-598.5 153.5,-579.5 108.5,-579.5"/>
+<text text-anchor="start" x="112.5" y="-587.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">boolean</text>
+<polygon fill="none" stroke="#2f6fb5" points="0.5,-560.5 0.5,-579.5 26.5,-579.5 26.5,-560.5 0.5,-560.5"/>
+<text text-anchor="start" x="4.5" y="-568.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a"> </text>
+<polygon fill="none" stroke="#2f6fb5" points="26.5,-560.5 26.5,-579.5 108.5,-579.5 108.5,-560.5 26.5,-560.5"/>
+<text text-anchor="start" x="30.5" y="-567.5" font-family="Helvetica,sans-Serif" font-size="10.00">anonymised_at</text>
+<polygon fill="none" stroke="#2f6fb5" points="108.5,-560.5 108.5,-579.5 153.5,-579.5 153.5,-560.5 108.5,-560.5"/>
+<text text-anchor="start" x="112.5" y="-568.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">timestamp</text>
 </g>
 <!-- roles -->
 <g id="node2" class="node">
@@ -559,35 +565,35 @@
 <!-- violation_codes -->
 <g id="node10" class="node">
 <title>violation_codes</title>
-<polygon fill="#f2eefb" stroke="transparent" points="8.5,-431 8.5,-534 144.5,-534 144.5,-431 8.5,-431"/>
-<polygon fill="#6b49b8" stroke="transparent" points="8.5,-506.5 8.5,-533.5 144.5,-533.5 144.5,-506.5 8.5,-506.5"/>
-<polygon fill="none" stroke="#6b49b8" points="8.5,-506.5 8.5,-533.5 144.5,-533.5 144.5,-506.5 8.5,-506.5"/>
-<text text-anchor="start" x="37.5" y="-521.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="white">Violation Code</text>
-<text text-anchor="start" x="49" y="-513.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#e6edf3">violation_codes</text>
-<polygon fill="none" stroke="#6b49b8" points="8.5,-487.5 8.5,-506.5 34.5,-506.5 34.5,-487.5 8.5,-487.5"/>
-<text text-anchor="start" x="12.5" y="-495.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">PK</text>
-<polygon fill="none" stroke="#6b49b8" points="34.5,-487.5 34.5,-506.5 108.5,-506.5 108.5,-487.5 34.5,-487.5"/>
-<text text-anchor="start" x="38.5" y="-495.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="10.00">id</text>
-<polygon fill="none" stroke="#6b49b8" points="108.5,-487.5 108.5,-506.5 144.5,-506.5 144.5,-487.5 108.5,-487.5"/>
-<text text-anchor="start" x="112.5" y="-495.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">bigint</text>
+<polygon fill="#f2eefb" stroke="transparent" points="8.5,-412 8.5,-515 144.5,-515 144.5,-412 8.5,-412"/>
+<polygon fill="#6b49b8" stroke="transparent" points="8.5,-487.5 8.5,-514.5 144.5,-514.5 144.5,-487.5 8.5,-487.5"/>
+<polygon fill="none" stroke="#6b49b8" points="8.5,-487.5 8.5,-514.5 144.5,-514.5 144.5,-487.5 8.5,-487.5"/>
+<text text-anchor="start" x="37.5" y="-502.7" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="white">Violation Code</text>
+<text text-anchor="start" x="49" y="-494.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#e6edf3">violation_codes</text>
 <polygon fill="none" stroke="#6b49b8" points="8.5,-468.5 8.5,-487.5 34.5,-487.5 34.5,-468.5 8.5,-468.5"/>
-<text text-anchor="start" x="12.5" y="-476.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a"> </text>
+<text text-anchor="start" x="12.5" y="-476.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">PK</text>
 <polygon fill="none" stroke="#6b49b8" points="34.5,-468.5 34.5,-487.5 108.5,-487.5 108.5,-468.5 34.5,-468.5"/>
-<text text-anchor="start" x="38.5" y="-475.5" font-family="Helvetica,sans-Serif" font-size="10.00">code</text>
+<text text-anchor="start" x="38.5" y="-476.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="10.00">id</text>
 <polygon fill="none" stroke="#6b49b8" points="108.5,-468.5 108.5,-487.5 144.5,-487.5 144.5,-468.5 108.5,-468.5"/>
-<text text-anchor="start" x="112.5" y="-476.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">varchar</text>
+<text text-anchor="start" x="112.5" y="-476.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">bigint</text>
 <polygon fill="none" stroke="#6b49b8" points="8.5,-449.5 8.5,-468.5 34.5,-468.5 34.5,-449.5 8.5,-449.5"/>
 <text text-anchor="start" x="12.5" y="-457.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a"> </text>
 <polygon fill="none" stroke="#6b49b8" points="34.5,-449.5 34.5,-468.5 108.5,-468.5 108.5,-449.5 34.5,-449.5"/>
-<text text-anchor="start" x="38.5" y="-456.5" font-family="Helvetica,sans-Serif" font-size="10.00">violation_name</text>
+<text text-anchor="start" x="38.5" y="-456.5" font-family="Helvetica,sans-Serif" font-size="10.00">code</text>
 <polygon fill="none" stroke="#6b49b8" points="108.5,-449.5 108.5,-468.5 144.5,-468.5 144.5,-449.5 108.5,-449.5"/>
 <text text-anchor="start" x="112.5" y="-457.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">varchar</text>
 <polygon fill="none" stroke="#6b49b8" points="8.5,-430.5 8.5,-449.5 34.5,-449.5 34.5,-430.5 8.5,-430.5"/>
 <text text-anchor="start" x="12.5" y="-438.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a"> </text>
 <polygon fill="none" stroke="#6b49b8" points="34.5,-430.5 34.5,-449.5 108.5,-449.5 108.5,-430.5 34.5,-430.5"/>
-<text text-anchor="start" x="38.5" y="-437.5" font-family="Helvetica,sans-Serif" font-size="10.00">first_offense</text>
+<text text-anchor="start" x="38.5" y="-437.5" font-family="Helvetica,sans-Serif" font-size="10.00">violation_name</text>
 <polygon fill="none" stroke="#6b49b8" points="108.5,-430.5 108.5,-449.5 144.5,-449.5 144.5,-430.5 108.5,-430.5"/>
-<text text-anchor="start" x="112.5" y="-438.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">decimal</text>
+<text text-anchor="start" x="112.5" y="-438.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">varchar</text>
+<polygon fill="none" stroke="#6b49b8" points="8.5,-411.5 8.5,-430.5 34.5,-430.5 34.5,-411.5 8.5,-411.5"/>
+<text text-anchor="start" x="12.5" y="-419.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a"> </text>
+<polygon fill="none" stroke="#6b49b8" points="34.5,-411.5 34.5,-430.5 108.5,-430.5 108.5,-411.5 34.5,-411.5"/>
+<text text-anchor="start" x="38.5" y="-418.5" font-family="Helvetica,sans-Serif" font-size="10.00">first_offense</text>
+<polygon fill="none" stroke="#6b49b8" points="108.5,-411.5 108.5,-430.5 144.5,-430.5 144.5,-411.5 108.5,-411.5"/>
+<text text-anchor="start" x="112.5" y="-419.1" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#57606a">decimal</text>
 </g>
 <!-- violation_logs -->
 <g id="node11" class="node">

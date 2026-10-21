@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Audited;
+use App\Support\Audit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -34,6 +36,7 @@ use Illuminate\Support\Carbon;
  */
 class ViolationCode extends Model
 {
+    use Audited;
     use HasFactory;
 
     protected $fillable = [
@@ -44,4 +47,18 @@ class ViolationCode extends Model
         'third_offense',
         'fourth_offense',
     ];
+    protected function auditCategory(): string
+    {
+        return Audit::VIOLATION;
+    }
+
+    protected function auditAttributes(): array
+    {
+        return ['code', 'violation_name', 'first_offense', 'second_offense', 'third_offense', 'fourth_offense'];
+    }
+
+    protected function auditLabel(): string
+    {
+        return 'violation code '.$this->code;
+    }
 }

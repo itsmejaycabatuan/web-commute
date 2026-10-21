@@ -97,7 +97,7 @@ Log in as `commuter@gmail.com` unless noted.
 - [x] Settings: change email, change theme (light/dark), change font size. The choice persists after a reload and across logins (`ana.reyes@` starts in dark, size 14).
 - [x] Settings → Security → **Sign out of other devices**: needs the current password (wrong one is rejected under the field); on success every other session of the account is ended and this one stays.
 - [x] Changing the password to the **same** password is rejected ("must be different from your current password").
-- [x] Delete account: logs you out, the account is gone, and login fails. Test this on a throwaway account you registered.
+- [x] Delete account: logs you out, the account is gone, and login fails. Test this on a throwaway account you registered. With payments or top-ups behind it the account is *anonymised* rather than removed, and a wallet balance blocks it — see section 11.
 
 ## 3. Driver
 
@@ -224,7 +224,7 @@ Found by running the seeded data through each page.
 1. **Violations pages crashed whenever a violation had penalty text.** Fixed in `DriverController` and `DriverManagerController` (`Str::contains` instead of `str_contains`). Re-check that penalties show with the right colour: suspension and impound in red; warning and community service in amber.
 2. **`/maintenance-logs` crashed when the logs spanned more than one page.** Fixed, and the page has since been removed together with the vehicle maintenance log.
 3. **Admin revenue counted unpaid payments.** Fixed: revenue figures count paid payments only.
-4. **The unused Routes feature was removed.** Its `routes` table (and the equally unused `fleets` table) is dropped by migration `2026_10_21_090000_drop_unused_routes_and_fleets_tables` — run `php artisan migrate` to apply it.
+4. **The unused Routes feature was removed.** Its `routes` table (and the equally unused `fleets` table) was dropped by migration `2026_10_21_090000_drop_unused_routes_and_fleets_tables`, applied on the dev database on 2026-10-21.
 
 Still worth a look: users have no `name` column, so commuters are identified by email. Check that the violations and driver-manager screens don't show "Unknown" for a name.
 
@@ -249,3 +249,45 @@ Still worth a look: users have no `name` column, so commuters are identified by 
 - [x] Select boxes look the same everywhere (same chevron, padding, readable option list in dark mode): staff, vehicles, violations, filters.
 - [x] Every add/edit modal (including *Add Staff*) shows a spinner on its button and a "Saving…" overlay when the request takes more than a moment.
 
+## 10. Audit trail and Activity Log (Oct 2026)
+
+Not yet clicked through in a browser — the automated suites (`AuditTrailTest`, `ActivityLogPageTest`) cover the same ground. On a local
+server the IP address will read `127.0.0.1`. Do the actions first, then read them back as the admin.
+
+**Access**
+- [ ] As `admin@gmail.com` the sidebar shows **Activity Log** (clipboard icon, after *Staff*). As `drivermanager@gmail.com`, `maintenancemanager@gmail.com`, a driver and a commuter it does **not**, and typing `/activity-log` gives 403. Signed out, it redirects to the login page.
+
+**Things that must leave an entry** (open Activity Log afterwards; newest is first)
+- [ ] Sign in as `commuter@gmail.com` → *Signed in*, with the email, role, IP and a device such as "Chrome on Windows".
+- [ ] Try the wrong password for that account → *Failed sign-in for commuter@gmail.com*, no password anywhere in the entry; the page header now shows "1 failed sign-in in the last 24 h" and the link filters to it.
+- [ ] Sign out → *Signed out*. Change a password in Settings → *Password changed*, with no password in the detail.
+- [ ] Admin suspends then reactivates a commuter who is not already suspended (not `pedro`) → *Suspended*, *Reactivated*, both naming the admin.
+- [ ] Vehicles → change a vehicle's status to *Maintenance* → *Updated vehicle …* and, expanded, a Before / After row for **Status** only.
+- [ ] Drivers → approve a pending driver → *Approved driver DRV-…*; suspend a driver with a reason → *Suspended*, with the reason and whether a vehicle was released.
+- [ ] Fare Rates → edit two rates and save → one *Fare rates updated* entry, expanded to a per-distance table (₱13.00 → ₱15.00 …). Save again without changing anything → no new entry.
+- [ ] Staff → add, change the role of, then delete a staff account → *Created*, *Role changed* (old → new), *Deleted*.
+- [ ] Reports → Export CSV → a *Report exported* entry (report type and dates).
+
+**Things that must NOT leave an entry**
+- [ ] Open the live map as a guest and as a commuter for a minute, then check Activity Log: no new rows.
+- [ ] A driver on the map broadcasting, toggling Available / Unavailable, clocking in and out: no entries except the *Created / Updated time entry* rows for the clock-in and clock-out.
+- [ ] Opening Activity Log, filtering and paging adds nothing. Settings theme / font size changes add nothing.
+
+**The page**
+- [ ] Search by an email, by a word from a description, and by the email a failed sign-in tried; each finds the right rows.
+- [ ] Category, Event and the from / to dates work alone and together; they survive going to page 2; **Clear** resets them. An end date before the start date shows an error toast.
+- [ ] Click a row: *What changed* and *Where it came from* open; click again to close. Entries from before the rebuild show *Legacy* with "No field values were recorded".
+- [ ] **Export CSV** downloads a file that Excel opens with `₱` and arrows intact, honours the filters, and leaves an *Activity log exported* entry.
+- [ ] Light and dark mode both read well; on a phone-width window the filters stack and the table scrolls sideways.
+
+## 11. Account removal keeps the ledger (Oct 2026)
+
+Destructive: use throwaway accounts you registered, not the seeded ones. Automated cover: `AccountErasureTest`.
+
+- [ ] **Balance blocks it.** Register a commuter, top up ₱50, then Settings → *Delete account* → refused with "Your wallet still holds PHP 50.00…", still signed in, nothing changed.
+- [ ] **History is kept.** Spend the balance on a fare (wallet payment of ₱50 or more, so it reaches ₱0), delete the account → signed out. Logging in with the old email and password fails. As admin: *Fare Transactions* still lists that payment, now under `deleted-<id>@deleted.invalid`; *Top Ups* still lists the top-up; *PUJ Commuters* no longer lists the account.
+- [ ] **Audit.** *Activity Log* shows *Deleted own account* with `outcome: anonymised` and the original email in its details, and nothing else for that deletion.
+- [ ] **The email is free again.** Register a new account with the same email address: it works and starts with an empty history.
+- [ ] **No history → really deleted.** Register a commuter that never paid or topped up, delete it: it is gone (admin *PUJ Commuters* never lists it, *Activity Log* says `outcome: deleted`).
+- [ ] **Admin removes a commuter.** *PUJ Commuters* → delete a commuter with a payment and zero balance → toast "Commuter removed. Their payments and top-ups were kept for the records." and an *Anonymised* entry in the Activity Log naming you. A commuter with a balance is still refused ("Cannot delete commuter with a balance of PHP…").
+- [ ] **Staff.** Add then delete a staff account: still *Deleted* (no payments), unchanged.

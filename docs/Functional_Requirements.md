@@ -9,8 +9,8 @@ What the system **shall do**, derived from the Use Case Narratives in [`UCN/`](U
 - **ID** — `FR-<area>-<nn>`. IDs are stable; new requirements take the next number in their area.
 - **Priority** — MoSCoW: **M**ust (core journey, the product does not work without it), **S**hould (important, workaround exists),
   **C**ould (convenience). Priorities are a proposal for the team to confirm — the UCNs do not carry them.
-- **Source** — the UCN the behaviour is documented in (`E006` = `UCN_SC_E006`). Every requirement in sections 1–11 describes
-  behaviour the UCNs record as **implemented**; section 12 lists what they record as **missing**.
+- **Source** — the UCN the behaviour is documented in (`E006` = `UCN_SC_E006`). Every requirement in sections 1–12 describes
+  behaviour the UCNs record as **implemented**; section 13 lists what they record as **missing**.
 - Roles: *Guest*, *Commuter*, *Driver*, *Driver Manager*, *Maintenance Manager*, *Admin* — see [Use_Case_Diagram.md](Use_Case_Diagram.md#1-actors).
 - Message wording, field names and route names are deliberately left to the UCNs; this document states the rule, not the copy.
 
@@ -21,7 +21,8 @@ What the system **shall do**, derived from the Use Case Narratives in [`UCN/`](U
 5. [Driver operations](#5-driver-operations-fr-drv) · 6. [Driver management](#6-driver-management-fr-dmg) ·
 7. [Fleet & maintenance](#7-fleet--maintenance-fr-flt) · 8. [Administration](#8-administration-fr-adm) ·
 9. [Dashboards & profile](#9-dashboards--profile-fr-dsh) · 10. [Access control](#10-access-control-fr-rbac) ·
-11. [Role summary](#11-role-capability-summary) · 12. [Not yet implemented](#12-documented-gaps-candidate-requirements)
+11. [Audit trail](#11-audit-trail-fr-aud) · 12. [Role summary](#12-role-capability-summary) ·
+13. [Not yet implemented](#13-documented-gaps-candidate-requirements)
 
 ---
 
@@ -46,10 +47,13 @@ What the system **shall do**, derived from the Use Case Narratives in [`UCN/`](U
 | FR-ACC-15 | A driver registration shall be created as **pending**: the user, driver profile (with generated driver code), role and licence image are saved together or not at all, and the applicant cannot use driver features until a Driver Manager approves. | M | E022, E012 |
 | FR-ACC-16 | A signed-in user shall be able to change their own password by giving the current password and a new one (≥ 8 characters, confirmed, different from the current one). | M | E008 |
 | FR-ACC-17 | A password change shall end the user's other active sessions, and a user shall also be able to end all other sessions without changing the password. | S | E008 |
-| FR-ACC-18 | A signed-in user shall be able to delete their own account after confirming; the system shall sign them out and invalidate the session. | S | E027 |
+| FR-ACC-18 | A signed-in user shall be able to delete their own account after confirming; the system shall sign them out and invalidate the session, and shall delete or anonymise the account as FR-ACC-23 says. | S | E027 |
 | FR-ACC-19 | The system shall refuse account deletion for a driver who still holds a vehicle, and shall tell the driver to ask the Maintenance Manager to unassign it. | S | E027 |
-| FR-ACC-20 | The system shall record sign-in, password reset and staff create/delete events in an activity log. | S | E001, E011, E028 |
+| FR-ACC-20 | The system shall record sign-in, sign-out, failed and blocked sign-in, password changes and resets, and account creation, suspension and deletion in the audit trail (see FR-AUD-01, FR-AUD-02). | M | E001, E008, E011, E028 |
 | FR-ACC-21 | The system shall end an already-open session of a suspended user on that user's next request. | M | E012, E018, E028 |
+| FR-ACC-22 | The system shall refuse to delete a user's own account while its wallet holds money, naming the balance and leaving the user signed in (there is no refund flow). | M | E027 |
+| FR-ACC-23 | When an account is removed — by its owner or by an Admin — the system shall **delete** it if it has no payments or top-ups, and otherwise **anonymise** it: replace the email with a placeholder, remove the password, roles, API tokens, sessions, preferences, reset links, map markers and any driver profile (and licence image), suspend it, and keep the user row, wallet, payments and top-ups. | M | E027, E018, E012, E028 |
+| FR-ACC-24 | An anonymised account shall be unable to sign in, hold no role and appear in no user list or user count, and its original email address shall be free to register again. | M | E027 |
 
 ## 2. Live map & tracking (FR-MAP)
 
@@ -128,8 +132,8 @@ What the system **shall do**, derived from the Use Case Narratives in [`UCN/`](U
 | FR-DMG-02 | They shall be able to add a driver (name, email, password, licence number/code/expiry, Philippine mobile number, licence image); the system generates the driver code, verifies the email, approves the driver immediately and rejects duplicate emails and licence numbers. | M | E012 |
 | FR-DMG-03 | They shall be able to edit any driver except a pending registration, and view driver details; a **pending** registration can only be approved or rejected. | M | E012 |
 | FR-DMG-04 | They shall be able to **approve** or **reject** a pending driver application; approval validates the licence fields and assigns the driver code. | M | E012 |
-| FR-DMG-05 | They shall be able to suspend an approved driver (optional reason) and reactivate them; suspension blocks sign-in, clock-in and broadcast, detaches the driver's vehicle and is logged. | M | E012 |
-| FR-DMG-06 | They shall be able to delete a driver, except one who is still assigned a vehicle. | S | E012 |
+| FR-DMG-05 | They shall be able to suspend an approved driver (optional reason) and reactivate them; suspension blocks sign-in, clock-in and broadcast, detaches the driver's vehicle and is recorded in the audit trail (FR-AUD-02). | M | E012 |
+| FR-DMG-06 | They shall be able to delete a driver, except one who is still assigned a vehicle; a driver who also has payments or top-ups is anonymised instead (FR-ACC-23). | S | E012 |
 | FR-DMG-07 | The list shall show each driver's licence state (valid / expires in N days / expired). | S | E012 |
 | FR-DMG-08 | A Driver Manager shall be able to read the timekeeping ledger (driver, date, shift, hours, overtime, type) and filter it by All / Regular / Sick / Vacation / Overtime. | M | E013 |
 | FR-DMG-09 | A Driver Manager shall be able to add a shift entry or a leave entry (sick / vacation); the system derives hours and overtime itself. | M | E013 |
@@ -162,7 +166,7 @@ What the system **shall do**, derived from the Use Case Narratives in [`UCN/`](U
 | FR-ADM-01 | An Admin shall be able to list commuters with search and filters (all, verified, pending, active, suspended), showing registration date and wallet balance, 10 per page. | M | E018 |
 | FR-ADM-02 | An Admin shall be able to add a commuter (email, password, optional "mark verified"), edit email/password/verification, and view details (balance, fares paid, total spent, last fare, top-up count). | M | E018 |
 | FR-ADM-03 | An Admin shall be able to suspend and reactivate a commuter; wallet and receipts are kept. | M | E018 |
-| FR-ADM-04 | The system shall refuse to delete a commuter whose wallet holds more than ₱0, and shall refuse an Admin deleting or suspending their own account. | M | E018, E028 |
+| FR-ADM-04 | The system shall refuse to remove a commuter whose wallet holds more than ₱0, and shall refuse an Admin deleting or suspending their own account. A commuter with payments or top-ups shall be anonymised, not deleted, and the confirmation shall say their records were kept (FR-ACC-23). | M | E018, E028 |
 | FR-ADM-05 | An Admin shall be able to upload the official fare guide (PDF) and the system shall extract its distance tiers and create a new fare set. | M | E019 |
 | FR-ADM-06 | An Admin shall be able to edit regular and discount rates in bulk; the whole save is rejected if it is empty or any rate is zero or negative. | M | E019 |
 | FR-ADM-07 | Fare pricing and the map's rate display shall always use the most recent fare set. | M | E019, E004, E006 |
@@ -172,6 +176,11 @@ What the system **shall do**, derived from the Use Case Narratives in [`UCN/`](U
 | FR-ADM-11 | An Admin shall be able to list staff accounts (Driver Managers and Maintenance Managers) and filter by email, role and status, 10 per page. | M | E028 |
 | FR-ADM-12 | An Admin shall be able to create a staff account (email, role, password), edit email/role/password (changing the role replaces the old one), suspend/reactivate and delete it. | M | E028 |
 | FR-ADM-13 | The staff pages shall refuse any non-Admin and any target that is not a staff account. | M | E028 |
+| FR-ADM-14 | An Admin shall be able to review the audit trail newest first, 10 entries per page; each entry shows when (Philippine time), who (email and role, or *not signed in / system*), what happened (category, event, description), the record concerned and the IP address, and can be expanded to show the before → after values, any extra facts (e.g. a suspension reason) and the device. | M | E029 |
+| FR-ADM-15 | An Admin shall be able to search the trail by text (description, the acting user's email, or the email a failed sign-in tried) and filter it by category, event and date range; filters shall combine and survive paging, an end date before the start date shall be rejected, and an unknown category or event shall be refused. | M | E029 |
+| FR-ADM-16 | An Admin shall be able to export the entries the current filters match as a CSV (newest 10,000 at most) in which spreadsheet formulas are neutralised; the export shall itself be recorded in the trail with the row count and filters. | S | E029 |
+| FR-ADM-17 | The Activity Log shall be read-only and available to the Admin role only; viewing it shall write nothing, entries from the retired noisy logging shall be hidden, and secret-looking values shall be masked and all content escaped on screen. | M | E029 |
+| FR-ADM-18 | Exporting a system report (E020) shall be recorded in the trail with who exported which report and for which date range. | S | E020, E029 |
 
 ## 9. Dashboards & profile (FR-DSH)
 
@@ -194,7 +203,25 @@ What the system **shall do**, derived from the Use Case Narratives in [`UCN/`](U
 | FR-RBAC-04 | Staff and driver accounts shall be created only by staff action or the driver registration flow; the system shall not let a commuter obtain a staff role. | M | E002, E012, E028 |
 | FR-RBAC-05 | Admin accounts shall not be creatable or removable from the staff screen. | M | E028 |
 
-## 11. Role capability summary
+## 11. Audit trail (FR-AUD)
+
+What the system records so that *who did what to which record, when and from where* can be answered. Reviewing it is FR-ADM-14 … 18. Design and event list:
+[AUDIT_TRAIL.md](AUDIT_TRAIL.md).
+
+| ID | Requirement | Pri | Source |
+|---|---|:-:|---|
+| FR-AUD-01 | After it happens, the system shall record every sign-in, failed sign-in (with the email tried, never the password), sign-in blocked because the account is suspended, sign-out, password change, password reset, password set by an admin, and "sign out other devices". | M | E001, E008, E011, E018, E028 |
+| FR-AUD-02 | The system shall record account events with the acting user: registration (commuter and driver), account created by an admin, suspended, reactivated, role changed, deleted or anonymised by an admin, deleted or anonymised by its owner (with the outcome), and driver approved or rejected. | M | E002, E012, E018, E022, E027, E028 |
+| FR-AUD-03 | The system shall record every create, update and delete of vehicles, maintenance tasks and service records, violation codes and violation logs, time entries, fare guides and payments and top-ups, naming the record and the acting user and storing the old and new value of each business field that changed; a bulk fare-rate edit and a fare-guide import shall each be one entry. | M | E005, E006, E009, E010, E013 – E017, E019, E024 |
+| FR-AUD-04 | Every entry shall carry the IP address, the user agent and a snapshot of the acting user's email and role, so it still names the actor after that account is deleted. | M | E029 |
+| FR-AUD-05 | The system shall never store a password, a hash, a token or licence-image data in an entry, and shall not record a change in which only unaudited fields moved. | M | E029 |
+| FR-AUD-06 | The system shall not record page views, map polling, location broadcasts, driver availability toggles or clock-in status flips; database and gateway failures shall go to the application log instead. | M | E003, E009, E021 |
+| FR-AUD-07 | A failure to write an entry shall never stop the action it describes, and shall be written to the application log. | S | E029 |
+| FR-AUD-08 | Entries older than the retention period (365 days, `ACTIVITY_LOG_RETENTION_DAYS`) shall be deleted daily. | S | E029 |
+
+---
+
+## 12. Role capability summary
 
 | Role | Can |
 |---|---|
@@ -203,14 +230,14 @@ What the system **shall do**, derived from the Use Case Narratives in [`UCN/`](U
 | **Driver** | Clock in/out, set availability, broadcast location, weekly timekeeping, violations, dashboard, change password, delete account (if no vehicle) |
 | **Driver Manager** | Manage drivers (add, edit, approve/reject, suspend, delete), timekeeping ledger, violation codes and log, dashboard |
 | **Maintenance Manager** | Manage vehicles, preventive maintenance schedule, maintenance tasks, dashboard |
-| **Admin** | Manage commuters, fare rates, staff accounts; reports and CSV export; top-up and payment ledgers; may also use the driver and vehicle pages; dashboard |
+| **Admin** | Manage commuters, fare rates, staff accounts; reports and CSV export; the Activity Log (audit trail) and its export; top-up and payment ledgers; may also use the driver and vehicle pages; dashboard |
 
 ---
 
-## 12. Documented gaps (candidate requirements)
+## 13. Documented gaps (candidate requirements)
 
 These are **not implemented**. They are taken from the *Known Gaps / Notes* of the UCNs and are written as requirements so the
-team can accept, defer or drop each one. They are not counted in sections 1–11.
+team can accept, defer or drop each one. They are not counted in sections 1–12.
 
 | ID | Candidate requirement | Why it matters | Source |
 |---|---|---|---|
@@ -231,10 +258,9 @@ team can accept, defer or drop each one. They are not counted in sections 1–11
 | FR-GAP-15 | Maintenance tasks shall be deactivatable instead of deletable, and unique by name. | Deleting a task erases its cost history; duplicates are allowed. | E017 |
 | FR-GAP-16 | Suspensions shall support an expiry or automatic reactivation, and commuter suspension shall record a reason. | Suspension is open-ended; commuters carry no reason. | E012, E018 |
 | FR-GAP-17 | A rejected driver application shall be re-approvable, and approval shall be reversible. | Reject is one-way in the UI; "un-approve" is commented out. | E012, E014 |
-| FR-GAP-18 | Account deletion shall keep the records the business must retain (payments, top-ups), remove or anonymise the rest, and handle failure with a friendly message. | Foreign keys cascade the delete through the user's payments and wallet, while role/session/log rows are left orphaned; a database failure shows a 500 page. | E027, ERD |
+| FR-GAP-18 | Account deletion shall handle a database failure with a friendly message. | A failure while deleting your own account shows the default 500 page, after the sign-out has already happened. | E027 |
 | FR-GAP-19 | The Terms of Service and Privacy Policy shall exist as real pages. | The registration links are placeholders. | E002 |
 | FR-GAP-20 | Reports shall be date-filtered end to end and exports shall be audited; an `.xlsx` export shall be offered. | Driver and maintenance reports ignore parts of the range; no audit trail; CSV only. | E020 |
 | FR-GAP-21 | The fare-guide importer shall accept guides with a different layout and shall retire the previous fare set. | Two fixed row bands; old sets accumulate. | E019 |
 | FR-GAP-22 | A staff user shall have a profile page of their own. | Only commuters have `/profile`. | E026 |
 | FR-GAP-23 | The history and aggregate pages shall show a distinct error state instead of an empty list when a query fails. | "No results" and "something broke" look identical. | E007 |
-| FR-GAP-24 | An Admin shall be able to review the activity log: a read-only, paged list filterable by user, event and date range (CSV export optional), showing who, what, which record and when. | The log is written on every action but nothing reads it; reviewing it needs direct database access. | NFR-AUD-05 |

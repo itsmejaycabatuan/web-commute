@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CommuterController;
 use App\Http\Controllers\Admin\DriverApprovalController;
+use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\DevMarkerController;
 use App\Http\Controllers\DriverController;
@@ -206,6 +207,10 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
         Route::get('/fares', [FareController::class, 'index'])->name('fares.index');
         Route::put('/fare/upload', [FareController::class, 'upload'])->name('fares.upload');
         Route::put('/fare/update', [FareController::class, 'bulkUpdate'])->name('fares.bulk-update');
+
+        // Audit trail — read-only (docs/AUDIT_TRAIL.md).
+        Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
+        Route::get('/activity-log/export', [ActivityLogController::class, 'export'])->name('activity-log.export');
 
         Route::get('/reports', [ReportController::class, 'generate'])->name('reports.generate');
         Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');

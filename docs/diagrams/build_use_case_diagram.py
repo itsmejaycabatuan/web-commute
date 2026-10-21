@@ -53,6 +53,7 @@ UC = {
     "E026": "Profile & Dashboard Views",
     "E027": "Account Deletion",
     "E028": "Manage Staff Accounts",
+    "E029": "View Activity Log",
 }
 
 # column, title, colour, [ids in drawing order]
@@ -62,7 +63,7 @@ GROUPS = {
                  ["E003", "E004", "E006", "E005", "E007"]),
     "driverops": ("L", "Driver Operations", ORANGE, ["E009", "E010", "E021", "E023"]),
     "drvmgmt": ("R", "Driver Management", PURPLE, ["E013", "E014", "E024", "E012"]),
-    "admin": ("R", "Administration", ROSE, ["E018", "E019", "E020", "E028"]),
+    "admin": ("R", "Administration", ROSE, ["E018", "E019", "E020", "E028", "E029"]),
     "fleet": ("R", "Fleet Maintenance", OLIVE, ["E015", "E016", "E017"]),
 }
 COMMON = ("Common Services (every authenticated user)", GRAY, ["E008", "E026", "E027"])
@@ -73,7 +74,7 @@ ASSOC = {
     "commuter": ["E003", "E004", "E006", "E005", "E007"],
     "driver": ["E009", "E010", "E021", "E023"],
     "drvmgr": ["E013", "E014", "E024", "E012"],
-    "admin": ["E018", "E019", "E020", "E028", "E012", "E015"],
+    "admin": ["E018", "E019", "E020", "E028", "E029", "E012", "E015"],
     "maint": ["E015", "E016", "E017"],
     "auth": ["E008", "E026", "E027"],
 }
@@ -230,7 +231,7 @@ def build():
     # ---- system boundary
     add(f'<rect x="{bx}" y="{by}" width="{bw}" height="{bh}" rx="10" fill="#FCFCFD" stroke="#30363d" stroke-width="2"/>')
     add(f'<text x="{bx + 20}" y="{by + 26}" class="title">SmartCommute — Web Commute System</text>')
-    add(f'<text x="{bx + 20}" y="{by + 41}" class="sub">use cases UCN_SC_E001 – E028 (E025 is unassigned)</text>')
+    add(f'<text x="{bx + 20}" y="{by + 41}" class="sub">use cases UCN_SC_E001 – E029 (E025 is unassigned)</text>')
 
     # ---- groups
     def draw_group(box, title, colour):

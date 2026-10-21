@@ -19,6 +19,8 @@ class Kernel extends ConsoleKernel
         $schedule->command("auth:clear-resets")->everyFifteenMinutes();
         $schedule->command('vehicle:offline-check')->everyMinute();
         $schedule->command('payments:expire-pending')->hourly();
+        // Audit trail retention (ACTIVITY_LOG_RETENTION_DAYS, default 365) — keeps activity_log from growing forever.
+        $schedule->command('activitylog:clean')->daily();
     }
 
     /**

@@ -31,6 +31,7 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 | UCN_SC_E026 | Profile and Dashboard Views | All authenticated roles | [Profile and Dashboard Views](#ucn_sc_e026--profile-and-dashboard-views) |
 | UCN_SC_E027 | Account Deletion | Authenticated user | [Account Deletion](#ucn_sc_e027--account-deletion) |
 | UCN_SC_E028 | Manage Staff Accounts | Admin | [Manage Staff Accounts](#ucn_sc_e028--manage-staff-accounts) |
+| UCN_SC_E029 | View Activity Log | Admin | [View Activity Log](#ucn_sc_e029--view-activity-log) |
 
 > **Numbering note.** E011–E020 were reconciled against the implementation. Two sheets previously
 > carried a duplicate identifier — *Manage Violations* shared `UCN_SC_E013` with *Manage Timekeeping*
@@ -90,7 +91,7 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 | 3   | Guest clicks the "Log in" button.        | System validates the credentials server-side (`required`, `email`, `required`).                                                                                                |
 | 4   |                                          | System regenerates the session ID (session-fixation guard) and creates a secure session token.                                                                                 |
 | 5   |                                          | System checks email verification status.<br>• Verified → System redirects the guest to the map as an authenticated user.<br>• Not verified → see **E2 – Email Not Confirmed**. |
-| 6   |                                          | System shows a "Logged in Successfully!" toast and records a `Log In` activity-log entry. A **driver** whose licence is expiring (30 days or fewer) or expired also gets a **warning toast at every sign-in** — *"Your driver's license expires in N days (date)…"* or *"…expired on date. Contact the administrator to renew it."*                                                                                      |
+| 6   |                                          | System shows a "Logged in Successfully!" toast and records a `login` audit-trail entry (who, IP address, device). A failed attempt (`login_failed`, with the email tried) and a suspended account's attempt (`login_blocked`) are recorded too. A **driver** whose licence is expiring (30 days or fewer) or expired also gets a **warning toast at every sign-in** — *"Your driver's license expires in N days (date)…"* or *"…expired on date. Contact the administrator to renew it."*                                                                                      |
 
 ---
 
@@ -111,7 +112,7 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 
 1. Guest is now authenticated and holds the **commuter** role (role is assigned at registration, UCN_SC_E002).
 2. A session token is generated and the session ID is regenerated.
-3. A success toast is displayed and a `Log In` activity-log entry is created (the System does **not** send an email notification).
+3. A success toast is displayed and a `login` audit-trail entry is created with the user, IP address and device (the System does **not** send an email notification).
 4. System redirects the commuter to the map (`/map`, protected by `auth` + `verified` middleware).
 
 ---
@@ -1160,7 +1161,7 @@ See A3 — *"Driver profile not found."*
 1. The user's password has been changed and stored **hashed**.
 2. The remember token has been regenerated, invalidating persistent logins issued before the reset.
 3. The `PasswordReset` event has been dispatched, so any registered listener can invalidate other sessions.
-4. An activity-log entry has been recorded against the user.
+4. A `password_reset` audit-trail entry has been recorded against the user.
 5. The password reset token has been consumed and can no longer be replayed.
 6. The user is redirected to the login page and must authenticate with the new password.
 
@@ -1191,7 +1192,7 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 ### Known Gaps / Notes
 
 - **No rate limiting on the reset *request***. `POST /forgot-password` has no throttle, so an attacker can enumerate registered emails by timing the response (the response message differs between `INVALID_USER` and `RESET_LINK_SENT`).
-- **No notification to the account owner** that the password was changed — only the in-app activity log records it.
+- **No notification to the account owner** that the password was changed — only the audit trail (`password_reset` entry) records it.
 - **The reset view requires the email as a query parameter** alongside the token; a user opening the link from a different client without `?email=` is asked to supply it again.
 - No password-history or reuse prevention (see UCN_SC_E008 for the shared policy notes).
 
@@ -1265,7 +1266,7 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 1. In the list, the actor clicks the delete icon on a driver row.
 2. System displays a confirmation dialog ("Delete Driver?").
 3. Driver Manager confirms with **"Delete"**.
-4. System deletes the **User** and the **Driver** record and confirms *"Driver removed."* — unless E8 applies. A driver who holds a vehicle shows a lock instead of the delete icon.
+4. System deletes the **User** and the **Driver** record and confirms *"Driver removed."* — unless E8 applies. A driver who also has payments or top-ups is **anonymised** instead: the driver profile and licence image are removed, the user becomes an anonymised shell, and the payments and top-ups are kept (an `anonymised` audit entry is written instead of `deleted`). A driver who holds a vehicle shows a lock instead of the delete icon.
 
 **A4 – View Driver Details**
 1. In the list, the actor clicks the ID-card icon on a driver row.
@@ -1277,7 +1278,7 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 1. In the list, the actor clicks the suspend icon (or *reactivate* when the driver is already suspended). Only an **approved** driver can be suspended — the icon is not shown for a pending or rejected registration and the server refuses it. A suspension also takes effect on a session that is already open: the driver's next request signs them out.
 2. System displays a confirmation dialog: suspending states that the driver *"will not be able to sign in, clock in or broadcast a location, and is detached from any assigned vehicle"*; an optional **Reason** field is provided.
 3. Driver Manager confirms.
-4. System sets `is_suspended`, records `suspended_at` and the reason, moves the driver `status` to **suspended**, **detaches any assigned vehicle**, logs the action and confirms *"Driver suspended. They can no longer sign in."*
+4. System sets `is_suspended`, records `suspended_at` and the reason, moves the driver `status` to **suspended**, **detaches any assigned vehicle**, writes a `suspended` audit-trail entry (with the reason) and confirms *"Driver suspended. They can no longer sign in."*
 5. Reactiving reverses all of it (`status` back to **inactive**) and confirms *"Driver reactivated."*
 
 **A6 – Approve or Reject a Driver Application**
@@ -1982,7 +1983,7 @@ The insert/update/delete fails at the database level. System cancels the operati
 1. In the list, the Admin clicks the delete icon on a commuter row.
 2. System displays the *"Delete Commuter?"* confirmation (*"This action is permanent and cannot be undone."*).
 3. Admin confirms by clicking **"Delete"**.
-4. System deletes the account and confirms *"Commuter removed."* — unless E8 applies.
+4. System removes the account and confirms *"Commuter removed."* — unless E8 applies. A commuter with **no payments or top-ups** is deleted. A commuter **with** them is **anonymised** instead (personal data, roles, tokens and sessions removed; the email becomes `deleted-<id>@deleted.invalid`; the wallet, payments and top-ups are kept) and the confirmation adds *"Their payments and top-ups were kept for the records."* The commuter disappears from this list either way, and an `anonymised` or `deleted` audit entry names the Admin.
 
 **A4 – Suspend / Reactivate a Commuter**
 1. In the list, the Admin clicks the suspend icon (or *reactivate* on an already-suspended commuter).
@@ -2003,7 +2004,8 @@ The insert/update/delete fails at the database level. System cancels the operati
 2. The commuter record in the database has been updated (`users`).
 3. The system notifies the Admin with a success message.
 4. A **suspended** commuter cannot sign in; their wallet balance and receipts remain intact and auditable.
-5. A commuter whose wallet still holds a balance is **never deleted** by this flow.
+5. A commuter whose wallet still holds a balance is **never deleted or anonymised** by this flow.
+6. A commuter's payments and top-ups are **never destroyed** by this flow: the database refuses it (`RESTRICT` foreign keys) and the application anonymises instead.
 
 ---
 
@@ -2245,7 +2247,7 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 - **E2 is a catch-all**: any exception during aggregation (including a genuine bug) is reported to the log and shown to the Admin as an aggregation timeout, so a real error can be mistaken for slowness.
 - **E4 is derived from the payments ledger only**; a system with no payments never raises the warning even if other data is stale.
 - Reports are generated on every page load from live queries — there is no caching, snapshotting or scheduled export.
-- No audit trail: reports are not recorded, and an Admin cannot see who exported what.
+- **Exports are audited**: each CSV export writes a `report_exported` entry (who, which report, the date range) that the Admin can find on the Activity Log page (UCN_SC_E029). Generating a report on screen is a read and writes nothing.
 
 ---
 
@@ -2870,9 +2872,9 @@ Any other unhandled exception results in a 500 error page.
 | #   | Actor's Action                                                                    | System Response                                                                                                                                                                                           |
 | --- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | User clicks **Delete Account** and confirms the action in a prompt (JavaScript `confirm()`). | System sends a `DELETE` request to `/delete-account` with the CSRF token.                                                                      |
-| 2   |                                                                                   | The `UserController::destroy` method logs the action, logs the user out (`Auth::logout()`), invalidates the session (`$request->session()->invalidate()`), and regenerates the CSRF token. |
-| 3   |                                                                                   | System attempts to delete the authenticated user’s record from the `users` table via `User::destroy($userId)`.                               |
-| 4   |                                                                                   | If the deletion succeeds, System redirects the user to the login page (`/login`) with a success toast: *“Account deleted successfully.”* A driver who still holds a vehicle is refused first (*"You are still assigned to a vehicle…"*) and stays signed in. |
+| 2   |                                                                                   | The `UserController::destroy` method writes a `deleted_self` audit-trail entry (keeping the email, because the account is about to go), logs the user out (`Auth::logout()`), invalidates the session (`$request->session()->invalidate()`), and regenerates the CSRF token. |
+| 3   |                                                                                   | System calls `User::eraseAccount()`. An account with **no payments or top-ups** is deleted from `users` (its wallet, preferences and other rows go with it). An account **with** payments or top-ups is **anonymised** instead: its email becomes `deleted-<id>@deleted.invalid`, and its password, roles, API tokens, sessions, preferences, reset links, map markers and any driver profile are removed, so it can never sign in again — while the user row, wallet, payments and top-ups are kept.                               |
+| 4   |                                                                                   | If the deletion succeeds, System redirects the user to the login page (`/login`) with a success toast: *“Account deleted successfully.”* An account whose **wallet still holds money** is refused first (*"Your wallet still holds PHP N. Use it up before deleting your account."*) and stays signed in. A driver who still holds a vehicle is refused first (*"You are still assigned to a vehicle…"*) and stays signed in. |
 | 5   |                                                                                   | The login page is displayed, and the user can now create a new account or log in with different credentials.                                   |
 
 ---
@@ -2884,7 +2886,7 @@ Any other unhandled exception results in a 500 error page.
 2. The `auth` middleware redirects the user to the login page (`/login`) with no deletion performed.
 
 **A2 – Database deletion failure**
-1. A PDO exception occurs while trying to delete the user record (e.g., foreign‑key constraint failure if another table references the user and the deletion is not cascaded, or a generic DB error).
+1. A PDO exception occurs while trying to delete the user record (a generic DB error — payments and top-ups can never be the cause: their foreign keys are `RESTRICT`, which is why an account that has them is anonymised rather than deleted).
 2. The exception is **not caught** by the controller, so no friendly message is produced — the request falls through to the default 500 error page. The logout/session invalidation at step 2 have already executed, so the session on this device is already ended.
 
 **A3 – Unexpected server error**
@@ -2895,9 +2897,10 @@ Any other unhandled exception results in a 500 error page.
 
 ### Postconditions
 
-- The authenticated user’s row in the `users` table is removed.
 - The user’s session is terminated and the session ID is regenerated.
-- Any data that is **not** tied to the user via foreign keys with `ON DELETE CASCADE` may become orphaned (e.g., related records in tables that do not have cascade delete set). In the current codebase, most related tables (e.g., `wallet`, `driver`, `time_keeping`, `violation_log`, `payment`, `topup_history`, `vehicle_location_history`) either have no foreign key to `users` or are set to cascade/delete via application logic (not enforced at the DB level). Consequently, deleting a user may leave orphaned rows; this is a known limitation.
+- **Deleted** (no payments or top-ups): the user's row in `users` is removed, and with it, by cascade, the wallet, preferences, location rows, driver profile (and its timekeeping) and violation logs.
+- **Anonymised** (payments or top-ups exist): the user row stays with a placeholder email and `anonymised_at` set; the account is suspended, has no roles, an unknown password, no tokens, sessions, preferences, reset links, map markers or driver profile (the licence image file is deleted). The wallet, **payments and top-ups are kept**, so the ledger and the Admin's audit stay whole. The original email address can be registered again.
+- Rows linked by id with **no** foreign key — role assignments (`model_has_roles`) in the *deleted* case, `sessions`, API tokens, password-reset rows, `activity_log` entries — are not cascaded; the anonymise path removes the first four explicitly, and audit entries are kept for the retention period.
 - The user sees a success message and is returned to the login page.
 - No further action is required; the user may register a new account if desired.
 
@@ -2919,10 +2922,10 @@ Any other exception in the `destroy` method results in a 500 error page.
 ### Known Gaps / Notes
 
 - The deletion is **hard delete**; there is no soft‑delete or “deactivated” state.
-- The controller does **not** attempt to delete related records (e.g., `Wallet`, `Driver`, `TimeKeeping`, `ViolationLog`, `Payment`, `TopupHistory`, `VehicleLocationHistory`) explicitly; it relies on either:
-  - Database‑level `ON DELETE CASCADE` foreign keys (if defined), or
-  - The fact that many of those tables either do not have a foreign key to `users` or are cleared elsewhere (e.g., via event listeners). In the current schema, most tables either lack the foreign key or have it set to `NULL` on delete, which can leave orphaned rows.
-- For a production‑ready implementation, consider adding explicit cleanup (e.g., deleting related records first) or using database cascades to avoid data inconsistency.
+- **The wallet must be empty.** There is no refund flow, so deletion is refused while the wallet holds money — the same rule the Admin is held to (UCN_SC_E018 E8). Spend it first.
+- **Cascades:** every other foreign key to `users` still cascades; only `payments.paid_by`, `topup_histories.user_id` and `topup_histories.wallet_id` are `RESTRICT`. The application decides delete-or-anonymise itself and does not rely on that restriction, which exists so a future stray `delete()` fails loudly instead of erasing the ledger.
+- **An anonymised account is permanent:** it cannot be restored, and the person must register anew (their old email is free again).
+- The action is written to the audit trail as a single `deleted_self` entry (email, role, `outcome` = `deleted` or `anonymised`) before the sign-out; the model's own delete event is suppressed so it is not logged twice. Refused requests write nothing.
 - The action is immediate and irreversible; there is no confirmation step beyond the browser’s `confirm()` dialog.
 - After deletion, the user must register anew if they wish to use the system again.
 - The route `/delete-account` is not grouped under any role middleware; it is accessible to any authenticated user regardless of role. A **driver who still holds a vehicle cannot delete their account** — they are told to ask the maintenance manager to unassign it first.
@@ -2972,7 +2975,7 @@ Any other exception in the `destroy` method results in a 500 error page.
 **A1 – Add a Staff Account**
 1. Admin clicks **"Add Staff"**. System displays the modal: *Email, Role, Password, Confirm Password*.
 2. The modal checks e-mail format, password length and confirmation while typing. Admin submits. System validates `email` **required, email, unique:users**, `role` **in `driver_manager, maintenance_manager`**, `password` **required, min 8, confirmed**.
-3. System creates the user (e-mail marked verified — staff are created by an admin, not by e-mail sign-up), assigns the role, logs *Create Staff* and confirms *"Staff account created."*
+3. System creates the user (e-mail marked verified — staff are created by an admin, not by e-mail sign-up), assigns the role, writes a `created` audit-trail entry (with the role) and confirms *"Staff account created."*
 
 **A2 – Edit a Staff Account**
 1. Admin clicks the edit icon. The modal opens pre-filled with the e-mail and role.
@@ -2985,7 +2988,7 @@ Any other exception in the `destroy` method results in a 500 error page.
 
 **A4 – Delete a Staff Account**
 1. Admin clicks the delete icon and confirms *"Delete staff account?"*.
-2. System deletes the user, logs *Delete Staff* and confirms *"Staff account removed."*
+2. System deletes the user, writes a `deleted` audit-trail entry (with the email and role) and confirms *"Staff account removed."* Should the account somehow have payments or top-ups it is anonymised instead, and the entry reads `anonymised`.
 
 ---
 
@@ -3033,3 +3036,114 @@ Any other role (or a guest) is refused (403 / redirect to login).
 | Menu | `config/menu.php` — *Staff* (admin) |
 | Tests | `tests/Feature/BugFixRegressionTest.php` (staff tests), `tests/Feature/RouteProtectionTest.php` |
 | Related | UCN_SC_E012 (Manage Drivers), UCN_SC_E018 (Manage Commuters) |
+
+---
+
+## UCN_SC_E029 — View Activity Log
+
+| Field                 | Value                                                                                                   |
+| --------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Use_Case_ID**       | UCN_SC_E029                                                                                             |
+| **Use Case Name**     | View Activity Log                                                                                       |
+| **Primary Actor**     | Admin (`role:admin`)                                                                                    |
+| **Secondary Actor**   | System (audit trail, CSV writer)                                                                        |
+| **Goal**              | Allow the Admin to review the audit trail — who did what, to which record, when and from where — and to export what they find. |
+| **Trigger**           | Admin clicks the **"Activity Log"** item on the sidebar (`GET /activity-log`).                           |
+| **Preconditions**     | 1. Admin is authenticated and registered to the system.<br>2. The audit trail has been written by the system (UCN actions that create, change, delete, sign in or export — see `docs/AUDIT_TRAIL.md`). |
+| **Supporting Actors** | Activity log (`activity_log`), User record                                                              |
+
+> **Scope.** The page is **read-only**: no entry can be edited, deleted or added from it. Only the Admin may open it; every other role is refused (403) and a guest is sent to the login page. **Viewing the page writes nothing** to the trail; exporting does.
+
+---
+
+## MAIN FLOW
+
+| #   | Actor's Action                                   | System Response                                                                                                                                                                                                                             |
+| --- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Admin clicks **"Activity Log"** on the sidebar.  | System verifies the `admin` role and lists the entries **newest first, 10 per page**, with the number of entries, how many were written today and — when there are any — how many **failed sign-ins** happened in the last 24 hours (a link to those entries). |
+| 2   |                                                  | Each row shows **When** (Philippine time), **Who** (the signed-in user's email and role, or *Not signed in / system*), **What happened** (a category badge, an event badge and a readable description), **Record** (e.g. *Vehicle #12*) and the **IP address**. |
+| 3   | Admin clicks a row.                              | System expands it: **What changed** — a *Field / Before / After* table of the business fields that changed (a fare-rate edit shows a *Distance / Regular / Discount* table instead) plus any extra facts (e.g. the suspension reason) — and **Where it came from**: entry number, exact time, IP address, device (e.g. *Chrome on Windows*) and the browser string. |
+
+---
+
+## Alternate Flow
+
+**A1 – Search**
+1. Admin types into the search box and presses **Filter**.
+2. System narrows the list to entries whose description, **acting user's email** or — for failed sign-ins — the **email that was tried** contains the text. `%` and `_` are matched literally.
+
+**A2 – Filter by category and event**
+1. Admin picks a **category** (*Sign-in & security, Accounts, Drivers, Fleet & maintenance, Violations, Timekeeping, Payments, Fares, System*) and/or an **event** (e.g. *Failed sign-in, Suspended, Role changed, Fare rates updated*).
+2. System applies it at once; the filters survive paging and combine with each other and with A1 / A3.
+
+**A3 – Filter by date range**
+1. Admin sets a **from** and/or **to** date and presses **Filter**.
+2. System keeps the entries written from the start of the first day to the end of the last day, inclusive.
+
+**A4 – Clear the filters**
+1. Admin presses **Clear**. System restores the full list.
+
+**A5 – Export to CSV**
+1. Admin presses **Export CSV**.
+2. System writes a UTF-8 CSV of **everything the current filters match** (newest first, at most **10,000 rows**) named `smartcommute_activity_log_<YYYY-MM-DD>.csv`, with the columns *Entry, Time, Category, Event, Actor email, Actor role, Description, Record, IP address, Device, Changes, Details*. A cell that would start with `=`, `+`, `-` or `@` is prefixed with `'` so a spreadsheet cannot run it as a formula.
+3. System records **the export itself** as an entry (`activity_log_exported`, with the row count and the filters used) — so an export is always attributable.
+
+**A6 – Jump to failed sign-ins**
+1. Admin clicks the *failed sign-ins in the last 24 h* link in the page header.
+2. System applies *Event = Failed sign-in* from yesterday onward.
+
+---
+
+## Postconditions
+
+1. The Admin has reviewed the entries that match the chosen filters; nothing was changed.
+2. **Viewing** the page and the list wrote nothing to the trail.
+3. After an export, one `activity_log_exported` entry exists naming the Admin, the number of rows and the filters.
+4. Entries written by the previous, noisy logging ("Action performed: …") are **hidden** from the list and the export; they are removed for good with `php artisan activitylog:purge-noise`.
+
+---
+
+## Exceptions
+
+**E1 – Not an Admin**
+A Driver Manager, Maintenance Manager, Driver or Commuter requests the page or the export. System answers 403; a guest is redirected to the login page. Nothing is shown or exported.
+
+**E2 – End Date Before Start Date**
+The *to* date is earlier than the *from* date. System rejects the request with *"The end date must be on or after the start date."*, shows no result and keeps the form.
+
+**E3 – Unknown Category or Event**
+The URL carries a category or event the system does not write. System rejects it with the framework validation message and runs no query on it.
+
+**E4 – No Entries Found**
+Nothing matches the filters (or nothing has been recorded yet). System shows *"No entries match your filters"* / *"Nothing has been recorded yet"* instead of an empty table.
+
+**E5 – Export Larger Than the Cap**
+More than 10,000 entries match. System exports the newest 10,000; the Admin narrows the dates to reach older ones.
+
+---
+
+## Known Gaps / Notes
+
+- **Entries are kept 365 days** (`ACTIVITY_LOG_RETENTION_DAYS`); the daily `activitylog:clean` job deletes older ones, so the page cannot show history beyond that. The scheduler must be running.
+- **Entries written before the audit trail was rebuilt** have a *Legacy* category, no record, no field values and no IP address. They are listed (except the "Action performed" noise) but carry little detail.
+- **The record link is a label, not a link.** An entry names its record (*Vehicle #12*), but the page does not open that record, and the record may since have been deleted — the description and `Details` still say what it was.
+- **Event and category lists are fixed** (`app/Support/AuditCatalog.php`). A new event type still appears in the list with its raw name, but is not offered in the *Event* filter until it is added there.
+- **Page size is 10**, in line with every other list; the export is the way to read many entries at once.
+- **No live refresh** — the list is as of the page load.
+- **Search scans the table** (no full-text index); it is quick at the retention size used here.
+
+---
+
+## Implementation References
+
+| Element | Location |
+|---|---|
+| Routes | `routes/web.php` — `activity-log.index`, `activity-log.export`, inside `role:admin` |
+| Controller | `app/Http/Controllers/Admin/ActivityLogController.php` — `index()`, `export()` |
+| Presentation | `app/Support/AuditPresenter.php` (row → readable data, masks secrets), `app/Support/AuditCatalog.php` (names and colours) |
+| View | `resources/views/admin/activity-log/index.blade.php` |
+| Menu | `config/menu.php` — *Activity Log* (admin) |
+| Writing the trail | `app/Support/Audit.php`, `app/Models/Concerns/Audited.php`; design in `docs/AUDIT_TRAIL.md` |
+| Schema | `activity_log`; `database/migrations/2026_10_21_100000_add_created_at_index_to_activity_log.php` |
+| Tests | `tests/Feature/ActivityLogPageTest.php`, `tests/Feature/AuditTrailTest.php` |
+| Related | UCN_SC_E001 (Login — sign-in events), UCN_SC_E018 / E028 (suspensions, staff), UCN_SC_E020 (report export, also audited) |

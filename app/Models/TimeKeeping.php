@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Audited;
+use App\Support\Audit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -38,6 +40,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TimeKeeping extends Model
 {
+    use Audited;
     use HasFactory;
 
     protected $fillable = [
@@ -54,5 +57,19 @@ class TimeKeeping extends Model
     public function driver()
     {
         return $this->belongsTo(Driver::class);
+    }
+    protected function auditCategory(): string
+    {
+        return Audit::TIMEKEEPING;
+    }
+
+    protected function auditAttributes(): array
+    {
+        return ['driver_id', 'date', 'time_in', 'time_out', 'hours_worked', 'overtime_hours', 'sick', 'vacation'];
+    }
+
+    protected function auditLabel(): string
+    {
+        return 'time entry (driver #'.$this->driver_id.', '.($this->date instanceof \DateTimeInterface ? $this->date->format('Y-m-d') : $this->date).')';
     }
 }

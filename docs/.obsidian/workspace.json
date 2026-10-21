@@ -11,14 +11,12 @@
             "id": "9f89179a0caa52b5",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "image",
               "state": {
-                "file": "Non_Functional_Requirements.md",
-                "mode": "source",
-                "source": false
+                "file": "diagrams/erd_full.svg"
               },
-              "icon": "lucide-file",
-              "title": "Non_Functional_Requirements"
+              "icon": "lucide-image",
+              "title": "erd_full"
             }
           }
         ]
@@ -190,17 +188,22 @@
   },
   "active": "9f89179a0caa52b5",
   "lastOpenFiles": [
-    "Functional_Requirements.md",
+    "diagrams/erd_summary.dot",
+    "diagrams/erd_full.dot",
     "diagrams/erd_full.png",
+    "diagrams/erd_summary.png",
+    "Non_Functional_Requirements.md",
+    "README.md",
+    "UCN/UCN_SC_E029_View_Activity_Log.md",
+    "AUDIT_TRAIL.md",
+    "AUDIT_TRAIL.md.tmp.5327.f984b1fe02a2",
+    "Functional_Requirements.md",
     "diagrams/erd_full.svg",
     "UCN/UCN_Combined.md",
     "Use_Case_Diagram.md",
     "diagrams/use-case-parts/01_overview.png",
     "diagrams/use_case_diagram.svg",
     "diagrams/use_case_diagram.png",
-    "diagrams/erd_summary.dot",
-    "diagrams/erd_full.dot",
-    "diagrams/erd_summary.png",
     "Entity_Relationship_Diagram.md",
     "diagrams/erd_summary.svg",
     "MANUAL_TEST_CHECKLIST.md",
@@ -219,10 +222,6 @@
     "UCN/UCN_SC_E011_Reset_Password.md",
     "UCN/UCN_SC_E010_Clock_Out.md",
     "UCN/UCN_SC_E009_Clock_In.md",
-    "UCN/UCN_SC_E008_Change_Password.md",
-    "UCN/UCN_SC_E007_View_Payment_History.md",
-    "UCN/UCN_SC_E006_Pay_Fare.md",
-    "UCN/UCN_SC_E005_Topup_Balance.md",
-    "UCN/UCN_SC_E004_Plan_Trip.md"
+    "UCN/UCN_SC_E008_Change_Password.md"
   ]
 }

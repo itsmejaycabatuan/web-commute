@@ -54,7 +54,7 @@
 1. In the list, the Admin clicks the delete icon on a commuter row.
 2. System displays the *"Delete Commuter?"* confirmation (*"This action is permanent and cannot be undone."*).
 3. Admin confirms by clicking **"Delete"**.
-4. System deletes the account and confirms *"Commuter removed."* — unless E8 applies.
+4. System removes the account and confirms *"Commuter removed."* — unless E8 applies. A commuter with **no payments or top-ups** is deleted. A commuter **with** them is **anonymised** instead (personal data, roles, tokens and sessions removed; the email becomes `deleted-<id>@deleted.invalid`; the wallet, payments and top-ups are kept) and the confirmation adds *"Their payments and top-ups were kept for the records."* The commuter disappears from this list either way, and an `anonymised` or `deleted` audit entry names the Admin.
 
 **A4 – Suspend / Reactivate a Commuter**
 1. In the list, the Admin clicks the suspend icon (or *reactivate* on an already-suspended commuter).
@@ -75,7 +75,8 @@
 2. The commuter record in the database has been updated (`users`).
 3. The system notifies the Admin with a success message.
 4. A **suspended** commuter cannot sign in; their wallet balance and receipts remain intact and auditable.
-5. A commuter whose wallet still holds a balance is **never deleted** by this flow.
+5. A commuter whose wallet still holds a balance is **never deleted or anonymised** by this flow.
+6. A commuter's payments and top-ups are **never destroyed** by this flow: the database refuses it (`RESTRICT` foreign keys) and the application anonymises instead.
 
 ---
 

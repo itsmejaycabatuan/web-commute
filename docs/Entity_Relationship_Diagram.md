@@ -1,7 +1,7 @@
 # Entity-Relationship Diagrams — SmartCommute
 
 Two views of the same database, both generated from the final state of `database/migrations/*.php`
-(39 migrations; later `ALTER`s applied; `vehicle_maintenance_logs`, `routes` and `fleets`, which migrations drop, are not shown):
+(41 migrations; later `ALTER`s applied; `vehicle_maintenance_logs`, `routes` and `fleets`, which migrations drop, are not shown):
 
 | Diagram | Use it for | Files |
 |---|---|---|
@@ -13,8 +13,9 @@ A **dashed** line means the tables are linked by an id column but the database h
 Both diagrams are produced by [`diagrams/build_erd.py`](diagrams/build_erd.py) (needs Graphviz); edit the `SCHEMA` / `REL`
 data at the top of that script after a migration and re-run `python3 docs/diagrams/build_erd.py`.
 
-> The database server was not running when these were made, so the schema comes from the migrations, not from a live
-> `information_schema` dump. If a column was changed by hand in MySQL it will not appear here.
+> **Verified against the live database on 2026-10-21** (after the `routes` / `fleets` drop, the `activity_log` index and the account-erasure migration were applied): the 27 tables, every
+> column with its nullability and primary key, and all 21 foreign keys match `information_schema` exactly: 18 are `ON DELETE CASCADE` and 3 (payments and top-ups) are `RESTRICT`.
+> Re-check after a migration; the comparison is a few lines against `information_schema.columns` / `key_column_usage`.
 
 ---
 
@@ -26,7 +27,7 @@ data at the top of that script after a migration and re-run `python3 docs/diagra
 
 | Entity | Table | Holds | Related UCNs |
 |---|---|---|---|
-| User | `users` | Every account — commuter, driver, staff, admin — with email, hashed password, verification and suspension state | E001, E002, E008, E018, E027, E028 |
+| User | `users` | Every account — commuter, driver, staff, admin — with email, hashed password, verification and suspension state, and `anonymised_at` (set when the account was erased but kept because payments reference it) | E001, E002, E008, E018, E027, E028 |
 | Role | `roles` | The five roles (via `model_has_roles`; Spatie permission package) | FR-RBAC |
 | Wallet | `wallets` | A commuter's stored balance | E005, E006 |
 | Top-up History | `topup_histories` | One row per wallet top-up, with a status | E005 |
@@ -45,10 +46,10 @@ data at the top of that script after a migration and re-run `python3 docs/diagra
 
 | Parent | Child | Foreign key | Meaning | On parent delete |
 |---|---|---|---|---|
-| User | Wallet | `wallets.user_id` | owns (0..1) | cascade |
-| Wallet | Top-up History | `topup_histories.wallet_id` | receives | cascade |
-| User | Top-up History | `topup_histories.user_id` | requests | cascade |
-| User | Payment | `payments.paid_by` | pays | cascade |
+| User | Wallet | `wallets.user_id` | owns (0..1) | cascade (only reached when there is no payment or top-up — see §3) |
+| Wallet | Top-up History | `topup_histories.wallet_id` | receives | **restrict** |
+| User | Top-up History | `topup_histories.user_id` | requests | **restrict** |
+| User | Payment | `payments.paid_by` | pays | **restrict** |
 | User | Driver | `drivers.user_id` | is profile of (0..1) | cascade |
 | Driver | Time Keeping | `time_keepings.driver_id` | records | cascade |
 | Driver | Vehicle | `vehicles.driver_id` (nullable) | is assigned | cascade |
@@ -93,24 +94,25 @@ data at the top of that script after a migration and re-run `python3 docs/diagra
 | `password_resets` | Reset tokens keyed by email, not by user id. |
 | `vehicle_location_histories` | Breadcrumb row for each accepted position broadcast (E021). |
 | `dev_markers` | Developer-only synthetic map markers (E021 A4, `local` environment). |
-| `activity_log` | Spatie activity log; `causer_id` / `subject_id` are polymorphic, no foreign key. |
+| `activity_log` | The audit trail ([AUDIT_TRAIL.md](AUDIT_TRAIL.md)); `causer_id` / `subject_id` are polymorphic, no foreign key. Indexed on `log_name`, causer, subject and — since `2026_10_21_100000` — `created_at`. Read by the admin Activity Log page (UCN_SC_E029). |
 | `failed_jobs` | Laravel queue failures. |
 
 ---
 
 ## 3. Things the diagrams show that the UCNs do not say
 
-1. **`routes` and `fleets` are gone.** They were created early, never used (no model, controller, view, seeder or test touched them;
-   `fleets` also duplicated `vehicles`) and are dropped by `2026_10_21_090000_drop_unused_routes_and_fleets_tables`. Until that
-   migration is run (`php artisan migrate`) they still exist in the database even though they are no longer drawn.
+1. **`routes` and `fleets` were removed.** They were created early, never used (no model, controller, view, seeder or test touched them;
+   `fleets` also duplicated `vehicles`) and are dropped by `2026_10_21_090000_drop_unused_routes_and_fleets_tables` — applied on the
+   dev database on 2026-10-21. Any other environment still has them until `php artisan migrate` is run there.
    By contrast **`vehicle_locations` is essential**: it is the only source of the live map and ETA (E003), the table the driver
    broadcast writes (E021), and the parent of `vehicle_location_histories`.2. **`vehicle_locations.vehicle_id` is a plain string with no foreign key** to `vehicles.id`, and `vehicle_locations` has
    no unique key per vehicle. The link exists only in code (E021), so a deleted vehicle can leave position rows behind.
-3. **Deleting a user cascades widely.** Every foreign key to `users` is `ON DELETE CASCADE`, so removing a user also
-   removes their wallet, **payments and top-up history**, driver profile (and from it timekeeping and any assigned
-   vehicle), violation logs, location rows, preferences and dev markers. What is *left behind* are rows with no foreign key:
-   role assignments, sessions, API tokens, password-reset rows and activity-log entries. This is the reverse of what
-   UCN_SC_E027 states (see NFR-PRIV-04).
+3. **Deleting a user can no longer destroy the ledger.** Every other foreign key to `users` still cascades (wallet, preferences, location rows, driver profile and from it
+   timekeeping, violation logs…), but `payments.paid_by`, `topup_histories.user_id` and `topup_histories.wallet_id` are `RESTRICT`: a delete that would remove a payment or
+   top-up is refused by the database. The application never relies on that — `User::eraseAccount()` deletes an account that has none, and **anonymises** one that has
+   (email → `deleted-<id>@deleted.invalid`, password, roles, tokens, sessions, preferences and driver profile removed, `anonymised_at` set, suspended), keeping the user row, wallet, payments and top-ups.
+   Rows with no foreign key — role assignments, sessions, API tokens, password-reset rows and `activity_log` entries — are not removed by either path except as `anonymise()` does explicitly.
+   (Before 2026-10-21 everything cascaded, so a commuter deleting their account erased their payment history.)
 4. **`vehicles.driver_id` cascades from `drivers`.** Deleting a driver row would delete the vehicle row. The application
    prevents this (E012 E8: a driver with a vehicle cannot be deleted), but the database would not.
 5. **`violation_logs.user_id` points at `users`, not `drivers`.** A violation belongs to the driver's *user account*;

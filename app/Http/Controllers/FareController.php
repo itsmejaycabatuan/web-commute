@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Fare;
 use App\Models\FareRate;
+use App\Support\Audit;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -13,7 +14,6 @@ class FareController extends Controller
 {
     public function index()
     {
-        activity()->event('Index')->log('Action performed: index');
         $fares = Fare::get();
         $latestFare = Fare::get()->last();
         $rates = FareRate::get();
@@ -31,7 +31,6 @@ class FareController extends Controller
 
     public function view($id)
     {
-        activity()->event('View')->log('Action performed: view');
         $rates = FareRate::where('fare_id', $id)->get();
 
         if (! $rates) {
@@ -71,7 +70,6 @@ class FareController extends Controller
 
     public function upload(Request $request)
     {
-        activity()->event('Upload')->log('Action performed: upload');
         $validated = $request->validate([
             'fare' => 'required|file|mimes:pdf',
         ], [
@@ -84,7 +82,7 @@ class FareController extends Controller
         $path = $request->file('fare')->store('fares');
 
         try {
-            DB::transaction(function () use ($path) {
+            $fare = DB::transaction(function () use ($path) {
                 $fare = Fare::create([
                     'location' => $path,
                 ]);
@@ -142,6 +140,8 @@ class FareController extends Controller
                 }
 
                 DB::table('fare_rates')->insert($rates);
+
+                return $fare;
             });
         } catch (QueryException|\RuntimeException $e) {
             // E3 — Database error (or an unreadable PDF): the transaction is rolled
@@ -152,12 +152,18 @@ class FareController extends Controller
             return back()->with('error', 'A database error occurred. The fare document was not saved.');
         }
 
+        // The Fare row is audited by the model; the tiers are bulk-inserted with the query builder, so say so here.
+        $rateRows = DB::table('fare_rates')->where('fare_id', $fare->id)->count();
+        Audit::log(Audit::FARE, 'fare_guide_imported', 'Imported a fare guide with '.$rateRows.' rate rows', $fare, [
+            'file' => $path,
+            'rate_rows' => $rateRows,
+        ]);
+
         return back()->with('success', 'File uploaded successfully!');
     }
 
     public function bulkUpdate(Request $request)
     {
-        activity()->event('Bulkupdate')->log('Action performed: bulkUpdate');
 
         // E2 — Rates Empty: nothing was submitted to save.
         if (! $request->has('rates') || ! is_array($request->input('rates')) || $request->input('rates') === []) {
@@ -178,19 +184,41 @@ class FareController extends Controller
         ]);
 
         // E3 — Database error: the update is all-or-nothing and the Admin is told.
+        $changes = [];
+
         try {
-            DB::transaction(function () use ($validated) {
+            DB::transaction(function () use ($validated, &$changes) {
                 foreach ($validated['rates'] as $id => $data) {
-                    FareRate::where('id', $data['id'] ?? $id)->update([
+                    $rateId = $data['id'] ?? $id;
+                    $before = FareRate::find($rateId);
+
+                    FareRate::where('id', $rateId)->update([
                         'regular' => $data['regular'],
                         'discount' => $data['discount'],
                     ]);
+
+                    // Written with the query builder (one UPDATE per tier), so no model event fires:
+                    // collect old → new here and log the whole edit as one entry below.
+                    if ($before && ((float) $before->regular !== (float) $data['regular'] || (float) $before->discount !== (float) $data['discount'])) {
+                        $changes[] = [
+                            'km' => $before->km,
+                            'regular' => ['old' => (float) $before->regular, 'new' => (float) $data['regular']],
+                            'discount' => ['old' => (float) $before->discount, 'new' => (float) $data['discount']],
+                        ];
+                    }
                 }
             });
         } catch (QueryException $e) {
             report($e);
 
             return back()->with('error', 'A database error occurred. The rates were not updated.');
+        }
+
+        if ($changes) {
+            Audit::log(Audit::FARE, 'fare_rates_updated', 'Updated '.count($changes).' fare rate(s)', null, [
+                'rows_changed' => count($changes),
+                'changes' => $changes,
+            ]);
         }
 
         return back()->with('success', 'Rates updated successfully');

@@ -9,7 +9,6 @@ class DriverProfileController extends Controller
 {
     public function update(Request $request)
     {
-        activity()->event('Update')->log('Action performed: update');
         if (! $request->filled('password')) {
             return redirect()
                 ->route('driverprofile')
