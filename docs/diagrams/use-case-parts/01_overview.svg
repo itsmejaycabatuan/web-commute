@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 682" width="1120" height="682" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+<title>SmartCommute use-case diagram — overview</title>
+<style>
+.al{font-size:12.5px;font-weight:700;fill:#1b1f23}.ui{font-size:9.5px;font-weight:700;fill:#57606a}
+.un{font-size:12.5px;fill:#1b1f23}.grp{font-size:12px;font-weight:700}.rel{font-size:10px;font-style:italic;fill:#444}
+.xs{font-size:9px;font-style:italic;fill:#57606a}.xn{font-size:12px;font-weight:700;fill:#1b1f23}.xb{font-size:9.5px;fill:#57606a}
+.ttl{font-size:17px;font-weight:700;fill:#1b1f23}.sub{font-size:11px;fill:#57606a}.leg{font-size:11px;fill:#1b1f23}
+</style><defs><marker id="open" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+<path d="M1,1 L9,5 L1,9" fill="none" stroke="#444" stroke-width="1.3"/></marker></defs>
+<rect width="1120" height="682" fill="#fff"/>
+<text x="24" y="30" class="ttl">Use-Case Diagram — Overview</text>
+<text x="24" y="48" class="sub">Seven feature packages and the roles that use them. Each package is expanded on its own page that follows.</text>
+<rect x="170" y="62" width="780" height="520" rx="10" fill="#FCFCFD" stroke="#30363d" stroke-width="2"/>
+<text x="186" y="84" class="grp" fill="#30363d">SmartCommute — Web Commute System</text>
+<g stroke="#5F6B73" stroke-width="2" fill="#ECEFF1" stroke-linecap="round"><circle cx="80" cy="135.0" r="9"/><line x1="80" y1="144.0" x2="80" y2="172.0"/><line x1="65" y1="154.0" x2="95" y2="154.0"/><line x1="80" y1="172.0" x2="68" y2="190.0"/><line x1="80" y1="172.0" x2="92" y2="190.0"/></g>
+<text x="80" y="208.0" text-anchor="middle" class="al">Authenticated</text>
+<text x="80" y="222.0" text-anchor="middle" class="al">User</text>
+<text x="80" y="236.0" text-anchor="middle" class="sub" font-style="italic">(any signed-in role)</text>
+<line x1="95.0" y1="154.0" x2="180.0" y2="158.0" stroke="#5F6B73" stroke-width="1.5" />
+<g stroke="#2F6FB5" stroke-width="2" fill="#E3F0FF" stroke-linecap="round"><circle cx="80" cy="312.0" r="9"/><line x1="80" y1="321.0" x2="80" y2="349.0"/><line x1="65" y1="331.0" x2="95" y2="331.0"/><line x1="80" y1="349.0" x2="68" y2="367.0"/><line x1="80" y1="349.0" x2="92" y2="367.0"/></g>
+<text x="80" y="385.0" text-anchor="middle" class="al">Guest</text>
+<line x1="95.0" y1="331.0" x2="180.0" y2="276.0" stroke="#2F6FB5" stroke-width="1.5" />
+<line x1="95.0" y1="331.0" x2="180.0" y2="394.0" stroke="#2F6FB5" stroke-width="1.5" />
+<g stroke="#1F8F6B" stroke-width="2" fill="#DDF3EC" stroke-linecap="round"><circle cx="80" cy="424.0" r="9"/><line x1="80" y1="433.0" x2="80" y2="461.0"/><line x1="65" y1="443.0" x2="95" y2="443.0"/><line x1="80" y1="461.0" x2="68" y2="479.0"/><line x1="80" y1="461.0" x2="92" y2="479.0"/></g>
+<text x="80" y="497.0" text-anchor="middle" class="al">Commuter</text>
+<line x1="95.0" y1="443.0" x2="180.0" y2="394.0" stroke="#1F8F6B" stroke-width="1.5" />
+<g stroke="#C46A12" stroke-width="2" fill="#FFEBD6" stroke-linecap="round"><circle cx="80" cy="536.0" r="9"/><line x1="80" y1="545.0" x2="80" y2="573.0"/><line x1="65" y1="555.0" x2="95" y2="555.0"/><line x1="80" y1="573.0" x2="68" y2="591.0"/><line x1="80" y1="573.0" x2="92" y2="591.0"/></g>
+<text x="80" y="609.0" text-anchor="middle" class="al">Driver</text>
+<line x1="95.0" y1="555.0" x2="180.0" y2="512.0" stroke="#C46A12" stroke-width="1.5" />
+<g stroke="#6B49B8" stroke-width="2" fill="#EBE3FA" stroke-linecap="round"><circle cx="1040" cy="194.0" r="9"/><line x1="1040" y1="203.0" x2="1040" y2="231.0"/><line x1="1025" y1="213.0" x2="1055" y2="213.0"/><line x1="1040" y1="231.0" x2="1028" y2="249.0"/><line x1="1040" y1="231.0" x2="1052" y2="249.0"/></g>
+<text x="1040" y="267.0" text-anchor="middle" class="al">Driver</text>
+<text x="1040" y="281.0" text-anchor="middle" class="al">Manager</text>
+<line x1="1025.0" y1="213.0" x2="940.0" y2="217.0" stroke="#6B49B8" stroke-width="1.5" />
+<g stroke="#B83A4B" stroke-width="2" fill="#FBE0E3" stroke-linecap="round"><circle cx="1040" cy="312.0" r="9"/><line x1="1040" y1="321.0" x2="1040" y2="349.0"/><line x1="1025" y1="331.0" x2="1055" y2="331.0"/><line x1="1040" y1="349.0" x2="1028" y2="367.0"/><line x1="1040" y1="349.0" x2="1052" y2="367.0"/></g>
+<text x="1040" y="385.0" text-anchor="middle" class="al">Admin</text>
+<line x1="1025.0" y1="331.0" x2="940.0" y2="217.0" stroke="#B83A4B" stroke-width="1.5" />
+<line x1="1025.0" y1="331.0" x2="940.0" y2="335.0" stroke="#B83A4B" stroke-width="1.5" />
+<line x1="1025.0" y1="331.0" x2="940.0" y2="453.0" stroke="#B83A4B" stroke-width="1.5" />
+<g stroke="#8A7410" stroke-width="2" fill="#F4EDC6" stroke-linecap="round"><circle cx="1040" cy="430.0" r="9"/><line x1="1040" y1="439.0" x2="1040" y2="467.0"/><line x1="1025" y1="449.0" x2="1055" y2="449.0"/><line x1="1040" y1="467.0" x2="1028" y2="485.0"/><line x1="1040" y1="467.0" x2="1052" y2="485.0"/></g>
+<text x="1040" y="503.0" text-anchor="middle" class="al">Maintenance</text>
+<text x="1040" y="517.0" text-anchor="middle" class="al">Manager</text>
+<line x1="1025.0" y1="449.0" x2="940.0" y2="453.0" stroke="#8A7410" stroke-width="1.5" />
+<ellipse cx="330" cy="158" rx="150" ry="36" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/><ellipse cx="330" cy="158" rx="150" ry="36" fill="#ECEFF1" fill-opacity="0.75"/>
+<text x="330" y="155" text-anchor="middle" class="un" font-weight="700">Common Services</text>
+<text x="330" y="171" text-anchor="middle" class="sub">E008 · E026 · E027</text>
+<ellipse cx="330" cy="276" rx="150" ry="36" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/><ellipse cx="330" cy="276" rx="150" ry="36" fill="#E3F0FF" fill-opacity="0.75"/>
+<text x="330" y="273" text-anchor="middle" class="un" font-weight="700">Account &amp; Access</text>
+<text x="330" y="289" text-anchor="middle" class="sub">E001 · E002 · E011 · E022</text>
+<ellipse cx="330" cy="394" rx="150" ry="36" fill="#fff" stroke="#1F8F6B" stroke-width="1.6"/><ellipse cx="330" cy="394" rx="150" ry="36" fill="#DDF3EC" fill-opacity="0.75"/>
+<text x="330" y="391" text-anchor="middle" class="un" font-weight="700">Map &amp; Commuter Services</text>
+<text x="330" y="407" text-anchor="middle" class="sub">E003 · E004 · E005 · E006 · E007</text>
+<ellipse cx="330" cy="512" rx="150" ry="36" fill="#fff" stroke="#C46A12" stroke-width="1.6"/><ellipse cx="330" cy="512" rx="150" ry="36" fill="#FFEBD6" fill-opacity="0.75"/>
+<text x="330" y="509" text-anchor="middle" class="un" font-weight="700">Driver Operations</text>
+<text x="330" y="525" text-anchor="middle" class="sub">E009 · E010 · E021 · E023</text>
+<ellipse cx="790" cy="217.0" rx="150" ry="36" fill="#fff" stroke="#6B49B8" stroke-width="1.6"/><ellipse cx="790" cy="217.0" rx="150" ry="36" fill="#EBE3FA" fill-opacity="0.75"/>
+<text x="790" y="214.0" text-anchor="middle" class="un" font-weight="700">Driver Management</text>
+<text x="790" y="230.0" text-anchor="middle" class="sub">E012 · E013 · E014 · E024</text>
+<ellipse cx="790" cy="335.0" rx="150" ry="36" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/><ellipse cx="790" cy="335.0" rx="150" ry="36" fill="#FBE0E3" fill-opacity="0.75"/>
+<text x="790" y="332.0" text-anchor="middle" class="un" font-weight="700">Administration</text>
+<text x="790" y="348.0" text-anchor="middle" class="sub">E018 · E019 · E020 · E028</text>
+<ellipse cx="790" cy="453.0" rx="150" ry="36" fill="#fff" stroke="#8A7410" stroke-width="1.6"/><ellipse cx="790" cy="453.0" rx="150" ry="36" fill="#F4EDC6" fill-opacity="0.75"/>
+<text x="790" y="450.0" text-anchor="middle" class="un" font-weight="700">Fleet Maintenance</text>
+<text x="790" y="466.0" text-anchor="middle" class="sub">E015 · E016 · E017</text>
+<text x="24" y="658" class="leg">Association</text>
+<line x1="94.0" y1="654.0" x2="128.0" y2="654.0" stroke="#2F6FB5" stroke-width="1.4" />
+<text x="24" y="658" class="sub" dx="124">Use-case ids under each package point to the UCN sheets in docs/UCN. "Authenticated User" stands for all five signed-in roles.</text>
+</svg>

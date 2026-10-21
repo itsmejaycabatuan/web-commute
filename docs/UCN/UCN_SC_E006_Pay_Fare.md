@@ -55,6 +55,10 @@
 1. The commuter picks GCash/Maya while `PAYMONGO_ENABLED=false` (or no secret key is set).
 2. System makes **no** external call and records the payment as a declared method, `status = paid`, then shows the receipt. This is the pre-integration behaviour and keeps local dev and CI working with no credentials.
 
+**A3a – A pending payment expires**
+1. A gateway payment still `pending` **12 hours** after it was started is closed as `cancelled` (*"Expired: not completed within 12 hours."*); nothing was charged.
+2. This runs hourly (`payments:expire-pending`) and whenever payment history, the admin ledger or a checkout page is opened, so it works without a scheduler. A late webhook for a genuinely paid session still settles it.
+
 **A3 – Commuter refreshes / goes back after paying**
 1. The receipt is a `GET` on `/payment/receipt/{id}`; refreshing re-renders it from the stored record.
 2. System creates **no** second payment and debits **no** further balance.
@@ -87,7 +91,7 @@ The submitted `payment-method` is not one of `GCash`, `Maya`, `Wallet`. System r
 The commuter selects **Wallet** but the balance is less than the fare. System responds with *"You don't have enough balance"*; no payment, no balance change.
 
 **E3 – Already Paid / Duplicate Submission**
-The commuter replays a request carrying a `transaction-id` this commuter already paid. System responds with *"This fare has already been paid…"* — no second charge.
+The commuter replays a request (double click, Back button, refresh) carrying a `transaction-id` this commuter already used. **No second charge** and no second checkout; the answer depends on where that payment stands: **paid** → the receipt opens with *"This fare has already been paid. Here is your receipt."*; **pending** → the *Confirming your payment* screen opens with *"This payment is already being processed…"*; **failed / cancelled** → payment history with *"That payment did not go through and nothing was charged…"*. The *Confirm Payment* button also sends only one request per page view, and coming back to the same trip while a gateway payment is pending shows a *payment already in progress* notice with a **Check payment status** link.
 
 **E4 – External Payment Gateway Timeout / Error**
 The gateway rejects the call, times out, or returns an error envelope. System responds with *"The payment service is unavailable right now. Please try again."*, creates **no** payment row and **no** checkout session, and logs `PAYMONGO … FAILED`. The commuter keeps the funds.

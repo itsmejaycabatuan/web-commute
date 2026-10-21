@@ -112,8 +112,7 @@ At least one violation log references the code. System refuses the deletion with
 ## Known Gaps / Notes
 
 - **No unique index on `violation_codes.code`** — uniqueness is a validation rule only, so a concurrent double submit could still slip a duplicate through.
-- **The log is not paginated**: `violationsLog()` loads every row before filtering and rendering.
-- **The search is not combined with pagination or sorting**; there is no ordering option, only *latest first*.
+- **The log is paginated on the server, 10 entries per page**; the driver / date filters travel with the page links (`withQueryString`). There is no ordering option, only *latest first*.
 - **Rejected applications cannot be re-approved** — the reject action is one-way in the UI (`is_rejected` has no counterpart action on the drivers page).
 - The *offense instance* is free choice (1–4 in the bulk form, `min:1` in the single form) and is not derived from how many times that code was previously logged against the driver.
 - Additional penalties are stored as free text; nothing derives them from the offense level.

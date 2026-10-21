@@ -22,7 +22,7 @@
 | 3   | Driver can change the displayed week by clicking **Previous Week**, **Next Week**, or **Today** links. | System receives the `week` query parameter, repeats step 1 for the requested week, and updates the view accordingly.                           |
 | 4   | Driver clicks the **Violations** item in the sidebar (or navigates to `/violations`). | System fetches the driver’s `ViolationLog` records (with eager‑loaded `violationCode`), computes total violations and total fines, and returns the `driver.violations` view. |
 | 5   |                                                                                   | The view renders summary cards (total violations, total fines, latest violation) and a list/table of each violation with details: violation type, code, offense count, date, location, fine, penalty, and remarks. |
-| 6   | Driver toggles the **status switch** in the header (or submits a form to `/status` with `status=active|inactive`). | System validates the `status` input (`required|in:active,inactive`), updates the `status` column on the driver’s `Driver` record, and returns a success toast (“You have successfully set your driver status”). |
+| 6   | Driver toggles the **status switch** in the header (or submits a form to `/status` with `status=active|inactive`). | System validates the `status` input (`required|in:active,inactive`), updates the `status` column on the driver’s `Driver` record (this availability also drives the colour and popup status of the driver's live marker on the map, UCN_SC_E003), and returns a success toast (“You have successfully set your driver status”). |
 | 7   |                                                                                   | The page reloads (or the toast appears) and the driver’s current status is reflected in the header UI.                                          |
 
 ---
@@ -79,7 +79,7 @@ Any other unhandled exception results in a 500 error page (or the Laravel defaul
 - The status toggle only affects the `status` column on the `driver` table; it does **not** automatically clock the driver in or out. Clock‑in/out actions are handled separately via UCN_SC_E009/E010.
 - Weekly totals are calculated from the stored `hours_worked` and `overtime_hours` columns; they are not recomputed on the fly from raw time‑in/out.
 - The view uses Alpine.js for client‑side interactivity (week navigation, card animations) but all data is sourced from server‑side queries.
-- No pagination is applied; the view assumes a maximum of seven days (one week) of records.
+- The time-keeping view is not paginated (it is bounded to one week); the **violations list is paginated 10 per page**, while the summary cards (total violations, total fines, latest violation) describe the whole record.
 
 ---
 

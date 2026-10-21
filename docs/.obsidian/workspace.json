@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "MANUAL_TEST_CHECKLIST.md",
+                "file": "Non_Functional_Requirements.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "MANUAL_TEST_CHECKLIST"
+              "title": "Non_Functional_Requirements"
             }
           }
         ]
@@ -83,8 +83,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "right": {
     "id": "585314b6635d2cd2",
@@ -191,7 +190,22 @@
   },
   "active": "9f89179a0caa52b5",
   "lastOpenFiles": [
+    "Functional_Requirements.md",
+    "diagrams/erd_full.png",
+    "diagrams/erd_full.svg",
+    "UCN/UCN_Combined.md",
+    "Use_Case_Diagram.md",
+    "diagrams/use-case-parts/01_overview.png",
+    "diagrams/use_case_diagram.svg",
+    "diagrams/use_case_diagram.png",
+    "diagrams/erd_summary.dot",
+    "diagrams/erd_full.dot",
+    "diagrams/erd_summary.png",
+    "Entity_Relationship_Diagram.md",
+    "diagrams/erd_summary.svg",
     "MANUAL_TEST_CHECKLIST.md",
+    "UCN/UCN_SC_E028_Manage_Staff_Accounts.md",
+    "UCN/UCN_SC_E025_Vehicle_Maintenance_Log_CRUD.md",
     "UCN/UCN_SC_E021_Share_Vehicle_Location.md",
     "UCN/UCN_SC_E020_View_System_Reports.md",
     "UCN/UCN_SC_E019_Manage_Fare_Rates.md",
@@ -209,9 +223,6 @@
     "UCN/UCN_SC_E007_View_Payment_History.md",
     "UCN/UCN_SC_E006_Pay_Fare.md",
     "UCN/UCN_SC_E005_Topup_Balance.md",
-    "UCN/UCN_SC_E004_Plan_Trip.md",
-    "UCN/UCN_SC_E003_Track_PUJ.md",
-    "UCN/UCN_SC_E002_Create_Account.md",
-    "UCN/UCN_SC_E001_Login.md"
+    "UCN/UCN_SC_E004_Plan_Trip.md"
   ]
 }

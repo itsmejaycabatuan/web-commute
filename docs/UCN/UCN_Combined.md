@@ -45,13 +45,13 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 | **Commuter** | An authenticated user holding the `commuter` role. A commuter starts as a guest and becomes a commuter by registering (UCN_SC_E002) and verifying their email. |
 | **Driver** | An authenticated user holding the `driver` role with an approved `Driver` record and a staff-assigned vehicle. Drivers clock in/out from the map sidebar (UCN_SC_E009 / E010). |
 | **Wallet** | The commuter's stored balance, created at registration. Funded via top-up (UCN_SC_E005) and debited when a fare is paid by wallet (UCN_SC_E006). |
-| **Payment record** | An immutable ledger row for one paid fare (transaction id `#SC-XXXXXXXX`), readable only by the commuter who paid it. Carries a lifecycle status: `pending` → `paid` / `failed` / `cancelled`. |
+| **Payment record** | An immutable ledger row for one paid fare (transaction id `#SC-XXXXXXXX`), readable by the commuter who paid it and, through the same receipt route, by an Admin auditing the ledger. A `pending` payment is closed as `cancelled` after 12 hours. Carries a lifecycle status: `pending` → `paid` / `failed` / `cancelled`. |
 | **Gateway** | Optional PayMongo integration for GCash/Maya fares. Disabled by default; enabled with sandbox test keys — see `docs/PAYMONGO_SETUP.md`. |
 | **Timekeeping record** | One row per driver per day, holding `time_in`, `time_out`, `hours_worked` and `overtime_hours`. |
-| **Suspension** | A flag that locks an account out of signing in without deleting it. Commuters carry `users.is_suspended` (UCN_SC_E018 A4); drivers carry `drivers.is_suspended` (UCN_SC_E012 A5), which additionally blocks clock-in and location broadcast and releases any assigned vehicle. |
+| **Suspension** | A flag that locks an account out of signing in — and signs out a session that is already open on its next request — without deleting it. Commuters carry `users.is_suspended` (UCN_SC_E018 A4); drivers carry `drivers.is_suspended` (UCN_SC_E012 A5), which additionally blocks clock-in and location broadcast and releases any assigned vehicle. |
 | **Vehicle status** | `active` (in service, the only status that may carry a driver and broadcast a location), `inactive`, `maintenance` (out of service, off the live map) or `disposed` (retired, kept for auditing) — UCN_SC_E015. |
 | **Preventive maintenance** | The maintenance record for a (vehicle, task) pair: the last service's date, odometer and cost, and the interval used to project the next due date/odometer. UCN_SC_E016. |
-| **PUJ** | Public Utility Vehicle. On the map, a PUJ marker is a **roadworthy** vehicle (status `active`/`inactive`) with a location reported in the last 5 minutes. |
+| **PUJ** | Public Utility Vehicle. On the map, a PUJ marker is a **roadworthy** vehicle (status `active`/`inactive`) with a location reported in the last 5 minutes, coloured by its driver's availability (green available, red unavailable). |
 | **Privacy radius** | 200 m. Guest/commuter coordinates are randomly obfuscated within this radius. |
 
 ## Document conventions
@@ -60,7 +60,8 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 - Every behaviour described is traceable to the code path listed in the *Implementation References* table.
 - Documents reconciled against the implementation (E011–E020) open with a **"Corrections vs. the original narrative"** note listing what the narrative said, what the system actually does, and why the narrative was changed rather than the code.
 - Items marked **Known Gaps / Notes** describe deliberate limitations or behaviours that do **not** yet match the original narrative — they are candidates for the next iteration, not bugs.
-- Error/warning UI uses a single status banner (`#map-alert`) with the priority stack:
+- **Messages (all pages except the map banners):** success, error and warning messages are shown as toasts (`<x-toast />`). In add / edit / delete modals a validation error keeps the modal open and shows the message under its own input; on success the modal closes, the page refreshes and a toast confirms. Lists longer than 10 rows are paged 10 per page. Where the documents below say a "flash" or "banner", read "toast".
+- Error/warning UI on the **map** uses a single status banner (`#map-alert`) with the priority stack:
   `offline` → `map-service` → `routing-service` → `location-denied` → `no-puj`.
 
 ---
@@ -629,6 +630,10 @@ Covered by E5 (request-level) and E3 (duplicate-level). Automated credential-stu
 1. The commuter picks GCash/Maya while `PAYMONGO_ENABLED=false` (or no secret key is set).
 2. System makes **no** external call and records the payment as a declared method, `status = paid`, then shows the receipt. This is the pre-integration behaviour and keeps local dev and CI working with no credentials.
 
+**A3a – A pending payment expires**
+1. A gateway payment still `pending` **12 hours** after it was started is closed as `cancelled` (*"Expired: not completed within 12 hours."*); nothing was charged.
+2. This runs hourly (`payments:expire-pending`) and whenever payment history, the admin ledger or a checkout page is opened, so it works without a scheduler. A late webhook for a genuinely paid session still settles it.
+
 **A3 – Commuter refreshes / goes back after paying**
 1. The receipt is a `GET` on `/payment/receipt/{id}`; refreshing re-renders it from the stored record.
 2. System creates **no** second payment and debits **no** further balance.
@@ -661,7 +666,7 @@ The submitted `payment-method` is not one of `GCash`, `Maya`, `Wallet`. System r
 The commuter selects **Wallet** but the balance is less than the fare. System responds with *"You don't have enough balance"*; no payment, no balance change.
 
 **E3 – Already Paid / Duplicate Submission**
-The commuter replays a request carrying a `transaction-id` this commuter already paid. System responds with *"This fare has already been paid…"* — no second charge.
+The commuter replays a request (double click, Back button, refresh) carrying a `transaction-id` this commuter already used. **No second charge** and no second checkout; the answer depends on where that payment stands: **paid** → the receipt opens with *"This fare has already been paid. Here is your receipt."*; **pending** → the *Confirming your payment* screen opens with *"This payment is already being processed…"*; **failed / cancelled** → payment history with *"That payment did not go through and nothing was charged…"*. The *Confirm Payment* button also sends only one request per page view, and coming back to the same trip while a gateway payment is pending shows a *payment already in progress* notice with a **Check payment status** link.
 
 **E4 – External Payment Gateway Timeout / Error**
 The gateway rejects the call, times out, or returns an error envelope. System responds with *"The payment service is unavailable right now. Please try again."*, creates **no** payment row and **no** checkout session, and logs `PAYMONGO … FAILED`. The commuter keeps the funds.
@@ -740,7 +745,7 @@ No fare rates are published for the current fare table, so the fare cannot be pr
 | #   | Actor's Action                                        | System Response                                                                                                                                                       |
 | --- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Commuter opens Payment History.                      | System queries **only that commuter's** payments and displays them newest-first in a card list, together with the wallet balance and the **total spent**.        |
-| 2   | Commuter scrolls down the list.                      | System paginates the list (**4 receipts per page**) and fetches the older page on demand; filters/search are preserved across pages.                            |
+| 2   | Commuter scrolls down the list.                      | System paginates the list (**10 receipts per page**) and fetches the older page on demand; filters/search are preserved across pages.                            |
 | 3   | Commuter taps a specific transaction.                | System displays the **receipt detail** for that payment (route, distance, method, transaction id, fare, paid-at) at `/payment/receipt/{id}`.                       |
 
 > The detail view is **owner-scoped**: `showReceipt()` filters on `paid_by = Auth::id()`, so a commuter cannot open another commuter's receipt by guessing the id (HTTP 404).
@@ -799,9 +804,9 @@ The requested receipt id does not exist, or belongs to another commuter. System 
 
 - **No explicit network/server error state.** A failed query renders an empty list rather than an error banner, so "no results" and "something broke" look identical to the commuter.
 - **Quick ranges are relative windows (7 / 30 / 90 days)**, not the calendar presets *"Last Month"* / *"This Month"* from the original narrative; only the relative windows and free-form dates exist.
-- **"Total spent" ignores the active filters** — it is computed with an unfiltered `sum('price')`, so it can disagree with the visible list. Filtered totals would need `sum()` on the filtered query.
+- **"Total spent" ignores the active filters** — it is an unfiltered `sum('price')` over **settled** payments only, so it can disagree with the visible list. Filtered totals would need `sum()` on the filtered query.
 - **No sorting or column options** — the order is fixed to `paid_at DESC`.
-- **Pagination size is 4** per page, which is small for a commuter with many trips.
+- Payments still `pending` after 12 hours are closed as `cancelled` when the page is opened (UCN_SC_E006 A3a); pending / failed attempts are sorted by the time they were started.
 - **The list markup is duplicated** for the desktop and mobile layouts; the paginator is therefore rendered twice on the page (hidden by breakpoint).
 - The page creates the wallet on the fly if the row is missing (`PaymentController::walletFor()` → `Wallet::firstOrCreate`), so it no longer 404s for a commuter who has never topped up.
 
@@ -813,7 +818,7 @@ The requested receipt id does not exist, or belongs to another commuter. System 
 |---|---|
 | Routes | `routes/web.php` — `payment.history` (`GET /payment/history`), `payment.showReceipt` (`GET /payment/receipt/{id}`), `payment.topup.history` |
 | Controller | `app/Http/Controllers/PaymentController.php::history()`, `showReceipt()` |
-| Pagination | `->orderBy('paid_at', 'desc')->paginate(4)->withQueryString()` |
+| Pagination | `->orderByRaw('COALESCE(paid_at, created_at) DESC')->paginate(10)->withQueryString()` |
 | Views | `resources/views/commuter/paymenthistory.blade.php`, `resources/views/commuter/viewreceipt.blade.php` |
 | Models | `app/Models/Payment.php`, `app/Models/Wallet.php` |
 | Related | UCN_SC_E006 (Pay Fare — creates these records), UCN_SC_E005 (Top-up History) |
@@ -1247,7 +1252,7 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 1. In the list, the actor clicks **"Add Driver"**.
 2. System displays the **Add Driver** modal: *Name, Email, Password, Confirm Password, License Number, License Code, Expiration Date, Contact Info, License Image*. The **driver code is not typed in**: it is generated automatically (`DRV-000001`, `DRV-000002`, …).
 3. Driver Manager inputs all required fields and clicks **"Create Driver"**.
-4. System validates: `name`, `license_number`, `license_code`, `expiration_date`, `contact_info`, `license_image` **required**; `email` **required, email, unique:users**; `password` **required, min 8, confirmed**; `license_image` **image, max 2048**; `license_number` **unique:drivers** (E2).
+4. System validates: `name`, `license_number`, `license_code`, `expiration_date`, `contact_info`, `license_image` **required**; `email` **required, email, unique:users**; `password` **required, min 8, confirmed**; `license_image` **image, jpg / jpeg / png, max 2048 KB**; `contact_info` **a Philippine mobile number** (`9XX XXX XXXX`, optionally with `0` or `+63`); `license_number` **unique:drivers** (E2).
 5. System stores the licence image (`storage/app/public/licenses`), creates the **User** (email verified immediately, role `driver`), creates the **Driver** profile with `is_approved = 1` and a generated driver code, and confirms *"Driver account created."* A validation failure keeps the modal open and shows each message under its own field.
 
 **A2 – Edit a Driver**
@@ -1330,7 +1335,7 @@ The driver is already in that state. System refuses with *"This driver is alread
 - **A suspended driver is signed out on their next request**: the `account.active` middleware re-checks the account on every authenticated request, ends the session and sends the driver to the login page (JSON calls get a 403 with the redirect). Sign-in, clock-in, status changes and location broadcast are all refused.
 - **There is no "un-approve"** — the reverse of approve is commented out in the controller.
 - Deleting a driver does not remove the uploaded licence image from storage when it was stored on disk.
-- The list is not paginated; it loads every driver.
+- The list is filtered in the browser and shown **10 drivers per page** with a pager (the server still loads every driver).
 
 ---
 
@@ -1432,7 +1437,7 @@ The shift being written shares part of the day with an entry that already exists
 - **No overlap check against the driver's own clock-in** (UCN_SC_E009) — a manager entry and a self-clocked entry on the same day are only blocked when they genuinely overlap in time.
 - **Entries are immutable**: there is no edit or delete for a manager-entered row; only the driver's own clock-out (E010) fills in `time_out`.
 - `time_in` / `time_out` are stored as free-form strings (`"08:00"` from this form, `"08:00 AM"` from the driver's clock-in), so downstream consumers must parse rather than compare as time.
-- The list is paginated at 10 rows, but the type filter applies only to the current page.
+- The page loads the latest 1,000 entries and filters and pages them **in the browser, 10 rows per page**, so the type filter applies to the whole list.
 
 ---
 
@@ -1565,8 +1570,7 @@ At least one violation log references the code. System refuses the deletion with
 ### Known Gaps / Notes
 
 - **No unique index on `violation_codes.code`** — uniqueness is a validation rule only, so a concurrent double submit could still slip a duplicate through.
-- **The log is not paginated**: `violationsLog()` loads every row before filtering and rendering.
-- **The search is not combined with pagination or sorting**; there is no ordering option, only *latest first*.
+- **The log is paginated on the server, 10 entries per page**; the driver / date filters travel with the page links (`withQueryString`). There is no ordering option, only *latest first*.
 - **Rejected applications cannot be re-approved** — the reject action is one-way in the UI (`is_rejected` has no counterpart action on the drivers page).
 - The *offense instance* is free choice (1–4 in the bulk form, `min:1` in the single form) and is not derived from how many times that code was previously logged against the driver.
 - Additional penalties are stored as free text; nothing derives them from the offense level.
@@ -1696,7 +1700,7 @@ The vehicle already has maintenance or preventive-maintenance records. System re
 - **There is no restore/undelete**: a deleted vehicle's plate number is free to reuse immediately.
 - **Map removal is status-driven, not history-driven**: a vehicle under maintenance disappears from the map at once, while a vehicle marked *inactive* stays visible if it is still broadcasting.
 - The **"Newest First" sort is by creation date**, not by last service or last location ping.
-- The vehicle list is not paginated and loads the full fleet.
+- The vehicle list is filtered and sorted in the browser and shown **10 vehicles per page** with a pager.
 
 ---
 
@@ -1904,7 +1908,7 @@ The insert/update/delete fails at the database level. System cancels the operati
 - **Deleting a task cascades** to its preventive-maintenance rows, so the cost/km figures for that task disappear from the fleet analytics.
 - **Intervals are optional**, so a task without `miles_between_service` / `months_between_service` produces no projected due date.
 - There is no deactivation: a task in use must be deleted (with the data loss above) or left in place.
-- The task list is not paginated.
+- The task list is paginated on the server, **10 tasks per page**; the summary cards still count the whole catalogue.
 
 ---
 
@@ -1965,7 +1969,7 @@ The insert/update/delete fails at the database level. System cancels the operati
 1. In the list, the Admin clicks the **"Add Commuter"** button.
 2. System displays the **Add Commuter** modal: *Email*, *Password*, *Confirm Password*, and a **Mark email as verified** toggle.
 3. Admin inputs all required fields and clicks **"Create Commuter"**.
-4. System validates `email` **required, email, unique:users** and `password` **required, min 8, confirmed**; creates the User with role `commuter` (verified or pending per the toggle) and confirms *"Commuter account created."*
+4. The modal checks the input while typing (e-mail format, password of 8+ characters, matching confirmation) and sends nothing while a field is invalid. System validates `email` **required, email, unique:users** and `password` **required, min 8, confirmed** (a mismatch reads *"The password confirmation does not match."*); creates the User with role `commuter` (verified or pending per the toggle) and confirms *"Commuter account created."*
 
 **A2 – Edit a Commuter**
 > Modal-based edit (no `commuters.edit` route or `edit.blade.php` view).
@@ -2040,7 +2044,7 @@ The Admin deletes or suspends their own account. System refuses with *"You canno
 - **A suspended commuter is signed out on their next request** (`account.active` middleware), not only refused at sign-in.
 - **There is no password reset from this screen** — the admin sets a password directly, and the commuter is not notified.
 - The details page (A5) exposes fare and top-up totals but offers no link to the individual receipts.
-- The commuter list is not paginated and loads every commuter with their fare counts and wallet balances.
+- The commuter list is filtered in the browser and shown **10 commuters per page** with a pager. The detail page (A5) pages the commuter's trips and top-ups separately, 10 per page each.
 
 ---
 
@@ -2189,7 +2193,7 @@ No file was selected, or the selected file is not a PDF. System rejects the uplo
 | --- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | 1   | Admin opens up the dashboard on the map.                                     | System displays the dashboard with the admin analytics.                                                                   |
 | 2   | Admin clicks the **"Reports & Analytics"** item on the sidebar.               | System redirects to the System Reports page (`reports.generate`), displaying the list of available reports, the report-type selector, the *from* / *to* date inputs, the **"Generate Report"** button and the **"Export CSV"** button. |
-| 3   | Admin selects a report type & date range and clicks **"Generate Report"**.   | System aggregates the data for the selected type and range and renders the report: **Financial Overview** (revenue, top-ups, transaction count, daily revenue chart), **Driver Performance** (total/active drivers, top 5 performers by hours, status distribution) or **Maintenance & Fleet** (pending/overdue/completed counts, upcoming schedule table). |
+| 3   | Admin selects a report type & date range and clicks **"Generate Report"**.   | System aggregates the data for the selected type and range and renders the report: **Financial Overview** (revenue, top-ups, transaction count, daily revenue chart), **Driver Performance** (total/active drivers, top 5 performers by hours, status distribution) or **Maintenance & Fleet** (pending/overdue/completed counts, upcoming schedule table; *completed* counts the preventive-maintenance records saved in the selected range). Top-up totals count **completed** top-ups only. |
 
 ---
 
@@ -2251,7 +2255,7 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 |---|---|
 | Routes | `routes/web.php` — `reports.generate` (`GET /reports`), `reports.export` (`GET /reports/export`), both inside `role:admin` |
 | Controller | `app/Http/Controllers/ReportController.php::generate()`, `buildReport()`, `assertValidRange()`, `reportIsEmpty()`, `syncLagMinutes()`, `export()` |
-| Models | `app/Models/Payment.php`, `app/Models/TopupHistory.php`, `app/Models/Driver.php`, `app/Models/PreventiveMaintenance.php`, `app/Models/VehicleMaintenanceLog.php` |
+| Models | `app/Models/Payment.php`, `app/Models/TopupHistory.php`, `app/Models/Driver.php`, `app/Models/PreventiveMaintenance.php` |
 | View | `resources/views/admin/reports.blade.php` (E2 / E3 / E4 notice banners) |
 | Menu | `config/menu.php` — *Reports & Analytics* (admin) |
 | Middleware | `auth`, `verified`, `role:admin` |
@@ -2287,7 +2291,7 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 | 4   |                                                                          | System validates the payload: `vehicle_id` **required, string**, `user_id` **required, integer**, `latitude` / `longitude` **required, numeric**, `speed` / `accuracy` **nullable, numeric**, `timestamp` **nullable, integer**. |
 | 5   |                                                                          | System resolves the actor and refuses the request unless they are signed in (**E2**), hold the `driver` role and have a driver profile (**E2**), are not suspended (**E4**), and the vehicle is assigned to them **and is `active`** (**E3**). A driver with no vehicle, or whose vehicle is inactive / under maintenance, is refused with 403 and the browser stops sharing immediately. |
 | 6   |                                                                          | System checks whether a row for `(vehicle_id, timestamp)` already exists. If it does, it makes no write and answers `{ success: true, duplicate: true }` (**A1**).              |
-| 7   |                                                                          | System upserts the current position into `vehicle_locations` (`user_id`, `latitude`, `longitude`, `speed`, `accuracy`, `last_update = now`) and marks the vehicle `is_active = true`.       |
+| 7   |                                                                          | System upserts the current position into `vehicle_locations` (the broadcast event also carries the driver's `driver_status`, which colours the marker on other users' maps) (`user_id`, `latitude`, `longitude`, `speed`, `accuracy`, `last_update = now`) and marks the vehicle `is_active = true`.       |
 | 8   |                                                                          | System **fires `LocationUpdated`**, which obfuscates the coordinates to a random point within a **200 m radius** and publishes `{ vehicleId, lat, lng, privacy_radius, speed, accuracy, timestamp, user_id }` on the Pusher channel `vehicle-locations` as `vehicle-location-updated`. **The exact coordinates are never published.** |
 | 9   |                                                                          | System appends a breadcrumb row to `vehicle_location_histories` and answers `200 { success: true, duplicate: false, location_id }`.                                                                       |
 | 10  |                                                                          | Guests and commuters receive the push event and move that PUJ's marker on their map (UCN_SC_E003 step 3); the "active" freshness window is 5 minutes.                                             |
@@ -2372,7 +2376,7 @@ The queued retry payload is missing a required key. `RetryBroadcastLocation` ret
 | Privacy | `app/Helpers/LocationPrivacy.php::obfuscate()` — random offset within a 200 m radius, applied to both the pushed event and `getActiveVehicles()` |
 | Models | `app/Models/VehicleLocation.php`, `app/Models/VehicleLocationHistory.php`, `app/Models/DevMarker.php` |
 | Scheduler | `app/Console/Commands/VehicleOfflineCheck.php` — `vehicle:offline-check`, every minute (`app/Console/Kernel.php`) |
-| Dev markers | `app/Http/Controllers/DevMarkerController.php`, routes `driver.dev.*` |
+| Dev markers | `app/Http/Controllers/DevMarkerController.php`, routes `driver.dev.*` (signed-in admin on a `local` install only: `auth`, `role:admin`, `env.local`; the `/pusher` test page and `/fire-event` are guarded the same way) |
 | Client | `resources/views/map.blade.php` — `broadcastDriverLocation()`, 2-second throttle, broadcast only when the actor is a driver with an assigned vehicle |
 | Tests | `tests/Feature/VehicleTrackingControllerTest.php`, `tests/Feature/UcnSuspensionTest.php::test_a_suspended_driver_cannot_broadcast_a_location` |
 | Related | UCN_SC_E003 (Track PUJ — the read side), UCN_SC_E009/E010 (clock in / out), UCN_SC_E012 (Manage Drivers — suspension), UCN_SC_E015 (Manage Vehicles — status drives map visibility) |
@@ -2406,7 +2410,7 @@ The queued retry payload is missing a required key. `RetryBroadcastLocation` ret
 | 6   |                                                                                   | System creates a **User** record with the supplied email, a bcrypt‑hashed password, and sets `email_verified_at` to the current timestamp (email considered verified).                               |
 | 7   |                                                                                   | System creates a linked **Driver** record associated with the new user, persisting the name, contact information, and the stored license‑image path.                                                   |
 | 8   |                                                                                   | If both User and Driver records are created successfully, the System assigns the **driver** role to the user and fires a `Registered` event.                                                       |
-| 9   |                                                                                   | System redirects the guest to the login page (`/login`), which opens a **"You're registered!"** dialog: *the driver account was submitted successfully and an administrator must approve it before the guest can sign in.* A driver code (`DRV-######`) is generated for the new profile.                                    |
+| 9   |                                                                                   | System redirects the guest to the login page (`/login`), which opens a **"You're registered!"** dialog: *the driver account was submitted successfully and an administrator must approve it before the guest can sign in.* A driver code (`DRV-######`) is generated for the new profile. Validation of the contact number (Philippine mobile, `+63 9XX XXX XXXX`) and the licence image (JPG / PNG, max 2 MB) is the same in the admin Add / Edit Driver modals (UCN_SC_E012).                                    |
 
 ---
 
@@ -2529,7 +2533,7 @@ The guest submits more than **6 registration attempts per minute** (same throttl
 | 3   | Driver can change the displayed week by clicking **Previous Week**, **Next Week**, or **Today** links. | System receives the `week` query parameter, repeats step 1 for the requested week, and updates the view accordingly.                           |
 | 4   | Driver clicks the **Violations** item in the sidebar (or navigates to `/violations`). | System fetches the driver’s `ViolationLog` records (with eager‑loaded `violationCode`), computes total violations and total fines, and returns the `driver.violations` view. |
 | 5   |                                                                                   | The view renders summary cards (total violations, total fines, latest violation) and a list/table of each violation with details: violation type, code, offense count, date, location, fine, penalty, and remarks. |
-| 6   | Driver toggles the **status switch** in the header (or submits a form to `/status` with `status=active|inactive`). | System validates the `status` input (`required|in:active,inactive`), updates the `status` column on the driver’s `Driver` record, and returns a success toast (“You have successfully set your driver status”). |
+| 6   | Driver toggles the **status switch** in the header (or submits a form to `/status` with `status=active|inactive`). | System validates the `status` input (`required|in:active,inactive`), updates the `status` column on the driver’s `Driver` record (this availability also drives the colour and popup status of the driver's live marker on the map, UCN_SC_E003), and returns a success toast (“You have successfully set your driver status”). |
 | 7   |                                                                                   | The page reloads (or the toast appears) and the driver’s current status is reflected in the header UI.                                          |
 
 ---
@@ -2586,7 +2590,7 @@ Any other unhandled exception results in a 500 error page (or the Laravel defaul
 - The status toggle only affects the `status` column on the `driver` table; it does **not** automatically clock the driver in or out. Clock‑in/out actions are handled separately via UCN_SC_E009/E010.
 - Weekly totals are calculated from the stored `hours_worked` and `overtime_hours` columns; they are not recomputed on the fly from raw time‑in/out.
 - The view uses Alpine.js for client‑side interactivity (week navigation, card animations) but all data is sourced from server‑side queries.
-- No pagination is applied; the view assumes a maximum of seven days (one week) of records.
+- The time-keeping view is not paginated (it is bounded to one week); the **violations list is paginated 10 per page**, while the summary cards (total violations, total fines, latest violation) describe the whole record.
 
 ---
 
@@ -2691,7 +2695,7 @@ A PDO exception occurs during any database interaction. System logs the exceptio
 - The `code` field is limited to 255 characters and is expected to be a short identifier (e.g., “UV01”, “Speeding”).
 - Deletion is prohibited only when the code is referenced by `violation_logs`; there is no cascade‑delete or soft‑delete mechanism.
 - The view uses Alpine.js for client‑side interactivity (modals, form handling) but all persistence is performed via standard POST/PUT/DELETE requests to the Laravel backend.
-- No pagination is applied; the table assumes a modest number of violation codes (typically under a few dozen).
+- The code table is filtered in the browser and shown **10 codes per page** with a pager. Add / edit / delete post in the background: a validation error keeps the modal open with the message under its field, and success closes it with a toast.
 
 ---
 
@@ -2868,7 +2872,7 @@ Any other unhandled exception results in a 500 error page.
 | 1   | User clicks **Delete Account** and confirms the action in a prompt (JavaScript `confirm()`). | System sends a `DELETE` request to `/delete-account` with the CSRF token.                                                                      |
 | 2   |                                                                                   | The `UserController::destroy` method logs the action, logs the user out (`Auth::logout()`), invalidates the session (`$request->session()->invalidate()`), and regenerates the CSRF token. |
 | 3   |                                                                                   | System attempts to delete the authenticated user’s record from the `users` table via `User::destroy($userId)`.                               |
-| 4   |                                                                                   | If the deletion succeeds, System redirects the user to the login page (`/login`) with a success flash message: *“Account deleted successfully.”* |
+| 4   |                                                                                   | If the deletion succeeds, System redirects the user to the login page (`/login`) with a success toast: *“Account deleted successfully.”* A driver who still holds a vehicle is refused first (*"You are still assigned to a vehicle…"*) and stays signed in. |
 | 5   |                                                                                   | The login page is displayed, and the user can now create a new account or log in with different credentials.                                   |
 
 ---
@@ -2967,7 +2971,7 @@ Any other exception in the `destroy` method results in a 500 error page.
 
 **A1 – Add a Staff Account**
 1. Admin clicks **"Add Staff"**. System displays the modal: *Email, Role, Password, Confirm Password*.
-2. Admin submits. System validates `email` **required, email, unique:users**, `role` **in `driver_manager, maintenance_manager`**, `password` **required, min 8, confirmed**.
+2. The modal checks e-mail format, password length and confirmation while typing. Admin submits. System validates `email` **required, email, unique:users**, `role` **in `driver_manager, maintenance_manager`**, `password` **required, min 8, confirmed**.
 3. System creates the user (e-mail marked verified — staff are created by an admin, not by e-mail sign-up), assigns the role, logs *Create Staff* and confirms *"Staff account created."*
 
 **A2 – Edit a Staff Account**

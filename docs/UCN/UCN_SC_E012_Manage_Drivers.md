@@ -38,7 +38,7 @@
 1. In the list, the actor clicks **"Add Driver"**.
 2. System displays the **Add Driver** modal: *Name, Email, Password, Confirm Password, License Number, License Code, Expiration Date, Contact Info, License Image*. The **driver code is not typed in**: it is generated automatically (`DRV-000001`, `DRV-000002`, …).
 3. Driver Manager inputs all required fields and clicks **"Create Driver"**.
-4. System validates: `name`, `license_number`, `license_code`, `expiration_date`, `contact_info`, `license_image` **required**; `email` **required, email, unique:users**; `password` **required, min 8, confirmed**; `license_image` **image, max 2048**; `license_number` **unique:drivers** (E2).
+4. System validates: `name`, `license_number`, `license_code`, `expiration_date`, `contact_info`, `license_image` **required**; `email` **required, email, unique:users**; `password` **required, min 8, confirmed**; `license_image` **image, jpg / jpeg / png, max 2048 KB**; `contact_info` **a Philippine mobile number** (`9XX XXX XXXX`, optionally with `0` or `+63`); `license_number` **unique:drivers** (E2).
 5. System stores the licence image (`storage/app/public/licenses`), creates the **User** (email verified immediately, role `driver`), creates the **Driver** profile with `is_approved = 1` and a generated driver code, and confirms *"Driver account created."* A validation failure keeps the modal open and shows each message under its own field.
 
 **A2 – Edit a Driver**
@@ -121,7 +121,7 @@ The driver is already in that state. System refuses with *"This driver is alread
 - **A suspended driver is signed out on their next request**: the `account.active` middleware re-checks the account on every authenticated request, ends the session and sends the driver to the login page (JSON calls get a 403 with the redirect). Sign-in, clock-in, status changes and location broadcast are all refused.
 - **There is no "un-approve"** — the reverse of approve is commented out in the controller.
 - Deleting a driver does not remove the uploaded licence image from storage when it was stored on disk.
-- The list is not paginated; it loads every driver.
+- The list is filtered in the browser and shown **10 drivers per page** with a pager (the server still loads every driver).
 
 ---
 

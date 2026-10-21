@@ -20,7 +20,7 @@
 | 1   | User clicks **Delete Account** and confirms the action in a prompt (JavaScript `confirm()`). | System sends a `DELETE` request to `/delete-account` with the CSRF token.                                                                      |
 | 2   |                                                                                   | The `UserController::destroy` method logs the action, logs the user out (`Auth::logout()`), invalidates the session (`$request->session()->invalidate()`), and regenerates the CSRF token. |
 | 3   |                                                                                   | System attempts to delete the authenticated user’s record from the `users` table via `User::destroy($userId)`.                               |
-| 4   |                                                                                   | If the deletion succeeds, System redirects the user to the login page (`/login`) with a success flash message: *“Account deleted successfully.”* |
+| 4   |                                                                                   | If the deletion succeeds, System redirects the user to the login page (`/login`) with a success toast: *“Account deleted successfully.”* A driver who still holds a vehicle is refused first (*"You are still assigned to a vehicle…"*) and stays signed in. |
 | 5   |                                                                                   | The login page is displayed, and the user can now create a new account or log in with different credentials.                                   |
 
 ---

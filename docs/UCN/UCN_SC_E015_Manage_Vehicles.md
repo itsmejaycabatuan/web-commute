@@ -106,7 +106,7 @@ The vehicle already has maintenance or preventive-maintenance records. System re
 - **There is no restore/undelete**: a deleted vehicle's plate number is free to reuse immediately.
 - **Map removal is status-driven, not history-driven**: a vehicle under maintenance disappears from the map at once, while a vehicle marked *inactive* stays visible if it is still broadcasting.
 - The **"Newest First" sort is by creation date**, not by last service or last location ping.
-- The vehicle list is not paginated and loads the full fleet.
+- The vehicle list is filtered and sorted in the browser and shown **10 vehicles per page** with a pager.
 
 ---
 

@@ -25,7 +25,7 @@
 | --- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | 1   | Admin opens up the dashboard on the map.                                     | System displays the dashboard with the admin analytics.                                                                   |
 | 2   | Admin clicks the **"Reports & Analytics"** item on the sidebar.               | System redirects to the System Reports page (`reports.generate`), displaying the list of available reports, the report-type selector, the *from* / *to* date inputs, the **"Generate Report"** button and the **"Export CSV"** button. |
-| 3   | Admin selects a report type & date range and clicks **"Generate Report"**.   | System aggregates the data for the selected type and range and renders the report: **Financial Overview** (revenue, top-ups, transaction count, daily revenue chart), **Driver Performance** (total/active drivers, top 5 performers by hours, status distribution) or **Maintenance & Fleet** (pending/overdue/completed counts, upcoming schedule table). |
+| 3   | Admin selects a report type & date range and clicks **"Generate Report"**.   | System aggregates the data for the selected type and range and renders the report: **Financial Overview** (revenue, top-ups, transaction count, daily revenue chart), **Driver Performance** (total/active drivers, top 5 performers by hours, status distribution) or **Maintenance & Fleet** (pending/overdue/completed counts, upcoming schedule table; *completed* counts the preventive-maintenance records saved in the selected range). Top-up totals count **completed** top-ups only. |
 
 ---
 
@@ -87,7 +87,7 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 |---|---|
 | Routes | `routes/web.php` — `reports.generate` (`GET /reports`), `reports.export` (`GET /reports/export`), both inside `role:admin` |
 | Controller | `app/Http/Controllers/ReportController.php::generate()`, `buildReport()`, `assertValidRange()`, `reportIsEmpty()`, `syncLagMinutes()`, `export()` |
-| Models | `app/Models/Payment.php`, `app/Models/TopupHistory.php`, `app/Models/Driver.php`, `app/Models/PreventiveMaintenance.php`, `app/Models/VehicleMaintenanceLog.php` |
+| Models | `app/Models/Payment.php`, `app/Models/TopupHistory.php`, `app/Models/Driver.php`, `app/Models/PreventiveMaintenance.php` |
 | View | `resources/views/admin/reports.blade.php` (E2 / E3 / E4 notice banners) |
 | Menu | `config/menu.php` — *Reports & Analytics* (admin) |
 | Middleware | `auth`, `verified`, `role:admin` |

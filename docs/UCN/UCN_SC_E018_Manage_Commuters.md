@@ -41,7 +41,7 @@
 1. In the list, the Admin clicks the **"Add Commuter"** button.
 2. System displays the **Add Commuter** modal: *Email*, *Password*, *Confirm Password*, and a **Mark email as verified** toggle.
 3. Admin inputs all required fields and clicks **"Create Commuter"**.
-4. System validates `email` **required, email, unique:users** and `password` **required, min 8, confirmed**; creates the User with role `commuter` (verified or pending per the toggle) and confirms *"Commuter account created."*
+4. The modal checks the input while typing (e-mail format, password of 8+ characters, matching confirmation) and sends nothing while a field is invalid. System validates `email` **required, email, unique:users** and `password` **required, min 8, confirmed** (a mismatch reads *"The password confirmation does not match."*); creates the User with role `commuter` (verified or pending per the toggle) and confirms *"Commuter account created."*
 
 **A2 – Edit a Commuter**
 > Modal-based edit (no `commuters.edit` route or `edit.blade.php` view).
@@ -116,7 +116,7 @@ The Admin deletes or suspends their own account. System refuses with *"You canno
 - **A suspended commuter is signed out on their next request** (`account.active` middleware), not only refused at sign-in.
 - **There is no password reset from this screen** — the admin sets a password directly, and the commuter is not notified.
 - The details page (A5) exposes fare and top-up totals but offers no link to the individual receipts.
-- The commuter list is not paginated and loads every commuter with their fare counts and wallet balances.
+- The commuter list is filtered in the browser and shown **10 commuters per page** with a pager. The detail page (A5) pages the commuter's trips and top-ups separately, 10 per page each.
 
 ---
 

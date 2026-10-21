@@ -18,7 +18,7 @@
 | #   | Actor's Action                                        | System Response                                                                                                                                                       |
 | --- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Commuter opens Payment History.                      | System queries **only that commuter's** payments and displays them newest-first in a card list, together with the wallet balance and the **total spent**.        |
-| 2   | Commuter scrolls down the list.                      | System paginates the list (**4 receipts per page**) and fetches the older page on demand; filters/search are preserved across pages.                            |
+| 2   | Commuter scrolls down the list.                      | System paginates the list (**10 receipts per page**) and fetches the older page on demand; filters/search are preserved across pages.                            |
 | 3   | Commuter taps a specific transaction.                | System displays the **receipt detail** for that payment (route, distance, method, transaction id, fare, paid-at) at `/payment/receipt/{id}`.                       |
 
 > The detail view is **owner-scoped**: `showReceipt()` filters on `paid_by = Auth::id()`, so a commuter cannot open another commuter's receipt by guessing the id (HTTP 404).
@@ -77,9 +77,9 @@ The requested receipt id does not exist, or belongs to another commuter. System 
 
 - **No explicit network/server error state.** A failed query renders an empty list rather than an error banner, so "no results" and "something broke" look identical to the commuter.
 - **Quick ranges are relative windows (7 / 30 / 90 days)**, not the calendar presets *"Last Month"* / *"This Month"* from the original narrative; only the relative windows and free-form dates exist.
-- **"Total spent" ignores the active filters** — it is computed with an unfiltered `sum('price')`, so it can disagree with the visible list. Filtered totals would need `sum()` on the filtered query.
+- **"Total spent" ignores the active filters** — it is an unfiltered `sum('price')` over **settled** payments only, so it can disagree with the visible list. Filtered totals would need `sum()` on the filtered query.
 - **No sorting or column options** — the order is fixed to `paid_at DESC`.
-- **Pagination size is 4** per page, which is small for a commuter with many trips.
+- Payments still `pending` after 12 hours are closed as `cancelled` when the page is opened (UCN_SC_E006 A3a); pending / failed attempts are sorted by the time they were started.
 - **The list markup is duplicated** for the desktop and mobile layouts; the paginator is therefore rendered twice on the page (hidden by breakpoint).
 - The page creates the wallet on the fly if the row is missing (`PaymentController::walletFor()` → `Wallet::firstOrCreate`), so it no longer 404s for a commuter who has never topped up.
 
@@ -91,7 +91,7 @@ The requested receipt id does not exist, or belongs to another commuter. System 
 |---|---|
 | Routes | `routes/web.php` — `payment.history` (`GET /payment/history`), `payment.showReceipt` (`GET /payment/receipt/{id}`), `payment.topup.history` |
 | Controller | `app/Http/Controllers/PaymentController.php::history()`, `showReceipt()` |
-| Pagination | `->orderBy('paid_at', 'desc')->paginate(4)->withQueryString()` |
+| Pagination | `->orderByRaw('COALESCE(paid_at, created_at) DESC')->paginate(10)->withQueryString()` |
 | Views | `resources/views/commuter/paymenthistory.blade.php`, `resources/views/commuter/viewreceipt.blade.php` |
 | Models | `app/Models/Payment.php`, `app/Models/Wallet.php` |
 | Related | UCN_SC_E006 (Pay Fare — creates these records), UCN_SC_E005 (Top-up History) |

@@ -87,7 +87,7 @@ A PDO exception occurs during any database interaction. System logs the exceptio
 - The `code` field is limited to 255 characters and is expected to be a short identifier (e.g., “UV01”, “Speeding”).
 - Deletion is prohibited only when the code is referenced by `violation_logs`; there is no cascade‑delete or soft‑delete mechanism.
 - The view uses Alpine.js for client‑side interactivity (modals, form handling) but all persistence is performed via standard POST/PUT/DELETE requests to the Laravel backend.
-- No pagination is applied; the table assumes a modest number of violation codes (typically under a few dozen).
+- The code table is filtered in the browser and shown **10 codes per page** with a pager. Add / edit / delete post in the background: a validation error keeps the modal open with the message under its field, and success closes it with a toast.
 
 ---
 

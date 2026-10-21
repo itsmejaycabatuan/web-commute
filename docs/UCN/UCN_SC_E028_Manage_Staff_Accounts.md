@@ -28,7 +28,7 @@
 
 **A1 – Add a Staff Account**
 1. Admin clicks **"Add Staff"**. System displays the modal: *Email, Role, Password, Confirm Password*.
-2. Admin submits. System validates `email` **required, email, unique:users**, `role` **in `driver_manager, maintenance_manager`**, `password` **required, min 8, confirmed**.
+2. The modal checks e-mail format, password length and confirmation while typing. Admin submits. System validates `email` **required, email, unique:users**, `role` **in `driver_manager, maintenance_manager`**, `password` **required, min 8, confirmed**.
 3. System creates the user (e-mail marked verified — staff are created by an admin, not by e-mail sign-up), assigns the role, logs *Create Staff* and confirms *"Staff account created."*
 
 **A2 – Edit a Staff Account**

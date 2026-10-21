@@ -82,7 +82,7 @@ The insert/update/delete fails at the database level. System cancels the operati
 - **Deleting a task cascades** to its preventive-maintenance rows, so the cost/km figures for that task disappear from the fleet analytics.
 - **Intervals are optional**, so a task without `miles_between_service` / `months_between_service` produces no projected due date.
 - There is no deactivation: a task in use must be deleted (with the data loss above) or left in place.
-- The task list is not paginated.
+- The task list is paginated on the server, **10 tasks per page**; the summary cards still count the whole catalogue.
 
 ---
 

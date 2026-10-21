@@ -81,7 +81,7 @@ The shift being written shares part of the day with an entry that already exists
 - **No overlap check against the driver's own clock-in** (UCN_SC_E009) — a manager entry and a self-clocked entry on the same day are only blocked when they genuinely overlap in time.
 - **Entries are immutable**: there is no edit or delete for a manager-entered row; only the driver's own clock-out (E010) fills in `time_out`.
 - `time_in` / `time_out` are stored as free-form strings (`"08:00"` from this form, `"08:00 AM"` from the driver's clock-in), so downstream consumers must parse rather than compare as time.
-- The list is paginated at 10 rows, but the type filter applies only to the current page.
+- The page loads the latest 1,000 entries and filters and pages them **in the browser, 10 rows per page**, so the type filter applies to the whole list.
 
 ---
 

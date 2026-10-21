@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 706" width="860" height="706" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+<title>SmartCommute use-case diagram — Account &amp; Access</title>
+<style>
+.al{font-size:12.5px;font-weight:700;fill:#1b1f23}.ui{font-size:9.5px;font-weight:700;fill:#57606a}
+.un{font-size:12.5px;fill:#1b1f23}.grp{font-size:12px;font-weight:700}.rel{font-size:10px;font-style:italic;fill:#444}
+.xs{font-size:9px;font-style:italic;fill:#57606a}.xn{font-size:12px;font-weight:700;fill:#1b1f23}.xb{font-size:9.5px;fill:#57606a}
+.ttl{font-size:17px;font-weight:700;fill:#1b1f23}.sub{font-size:11px;fill:#57606a}.leg{font-size:11px;fill:#1b1f23}
+</style><defs><marker id="open" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+<path d="M1,1 L9,5 L1,9" fill="none" stroke="#444" stroke-width="1.3"/></marker></defs>
+<rect width="860" height="706" fill="#fff"/>
+<text x="24" y="30" class="ttl">Use-Case Diagram — Account &amp; Access</text>
+<text x="24" y="48" class="sub">Public sign-up / sign-in / recovery, plus the three tasks every signed-in user has.</text>
+<rect x="190" y="62" width="380" height="586" rx="10" fill="#FCFCFD" stroke="#30363d" stroke-width="2"/>
+<text x="206" y="84" class="grp" fill="#30363d">SmartCommute — Web Commute System</text>
+<rect x="210" y="104" width="340" height="282" rx="8" fill="#E3F0FF" fill-opacity="0.45" stroke="#2F6FB5" stroke-width="1.2" stroke-dasharray="5 3"/>
+<text x="222" y="123" class="grp" fill="#2F6FB5">Account &amp; Access</text>
+<rect x="210" y="408" width="340" height="220" rx="8" fill="#ECEFF1" fill-opacity="0.45" stroke="#5F6B73" stroke-width="1.2" stroke-dasharray="5 3"/>
+<text x="222" y="427" class="grp" fill="#5F6B73">Common Services (every authenticated user)</text>
+<line x1="655.0" y1="258.0" x2="515.0" y2="289.0" stroke="#57606a" stroke-width="1.2" />
+<line x1="655.0" y1="258.0" x2="515.0" y2="227.0" stroke="#57606a" stroke-width="1.2" />
+<rect x="655" y="230.0" width="170" height="56" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/><text x="740" y="246.0" text-anchor="middle" class="xs">«external system»</text><text x="740" y="261.0" text-anchor="middle" class="xn">Email Service</text><text x="740" y="276.0" text-anchor="middle" class="xb">(SMTP)</text>
+<line x1="310.0" y1="210.8" x2="310.0" y2="181.2" stroke="#444" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#open)"/>
+<text x="318.0" y="199.5" class="rel">«extend»</text>
+<line x1="310.0" y1="334.8" x2="310.0" y2="305.2" stroke="#444" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#open)"/>
+<text x="318.0" y="323.5" class="rel">«extend»</text>
+<g stroke="#2F6FB5" stroke-width="2" fill="#E3F0FF" stroke-linecap="round"><circle cx="100" cy="235.0" r="9"/><line x1="100" y1="244.0" x2="100" y2="272.0"/><line x1="85" y1="254.0" x2="115" y2="254.0"/><line x1="100" y1="272.0" x2="88" y2="290.0"/><line x1="100" y1="272.0" x2="112" y2="290.0"/></g>
+<text x="100" y="308.0" text-anchor="middle" class="al">Guest</text>
+<line x1="115.0" y1="254.0" x2="245.0" y2="165.0" stroke="#2F6FB5" stroke-width="1.4" />
+<line x1="115.0" y1="254.0" x2="245.0" y2="227.0" stroke="#2F6FB5" stroke-width="1.4" />
+<line x1="115.0" y1="254.0" x2="245.0" y2="289.0" stroke="#2F6FB5" stroke-width="1.4" />
+<line x1="115.0" y1="254.0" x2="245.0" y2="351.0" stroke="#2F6FB5" stroke-width="1.4" />
+<g stroke="#5F6B73" stroke-width="2" fill="#ECEFF1" stroke-linecap="round"><circle cx="100" cy="508.0" r="9"/><line x1="100" y1="517.0" x2="100" y2="545.0"/><line x1="85" y1="527.0" x2="115" y2="527.0"/><line x1="100" y1="545.0" x2="88" y2="563.0"/><line x1="100" y1="545.0" x2="112" y2="563.0"/></g>
+<text x="100" y="581.0" text-anchor="middle" class="al">Authenticated</text>
+<text x="100" y="595.0" text-anchor="middle" class="al">User</text>
+<text x="100" y="609.0" text-anchor="middle" class="sub" font-style="italic">(any signed-in role)</text>
+<line x1="115.0" y1="527.0" x2="245.0" y2="469.0" stroke="#5F6B73" stroke-width="1.4" />
+<line x1="115.0" y1="527.0" x2="245.0" y2="531.0" stroke="#5F6B73" stroke-width="1.4" />
+<line x1="115.0" y1="527.0" x2="245.0" y2="593.0" stroke="#5F6B73" stroke-width="1.4" />
+<ellipse cx="380.0" cy="165.0" rx="135" ry="19" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/><ellipse cx="380.0" cy="165.0" rx="135" ry="19" fill="#E3F0FF" fill-opacity="0.75"/>
+<text x="380.0" y="169.3" text-anchor="middle"><tspan class="ui">E001</tspan><tspan class="un" dx="6">Login</tspan></text>
+<ellipse cx="380.0" cy="227.0" rx="135" ry="19" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/><ellipse cx="380.0" cy="227.0" rx="135" ry="19" fill="#E3F0FF" fill-opacity="0.75"/>
+<text x="380.0" y="231.3" text-anchor="middle"><tspan class="ui">E011</tspan><tspan class="un" dx="6">Reset Password</tspan></text>
+<ellipse cx="380.0" cy="289.0" rx="135" ry="19" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/><ellipse cx="380.0" cy="289.0" rx="135" ry="19" fill="#E3F0FF" fill-opacity="0.75"/>
+<text x="380.0" y="293.3" text-anchor="middle"><tspan class="ui">E002</tspan><tspan class="un" dx="6">Create Account</tspan></text>
+<ellipse cx="380.0" cy="351.0" rx="135" ry="19" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/><ellipse cx="380.0" cy="351.0" rx="135" ry="19" fill="#E3F0FF" fill-opacity="0.75"/>
+<text x="380.0" y="355.3" text-anchor="middle"><tspan class="ui">E022</tspan><tspan class="un" dx="6">Driver Registration</tspan></text>
+<ellipse cx="380.0" cy="469.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/><ellipse cx="380.0" cy="469.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75"/>
+<text x="380.0" y="473.3" text-anchor="middle"><tspan class="ui">E008</tspan><tspan class="un" dx="6">Change Password</tspan></text>
+<ellipse cx="380.0" cy="531.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/><ellipse cx="380.0" cy="531.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75"/>
+<text x="380.0" y="535.3" text-anchor="middle"><tspan class="ui">E026</tspan><tspan class="un" dx="6">Profile &amp; Dashboard Views</tspan></text>
+<ellipse cx="380.0" cy="593.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/><ellipse cx="380.0" cy="593.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75"/>
+<text x="380.0" y="597.3" text-anchor="middle"><tspan class="ui">E027</tspan><tspan class="un" dx="6">Account Deletion</tspan></text>
+<line x1="24.0" y1="682.0" x2="58.0" y2="682.0" stroke="#2F6FB5" stroke-width="1.4" />
+<text x="66" y="686" class="leg">Association</text>
+<line x1="149.6" y1="682.0" x2="183.6" y2="682.0" stroke="#57606a" stroke-width="1.2" />
+<text x="191.6" y="686" class="leg">Association to an external system</text>
+<line x1="398.4" y1="682" x2="432.4" y2="682" stroke="#444" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#open)"/>
+<text x="440.4" y="686" class="leg">«extend» / «include» (arrow points at the base / included use case)</text>
+</svg>

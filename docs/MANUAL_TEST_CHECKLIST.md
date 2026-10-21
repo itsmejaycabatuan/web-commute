@@ -224,7 +224,7 @@ Found by running the seeded data through each page.
 1. **Violations pages crashed whenever a violation had penalty text.** Fixed in `DriverController` and `DriverManagerController` (`Str::contains` instead of `str_contains`). Re-check that penalties show with the right colour: suspension and impound in red; warning and community service in amber.
 2. **`/maintenance-logs` crashed when the logs spanned more than one page.** Fixed, and the page has since been removed together with the vehicle maintenance log.
 3. **Admin revenue counted unpaid payments.** Fixed: revenue figures count paid payments only.
-4. **The unused Routes feature was removed.** The `routes` table is still in the database.
+4. **The unused Routes feature was removed.** Its `routes` table (and the equally unused `fleets` table) is dropped by migration `2026_10_21_090000_drop_unused_routes_and_fleets_tables` — run `php artisan migrate` to apply it.
 
 Still worth a look: users have no `name` column, so commuters are identified by email. Check that the violations and driver-manager screens don't show "Unknown" for a name.
 
