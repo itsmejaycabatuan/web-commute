@@ -1,8 +1,8 @@
-# UCN_SC_E029 — View Activity Log
+# UCN_SC_E028 — View Activity Log
 
 | Field                 | Value                                                                                                   |
 | --------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Use_Case_ID**       | UCN_SC_E029                                                                                             |
+| **Use_Case_ID**       | UCN_SC_E028                                                                                             |
 | **Use Case Name**     | View Activity Log                                                                                       |
 | **Primary Actor**     | Admin (`role:admin`)                                                                                    |
 | **Secondary Actor**   | System (audit trail, CSV writer)                                                                        |
@@ -105,4 +105,4 @@ More than 10,000 entries match. System exports the newest 10,000; the Admin narr
 | Writing the trail | `app/Support/Audit.php`, `app/Models/Concerns/Audited.php`; design in `docs/AUDIT_TRAIL.md` |
 | Schema | `activity_log`; `database/migrations/2026_10_21_100000_add_created_at_index_to_activity_log.php` |
 | Tests | `tests/Feature/ActivityLogPageTest.php`, `tests/Feature/AuditTrailTest.php` |
-| Related | UCN_SC_E001 (Login — sign-in events), UCN_SC_E018 / E028 (suspensions, staff), UCN_SC_E020 (report export, also audited) |
+| Related | UCN_SC_E001 (Login — sign-in events), UCN_SC_E018 / E027 (suspensions, staff), UCN_SC_E020 (report export, also audited) |

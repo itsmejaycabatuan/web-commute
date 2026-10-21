@@ -50,10 +50,10 @@ UC = {
     "E022": "Driver Registration",
     "E023": "Driver Dashboard Views",
     "E024": "Violation Code Management",
-    "E026": "Profile & Dashboard Views",
-    "E027": "Account Deletion",
-    "E028": "Manage Staff Accounts",
-    "E029": "View Activity Log",
+    "E025": "Profile & Dashboard Views",
+    "E026": "Account Deletion",
+    "E027": "Manage Staff Accounts",
+    "E028": "View Activity Log",
 }
 
 # column, title, colour, [ids in drawing order]
@@ -63,10 +63,10 @@ GROUPS = {
                  ["E003", "E004", "E006", "E005", "E007"]),
     "driverops": ("L", "Driver Operations", ORANGE, ["E009", "E010", "E021", "E023"]),
     "drvmgmt": ("R", "Driver Management", PURPLE, ["E013", "E014", "E024", "E012"]),
-    "admin": ("R", "Administration", ROSE, ["E018", "E019", "E020", "E028", "E029"]),
+    "admin": ("R", "Administration", ROSE, ["E018", "E019", "E020", "E027", "E028"]),
     "fleet": ("R", "Fleet Maintenance", OLIVE, ["E015", "E016", "E017"]),
 }
-COMMON = ("Common Services (every authenticated user)", GRAY, ["E008", "E026", "E027"])
+COMMON = ("Common Services (every authenticated user)", GRAY, ["E008", "E025", "E026"])
 
 # actor -> use cases (UML associations)
 ASSOC = {
@@ -74,9 +74,9 @@ ASSOC = {
     "commuter": ["E003", "E004", "E006", "E005", "E007"],
     "driver": ["E009", "E010", "E021", "E023"],
     "drvmgr": ["E013", "E014", "E024", "E012"],
-    "admin": ["E018", "E019", "E020", "E028", "E029", "E012", "E015"],
+    "admin": ["E018", "E019", "E020", "E027", "E028", "E012", "E015"],
     "maint": ["E015", "E016", "E017"],
-    "auth": ["E008", "E026", "E027"],
+    "auth": ["E008", "E025", "E026"],
 }
 ACTORS = {  # key: (label lines, colour)
     "guest": (["Guest"], BLUE),
@@ -208,7 +208,7 @@ def build():
     add(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
         f'font-family="\'Segoe UI\', \'Helvetica Neue\', Helvetica, Arial, sans-serif">')
     add('<title>SmartCommute — UML use-case diagram</title>')
-    add('<desc>Actors, use cases (UCN_SC_E001–E028) and their relationships for the SmartCommute web system.</desc>')
+    add('<desc>Actors, use cases (UCN_SC_E001–E027) and their relationships for the SmartCommute web system.</desc>')
     add('''<style>
 .actor-label{font-size:12.5px;font-weight:700;fill:#1b1f23}
 .uc-id{font-size:9.5px;font-weight:700;fill:#57606a}
@@ -231,7 +231,7 @@ def build():
     # ---- system boundary
     add(f'<rect x="{bx}" y="{by}" width="{bw}" height="{bh}" rx="10" fill="#FCFCFD" stroke="#30363d" stroke-width="2"/>')
     add(f'<text x="{bx + 20}" y="{by + 26}" class="title">SmartCommute — Web Commute System</text>')
-    add(f'<text x="{bx + 20}" y="{by + 41}" class="sub">use cases UCN_SC_E001 – E029 (E025 is unassigned)</text>')
+    add(f'<text x="{bx + 20}" y="{by + 41}" class="sub">use cases UCN_SC_E001 – E028</text>')
 
     # ---- groups
     def draw_group(box, title, colour):

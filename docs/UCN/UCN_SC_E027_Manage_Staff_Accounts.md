@@ -1,8 +1,8 @@
-# UCN_SC_E028 — Manage Staff Accounts
+# UCN_SC_E027 — Manage Staff Accounts
 
 | Field                 | Value                                                                                                   |
 | --------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Use_Case_ID**       | UCN_SC_E028                                                                                             |
+| **Use_Case_ID**       | UCN_SC_E027                                                                                             |
 | **Use Case Name**     | Manage Staff Accounts                                                                                   |
 | **Primary Actor**     | Admin (`role:admin`)                                                                                    |
 | **Secondary Actor**   | System                                                                                                  |

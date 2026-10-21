@@ -16,7 +16,7 @@
 > - The page does **not** show a "list of maintenance services to be logged"; it is a per-vehicle schedule board: a vehicle picker plus one card per maintenance task showing *last serviced*, *odometer*, *cost* and the computed **next due date / next due odometer**.
 > - The buttons are **"Log"** (or **"Update"** once logged) per task card and **"Save Log"** in the modal — not *"Log button"* / *"Save Log button"* on a list row.
 > - **E2 (invalid odometer reading)** is now enforced: a reading lower than the last recorded one for that vehicle is rejected.
-> - The separate *vehicle maintenance log* (UCN_SC_E025) was **retired**: the preventive-maintenance record now holds each service's date, odometer and cost, and the fleet cost/kilometre analytics and the reports read it directly.
+> - The separate *vehicle maintenance log* (formerly its own use case, numbered E025 until the October 2026 renumbering — see the UCN README) was **retired**: the preventive-maintenance record now holds each service's date, odometer and cost, and the fleet cost/kilometre analytics and the reports read it directly.
 
 ---
 

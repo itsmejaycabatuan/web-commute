@@ -27,8 +27,8 @@ data at the top of that script after a migration and re-run `python3 docs/diagra
 
 | Entity | Table | Holds | Related UCNs |
 |---|---|---|---|
-| User | `users` | Every account — commuter, driver, staff, admin — with email, hashed password, verification and suspension state, and `anonymised_at` (set when the account was erased but kept because payments reference it) | E001, E002, E008, E018, E027, E028 |
-| Role | `roles` | The five roles (via `model_has_roles`; Spatie permission package) | FR-RBAC |
+| User | `users` | Every account — commuter, driver, staff, admin — with email, hashed password, verification and suspension state, and `anonymised_at` (set when the account was erased but kept because payments reference it) | E001, E002, E008, E018, E026, E027 |
+| Role | `roles` | The five roles (via `model_has_roles`; Spatie permission package) | E027 |
 | Wallet | `wallets` | A commuter's stored balance | E005, E006 |
 | Top-up History | `topup_histories` | One row per wallet top-up, with a status | E005 |
 | Payment | `payments` | One row per fare payment, including gateway ids and lifecycle status | E006, E007 |
@@ -94,7 +94,7 @@ data at the top of that script after a migration and re-run `python3 docs/diagra
 | `password_resets` | Reset tokens keyed by email, not by user id. |
 | `vehicle_location_histories` | Breadcrumb row for each accepted position broadcast (E021). |
 | `dev_markers` | Developer-only synthetic map markers (E021 A4, `local` environment). |
-| `activity_log` | The audit trail ([AUDIT_TRAIL.md](AUDIT_TRAIL.md)); `causer_id` / `subject_id` are polymorphic, no foreign key. Indexed on `log_name`, causer, subject and — since `2026_10_21_100000` — `created_at`. Read by the admin Activity Log page (UCN_SC_E029). |
+| `activity_log` | The audit trail ([AUDIT_TRAIL.md](AUDIT_TRAIL.md)); `causer_id` / `subject_id` are polymorphic, no foreign key. Indexed on `log_name`, causer, subject and — since `2026_10_21_100000` — `created_at`. Read by the admin Activity Log page (UCN_SC_E028). |
 | `failed_jobs` | Laravel queue failures. |
 
 ---

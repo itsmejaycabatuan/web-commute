@@ -77,7 +77,7 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 - **E2 is a catch-all**: any exception during aggregation (including a genuine bug) is reported to the log and shown to the Admin as an aggregation timeout, so a real error can be mistaken for slowness.
 - **E4 is derived from the payments ledger only**; a system with no payments never raises the warning even if other data is stale.
 - Reports are generated on every page load from live queries — there is no caching, snapshotting or scheduled export.
-- **Exports are audited**: each CSV export writes a `report_exported` entry (who, which report, the date range) that the Admin can find on the Activity Log page (UCN_SC_E029). Generating a report on screen is a read and writes nothing.
+- **Exports are audited**: each CSV export writes a `report_exported` entry (who, which report, the date range) that the Admin can find on the Activity Log page (UCN_SC_E028). Generating a report on screen is a read and writes nothing.
 
 ---
 

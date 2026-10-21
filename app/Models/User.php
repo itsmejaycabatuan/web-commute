@@ -229,7 +229,7 @@ class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
 
     /**
      * Remove an account without destroying the ledger: with nothing financial attached it is deleted
-     * outright; with payments or top-ups it is anonymised instead. UCN_SC_E027 / E018 / E012 / E028.
+     * outright; with payments or top-ups it is anonymised instead. UCN_SC_E026 / E018 / E012 / E027.
      *
      * Callers audit the action themselves (they know the actor), so the model's own events are off here.
      *

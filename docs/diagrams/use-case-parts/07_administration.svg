@@ -26,9 +26,9 @@
 <ellipse cx="380.0" cy="289.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/><ellipse cx="380.0" cy="289.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75"/>
 <text x="380.0" y="293.3" text-anchor="middle"><tspan class="ui">E020</tspan><tspan class="un" dx="6">View System Reports</tspan></text>
 <ellipse cx="380.0" cy="351.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/><ellipse cx="380.0" cy="351.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75"/>
-<text x="380.0" y="355.3" text-anchor="middle"><tspan class="ui">E028</tspan><tspan class="un" dx="6">Manage Staff Accounts</tspan></text>
+<text x="380.0" y="355.3" text-anchor="middle"><tspan class="ui">E027</tspan><tspan class="un" dx="6">Manage Staff Accounts</tspan></text>
 <ellipse cx="380.0" cy="413.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/><ellipse cx="380.0" cy="413.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75"/>
-<text x="380.0" y="417.3" text-anchor="middle"><tspan class="ui">E029</tspan><tspan class="un" dx="6">View Activity Log</tspan></text>
+<text x="380.0" y="417.3" text-anchor="middle"><tspan class="ui">E028</tspan><tspan class="un" dx="6">View Activity Log</tspan></text>
 <line x1="24.0" y1="502.0" x2="58.0" y2="502.0" stroke="#2F6FB5" stroke-width="1.4" />
 <text x="66" y="506" class="leg">Association</text>
 </svg>

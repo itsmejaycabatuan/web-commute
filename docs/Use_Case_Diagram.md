@@ -1,7 +1,7 @@
 # Use-Case Diagram — SmartCommute
 
 UML use-case diagram for the whole system, built from the 28 Use Case Narratives in [`UCN/`](UCN/README.md)
-(`UCN_SC_E001` – `E029`; `E025` is unassigned in the UCN set).
+(`UCN_SC_E001` – `E028`, contiguous since the October 2026 renumbering — see the numbering note in the [UCN README](UCN/README.md)).
 
 ![SmartCommute use-case diagram](diagrams/use_case_diagram.svg)
 
@@ -17,12 +17,12 @@ do not accept SVG, so use the **PNG** (2× resolution, white background): *Inser
 | # | Diagram | Shows | PNG |
 |---|---|---|---|
 | 1 | Overview | The 7 feature packages and which roles use them | [01_overview.png](diagrams/use-case-parts/01_overview.png) |
-| 2 | Account & Access | E001, E002, E011, E022 (public) and E008, E026, E027 (every signed-in user); Email Service | [02_account_and_access.png](diagrams/use-case-parts/02_account_and_access.png) |
+| 2 | Account & Access | E001, E002, E011, E022 (public) and E008, E025, E026 (every signed-in user); Email Service | [02_account_and_access.png](diagrams/use-case-parts/02_account_and_access.png) |
 | 3 | Map & Commuter Services | E003–E007; Map & Routing, Push Channel, PayMongo | [03_map_and_commuter_services.png](diagrams/use-case-parts/03_map_and_commuter_services.png) |
 | 4 | Driver Operations | E009, E010, E021, E023; Push Channel | [04_driver_operations.png](diagrams/use-case-parts/04_driver_operations.png) |
 | 5 | Driver Management | E012, E013, E014, E024; Admin shares E012 | [05_driver_management.png](diagrams/use-case-parts/05_driver_management.png) |
 | 6 | Fleet Maintenance | E015, E016, E017; Admin shares E015 | [06_fleet_maintenance.png](diagrams/use-case-parts/06_fleet_maintenance.png) |
-| 7 | Administration | E018, E019, E020, E028, E029 | [07_administration.png](diagrams/use-case-parts/07_administration.png) |
+| 7 | Administration | E018, E019, E020, E027, E028 | [07_administration.png](diagrams/use-case-parts/07_administration.png) |
 
 SVG versions sit beside each PNG. They are regenerated with `python3 docs/diagrams/build_use_case_parts.py`, which reads
 its content from `build_use_case_diagram.py` so the pieces and the full diagram cannot drift apart.
@@ -43,7 +43,7 @@ Companion documents: [Functional Requirements](Functional_Requirements.md) ·
 | **Driver Manager** | Primary | Back-office staff who run the driver roster, timekeeping and violations. | `role:driver_manager` |
 | **Maintenance Manager** | Primary | Back-office staff who run the fleet and preventive maintenance. | `role:maintenance_manager` |
 | **Admin** | Primary | System administrator: commuters, fare rates, reports, staff accounts, the activity log; may also use the driver and vehicle pages. | `role:admin` |
-| **Authenticated User** | Abstract | Generalisation of the five signed-in roles above. Holds the use cases every signed-in user has (E008, E026, E027). | — |
+| **Authenticated User** | Abstract | Generalisation of the five signed-in roles above. Holds the use cases every signed-in user has (E008, E025, E026). | — |
 | **Email Service** | Secondary (external) | Mail transport that delivers verification and password-reset links. | E002, E011 |
 | **Map & Routing Services** | Secondary (external) | OpenFreeMap tiles (MapLibre GL), Photon geocoding, OSRM routing. | E003, E004 |
 | **PayMongo Gateway** | Secondary (external) | Hosted checkout and signed webhooks for GCash / Maya fares. Optional, flag-controlled. | E006 |
@@ -79,10 +79,10 @@ Companion documents: [Functional Requirements](Functional_Requirements.md) ·
 | [E022](UCN/UCN_SC_E022_Driver_Registration.md) | Driver Registration | ● | | | | | | |
 | [E023](UCN/UCN_SC_E023_Driver_Dashboard_Views.md) | Driver Dashboard Views | | | ● | | | | |
 | [E024](UCN/UCN_SC_E024_Admin_Violation_Code_Management.md) | Violation Code Management | | | | ● | | | |
-| [E026](UCN/UCN_SC_E026_Profile_and_Dashboard.md) | Profile & Dashboard Views | | | | | | | ● |
-| [E027](UCN/UCN_SC_E027_Account_Deletion.md) | Account Deletion | | | | | | | ● |
-| [E028](UCN/UCN_SC_E028_Manage_Staff_Accounts.md) | Manage Staff Accounts | | | | | | ● | |
-| [E029](UCN/UCN_SC_E029_View_Activity_Log.md) | View Activity Log | | | | | | ● | |
+| [E025](UCN/UCN_SC_E025_Profile_and_Dashboard.md) | Profile & Dashboard Views | | | | | | | ● |
+| [E026](UCN/UCN_SC_E026_Account_Deletion.md) | Account Deletion | | | | | | | ● |
+| [E027](UCN/UCN_SC_E027_Manage_Staff_Accounts.md) | Manage Staff Accounts | | | | | | ● | |
+| [E028](UCN/UCN_SC_E028_View_Activity_Log.md) | View Activity Log | | | | | | ● | |
 
 ## 3. Relationships between use cases
 
@@ -98,9 +98,9 @@ Companion documents: [Functional Requirements](Functional_Requirements.md) ·
 - **Grouping.** The dashed packages inside the system boundary group use cases by the part of the product they belong to;
   they carry no UML meaning beyond layout. Each use case is labelled with its UCN id so the diagram traces straight to
   the narratives.
-- **Authenticated User.** E008 Change Password, E026 Profile & Dashboard Views and E027 Account Deletion are available
+- **Authenticated User.** E008 Change Password, E025 Profile & Dashboard Views and E026 Account Deletion are available
   to every signed-in role, so they hang off the abstract *Authenticated User* actor instead of drawing 15 separate lines.
-  (E026 is role-specific *content*: the profile page is commuter-only and the dashboard is staff-only — see its UCN.)
+  (E025 is role-specific *content*: the profile page is commuter-only and the dashboard is staff-only — see its UCN.)
 - **Guest vs. Commuter.** Track PUJ and Plan Trip are drawn for both. Commuter is *not* drawn as a specialisation of Guest,
   because that would also give Commuters Login / Create Account.
 - **Admin access to other roles' pages.** The diagram shows the two cases the narratives name as shared with the Admin

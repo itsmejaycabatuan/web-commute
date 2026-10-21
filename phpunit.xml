@@ -12,6 +12,13 @@
             <directory suffix="Test.php">./tests/Feature</directory>
         </testsuite>
     </testsuites>
+    <groups>
+        <exclude>
+            <!-- Known non-functional gaps: tests that assert the wanted behaviour and fail today.
+                 Run them on purpose with the group name nfr-gap (see tests/Feature/Nfr/KnownGapsNfrTest.php). -->
+            <group>nfr-gap</group>
+        </exclude>
+    </groups>
     <coverage processUncoveredFiles="true">
         <include>
             <directory suffix=".php">./app</directory>

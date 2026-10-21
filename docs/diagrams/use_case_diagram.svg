@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1420 1503" width="1420" height="1503" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
 <title>SmartCommute — UML use-case diagram</title>
-<desc>Actors, use cases (UCN_SC_E001–E028) and their relationships for the SmartCommute web system.</desc>
+<desc>Actors, use cases (UCN_SC_E001–E027) and their relationships for the SmartCommute web system.</desc>
 <style>
 .actor-label{font-size:12.5px;font-weight:700;fill:#1b1f23}
 .uc-id{font-size:9.5px;font-weight:700;fill:#57606a}
@@ -18,7 +18,7 @@
 <rect width="1420" height="1503" fill="#ffffff"/>
 <rect x="175" y="172" width="1070" height="1116" rx="10" fill="#FCFCFD" stroke="#30363d" stroke-width="2"/>
 <text x="195" y="198" class="title">SmartCommute — Web Commute System</text>
-<text x="195" y="213" class="sub">use cases UCN_SC_E001 – E029 (E025 is unassigned)</text>
+<text x="195" y="213" class="sub">use cases UCN_SC_E001 – E028</text>
 <rect x="210" y="238" width="310" height="266" rx="8" fill="#E3F0FF" fill-opacity="0.45" stroke="#2F6FB5" stroke-width="1.2" stroke-dasharray="5 3"/>
 <text x="222" y="257" class="grp" fill="#2F6FB5">Account &amp; Access</text>
 <rect x="210" y="530" width="310" height="324" rx="8" fill="#DDF3EC" fill-opacity="0.45" stroke="#1F8F6B" stroke-width="1.2" stroke-dasharray="5 3"/>
@@ -225,10 +225,10 @@
 <text x="1055.0" y="709.3" text-anchor="middle"><tspan class="uc-id">E020</tspan><tspan class="uc-name" dx="6">View System Reports</tspan></text>
 <ellipse cx="1055.0" cy="763.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
 <ellipse cx="1055.0" cy="763.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="767.3" text-anchor="middle"><tspan class="uc-id">E028</tspan><tspan class="uc-name" dx="6">Manage Staff Accounts</tspan></text>
+<text x="1055.0" y="767.3" text-anchor="middle"><tspan class="uc-id">E027</tspan><tspan class="uc-name" dx="6">Manage Staff Accounts</tspan></text>
 <ellipse cx="1055.0" cy="821.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
 <ellipse cx="1055.0" cy="821.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="825.3" text-anchor="middle"><tspan class="uc-id">E029</tspan><tspan class="uc-name" dx="6">View Activity Log</tspan></text>
+<text x="1055.0" y="825.3" text-anchor="middle"><tspan class="uc-id">E028</tspan><tspan class="uc-name" dx="6">View Activity Log</tspan></text>
 <ellipse cx="1055.0" cy="939.0" rx="135" ry="19" fill="#fff" stroke="#8A7410" stroke-width="1.6"/>
 <ellipse cx="1055.0" cy="939.0" rx="135" ry="19" fill="#F4EDC6" fill-opacity="0.75" stroke="none"/>
 <text x="1055.0" y="943.3" text-anchor="middle"><tspan class="uc-id">E015</tspan><tspan class="uc-name" dx="6">Manage Vehicles</tspan></text>
@@ -243,10 +243,10 @@
 <text x="365.0" y="1235.3" text-anchor="middle"><tspan class="uc-id">E008</tspan><tspan class="uc-name" dx="6">Change Password</tspan></text>
 <ellipse cx="710.0" cy="1231.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/>
 <ellipse cx="710.0" cy="1231.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75" stroke="none"/>
-<text x="710.0" y="1235.3" text-anchor="middle"><tspan class="uc-id">E026</tspan><tspan class="uc-name" dx="6">Profile &amp; Dashboard Views</tspan></text>
+<text x="710.0" y="1235.3" text-anchor="middle"><tspan class="uc-id">E025</tspan><tspan class="uc-name" dx="6">Profile &amp; Dashboard Views</tspan></text>
 <ellipse cx="1055.0" cy="1231.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/>
 <ellipse cx="1055.0" cy="1231.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="1235.3" text-anchor="middle"><tspan class="uc-id">E027</tspan><tspan class="uc-name" dx="6">Account Deletion</tspan></text>
+<text x="1055.0" y="1235.3" text-anchor="middle"><tspan class="uc-id">E026</tspan><tspan class="uc-name" dx="6">Account Deletion</tspan></text>
 <rect x="70" y="1316" width="420" height="132" rx="6" fill="#fff" stroke="#c9d1d9"/>
 <text x="82" y="1334" class="grp" fill="#1b1f23">Legend</text>
 <line x1="84.0" y1="1356.0" x2="122.0" y2="1356.0" stroke="#2F6FB5" stroke-width="1.4" />

@@ -47,9 +47,9 @@
 <ellipse cx="380.0" cy="469.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/><ellipse cx="380.0" cy="469.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75"/>
 <text x="380.0" y="473.3" text-anchor="middle"><tspan class="ui">E008</tspan><tspan class="un" dx="6">Change Password</tspan></text>
 <ellipse cx="380.0" cy="531.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/><ellipse cx="380.0" cy="531.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75"/>
-<text x="380.0" y="535.3" text-anchor="middle"><tspan class="ui">E026</tspan><tspan class="un" dx="6">Profile &amp; Dashboard Views</tspan></text>
+<text x="380.0" y="535.3" text-anchor="middle"><tspan class="ui">E025</tspan><tspan class="un" dx="6">Profile &amp; Dashboard Views</tspan></text>
 <ellipse cx="380.0" cy="593.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/><ellipse cx="380.0" cy="593.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75"/>
-<text x="380.0" y="597.3" text-anchor="middle"><tspan class="ui">E027</tspan><tspan class="un" dx="6">Account Deletion</tspan></text>
+<text x="380.0" y="597.3" text-anchor="middle"><tspan class="ui">E026</tspan><tspan class="un" dx="6">Account Deletion</tspan></text>
 <line x1="24.0" y1="682.0" x2="58.0" y2="682.0" stroke="#2F6FB5" stroke-width="1.4" />
 <text x="66" y="686" class="leg">Association</text>
 <line x1="149.6" y1="682.0" x2="183.6" y2="682.0" stroke="#57606a" stroke-width="1.2" />

@@ -23,7 +23,7 @@ use Tests\TestCase;
  * Removing an account must never destroy the payment ledger: an account with payments or top-ups is
  * anonymised (personal data and access gone, financial rows kept); one without is deleted outright;
  * and the database itself refuses to cascade through payments / top-ups.
- * UCN_SC_E027, E018 A3, E012 A3, E028 A4.
+ * UCN_SC_E026, E018 A3, E012 A3, E027 A4.
  */
 class AccountErasureTest extends TestCase
 {
@@ -68,7 +68,7 @@ class AccountErasureTest extends TestCase
         return Activity::where('id', '>', $this->baseline)->when($event, fn ($q) => $q->where('event', $event))->orderBy('id')->get();
     }
 
-    // ───────────────────────── self-deletion (E027) ─────────────────────────
+    // ───────────────────────── self-deletion (E026) ─────────────────────────
 
     public function test_deleting_your_own_account_keeps_the_payment_history_and_erases_the_person()
     {

@@ -1,8 +1,8 @@
-# UCN_SC_E027 — Account Deletion
+# UCN_SC_E026 — Account Deletion
 
 | Field                 | Value                                                                                                                                            |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Use_Case_ID**       | UCN SC E027                                                                                                                                      |
+| **Use_Case_ID**       | UCN SC E026                                                                                                                                      |
 | **Use Case Name**     | Account Deletion                                                                                                                                 |
 | **Primary Actor**     | Authenticated user (any role)                                                                                                                    |
 | **Secondary Actor**   | System                                                                                                                                           |

@@ -11,12 +11,14 @@
             "id": "9f89179a0caa52b5",
             "type": "leaf",
             "state": {
-              "type": "image",
+              "type": "markdown",
               "state": {
-                "file": "diagrams/erd_full.svg"
+                "file": "Non_Functional_Requirements.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-image",
-              "title": "erd_full"
+              "icon": "lucide-file",
+              "title": "Non_Functional_Requirements"
             }
           }
         ]
@@ -188,17 +190,25 @@
   },
   "active": "9f89179a0caa52b5",
   "lastOpenFiles": [
+    "MANUAL_TEST_CHECKLIST.md",
+    "Functional_Requirements.md",
+    "UCN/UCN_SC_E028_View_Activity_Log.md",
+    "UCN/UCN_SC_E027_Manage_Staff_Accounts.md",
+    "UCN/UCN_SC_E026_Account_Deletion.md",
+    "UCN/UCN_SC_E025_Profile_and_Dashboard.md",
+    "Functional_Requirements.md.tmp.5327.3ba4a1a92e44",
+    "UCN/UCN_SC_E001_Login.md",
+    "UCN/UCN_SC_E023_Driver_Dashboard_Views.md",
+    "diagrams/erd_full.svg",
+    "UCN/UCN_SC_E029_View_Activity_Log.md",
+    "README.md",
+    "AUDIT_TRAIL.md",
     "diagrams/erd_summary.dot",
     "diagrams/erd_full.dot",
     "diagrams/erd_full.png",
     "diagrams/erd_summary.png",
     "Non_Functional_Requirements.md",
-    "README.md",
-    "UCN/UCN_SC_E029_View_Activity_Log.md",
-    "AUDIT_TRAIL.md",
     "AUDIT_TRAIL.md.tmp.5327.f984b1fe02a2",
-    "Functional_Requirements.md",
-    "diagrams/erd_full.svg",
     "UCN/UCN_Combined.md",
     "Use_Case_Diagram.md",
     "diagrams/use-case-parts/01_overview.png",
@@ -206,7 +216,6 @@
     "diagrams/use_case_diagram.png",
     "Entity_Relationship_Diagram.md",
     "diagrams/erd_summary.svg",
-    "MANUAL_TEST_CHECKLIST.md",
     "UCN/UCN_SC_E028_Manage_Staff_Accounts.md",
     "UCN/UCN_SC_E025_Vehicle_Maintenance_Log_CRUD.md",
     "UCN/UCN_SC_E021_Share_Vehicle_Location.md",
@@ -217,11 +226,6 @@
     "UCN/UCN_SC_E016_Manage_Maintenance_Schedule.md",
     "UCN/UCN_SC_E015_Manage_Vehicles.md",
     "UCN/UCN_SC_E014_Manage_Violations.md",
-    "UCN/UCN_SC_E013_Manage_Timekeeping.md",
-    "UCN/UCN_SC_E012_Manage_Drivers.md",
-    "UCN/UCN_SC_E011_Reset_Password.md",
-    "UCN/UCN_SC_E010_Clock_Out.md",
-    "UCN/UCN_SC_E009_Clock_In.md",
-    "UCN/UCN_SC_E008_Change_Password.md"
+    "UCN/UCN_SC_E013_Manage_Timekeeping.md"
   ]
 }

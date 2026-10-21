@@ -28,10 +28,10 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 | UCN_SC_E022 | Driver Registration | Guest | [Driver Registration](#ucn_sc_e022--driver-registration) |
 | UCN_SC_E023 | Driver Dashboard Views | Driver | [Driver Dashboard Views](#ucn_sc_e023--driver-dashboard-views) |
 | UCN_SC_E024 | Admin Violation Code Management | Driver Manager | [Admin Violation Code Management](#ucn_sc_e024--admin-violation-code-management) |
-| UCN_SC_E026 | Profile and Dashboard Views | All authenticated roles | [Profile and Dashboard Views](#ucn_sc_e026--profile-and-dashboard-views) |
-| UCN_SC_E027 | Account Deletion | Authenticated user | [Account Deletion](#ucn_sc_e027--account-deletion) |
-| UCN_SC_E028 | Manage Staff Accounts | Admin | [Manage Staff Accounts](#ucn_sc_e028--manage-staff-accounts) |
-| UCN_SC_E029 | View Activity Log | Admin | [View Activity Log](#ucn_sc_e029--view-activity-log) |
+| UCN_SC_E025 | Profile and Dashboard Views | All authenticated roles | [Profile and Dashboard Views](#ucn_sc_e025--profile-and-dashboard-views) |
+| UCN_SC_E026 | Account Deletion | Authenticated user | [Account Deletion](#ucn_sc_e026--account-deletion) |
+| UCN_SC_E027 | Manage Staff Accounts | Admin | [Manage Staff Accounts](#ucn_sc_e027--manage-staff-accounts) |
+| UCN_SC_E028 | View Activity Log | Admin | [View Activity Log](#ucn_sc_e028--view-activity-log) |
 
 > **Numbering note.** E011–E020 were reconciled against the implementation. Two sheets previously
 > carried a duplicate identifier — *Manage Violations* shared `UCN_SC_E013` with *Manage Timekeeping*
@@ -1741,7 +1741,7 @@ Vehicle issues (E3/E4 map removal, driver detachment, disposal guards) are now e
 > - The page does **not** show a "list of maintenance services to be logged"; it is a per-vehicle schedule board: a vehicle picker plus one card per maintenance task showing *last serviced*, *odometer*, *cost* and the computed **next due date / next due odometer**.
 > - The buttons are **"Log"** (or **"Update"** once logged) per task card and **"Save Log"** in the modal — not *"Log button"* / *"Save Log button"* on a list row.
 > - **E2 (invalid odometer reading)** is now enforced: a reading lower than the last recorded one for that vehicle is rejected.
-> - The separate *vehicle maintenance log* (UCN_SC_E025) was **retired**: the preventive-maintenance record now holds each service's date, odometer and cost, and the fleet cost/kilometre analytics and the reports read it directly.
+> - The separate *vehicle maintenance log* (formerly its own use case, numbered E025 until the October 2026 renumbering — see the UCN README) was **retired**: the preventive-maintenance record now holds each service's date, odometer and cost, and the fleet cost/kilometre analytics and the reports read it directly.
 
 ---
 
@@ -2247,7 +2247,7 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 - **E2 is a catch-all**: any exception during aggregation (including a genuine bug) is reported to the log and shown to the Admin as an aggregation timeout, so a real error can be mistaken for slowness.
 - **E4 is derived from the payments ledger only**; a system with no payments never raises the warning even if other data is stale.
 - Reports are generated on every page load from live queries — there is no caching, snapshotting or scheduled export.
-- **Exports are audited**: each CSV export writes a `report_exported` entry (who, which report, the date range) that the Admin can find on the Activity Log page (UCN_SC_E029). Generating a report on screen is a read and writes nothing.
+- **Exports are audited**: each CSV export writes a `report_exported` entry (who, which report, the date range) that the Admin can find on the Activity Log page (UCN_SC_E028). Generating a report on screen is a read and writes nothing.
 
 ---
 
@@ -2713,11 +2713,11 @@ A PDO exception occurs during any database interaction. System logs the exceptio
 
 ---
 
-## UCN_SC_E026 — Profile and Dashboard Views
+## UCN_SC_E025 — Profile and Dashboard Views
 
 | Field                 | Value                                                                                                                                            |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Use_Case_ID**       | UCN SC E026                                                                                                                                      |
+| **Use_Case_ID**       | UCN SC E025                                                                                                                                      |
 | **Use Case Name**     | Profile and Dashboard Views                                                                                                                      |
 | **Primary Actor**     | Authenticated user (Commuter for profile; Admin, Driver, Driver Manager, Maintenance Manager for dashboard)                                      |
 | **Secondary Actor**   | System                                                                                                                                           |
@@ -2852,11 +2852,11 @@ Any other unhandled exception results in a 500 error page.
 
 ---
 
-## UCN_SC_E027 — Account Deletion
+## UCN_SC_E026 — Account Deletion
 
 | Field                 | Value                                                                                                                                            |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Use_Case_ID**       | UCN SC E027                                                                                                                                      |
+| **Use_Case_ID**       | UCN SC E026                                                                                                                                      |
 | **Use Case Name**     | Account Deletion                                                                                                                                 |
 | **Primary Actor**     | Authenticated user (any role)                                                                                                                    |
 | **Secondary Actor**   | System                                                                                                                                           |
@@ -2944,11 +2944,11 @@ Any other exception in the `destroy` method results in a 500 error page.
 
 ---
 
-## UCN_SC_E028 — Manage Staff Accounts
+## UCN_SC_E027 — Manage Staff Accounts
 
 | Field                 | Value                                                                                                   |
 | --------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Use_Case_ID**       | UCN_SC_E028                                                                                             |
+| **Use_Case_ID**       | UCN_SC_E027                                                                                             |
 | **Use Case Name**     | Manage Staff Accounts                                                                                   |
 | **Primary Actor**     | Admin (`role:admin`)                                                                                    |
 | **Secondary Actor**   | System                                                                                                  |
@@ -3039,11 +3039,11 @@ Any other role (or a guest) is refused (403 / redirect to login).
 
 ---
 
-## UCN_SC_E029 — View Activity Log
+## UCN_SC_E028 — View Activity Log
 
 | Field                 | Value                                                                                                   |
 | --------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Use_Case_ID**       | UCN_SC_E029                                                                                             |
+| **Use_Case_ID**       | UCN_SC_E028                                                                                             |
 | **Use Case Name**     | View Activity Log                                                                                       |
 | **Primary Actor**     | Admin (`role:admin`)                                                                                    |
 | **Secondary Actor**   | System (audit trail, CSV writer)                                                                        |
@@ -3146,4 +3146,4 @@ More than 10,000 entries match. System exports the newest 10,000; the Admin narr
 | Writing the trail | `app/Support/Audit.php`, `app/Models/Concerns/Audited.php`; design in `docs/AUDIT_TRAIL.md` |
 | Schema | `activity_log`; `database/migrations/2026_10_21_100000_add_created_at_index_to_activity_log.php` |
 | Tests | `tests/Feature/ActivityLogPageTest.php`, `tests/Feature/AuditTrailTest.php` |
-| Related | UCN_SC_E001 (Login — sign-in events), UCN_SC_E018 / E028 (suspensions, staff), UCN_SC_E020 (report export, also audited) |
+| Related | UCN_SC_E001 (Login — sign-in events), UCN_SC_E018 / E027 (suspensions, staff), UCN_SC_E020 (report export, also audited) |

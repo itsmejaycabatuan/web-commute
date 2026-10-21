@@ -3,7 +3,7 @@
 What the system records about who did what, how to read it, and how to add to it.
 Code: [`app/Support/Audit.php`](../app/Support/Audit.php) · [`app/Models/Concerns/Audited.php`](../app/Models/Concerns/Audited.php) ·
 config [`config/activitylog.php`](../config/activitylog.php) · tests [`tests/Feature/AuditTrailTest.php`](../tests/Feature/AuditTrailTest.php).
-Requirements: NFR-AUD-01 … 06 in [Non_Functional_Requirements.md](Non_Functional_Requirements.md); FR-ADM-14 … 18 in [Functional_Requirements.md](Functional_Requirements.md); use case [UCN_SC_E029](UCN/UCN_SC_E029_View_Activity_Log.md).
+Requirements: NFR-AUD-01 … 06 in [Non_Functional_Requirements.md](Non_Functional_Requirements.md); FR-E028 in [Functional_Requirements.md](Functional_Requirements.md); use case [UCN_SC_E028](UCN/UCN_SC_E028_View_Activity_Log.md).
 
 ## Why it was rebuilt
 
@@ -62,7 +62,7 @@ Database and gateway failures go to `storage/logs/laravel.log` (`Log::error` wit
   instance) and the explicit entry carries the extra context.
 - **Self-deleting an account is logged before the sign-out**, so the entry still knows who did it, and keeps the email and the outcome. An account with
   payments or top-ups is **anonymised**, not deleted (`User::eraseAccount()`), so the ledger survives; those rows are no longer removed by any delete — the
-  foreign keys are `RESTRICT` — see [Entity_Relationship_Diagram.md](Entity_Relationship_Diagram.md) §3 and UCN_SC_E027.
+  foreign keys are `RESTRICT` — see [Entity_Relationship_Diagram.md](Entity_Relationship_Diagram.md) §3 and UCN_SC_E026.
 - **Auditing never breaks a request.** `Audit::log()` catches its own failures and writes `AUDIT LOG FAILED` to the Laravel log
   (tested). The cost is that a lost entry is only visible there.
 - **Retention.** `activitylog:clean` runs daily and deletes entries older than `ACTIVITY_LOG_RETENTION_DAYS` (default 365). The
@@ -100,7 +100,7 @@ to `AuditTrailTest` — it asserts the actor, the subject, the old/new values an
 
 ## The admin page — Activity Log
 
-Admin sidebar → **Activity Log** (`GET /activity-log`, UCN_SC_E029). Read-only, admin role only, 10 entries per page, newest first.
+Admin sidebar → **Activity Log** (`GET /activity-log`, UCN_SC_E028). Read-only, admin role only, 10 entries per page, newest first.
 
 | Part | What it does |
 |---|---|

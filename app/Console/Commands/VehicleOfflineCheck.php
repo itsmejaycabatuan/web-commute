@@ -19,7 +19,7 @@ class VehicleOfflineCheck extends Command
             ->pluck('vehicle_id');
         foreach ($stale as $vid) {
             Vehicle::where('id', $vid)
-                ->whereTrue('is_active')
+                ->where('is_active', true)
                 ->update(['is_active' => false]);
             Log::info("Vehicle {$vid} marked inactive.");
         }
@@ -28,7 +28,7 @@ class VehicleOfflineCheck extends Command
             ->pluck('vehicle_id');
         foreach ($recent as $vid) {
             Vehicle::where('id', $vid)
-                ->whereFalse('is_active')
+                ->where('is_active', false)
                 ->update(['is_active' => true]);
             Log::info("Vehicle {$vid} re-activated.");
         }

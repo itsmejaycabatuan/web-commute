@@ -1,181 +1,208 @@
 # Non-Functional Requirements — SmartCommute
 
-The qualities and constraints the system shall meet, alongside the behaviour in
-[Functional Requirements](Functional_Requirements.md). Every figure below comes from the
-[Use Case Narratives](UCN/README.md) or the project configuration (`composer.json`, `package.json`, `config/*`,
-`routes/web.php`, `app/Console/Kernel.php`); nothing is a measured benchmark.
+The qualities the system shall have — security, privacy, reliability, performance, usability and so on — alongside the behaviour in
+[Functional Requirements](Functional_Requirements.md). **Every requirement here is tied to evidence:** an automated test that passes,
+a test that fails because the system falls short, or an honest *not tested*. Nothing is marked "met" on the strength of someone's reading of the code.
 
-## How to read this document
+## How a requirement is verified
 
-- **ID** — `NFR-<category>-<nn>`.
-- **Measure** — the value the system uses today, or what a reviewer can check. Where the UCNs give no number, the
-  requirement is stated qualitatively rather than inventing one.
-- **Status** — what the system does **today**:
-  **Met** = implemented as written · **Partial** = implemented with a documented limitation (said in the row) ·
-  **Gap** = not implemented, kept as a requirement so the team can decide.
-- **Source** — UCN id or file where the behaviour is documented.
-- Section 12 lists quality attributes **nobody has specified yet** (availability target, backup, accessibility…).
+| Result | Meaning |
+|---|---|
+| ✅ **Pass** | The tests cited in *Evidence* pass in the normal run. |
+| ❌ **Fail** | The system falls short. Either a **known-gap test** — it asserts the behaviour the requirement *wants*, fails today, and is kept out of the normal run — or a tool check that fails. The test starts passing the day the gap is fixed. |
+| ⚪ **Not tested** | No test exists yet (usually because it needs a real browser, or a production server). The *Notes* say what is missing. |
 
-| Category | Met | Partial | Gap |
+*Evidence* names tests as `Class::test_method` (a class on its own means every test in it). "manual" points at a section of the
+[manual test checklist](MANUAL_TEST_CHECKLIST.md). A few checks are not PHPUnit tests and say so.
+
+### Running the evidence
+
+```bash
+php vendor/bin/phpunit                          # the normal run — every Pass row
+php vendor/bin/phpunit tests/Feature/Nfr        # only the tests written for this document
+php vendor/bin/phpunit --group NFR-SEC-03       # one requirement's evidence
+php vendor/bin/phpunit --group NFR-SEC          # one category
+php vendor/bin/phpunit --group nfr-gap          # all the known gaps — every one of these FAILS, on purpose
+php vendor/bin/phpunit --group NFR-SEC-17 --exclude-group none   # one requirement's known gap
+php vendor/bin/pint --test                      # code style (NFR-MNT-04)
+```
+
+`tests/Feature/Nfr/NfrTraceabilityTest.php` fails the build if this document cites a test that does not exist, if a row has no recognised result, if the summary
+counts below differ from the rows, or if the functional requirements stop being one per use case.
+
+### Last run
+
+**2026-10-21** — the normal run: **423 tests, 6,192 assertions, all passing** (49 of them written for this document). The known-gap group: **11 tests, all failing as designed.** `pint --test`: **109 files** out of style.
+
+## Summary
+
+| Category | ✅ Pass | ❌ Fail | ⚪ Not tested |
 |---|:-:|:-:|:-:|
-| 1 Performance & responsiveness | 5 | 2 | 0 |
-| 2 Security | 9 | 6 | 1 |
-| 3 Privacy | 2 | 3 | 2 |
-| 4 Reliability & data integrity | 7 | 4 | 0 |
-| 5 Usability | 6 | 0 | 1 |
-| 6 Compatibility & interoperability | 4 | 0 | 0 |
-| 7 Maintainability & testability | 4 | 0 | 0 |
+| 1 Performance & responsiveness | 5 | 1 | 1 |
+| 2 Security | 15 | 4 | 1 |
+| 3 Privacy | 4 | 2 | 1 |
+| 4 Reliability & data integrity | 9 | 2 | 0 |
+| 5 Usability | 5 | 0 | 2 |
+| 6 Compatibility & interoperability | 3 | 0 | 1 |
+| 7 Maintainability & testability | 3 | 1 | 0 |
 | 8 Auditability | 6 | 0 | 0 |
 | 9 Localisation | 3 | 0 | 0 |
-| 10 Scalability & capacity | 0 | 2 | 2 |
-| 11 Deployment & operations | 2 | 2 | 0 |
-| **Total (73)** | **48** | **19** | **6** |
+| 10 Scalability & capacity | 1 | 3 | 0 |
+| 11 Deployment & operations | 2 | 0 | 2 |
+| **Total (77)** | **56** | **13** | **8** |
+
+Requirements are numbered by category; a number is never reused. `SEC-17` – `SEC-20` were split out of broader requirements so that each row has a single, testable result.
 
 ---
 
 ## 1. Performance & responsiveness (NFR-PERF)
 
-| ID | Requirement | Measure | Status | Source |
-|---|---|---|:-:|---|
-| NFR-PERF-01 | Driver positions shall reach rider maps without the rider reloading. | Push over the `vehicle-locations` channel, with an initial fetch and a polling fallback; a status toggle shows on the marker "within a few seconds". | Met | E003, E021 |
-| NFR-PERF-02 | A driver's device shall not flood the server with positions. | One broadcast per 2 seconds, throttled in the browser. | Partial — client-side only; no server limit (see NFR-SEC-03) | E021 |
-| NFR-PERF-03 | The live map shall show only current vehicles. | A vehicle is "active" for 5 minutes after its last position; a scheduled job (`vehicle:offline-check`, every minute) clears the flag. | Met | E003, E021 |
-| NFR-PERF-04 | Long lists shall not render all rows at once. | 10 rows per page for drivers, vehicles, commuters, tasks, violation codes/log, staff, receipts, top-ups, violations. | Met | README, E012–E028 |
-| NFR-PERF-05 | The payment-confirmation screen shall not hammer the gateway. | Gateway lookup throttled to once per 4 seconds while the screen auto-refreshes. | Met | E006 |
-| NFR-PERF-06 | A report that cannot be built in time shall fail cleanly, not hang. | Aggregation error is caught and the Admin is asked to shorten the range (no numeric time limit is defined). | Partial — every error, even a bug, shows as "taking too long" | E020 |
-| NFR-PERF-07 | Map and routing calls shall be limited to the service area and a bounded result set. | Geocoding restricted to the service-area box, ≤ 6 matches, from 2 characters; ETA badges ≤ 5 km, nearest indicator ≤ 10 km. | Met | E003, E004 |
+| ID | Requirement | Measure | Evidence | Result | Notes |
+|---|---|---|---|---|---|
+| NFR-PERF-01 | Driver positions shall reach rider maps without the rider reloading. | Push channel with an initial fetch and a polling fallback; a driver's availability change shows on the marker within a few seconds. | `SecondRoundRegressionTest::test_the_feed_follows_the_driver_when_they_toggle_their_status`<br>`SecondRoundRegressionTest::test_the_broadcast_event_carries_the_driver_status`<br>manual checklist §8 | ✅ Pass | Push latency itself can only be timed in a browser (checklist §8). |
+| NFR-PERF-02 | A driver's device shall not be able to flood the server with positions. | The browser sends at most one position every 2 seconds; the server must also refuse a faster stream. | `KnownGapsNfrTest::test_gap_the_location_broadcast_endpoint_is_rate_limited_on_the_server` | ❌ Fail | The 2-second throttle exists only in the browser (`map.blade.php`). 40 rapid posts are all accepted. |
+| NFR-PERF-03 | The live map shall show only current vehicles. | A vehicle is live for 5 minutes after its last position; `vehicle:offline-check` (every minute) clears the flag. | `PerformanceNfrTest::test_the_live_feed_only_lists_vehicles_that_reported_in_the_last_five_minutes`<br>`PerformanceNfrTest::test_the_offline_check_flips_the_active_flag_after_five_minutes_of_silence` | ✅ Pass | Writing the second test found that the command had crashed on every run (`whereTrue()` is not a Laravel method); fixed. |
+| NFR-PERF-04 | Long lists shall not render all rows at once. | 10 rows per page for staff, ledgers, violation log and codes, maintenance tasks, commuter detail, activity log; drivers, commuters and vehicles page in the browser. | `BugFixRegressionTest::test_the_staff_list_pages_ten_at_a_time`<br>`BugFixRegressionTest::test_the_fare_transaction_list_pages_ten_at_a_time`<br>`SecondRoundRegressionTest::test_the_violation_log_pages_ten_at_a_time_and_keeps_the_filters`<br>`SecondRoundRegressionTest::test_the_maintenance_task_list_pages_ten_at_a_time_but_counts_all_of_them`<br>`SecondRoundRegressionTest::test_the_driver_violation_record_pages_ten_at_a_time_with_full_totals`<br>`SecondRoundRegressionTest::test_the_commuter_detail_page_pages_trips_and_topups`<br>`SecondRoundRegressionTest::test_the_client_filtered_lists_ship_a_ten_per_page_pager`<br>`ActivityLogPageTest::test_the_list_is_paged_ten_at_a_time_newest_first` | ✅ Pass |  |
+| NFR-PERF-05 | The payment-confirmation screen shall not hammer the gateway. | The gateway is asked at most once every 4 seconds while the screen refreshes itself. | `PerformanceNfrTest::test_the_pending_payment_screen_asks_the_gateway_at_most_once_every_four_seconds` | ✅ Pass |  |
+| NFR-PERF-06 | A report that cannot be built shall fail cleanly, not hang or half-render. | An aggregation failure cancels the run and tells the Admin to shorten the range; no partial report. | `PerformanceNfrTest::test_a_report_whose_queries_fail_is_cancelled_with_a_clear_message_instead_of_hanging_or_half_rendering` | ✅ Pass | Every error is reported as "taking too long", so a real bug can look like slowness; there is no numeric time limit. |
+| NFR-PERF-07 | Map and routing calls shall be limited to the service area and a bounded result set. | Geocoding restricted to the service-area box, at most 6 matches from 2 characters; ETA badges within 5 km, nearest indicator within 10 km. | — | ⚪ Not tested | Runs in the browser (`map.blade.php`); needs a browser test. |
 
 ## 2. Security (NFR-SEC)
 
-| ID | Requirement | Measure | Status | Source |
-|---|---|---|:-:|---|
-| NFR-SEC-01 | Passwords shall be stored only as salted hashes and be at least 8 characters. | bcrypt (`config/hashing.php`, default 10 rounds); minimum 8 on registration, reset, change and admin-set. | Partial — length only, no complexity or reuse rule | E002, E008, E011 |
-| NFR-SEC-02 | A sign-in shall start a fresh session, and a password change/reset shall cut off other sessions. | Session id regenerated on login; other sessions ended on password change; remember token regenerated on reset. | Met | E001, E008, E011 |
-| NFR-SEC-03 | Abuse-prone endpoints shall be rate limited. | Per minute: login 5, registration 6 (shared by commuter and driver), top-up 5, verification resend 6. | Partial — none on password-reset request, password change or location broadcast | E001, E002, E005, E008, E011, E021 |
-| NFR-SEC-04 | State-changing requests shall be protected against cross-site forgery. | CSRF token on all web forms and the broadcast call; the only exemption is `webhooks/paymongo`. | Met | E006, E021, E027 |
-| NFR-SEC-05 | Gateway callbacks shall be authenticated. | HMAC signature verified on the PayMongo webhook; invalid → HTTP 401, no payment touched. | Met | E006 |
-| NFR-SEC-06 | Every page shall be restricted to the roles allowed to use it. | `auth`, `verified`, `role:*` and `account.active` middleware; wrong role → 403 or redirect. | Met | E024, E028, README |
-| NFR-SEC-07 | A user shall only reach their own data. | Receipts filtered by owner (others → 404); broadcast accepted only for the driver's own vehicle; reset and verification links are signed/tokenised. | Met | E007, E021 |
-| NFR-SEC-08 | Suspending an account shall take effect at once. | `account.active` re-checks the account on every authenticated request and signs the user out; broadcast re-checks suspension per call. | Met | E012, E018, E021, E028 |
-| NFR-SEC-09 | The server shall never trust client-computed values. | Fare re-priced server-side; hours/overtime derived server-side; all inputs validated server-side (client checks are convenience). | Partial — trip **distance** still comes from the browser's routing call | E006, E013 |
-| NFR-SEC-10 | Sign-in shall not reveal whether an email is registered. | One generic credentials-mismatch message. | Partial — the password-reset form does reveal it (and no throttle on that form) | E001, E011 |
-| NFR-SEC-11 | Uploads shall be type- and size-restricted. | Licence image: JPG/JPEG/PNG, ≤ 2 MB; fare guide: PDF only. | Met | E012, E019, E022 |
-| NFR-SEC-12 | Payment configuration shall fail safe. | Gateway disabled by default; refuses to arm on key/host mismatch, a live key outside `production`, or an empty key — and degrades to the declared-payment flow. Secrets are read from the environment, not source. | Met | E006, `docs/PAYMONGO_SETUP.md` |
-| NFR-SEC-13 | Developer-only features shall not exist in production. | Dev markers are compiled out outside the `local` environment. | Partial — their routes are not role-gated | E021 |
-| NFR-SEC-14 | Destructive actions shall be hard to trigger by accident. | Confirmation dialog on every delete / suspend; an Admin cannot delete or suspend themself. | Met | E012, E018, E028 |
-| NFR-SEC-15 | API tokens shall be revocable with the session. | — | Gap — Sanctum personal access tokens are not revoked by "log out other devices" | E008 |
-| NFR-SEC-16 | Data an export writes shall not run as a spreadsheet formula. | The Activity Log CSV prefixes any cell starting `=`, `+`, `-`, `@` with `'`. | Partial — the Reports CSV export (E020) writes emails and names as-is | E029, E020 |
+| ID | Requirement | Measure | Evidence | Result | Notes |
+|---|---|---|---|---|---|
+| NFR-SEC-01 | Passwords shall be stored only as salted hashes and be at least 8 characters. | bcrypt; minimum 8 on registration, change, reset and admin-set. | `SecurityNfrTest::test_passwords_are_stored_only_as_bcrypt_hashes`<br>`SecurityNfrTest::test_a_password_under_eight_characters_is_refused_everywhere_one_can_be_set` | ✅ Pass | Length is the only rule — no complexity or reuse check (FR doc GAP-09). |
+| NFR-SEC-02 | A sign-in shall start a fresh session, and a password change shall cut off other sessions. | Session id regenerated at sign-in; other sessions ended on a password change or on request. | `SecurityNfrTest::test_signing_in_starts_a_fresh_session`<br>`BugFixRegressionTest::test_other_database_sessions_are_removed_and_the_current_one_kept`<br>`UcnRegressionTest::test_changing_password_keeps_current_session`<br>`BugFixRegressionTest::test_a_commuter_can_sign_out_other_devices_with_their_password` | ✅ Pass |  |
+| NFR-SEC-03 | Sign-in, registration, top-up and verification-email requests shall be rate limited. | Per minute: sign-in 5, commuter and driver registration 6, top-up 5, verification email 6. | `SecurityNfrTest::test_sign_in_is_limited_to_five_attempts_a_minute`<br>`SecurityNfrTest::test_registration_is_limited_to_six_attempts_a_minute`<br>`SecurityNfrTest::test_driver_registration_is_limited_to_six_attempts_a_minute`<br>`SecurityNfrTest::test_top_ups_are_limited_to_five_requests_a_minute`<br>`SecurityNfrTest::test_the_verification_email_can_be_requested_at_most_six_times_a_minute` | ✅ Pass | The verification route is written `throttle:6.1` (typo for `6,1`); it works because PHP reads 6.1 as 6 per minute — worth correcting. |
+| NFR-SEC-04 | State-changing web requests shall be protected against cross-site forgery; the only exemptions are the signed PayMongo webhook and the driver location feed (authorised in its controller). | A POST / PUT / DELETE without a valid token gets 419; with one it is accepted; exactly two state-changing routes are exempt. | `SecurityNfrTest::test_a_state_changing_request_without_a_csrf_token_is_refused`<br>`SecurityNfrTest::test_the_same_request_with_a_valid_token_is_accepted`<br>`SecurityNfrTest::test_the_only_csrf_exemptions_are_the_signed_webhook_and_the_driver_location_feed` | ✅ Pass | `VerifyCsrfToken` also lists `api/*` and `track/*/update`; no state-changing route matches them today, so they are dead exemptions — a future route under `api/` would silently skip CSRF. |
+| NFR-SEC-05 | Gateway callbacks shall be authenticated. | HMAC signature verified; an unsigned or tampered webhook gets 401 and touches nothing. | `PayMongoPaymentTest::test_webhook_rejects_an_unsigned_request`<br>`PayMongoPaymentTest::test_webhook_rejects_a_tampered_signature`<br>`PayMongoPaymentTest::test_replayed_webhook_is_idempotent` | ✅ Pass |  |
+| NFR-SEC-06 | Every page shall be restricted to the roles allowed to use it. | `auth`, `verified`, `role:*` and `account.active` middleware; wrong role → 403, guest → login. | `RouteProtectionTest::test_every_route_turns_a_guest_away_unless_it_is_public_on_purpose`<br>`RouteProtectionTest::test_admin_only_pages_refuse_every_other_role`<br>`RouteProtectionTest::test_staff_pages_are_split_between_the_staff_roles`<br>`RouteProtectionTest::test_driver_pages_are_closed_to_everyone_but_drivers` | ✅ Pass |  |
+| NFR-SEC-07 | A user shall only reach their own data. | Receipts are owner-scoped (404 otherwise); a driver can broadcast only for their own vehicle. | `UcnRegressionTest::test_receipt_cannot_be_read_by_another_commuter`<br>`PayMongoPaymentTest::test_return_url_ignores_another_commuters_reference`<br>`SecurityNfrTest::test_a_driver_cannot_broadcast_a_position_for_another_drivers_vehicle` | ✅ Pass |  |
+| NFR-SEC-08 | Suspending an account shall take effect at once. | `account.active` re-checks the account on every authenticated request; broadcast re-checks per call. | `BugFixRegressionTest::test_a_driver_suspended_mid_session_is_signed_out_on_the_next_request`<br>`BugFixRegressionTest::test_a_commuter_suspended_mid_session_is_signed_out_too`<br>`UcnSuspensionTest::test_a_suspended_driver_cannot_broadcast_a_location` | ✅ Pass |  |
+| NFR-SEC-09 | The server shall not trust client-supplied money or hours. | The fare is re-priced from the rate table; worked hours and overtime are derived from the clock times. | `PayMongoPaymentTest::test_tampered_amount_is_ignored_and_the_fare_is_repriced_server_side`<br>`SecurityNfrTest::test_worked_hours_come_from_the_clock_times_not_from_the_request` | ✅ Pass |  |
+| NFR-SEC-10 | Sign-in shall not reveal whether an email is registered. | One generic message for an unknown email and a wrong password. | `SecurityNfrTest::test_sign_in_gives_the_same_answer_for_an_unknown_email_and_a_wrong_password` | ✅ Pass |  |
+| NFR-SEC-11 | Uploads shall be type- and size-restricted. | Licence image: JPG / JPEG / PNG up to 2 MB; fare guide: PDF only. | `SecurityNfrTest::test_a_licence_upload_must_be_a_small_jpg_or_png`<br>`SecondRoundRegressionTest::test_the_admin_driver_form_rejects_a_bad_phone_and_a_non_image_licence`<br>`FareControllerTest::test_fare_upload_requires_a_pdf` | ✅ Pass |  |
+| NFR-SEC-12 | Payment configuration shall fail safe. | Gateway off by default; refuses to run on a key/host mismatch, a live key outside production, an unknown host or an empty key — and degrades to the declared-payment flow. | `PayMongoPaymentTest::test_gateway_is_disabled_by_default_and_records_gcash_as_declared`<br>`PayMongoPaymentTest::test_live_key_against_the_sandbox_host_refuses_to_run`<br>`PayMongoPaymentTest::test_sandbox_key_against_the_live_host_refuses_to_run`<br>`PayMongoPaymentTest::test_live_key_outside_production_refuses_to_run`<br>`PayMongoPaymentTest::test_unknown_host_refuses_to_run`<br>`PayMongoPaymentTest::test_missing_secret_key_refuses_to_run`<br>`PayMongoPaymentTest::test_refused_gateway_falls_back_to_a_declared_payment` | ✅ Pass |  |
+| NFR-SEC-13 | Developer-only features shall not exist in production and shall be admin-only. | Dev markers and the Pusher tooling answer only on a `local` install, and only to an Admin. | `DevMarkerControllerTest::test_the_markers_do_not_exist_outside_a_local_install`<br>`DevMarkerControllerTest::test_only_admins_may_use_the_markers`<br>`PusherControllerTest::test_the_tooling_does_not_exist_outside_a_local_install`<br>`PusherControllerTest::test_non_admins_cannot_fire_events` | ✅ Pass |  |
+| NFR-SEC-14 | Destructive actions shall be hard to trigger by accident. | Every delete sits behind a confirmation dialog. | `SecurityNfrTest::test_every_destructive_action_sits_behind_a_confirmation_dialog` | ✅ Pass | The "an Admin cannot delete or suspend their own account" guard is unreachable in practice: the role check 404s first. |
+| NFR-SEC-15 | API tokens shall be revoked when other devices are signed out or the password changes. | A Sanctum token issued before a password change is gone afterwards. | `KnownGapsNfrTest::test_gap_signing_out_other_devices_also_revokes_api_tokens` | ❌ Fail | Tokens survive a password change. |
+| NFR-SEC-16 | Data the Activity Log CSV writes shall not run as a spreadsheet formula. | Cells starting `=`, `+`, `-`, `@` are prefixed with `'`. | `ActivityLogPageTest::test_a_spreadsheet_formula_in_an_entry_is_neutralised_in_the_export` | ✅ Pass |  |
+| NFR-SEC-17 | Password-reset requests and location broadcasts shall be rate limited. | Repeated requests get 429. | `KnownGapsNfrTest::test_gap_the_password_reset_request_is_rate_limited`<br>`KnownGapsNfrTest::test_gap_the_location_broadcast_endpoint_is_rate_limited_on_the_server` | ❌ Fail | Neither endpoint has a throttle. |
+| NFR-SEC-18 | The trip distance used for pricing shall be computed by the server. | The server prices from its own route, not the browser's. | — | ⚪ Not tested | The distance still comes from the browser's routing call (FR doc GAP-02); there is no server-side route to test against. |
+| NFR-SEC-19 | The password-reset form shall not reveal whether an email is registered. | Identical response for a known and an unknown email. | `KnownGapsNfrTest::test_gap_the_password_reset_form_does_not_reveal_whether_an_email_is_registered` | ❌ Fail | A registered email gets a success message, an unregistered one an error. |
+| NFR-SEC-20 | Data the Reports CSV writes shall not run as a spreadsheet formula. | Same neutralisation as the Activity Log export. | `KnownGapsNfrTest::test_gap_the_report_csv_neutralises_spreadsheet_formulas` | ❌ Fail | The report export writes emails and names as-is. |
 
 ## 3. Privacy (NFR-PRIV)
 
-| ID | Requirement | Measure | Status | Source |
-|---|---|---|:-:|---|
-| NFR-PRIV-01 | A driver's exact position shall never be shown to other users. | Published coordinates are randomised within a **200 m** radius; the payload carries `privacy_radius`; popups say "approximate". | Met | E003, E021 |
-| NFR-PRIV-02 | The system shall collect no more personal data than needed. | Commuters give only email + password; wallet and receipts hold no card data (gateway collects it). | Met | E002, E006 |
-| NFR-PRIV-03 | Sensitive documents shall not be publicly readable. | Driver licence images are saved on the `public` disk (`storage/app/public/licenses`). | Gap — anyone who learns the path can fetch a licence image | E012, E022 |
-| NFR-PRIV-04 | Deleting an account shall remove or anonymise the person's data without losing records the business must keep. | `User::eraseAccount()`: an account with no payments or top-ups is deleted; one with them is **anonymised** — email → `deleted-<id>@deleted.invalid`, password, roles, tokens, sessions, preferences, reset links, map markers, driver profile and licence image removed, suspended — and its wallet, payments and top-ups kept. Deletion is refused while the wallet holds money. | Partial — the original email stays in audit entries until they expire (365 days); a plain delete still leaves orphaned role / token rows (no personal data); no refund path for a wallet balance | E027, [ERD](Entity_Relationship_Diagram.md) |
-| NFR-PRIV-05 | Users shall be able to read the terms and privacy policy they accept. | Links exist on the registration form. | Gap — both are placeholders (`href="#"`) | E002 |
-| NFR-PRIV-06 | Users shall be told what is shared with outside services. | Pick-up / destination text and coordinates go to the geocoding and routing providers from the browser. | Partial — not disclosed anywhere in the product | E004 |
-| NFR-PRIV-07 | Personal data held in the audit trail shall be limited, access-restricted and time-boxed. | Entries hold IP address, user agent and email (never passwords or tokens); readable only by the Admin; deleted after `ACTIVITY_LOG_RETENTION_DAYS` (365). | Partial — users are not told it is kept: the privacy policy is a placeholder (NFR-PRIV-05) | E029, [AUDIT_TRAIL](AUDIT_TRAIL.md) |
+| ID | Requirement | Measure | Evidence | Result | Notes |
+|---|---|---|---|---|---|
+| NFR-PRIV-01 | A driver's exact position shall never be shown to other users. | Published coordinates are randomised within 200 m; the payload carries `privacy_radius`. | `PrivacyNfrTest::test_an_obfuscated_position_is_always_within_200_metres_and_never_the_real_one`<br>`PrivacyNfrTest::test_the_live_feed_never_contains_the_exact_position_or_the_drivers_account`<br>`PrivacyNfrTest::test_the_push_event_carries_an_obfuscated_position_not_the_real_one` | ✅ Pass | 3,000 samples: all within 200 m (+rounding), none identical to the real position. |
+| NFR-PRIV-02 | The system shall collect no more personal data than needed. | A commuter needs only an email and a password; the users table has no name, phone or address column. | `PrivacyNfrTest::test_a_commuter_account_needs_nothing_but_an_email_and_a_password` | ✅ Pass |  |
+| NFR-PRIV-03 | Sensitive documents shall not be publicly readable. | Driver licence images are not stored on the public disk. | `KnownGapsNfrTest::test_gap_driver_licence_images_are_not_stored_on_the_public_disk` | ❌ Fail | Licence images are saved to `storage/app/public/licenses`. |
+| NFR-PRIV-04 | Deleting an account shall remove the person's data without losing the payment ledger. | No payments or top-ups → deleted; otherwise anonymised (email, password, roles, tokens, sessions, preferences, driver profile removed; wallet, payments, top-ups kept); refused while the wallet holds money. | `AccountErasureTest::test_deleting_your_own_account_keeps_the_payment_history_and_erases_the_person`<br>`AccountErasureTest::test_an_account_with_no_payments_or_top_ups_is_deleted_outright`<br>`AccountErasureTest::test_self_deletion_is_refused_while_the_wallet_holds_money`<br>`AccountErasureTest::test_an_anonymised_account_can_never_sign_in_and_the_email_can_be_registered_again`<br>`AccountErasureTest::test_a_driver_with_payments_loses_the_driver_profile_but_not_the_ledger` | ✅ Pass | The original email stays in audit entries until they expire (365 days); a plain delete leaves orphaned role / token rows (no personal data). |
+| NFR-PRIV-05 | Users shall be able to read the terms and privacy policy they accept. | The registration links lead to real pages. | `KnownGapsNfrTest::test_gap_the_terms_and_privacy_links_on_the_registration_form_lead_somewhere` | ❌ Fail | Both links are `href="#"` placeholders. |
+| NFR-PRIV-06 | Users shall be told what is shared with outside services. | Pick-up and destination text and coordinates go to the geocoding and routing providers. | — | ⚪ Not tested | A content/policy matter; nothing in the product discloses it. |
+| NFR-PRIV-07 | Personal data in the audit trail shall be limited, access-restricted and time-boxed. | IP, user agent and email only; Admin-only; deleted after 365 days; no passwords or tokens. | `ActivityLogPageTest::test_only_an_admin_can_open_the_page_or_export_it`<br>`AuditTrailTest::test_no_secret_ever_reaches_the_audit_trail`<br>`PrivacyNfrTest::test_audit_entries_are_deleted_after_the_retention_period` | ✅ Pass | Users are not told it is kept (PRIV-05). |
 
 ## 4. Reliability & data integrity (NFR-REL)
 
-| ID | Requirement | Measure | Status | Source |
-|---|---|---|:-:|---|
-| NFR-REL-01 | A payment shall never be charged twice. | Unique transaction id; replays rejected; receipt shown by redirect from the stored record; settlement `pending → paid` happens once. | Met | E006 |
-| NFR-REL-02 | A duplicate top-up shall not be credited twice. | Same user + amount + method within 2 minutes is refused. | Partial — a heuristic, not an idempotency key; blocks legitimate repeats | E005 |
-| NFR-REL-03 | Multi-record writes shall be all-or-nothing. | Driver registration (user + driver + role) in one DB transaction with rollback and image clean-up; fare upload and rate save each in one transaction. | Met | E019, E022 |
-| NFR-REL-04 | An outside failure shall not leave half-done state. | Gateway error → no payment row, no checkout session, funds kept; mail failure → no success message; routing/map failure → banner, no stale fare. | Met | E004, E006, E011 |
-| NFR-REL-05 | Location broadcasts shall be safe to retry. | Same `(vehicle, timestamp)` is a no-op; a failed write is retried once after 5 s so the last position still publishes. | Partial — the 5 s delay needs an asynchronous queue driver (the default `QUEUE_CONNECTION=sync` ignores it); the browser does not retry | E021, `.env.example` |
-| NFR-REL-06 | Stuck payments shall resolve themselves. | `pending` closed as `cancelled` after 12 hours, hourly and on page open. | Met | E006 |
-| NFR-REL-07 | Records other data depends on shall not be deletable. | Blocked: driver with a vehicle, vehicle with a driver or service history, violation code in use, commuter with a balance, **payments and top-ups (an account that has them is anonymised; the foreign keys `RESTRICT`)**. | Met | E012, E014, E015, E018, E027 |
-| NFR-REL-08 | Time-based housekeeping shall run unattended. | Scheduled: `auth:clear-resets` every 15 min, `vehicle:offline-check` every minute, `payments:expire-pending` hourly, `activitylog:clean` daily. | Met | `app/Console/Kernel.php` |
-| NFR-REL-09 | The product shall keep working when an optional service is off. | Gateway off → declared payments; location denied → map without centring/ETA; map style down → banner; offline → polling pauses and resumes. | Met | E003, E006 |
-| NFR-REL-10 | Related writes that must agree shall be atomic. | — | Partial — clock-in/out and the driver-status update are two writes; a top-up credits the wallet before writing its history row | E005, E009, E010 |
-| NFR-REL-11 | Unexpected errors shall show a controlled message. | Most flows catch database errors and show a toast. | Partial — account deletion and a few others fall through to the default 500 page | E027 |
+| ID | Requirement | Measure | Evidence | Result | Notes |
+|---|---|---|---|---|---|
+| NFR-REL-01 | A payment shall never be charged twice. | Unique transaction id; replays rejected; the receipt is rendered from the stored record. | `UcnRegressionTest::test_duplicate_fare_submission_is_rejected`<br>`UcnRegressionTest::test_paying_a_fare_redirects_to_the_stored_receipt`<br>`PayMongoPaymentTest::test_replayed_webhook_is_idempotent`<br>`BugFixRegressionTest::test_a_replayed_pending_payment_goes_back_to_its_status_page_not_to_a_second_checkout` | ✅ Pass |  |
+| NFR-REL-02 | A duplicate top-up shall not be credited twice. | The same user, amount and method within 2 minutes is credited once. | `ReliabilityNfrTest::test_an_identical_top_up_within_two_minutes_is_credited_only_once` | ✅ Pass | A heuristic, not an idempotency key: a genuine repeat of the same amount within 2 minutes is also blocked. |
+| NFR-REL-03 | Multi-record writes shall be all-or-nothing. | Driver registration (user + driver + image) and commuter registration (user + role + wallet) roll back completely on a failure. | `ReliabilityNfrTest::test_a_driver_application_that_fails_part_way_leaves_no_user_no_driver_and_no_image`<br>`ReliabilityNfrTest::test_a_commuter_registration_that_fails_creating_the_wallet_leaves_no_account` | ✅ Pass |  |
+| NFR-REL-04 | An outside failure shall not leave half-done state. | A gateway failure creates no payment row and no session; funds are kept. | `PayMongoPaymentTest::test_gateway_failure_does_not_create_a_payment`<br>`PayMongoPaymentTest::test_refused_gateway_falls_back_to_a_declared_payment` | ✅ Pass |  |
+| NFR-REL-05 | Location broadcasts shall be safe to retry. | The same timestamp is a no-op; a failed write answers 409 with `Retry-After: 5` and queues one retry. | `ReliabilityNfrTest::test_repeating_a_broadcast_with_the_same_timestamp_changes_nothing`<br>`ReliabilityNfrTest::test_a_failed_write_answers_409_with_retry_after_and_queues_one_retry` | ✅ Pass | The 5-second delay needs an asynchronous queue driver; the default `QUEUE_CONNECTION=sync` ignores it. |
+| NFR-REL-06 | Stuck payments shall resolve themselves. | A gateway payment still pending after 12 hours is closed as cancelled. | `ThirdRoundRegressionTest::test_a_pending_payment_older_than_twelve_hours_is_closed`<br>`ThirdRoundRegressionTest::test_the_expiry_never_touches_settled_or_failed_payments`<br>`ThirdRoundRegressionTest::test_opening_the_history_or_the_ledger_expires_stale_payments_without_a_scheduler` | ✅ Pass |  |
+| NFR-REL-07 | Records other data depends on shall not be deletable. | Refused: driver with a vehicle, vehicle with a driver or service history, violation code in use, commuter with a balance; the database refuses to delete a user or wallet that payments or top-ups reference. | `BugFixRegressionTest::test_an_assigned_vehicle_cannot_be_deleted`<br>`UcnStaffRegressionTest::test_an_in_use_violation_code_cannot_be_deleted`<br>`UcnStaffRegressionTest::test_a_vehicle_with_maintenance_records_cannot_be_deleted`<br>`UcnStaffRegressionTest::test_a_commuter_with_a_balance_cannot_be_deleted`<br>`BugFixRegressionTest::test_a_driver_holding_a_vehicle_cannot_delete_their_own_account`<br>`AccountErasureTest::test_the_database_refuses_to_cascade_through_payments`<br>`AccountErasureTest::test_the_database_refuses_to_cascade_through_top_ups_from_either_side` | ✅ Pass |  |
+| NFR-REL-08 | Time-based housekeeping shall be scheduled. | `auth:clear-resets` every 15 min, `vehicle:offline-check` every minute, `payments:expire-pending` hourly, `activitylog:clean` daily. | `ReliabilityNfrTest::test_the_four_housekeeping_jobs_are_scheduled`<br>`ThirdRoundRegressionTest::test_the_expiry_command_is_scheduled_and_runnable` | ✅ Pass | Whether the production server actually runs the scheduler is OPS-01. |
+| NFR-REL-09 | The product shall keep working when an optional service is off. | Gateway off → payments recorded as declared; wallet payments never contact the gateway. | `PayMongoPaymentTest::test_gateway_is_disabled_by_default_and_records_gcash_as_declared`<br>`PayMongoPaymentTest::test_wallet_payment_stays_internal_even_when_the_gateway_is_enabled` | ✅ Pass | The map's degraded modes (offline, location denied, tiles down) run in the browser and are not automated. |
+| NFR-REL-10 | Writes that must agree shall be atomic. | A clock-in that cannot set the driver's status leaves no shift record. | `KnownGapsNfrTest::test_gap_a_clock_in_that_cannot_set_the_driver_status_leaves_no_shift_behind` | ❌ Fail | The shift row is written and the status update is a second, separate write. |
+| NFR-REL-11 | Unexpected errors shall show a controlled message. | A database failure while deleting your own account redirects with a message, not the default 500 page. | `KnownGapsNfrTest::test_gap_a_database_failure_while_deleting_your_account_gives_a_friendly_message` | ❌ Fail | The failure is uncaught and shows the 500 page — after the sign-out has already happened. |
 
 ## 5. Usability (NFR-USE)
 
-| ID | Requirement | Measure | Status | Source |
-|---|---|---|:-:|---|
-| NFR-USE-01 | Outcomes shall be reported consistently. | Success / error / warning shown as toasts; on a form error the modal stays open with the message under the failing input; on success it closes, the page refreshes and a toast confirms. | Met | README conventions |
-| NFR-USE-02 | Map problems shall be explained in one place. | A single status banner with a fixed priority; clears itself. | Met | E003, E004 |
-| NFR-USE-03 | The UI shall work on phones as well as desktops. | Separate mobile and desktop markup for lists; mobile-layout tests. | Met | `tests/Feature/MobileLayoutTest.php` |
-| NFR-USE-04 | Forms shall help users get input right before submit. | Live checks for email, password length/match, Philippine mobile format (`+63 9XX XXX XXXX`), image type/size; password eye-toggle, strength meter and match indicator. | Met | E002, E011, E012, E018 |
-| NFR-USE-05 | Empty and filtered-out lists shall say so. | Dedicated empty states with a *Clear filters* action. | Met | E007, E014 |
-| NFR-USE-06 | Search and filter state shall survive paging. | Filters travel in the query string. | Met | E007, E014, E028 |
-| NFR-USE-07 | The product shall be usable with assistive technology. | — | Gap — no accessibility requirement or audit exists (see §12) | — |
+| ID | Requirement | Measure | Evidence | Result | Notes |
+|---|---|---|---|---|---|
+| NFR-USE-01 | Outcomes shall be reported consistently. | Toasts for success / error / warning; on a form error the modal stays open with the message under the input. | `BugFixRegressionTest::test_the_toast_component_is_mounted_on_pages_and_the_old_flash_view_is_gone`<br>`BugFixRegressionTest::test_an_ajax_post_that_succeeds_answers_json_with_the_flash_message`<br>`BugFixRegressionTest::test_an_ajax_post_that_fails_validation_keeps_the_field_errors`<br>`BugFixRegressionTest::test_an_ajax_post_refused_by_the_application_answers_409_with_the_reason`<br>`MobileLayoutTest::test_toast_renders_the_flash_on_the_topmost_layer` | ✅ Pass |  |
+| NFR-USE-02 | Map problems shall be explained in one place. | A single status banner chosen by a fixed priority; it clears itself. | — | ⚪ Not tested | Browser behaviour (`map.blade.php`); needs a browser test. |
+| NFR-USE-03 | The UI shall work on phones as well as desktops. | Separate mobile markup and sheets; landscape styles. | `MobileLayoutTest` | ✅ Pass | Checks the markup is shipped, not how it renders on a device. |
+| NFR-USE-04 | Forms shall help users get input right before submit. | Admin modals carry the registration rules (email, password length and match, Philippine mobile number, image type and size). | `SecondRoundRegressionTest::test_the_admin_modals_carry_the_registration_rules`<br>`SecondRoundRegressionTest::test_the_commuter_form_words_a_password_mismatch_like_registration` | ✅ Pass | Checks the rules are present in the page, not that they run in a browser. |
+| NFR-USE-05 | Empty and filtered-out lists shall say so. | A dedicated empty state with a Clear action. | `ActivityLogPageTest::test_an_empty_result_says_so`<br>`UcnStaffRegressionTest::test_a_report_over_an_empty_window_reports_no_data` | ✅ Pass |  |
+| NFR-USE-06 | Search and filter state shall survive paging. | Filters travel in the query string. | `SecondRoundRegressionTest::test_the_violation_log_pages_ten_at_a_time_and_keeps_the_filters`<br>`ActivityLogPageTest::test_the_list_is_paged_ten_at_a_time_newest_first` | ✅ Pass |  |
+| NFR-USE-07 | The product shall be usable with assistive technology. | A target standard (e.g. WCAG 2.1 AA) met. | — | ⚪ Not tested | No accessibility requirement or audit exists yet. |
 
 ## 6. Compatibility & interoperability (NFR-COMP)
 
-| ID | Requirement | Measure | Status | Source |
-|---|---|---|:-:|---|
-| NFR-COMP-01 | The product shall run in a current web browser with no install. | Needs JavaScript, the Geolocation API (for centring/ETA/driver broadcast) and WebGL (MapLibre GL). | Met | E003, E021 |
-| NFR-COMP-02 | The server shall run on the documented stack. | PHP ≥ 8.0 (development on 8.2), Laravel 9, MySQL, Sanctum, Spatie permission + activity log, Pusher server SDK. | Met | `composer.json` |
-| NFR-COMP-03 | External services shall be used through their public interfaces only. | OpenFreeMap tiles, Photon geocoding, OSRM routing, PayMongo hosted checkout + signed webhooks, Pusher/Echo, SMTP. | Met | E003, E004, E006, E011 |
-| NFR-COMP-04 | Bundled front-end libraries shall be pinned. | `maplibre-gl` ^5, `laravel-echo` ^2, `pusher-js` ^8, `axios`. | Met | `package.json` |
+| ID | Requirement | Measure | Evidence | Result | Notes |
+|---|---|---|---|---|---|
+| NFR-COMP-01 | The product shall run in a current web browser with no install. | Needs JavaScript, Geolocation and WebGL. | — | ⚪ Not tested | Needs a cross-browser test run. |
+| NFR-COMP-02 | The server shall run on the documented stack. | PHP ≥ 8.0, Laravel 9, MySQL, Sanctum 2, Spatie permission 6 and activity log 4, Pusher SDK 7. | `PlatformNfrTest::test_the_server_runs_on_the_documented_stack` | ✅ Pass |  |
+| NFR-COMP-03 | External payment services shall be used through their public interface only. | PayMongo hosted checkout and signed webhooks; amounts in centavos. | `PayMongoPaymentTest::test_gcash_payment_creates_a_checkout_session_and_redirects_away`<br>`PayMongoPaymentTest::test_gateway_request_is_sent_in_centavos_with_the_server_price` | ✅ Pass | Map tiles, geocoding and routing are called from the browser and are not covered. |
+| NFR-COMP-04 | Front-end libraries shall be declared with a version. | `maplibre-gl`, `laravel-echo`, `pusher-js` present, every dependency a version range. | `PlatformNfrTest::test_front_end_libraries_are_declared_with_a_version_range` | ✅ Pass |  |
 
 ## 7. Maintainability & testability (NFR-MNT)
 
-| ID | Requirement | Measure | Status | Source |
-|---|---|---|:-:|---|
-| NFR-MNT-01 | Behaviour shall be covered by automated tests. | 29 PHPUnit feature-test files under `tests/Feature` (374 tests), including per-UCN regression suites, a 29-test PayMongo suite and the audit-trail suites (`AuditTrailTest`, `ActivityLogPageTest`) and `AccountErasureTest`. | Met | `tests/Feature` |
-| NFR-MNT-02 | Requirements shall trace to code. | Each UCN has an *Implementation References* table (routes, controllers, services, views, models, tests). | Met | UCN sheets |
-| NFR-MNT-03 | Environment-specific behaviour shall be configuration, not code. | Env-driven: payment gateway flags and keys, mail, session, queue and broadcast drivers, bcrypt rounds. | Met | `.env.example`, `config/` |
-| NFR-MNT-04 | Code style shall be enforceable. | Laravel Pint is a dev dependency. | Met | `composer.json` |
+| ID | Requirement | Measure | Evidence | Result | Notes |
+|---|---|---|---|---|---|
+| NFR-MNT-01 | Behaviour shall be covered by automated tests. | PHPUnit feature tests, run against the dev database in transactions. | the whole suite (`php vendor/bin/phpunit`) | ✅ Pass | See the run total above. |
+| NFR-MNT-02 | Requirements shall trace to code. | Every UCN has an Implementation References section and every full repo path it cites exists. | `PlatformNfrTest::test_every_use_case_narrative_points_at_code_that_exists`<br>`NfrTraceabilityTest::test_the_functional_requirements_are_one_per_use_case_narrative` | ✅ Pass | 180 paths checked. |
+| NFR-MNT-03 | Environment-specific behaviour shall be configuration, not code. | Gateway, mail, queue, session, broadcast, retention are env-driven and documented in `.env.example`; the gateway defaults to off. | `PlatformNfrTest::test_environment_specific_behaviour_is_documented_as_configuration` | ✅ Pass |  |
+| NFR-MNT-04 | Code style shall be enforceable. | `vendor/bin/pint --test` passes. | `vendor/bin/pint --test` (not a PHPUnit test) | ❌ Fail | Run 2026-10-21: 109 files do not meet the project's style preset and 2 cannot be parsed (`app/View/Components/settings-modal.php`, `layout.sidebar.php` — invalid class names, unused). |
 
 ## 8. Auditability (NFR-AUD)
 
-| ID | Requirement | Measure | Status | Source |
-|---|---|---|:-:|---|
-| NFR-AUD-01 | Security-relevant actions shall be logged so that *who did what to which record, when and from where* can be answered. | Audit trail (`activity_log`) via `App\Support\Audit` and the `Audited` model trait. **Who**: the signed-in user, plus a snapshot of their email and role. **What / which record**: event name, a readable description, the subject record, and old → new values for changed business fields. **From where**: IP address and user agent on every entry. Categories (`log_name`): auth, account, driver, fleet, fare, violation, timekeeping, payment, system. Covers sign-in, failed and blocked sign-in (email tried), sign-out, password changes/resets, suspend / reactivate, driver approve / reject, account create / delete, vehicle, violation, maintenance, timekeeping, fare and payment changes. | Met | E001, E011, E012, E018, E028, `tests/Feature/AuditTrailTest.php` |
-| NFR-AUD-02 | Financial and service history shall be preserved. | Payments are immutable once paid; suspended commuters keep wallet and receipts; vehicles with service history are marked *disposed*, never erased; **deleting an account anonymises it when payments or top-ups exist**, and the database refuses (`RESTRICT`) to delete a user or wallet that payments or top-ups reference. | Met | E006, E015, E018, E027, `AccountErasureTest` |
-| NFR-AUD-03 | Report exports shall be attributable. | Every CSV export of a system report (E020) and of the Activity Log writes a `report_exported` / `activity_log_exported` entry: who, what, the date range or filters, the row count. | Met | E020, E029 |
-| NFR-AUD-04 | Account self-deletion shall leave a trace. | A `deleted_self` entry (email, role, `outcome` deleted / anonymised, the acting user) is written before the sign-out, and the model's own delete event is suppressed so there is exactly one entry. | Met | E027, `AuditTrailTest`, `AccountErasureTest` |
-| NFR-AUD-05 | An Admin shall be able to review the audit trail without database access. | Admin-only, read-only *Activity Log* page: newest first, 10 per page, search, category / event / date filters, expandable before → after detail, CSV export. | Met | E029, `tests/Feature/ActivityLogPageTest.php` |
-| NFR-AUD-06 | The audit trail shall hold only what an audit needs and shall not grow without limit. | Page views, map polling, location broadcasts, availability toggles and diagnostics are **not** written (they go to `storage/logs`). Passwords, tokens and licence-image data are never stored. Entries older than `ACTIVITY_LOG_RETENTION_DAYS` (default 365) are deleted daily by `activitylog:clean`. `activitylog:purge-noise` clears the legacy "Action performed" rows. | Met | `config/activitylog.php`, `Kernel.php` |
+| ID | Requirement | Measure | Evidence | Result | Notes |
+|---|---|---|---|---|---|
+| NFR-AUD-01 | Security-relevant actions shall be logged so that who did what to which record, when and from where can be answered. | Actor (with email and role snapshot), event, description, subject record, old → new values, IP and user agent; categories auth, account, driver, fleet, fare, violation, timekeeping, payment, system. | `AuditTrailTest` | ✅ Pass |  |
+| NFR-AUD-02 | Financial and service history shall be preserved. | Payments immutable once paid; suspended commuters keep wallet and receipts; vehicles with history are disposed, not erased; accounts with payments are anonymised, and the database refuses to delete them. | `AccountErasureTest`<br>`UcnStaffRegressionTest::test_a_vehicle_with_maintenance_records_cannot_be_deleted` | ✅ Pass |  |
+| NFR-AUD-03 | Report and Activity Log exports shall be attributable. | Each export writes an entry with who, what, range or filters and row count. | `ActivityLogPageTest::test_exporting_a_report_is_audited_with_who_what_and_the_range`<br>`ActivityLogPageTest::test_the_export_is_a_csv_of_the_filtered_entries_and_is_itself_audited` | ✅ Pass |  |
+| NFR-AUD-04 | Account self-deletion shall leave a trace. | One `deleted_self` entry (email, role, outcome, actor), written before the sign-out. | `AccountErasureTest::test_the_audit_entry_says_how_it_ended_and_keeps_the_original_email`<br>`AuditTrailTest::test_deleting_your_own_account_leaves_exactly_one_entry_with_the_email` | ✅ Pass |  |
+| NFR-AUD-05 | An Admin shall be able to review the audit trail without database access. | Admin-only, read-only Activity Log page: search, category / event / date filters, expandable detail, CSV export. | `ActivityLogPageTest` | ✅ Pass |  |
+| NFR-AUD-06 | The audit trail shall hold only what an audit needs and shall not grow without limit. | No page views, polling, broadcasts or toggles; no passwords or tokens; entries older than 365 days deleted daily. | `AuditTrailTest::test_map_polling_and_page_views_write_nothing`<br>`AuditTrailTest::test_no_secret_ever_reaches_the_audit_trail`<br>`PrivacyNfrTest::test_audit_entries_are_deleted_after_the_retention_period` | ✅ Pass |  |
 
 ## 9. Localisation (NFR-LOC)
 
-| ID | Requirement | Measure | Status | Source |
-|---|---|---|:-:|---|
-| NFR-LOC-01 | All times shall be Philippine time. | Application timezone `Asia/Manila`; shifts stamped in that zone. | Met | `config/app.php`, E009, E010 |
-| NFR-LOC-02 | Money shall be Philippine pesos. | `₱` with two decimals; fares rounded up to whole pesos; top-ups ₱10–₱100,000. | Met | E004, E005 |
-| NFR-LOC-03 | Contact numbers shall be Philippine mobile numbers. | `9XX XXX XXXX`, optionally `0` or `+63`. | Met | E012, E022 |
+| ID | Requirement | Measure | Evidence | Result | Notes |
+|---|---|---|---|---|---|
+| NFR-LOC-01 | All times shall be Philippine time. | Application timezone `Asia/Manila`; a shift is stamped in that zone. | `PlatformNfrTest::test_a_shift_is_stamped_in_philippine_time` | ✅ Pass |  |
+| NFR-LOC-02 | Money shall be Philippine pesos. | `₱` on money screens; a top-up is ₱10 – ₱100,000; the fare calculator picks the right tier. | `PlatformNfrTest::test_a_top_up_must_be_between_ten_and_one_hundred_thousand_pesos`<br>`PlatformNfrTest::test_money_is_shown_in_pesos`<br>`PayMongoPaymentTest::test_fare_calculator_picks_the_correct_tier` | ✅ Pass |  |
+| NFR-LOC-03 | Contact numbers shall be Philippine mobile numbers. | `9XX XXX XXXX`, optionally with `0` or `+63`; other formats refused. | `PlatformNfrTest::test_only_philippine_mobile_numbers_are_accepted_as_a_contact_number` | ✅ Pass |  |
 
 ## 10. Scalability & capacity (NFR-SCL)
 
-| ID | Requirement | Measure | Status | Source |
-|---|---|---|:-:|---|
-| NFR-SCL-01 | Large tables shall not be loaded wholesale. | Timekeeping loads the latest 1,000 rows and the driver list loads every driver, then both filter/page in the browser. | Partial — fine at current size, will not scale | E012, E013 |
-| NFR-SCL-02 | Growing history tables shall have a retention rule. | — | Gap — `vehicle_location_histories` grows without limit (every accepted broadcast adds a row) | E021 |
-| NFR-SCL-03 | Server-side limits shall protect shared capacity. | — | Gap — no server rate limit on the broadcast endpoint; reports run live queries with no caching | E020, E021 |
-| NFR-SCL-04 | The audit page shall stay responsive as the trail grows. | 10 entries per page; indexes on `log_name`, causer, subject and `created_at`; retention caps the table; the CSV export is capped at 10,000 rows. | Partial — free-text search (description, actor email) is a `LIKE` scan, fine at the retention size but not indexed | E029 |
+| ID | Requirement | Measure | Evidence | Result | Notes |
+|---|---|---|---|---|---|
+| NFR-SCL-01 | Large tables shall not be loaded wholesale. | The timekeeping ledger is paged by the server. | `KnownGapsNfrTest::test_gap_the_timekeeping_ledger_is_paged_by_the_server` | ❌ Fail | The page loads up to 1,000 entries (57 on the dev database) and pages them in the browser; the driver list loads every driver. |
+| NFR-SCL-02 | Growing history tables shall have a retention rule. | A scheduled job prunes `vehicle_location_histories`. | `KnownGapsNfrTest::test_gap_location_history_has_a_retention_job` | ❌ Fail | A row is added for every accepted broadcast and nothing removes it. (`activity_log` is pruned — AUD-06.) |
+| NFR-SCL-03 | Server-side limits shall protect shared capacity. | The broadcast endpoint is rate limited on the server; reports are bounded. | `KnownGapsNfrTest::test_gap_the_location_broadcast_endpoint_is_rate_limited_on_the_server` | ❌ Fail | Same gap as PERF-02 / SEC-17; reports run live queries with no caching. |
+| NFR-SCL-04 | The audit page shall stay responsive as the trail grows. | 10 per page; indexes on `log_name`, `created_at`, causer and subject; retention caps the table. | `PlatformNfrTest::test_the_audit_table_is_indexed_for_the_date_filter_and_the_prune`<br>`ActivityLogPageTest::test_the_list_is_paged_ten_at_a_time_newest_first` | ✅ Pass | Free-text search is a `LIKE` scan — fine at the retention size, not indexed. |
 
 ## 11. Deployment & operations (NFR-OPS)
 
-| ID | Requirement | Measure | Status | Source |
-|---|---|---|:-:|---|
-| NFR-OPS-01 | Production shall run the scheduler. | The four scheduled commands (NFR-REL-08) need a cron entry for `schedule:run`. Pending payments are also closed on page open, so payments degrade gracefully without it. | Met | `Kernel.php`, E006 |
-| NFR-OPS-02 | Production shall use real push, mail and queue drivers. | Example env defaults to `BROADCAST_DRIVER=log`, `QUEUE_CONNECTION=sync`, `SESSION_DRIVER=file`; live tracking needs Pusher credentials and password-reset/verification need a working `MAIL_MAILER`. | Partial — defaults suit development only | `.env.example`, E011, E021 |
-| NFR-OPS-03 | The fare-guide import shall have its runtime available. | PDF extraction shells out to Python in the project virtualenv; a missing interpreter fails the upload with no fallback. | Partial — synchronous, single point of failure | E019 |
-| NFR-OPS-04 | Payment gateway keys shall match the environment. | Sandbox keys outside `production`; live keys only in `production` (enforced in code). | Met | E006, `docs/PAYMONGO_SETUP.md` |
+| ID | Requirement | Measure | Evidence | Result | Notes |
+|---|---|---|---|---|---|
+| NFR-OPS-01 | Production shall run the scheduler. | A cron entry runs `schedule:run` every minute. | — | ⚪ Not tested | A deployment check: the jobs are scheduled (REL-08) but only the server can show the cron entry. Payments still expire when pages are opened. |
+| NFR-OPS-02 | Production shall use real push, mail and queue drivers. | `BROADCAST_DRIVER`, `MAIL_MAILER`, `QUEUE_CONNECTION` set for production. | — | ⚪ Not tested | `.env.example` defaults (`log`, `sync`, `file`) suit development only; a production check is needed. |
+| NFR-OPS-03 | The fare-guide import shall have its runtime available. | `venv/bin/python3` and `resources/scripts/extractPdf.py` exist. | `PlatformNfrTest::test_the_fare_guide_import_has_its_python_runtime` | ✅ Pass | Environment-specific: passes on this machine only. |
+| NFR-OPS-04 | Payment gateway keys shall match the environment. | Sandbox keys outside production, live keys only in production — enforced in code. | `PayMongoPaymentTest::test_live_key_outside_production_refuses_to_run`<br>`PayMongoPaymentTest::test_live_key_against_the_sandbox_host_refuses_to_run`<br>`PayMongoPaymentTest::test_sandbox_key_against_the_live_host_refuses_to_run` | ✅ Pass |  |
 
 ---
 
-## 12. Not yet specified
+## Defects found while writing these tests
 
-The UCNs and configuration say nothing about these. They are listed so the team can decide whether to set a target —
-no value has been invented here.
+Building the evidence turned up real problems; the first was a scheduled job that had never worked.
 
-| Area | Question to settle |
-|---|---|
-| **Availability** | Uptime target and maintenance window? What happens to live tracking if Pusher is down for an hour? |
-| **Response time** | Target page-load and API times (e.g. map first paint, checkout, report generation) and how they are measured? |
-| **Capacity** | Expected number of vehicles, concurrent riders and drivers, payments per day? (Drives the broadcast rate limit, history retention and pagination decisions in NFR-SCL.) |
-| **Backup & recovery** | Database backup schedule, retention, restore test, and recovery-time / recovery-point objectives — especially for the payment ledger. |
-| **Accessibility** | Target standard (e.g. WCAG 2.1 AA), colour-contrast and keyboard checks — marker colours alone (green/red) already carry meaning. |
-| **Browser / device support** | Minimum browser versions and phone models; behaviour without WebGL. |
-| **Data protection** | Which law applies (e.g. the Philippine Data Privacy Act), retention periods for licence images and location history, breach process. |
-| **Session policy** | Idle timeout (currently the framework default of 120 minutes) and whether staff roles need a shorter one or two-factor sign-in. |
-| **Monitoring** | Error tracking, log retention, alerting on failed webhooks / `PAYMONGO … FAILED` lines. |
+| Finding | What it is | Status |
+|---|---|---|
+| `vehicle:offline-check` crashed on every run | `whereTrue()` is not a Laravel method, so the scheduled job failed with an SQL error each minute and `vehicles.is_active` was never maintained. Hidden because the live map reads `last_update`, not the flag. | Fixed (`where('is_active', …)`); covered by PERF-03. |
+| CSRF exemption was wider than documented | The broadcast endpoint is exempt as well as the webhook, and `api/*` / `track/*/update` are listed but unused. | Documented in SEC-04; the test pins the exact exposed routes. |
+| The verification-email throttle is mistyped | `throttle:6.1` instead of `6,1`; it works only because PHP reads 6.1 as 6. | Open (SEC-03 note). |
+| `test_driver_can_register` tested nothing | It omits the required `name`, fails validation, then asserts `true`. | Open; REL-03 and SEC-11 now cover driver registration properly. |
+| `VehicleLocationFactory` is stale | It sets a `driver_id` column that no longer exists, so it cannot create a row. | Open; the new tests build rows directly. |
+| Two unusable component classes | `app/View/Components/settings-modal.php` and `layout.sidebar.php` declare classes with hyphen / dot names — not valid PHP — and nothing uses them. | Open (MNT-04). |
+| An Admin's own-account guard is unreachable | `toggleSuspension` / `destroy` check `$user->id === auth()->id()`, but the role check 404s before that for an admin. | Open (SEC-14 note); harmless. |
+
+---
+
+

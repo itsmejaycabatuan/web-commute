@@ -143,7 +143,7 @@ class UserController extends Controller
     }
 
     /**
-     * UCN_SC_E026 E2/E3/E4 — a role without a dashboard, or a failing query, is
+     * UCN_SC_E025 E2/E3/E4 — a role without a dashboard, or a failing query, is
      * answered with a message instead of an empty page or a raw 500.
      */
     public function dashboard(Request $request, FleetMaintenanceService $fleet)
@@ -347,12 +347,12 @@ class UserController extends Controller
         $userId = Auth::user()->id;
         $role = $user->roles->first()?->name;
 
-        // UCN_SC_E026 E1 — only commuters have a profile page.
+        // UCN_SC_E025 E1 — only commuters have a profile page.
         if ($role !== 'commuter') {
             return redirect()->route('map')->with('error', 'Profile page unavailable.');
         }
 
-        // UCN_SC_E026 E3 — a failing query is logged and reported, not a raw 500.
+        // UCN_SC_E025 E3 — a failing query is logged and reported, not a raw 500.
         try {
             $payments = Payment::where('paid_by', $userId)->get();
             $topups = TopupHistory::where('user_id', $userId)->get();
