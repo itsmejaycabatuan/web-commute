@@ -1,0 +1,254 @@
+==============================================================================================
+ SMARTCOMMUTE (WEB COMMUTE) - USE CASE TEST CHECKLIST - PART 3 OF 5
+==============================================================================================
+
+ Source of truth : docs/UCN/UCN_SC_E0xx_*.md  (open the matching file if a step is unclear)
+ Test data       : docs/MANUAL_TEST_CHECKLIST.md + database/seeders/DevSeeder.php
+ Built           : 2026-10-22
+
+ The 5 parts (this file is Part 3):
+     1  Accounts and Access                  E001 E002 E008 E011 E022 E026
+     2  Commuter Journey                     E003 E004 E005 E006 E007
+   > 3  Driver Day-to-Day + Timekeeping      E009 E010 E021 E023 E013
+     4  Driver Mgr + Maintenance Mgr         E012 E014 E024 E015 E016 E017
+     5  Admin Tools + Dashboards             E018 E019 E020 E025 E027 E028
+
+
+----------------------------------------------------------------------------------------------
+ BEFORE YOU START (everyone)
+----------------------------------------------------------------------------------------------
+
+ 1. Load the baseline data (safe to re-run any time, it never duplicates rows):
+
+        /opt/lampp/bin/php artisan db:seed --class=DevSeeder
+
+ 2. Start the app and browse to http://127.0.0.1:8000
+
+        /opt/lampp/bin/php artisan serve
+
+    Use 127.0.0.1:8000, NOT XAMPP Apache (Apache breaks the compiled-view permissions).
+
+ 3. Password for every seeded account is:  admin123
+ 4. Login is throttled to 5 attempts per minute. If you get "Too many attempts" (429), wait a minute.
+ 5. Team members share ONE database. If two people test at once, wallet balances, shifts and
+    suspensions will change under each other. Agree who is on the server, or give each person their
+    own copy, and re-run the seeder whenever the data looks wrong.
+ 6. Use a separate browser profile (or private window) per role so sessions do not collide.
+
+ SEEDED TEST ACCOUNTS (password admin123)
+
+   Admin ............. admin@gmail.com
+   Driver manager .... drivermanager@gmail.com
+   Maintenance mgr ... maintenancemanager@gmail.com
+
+   Commuter .......... commuter@gmail.com           wallet P623, 5 rides
+   Commuter .......... maria.santos@example.com     wallet P1,430, 6 rides
+   Commuter .......... juan.delacruz@example.com    wallet P0; has pending, failed, cancelled payments
+   Commuter .......... ana.reyes@example.com        wallet P4,896; 14 payments, 12 top-ups (pagination)
+   Commuter .......... pedro.lim@example.com        SUSPENDED, wallet P85
+   Commuter .......... lara.gomez@example.com       EMAIL NOT VERIFIED, wallet P0
+
+   Driver ............ driver@gmail.com             approved, vehicle JKL-7890, NO shift today (clock in)
+   Driver ............ ramon.delacruz@example.com   approved, vehicle ABC-1234, MID-SHIFT (clock out)
+   Driver ............ liza.mercado@example.com     approved, vehicle DEF-5678, licence expires in 20 days
+   Driver ............ dante.cruz@example.com       approved, licence EXPIRED 45 days ago
+   Driver ............ carlos.bautista@example.com  SUSPENDED
+   Driver ............ elena.torres@example.com     PENDING approval
+   Driver ............ mark.ocampo@example.com      PENDING approval
+   Driver ............ nico.tan@example.com         REJECTED
+
+   Fleet: ABC-1234 Coaster (active, Ramon) | DEF-5678 County (active, Liza) | JKL-7890 HiAce (active,
+          driver@) | STU-1122 Toano (active, unassigned) | GHI-9012 NPR (maintenance) |
+          MNO-3456 L300 (inactive) | PQR-7890 Urvan (disposed)
+
+ HOW TO USE THIS CHECKLIST
+
+   - Work through your part top to bottom. Tick a box by changing [ ] to [x].
+   - If a step FAILS, change it to [F] and write what you saw on the "Notes" line (or on the line below).
+   - If a step cannot be tested, change it to [-] and say why.
+   - Every use case has three groups:  MAIN FLOW (happy path), ALTERNATE FLOWS (A1, A2...),
+     and EXCEPTIONS (E1, E2... = what happens when something goes wrong).
+   - The text after "->" is the EXPECTED result. Messages in quotes should match what the screen shows.
+   - Finish each use case with the RESULT line: tick PASS only if every step above it is [x] or [-].
+   - (*) marks a step that needs a fault to be forced (database down, mail server down, payment gateway
+     down, lost network). Do not break the server just for this - mark it [-] unless a developer
+     has staged the fault. Network loss can be simulated with the browser dev-tools "Offline" switch.
+   - "Known Gaps" in the UCN files are NOT bugs - they are documented limitations. Do not log them.
+   - Toasts (bottom-right) are how success and error messages appear. In add/edit/delete modals a
+     validation error keeps the modal open and shows the message under its own input.
+
+
+
+##############################################################################################
+ PART 3 OF 5 - DRIVER DAY-TO-DAY + TIMEKEEPING
+ Use cases: E009 Clock In | E010 Clock Out | E021 Share Vehicle Location |
+            E023 Driver Dashboard Views | E013 Manage Timekeeping (Driver Manager)
+ Tester: ______________________   Start: ____/____/______   Finish: ____/____/______
+##############################################################################################
+
+Notes for this part
+ - Do them in this order: E009 -> E021 -> E010 -> E023 -> E013. Clock-in feeds the shift that E010 closes
+   and that E013/E023 then display.
+ - driver@gmail.com has NO shift today (use for clock-in). ramon.delacruz@ is MID-SHIFT (use for clock-out).
+ - E021 needs two browsers: a driver on the map, and a commuter/guest watching it. It also needs
+   location permission and the live-update (Pusher) service running.
+ - Clock-in happens ONCE per day. After you clock in as driver@, re-run the seeder to test it again.
+
+==============================================================================================
+ UCN_SC_E009 - CLOCK IN                                Actor: Driver        File: UCN_SC_E009_Clock_In.md
+==============================================================================================
+ Use: driver@gmail.com
+
+ MAIN FLOW
+ [ ] 1. Log in and open the map's left sidebar -> Availability card (Active/Inactive), Today's Shift card
+        and a "Weekly Log" link.
+ [ ] 2. Click "Clock In" on Today's Shift.
+ [ ] 3. -> Notice "Clocked in at HH:MM AM/PM." The card switches to "In Progress" and shows Time In;
+        driver status becomes active (visible to commuters).
+
+ ALTERNATE FLOWS
+ [ ] A1. After clocking in, the Clock In button is gone; replay the request (or use a stale page) ->
+         "You have already clocked in today." and nothing is written.
+ [ ] A2. (*) A user with the driver role but no driver profile -> "Driver profile not found."
+
+ EXCEPTIONS
+ [ ] E1. (*) Database failure -> "Clock-in failed. Please try again later."; no write, status unchanged.
+ [ ] E2. (*) Driver profile missing -> "Driver profile not found." (same as A2).
+ [ ] E3. Already clocked in -> "You have already clocked in today." (same as A1).
+ Also: carlos.bautista@ (suspended) cannot even log in, so cannot clock in.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E021 - SHARE VEHICLE LOCATION                  Actor: Driver        File: UCN_SC_E021_Share_Vehicle_Location.md
+==============================================================================================
+ Use: driver@gmail.com (vehicle JKL-7890) on browser 1; commuter@gmail.com or a guest on browser 2.
+
+ MAIN FLOW
+ [ ] 1. Driver opens the map and allows location -> map for a driver; "GPS: Broadcasting" (not "Not broadcasting").
+ [ ] 2. -> Every ~2 seconds the browser sends the position (watch Network tab: POST /track/vehicle/broadcast
+        returns 200 {success:true}).
+ [ ] 3. On browser 2 the driver's PUJ marker appears and moves; its position is blurred within about 200 m.
+ [ ] 4. Driver toggles Available / Unavailable -> within a few seconds the marker turns green / red and
+        the popup says Available / Unavailable.
+ [ ] 5. Stop broadcasting; after 5 minutes the marker disappears from the map (freshness window).
+
+ ALTERNATE FLOWS
+ [ ] A1. Re-send the same payload (same timestamp) -> 200 {success:true, duplicate:true}; no new row.
+ [ ] A2. (*) Database write fails -> 409 {retry:true, retry_after:5, "Temporary failure - retrying in 5
+         seconds."}; one delayed re-publish follows. Developer test.
+ [ ] A3. A driver with NO assigned vehicle opens the map -> never broadcasts and does not appear on the map.
+ [ ] A4. (local environment only) As admin, add / toggle / remove a developer marker on the map; commuters see
+         only the active ones. In a non-local environment this feature is absent.
+
+ EXCEPTIONS
+ [ ] E1. Send a payload with a non-numeric latitude -> HTTP 422 with field errors; nothing written.
+ [ ] E2. Call the endpoint as a guest, a commuter, a manager, or a driver with no profile -> HTTP 403
+         ("Sign in as a driver..." / "Only drivers can broadcast a vehicle location.").
+ [ ] E3. Broadcast a vehicle that is not yours, or a vehicle that is not active (inactive / maintenance /
+         disposed) -> HTTP 403 "This vehicle is not assigned to you."; map shows "GPS: Not broadcasting".
+ [ ] E4. Suspend the driver (see Part 4 / E012) while they are broadcasting -> HTTP 403 "Your account is
+         suspended."; marker stops updating immediately.
+ [ ] E5. Take the driver's browser Offline -> a console warning only; the vehicle keeps its last position until
+         the 5-minute window closes; no retry.
+ [ ] E6. (*) A queued retry with a missing key -> nothing is published. Developer test.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E010 - CLOCK OUT                               Actor: Driver        File: UCN_SC_E010_Clock_Out.md
+==============================================================================================
+ Use: ramon.delacruz@example.com (mid-shift), or driver@ after clocking in during E009.
+
+ MAIN FLOW
+ [ ] 1. Open the map sidebar -> Today's Shift shows "In Progress" with Time In.
+ [ ] 2. Click "Clock Out".
+ [ ] 3. -> Notice "Clocked out at HH:MM AM/PM. Total: X..." ; card changes to "Shift Complete" with the total
+        hours; driver status becomes inactive (no longer shown as available).
+ [ ] 4. Open the Weekly Log -> the closed shift is listed for the week with hours and overtime.
+
+ ALTERNATE FLOWS
+ [ ] A1. Press Clock Out with no open shift (replay / stale page) -> "No active shift found to clock out."
+ [ ] A2. A shift longer than 8 hours -> overtime = hours - 8 and the card shows "+N.N OT". (Ask a dev to
+         back-date time_in, or use the seeded overtime day.)
+ [ ] A3. (*) Driver role without a driver profile -> "Driver profile not found."
+
+ EXCEPTIONS
+ [ ] E1. (*) Database failure -> "Clock-out failed. Please try again later."; shift stays open.
+ [ ] E2. No active shift -> "No active shift found to clock out." (same as A1).
+ [ ] E3. (*) Driver profile missing -> "Driver profile not found." (same as A3).
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E023 - DRIVER DASHBOARD VIEWS                  Actor: Driver        File: UCN_SC_E023_Driver_Dashboard_Views.md
+==============================================================================================
+ Use: driver@gmail.com (4 violations), plus ramon.delacruz@ (2 violations).
+
+ MAIN FLOW
+ [ ] 1. Click "Timekeeping" in the sidebar (/timekeeping) -> this week's records with weekly totals.
+ [ ] 2. -> Weekly summary card (hours, overtime, progress) and a day-by-day table: date, in, out, hours,
+        overtime, status (Complete / Active / Absent...). Seeded rows include an overtime, a sick and a
+        vacation day; the totals add up.
+ [ ] 3. Click Previous Week / Next Week / Today -> the view changes week accordingly.
+ [ ] 4. Click "Violations" (/violations) -> list of the driver's violations.
+ [ ] 5. -> Summary cards (total violations, total fines, latest) and a table: type, code, offense count,
+        date, location, fine, penalty, remarks. Penalties show the right colour (suspension / impound red,
+        warning / community service amber).
+ [ ] 6. Flip the Active / Inactive status switch in the header -> status is saved and the header reflects it.
+
+ ALTERNATE FLOWS
+ [ ] A1. Logged out, open /timekeeping, /violations or submit /status -> redirected to /login.
+ [ ] A2. Submit a status other than active/inactive (e.g. maintenance) -> rejected with a validation error.
+ [ ] A3. (*) Database error while loading -> "Time-keeping failed. Please try again later." (or the
+         violations equivalent); no partial data.
+ [ ] A4. (*) Driver profile missing -> "Driver profile not found."
+
+ EXCEPTIONS
+ [ ] E1. (*) No driver profile -> redirected to the map with "Driver profile not found." (status update:
+         "Driver not found."); nothing written.
+ [ ] E2. Invalid or empty status -> "The status field must be either active or inactive."; record unchanged.
+ [ ] E3. (*) Query failure -> logged, generic "failed. Please try again later." message, no data.
+ [ ] E4. (*) Any other unhandled error -> 500 page.
+ Also: a driver cannot open /commuters, /vehicles or /reports (HTTP 403).
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E013 - MANAGE TIMEKEEPING                      Actor: Driver Manager   File: UCN_SC_E013_Manage_Timekeeping.md
+==============================================================================================
+ Use: drivermanager@gmail.com
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> driver-manager analytics.
+ [ ] 2. Click "Time Keeping" in the sidebar -> the timekeeping page.
+ [ ] 3. -> Table with columns: #, Driver & Date, Shift, Hours, Overtime, Type; type filter chips and a
+        "New Entry" button. The shifts you clocked in/out in E009/E010 are listed.
+
+ ALTERNATE FLOWS
+ [ ] A1. "New Entry" -> modal with Driver, Date, Time In, Time Out (or toggle "Log Leave" for Sick /
+         Vacation). Save a normal shift (in 06:00, out 14:00) -> "Time entry saved successfully."; hours = 8,
+         overtime = 0. Save 06:00 - 16:00 -> overtime = 2.
+ [ ] A1b. Log a Sick Leave and a Vacation Leave -> saved with zero hours and no times.
+ [ ] A2. Click the chips All / Regular / Sick / Vacation / Overtime -> table filters instantly and the
+         counter updates; Overtime = overtime greater than 0.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / service unreachable -> action cancelled; you are asked to check your connection.
+ [ ] E2. Submit without a driver or date -> the offending fields are listed; nothing stored.
+ [ ] E3. (*) Database failure -> operation cancelled and a notice shown.
+ [ ] E4. Clock-out earlier than or equal to clock-in -> "The clock-out time must be later than the clock-in time."
+ [ ] E5. A shift that overlaps an existing entry for that driver and date -> "This shift overlaps an
+         existing time entry for the driver on that date."
+ Also: only one of in/out given for a shift is rejected. A driver manager cannot open admin pages
+ (/commuters, /reports) or maintenance pages (HTTP 403).
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+ PART 3 SIGN-OFF   All five use cases complete:  [ ] YES     Tester: ____________  Date: ____/____/______
+

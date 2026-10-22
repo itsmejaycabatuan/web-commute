@@ -185,8 +185,8 @@
 
         <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight mt-3 sm:mt-4 mb-1.5 sm:mb-2">Verify your email</h2>
         <p class="text-[11px] sm:text-xs text-gray-400 leading-relaxed px-1 sm:px-2 mb-1.5 sm:mb-2">
-            We've sent an activation link to your inbox. Please check your email and click the link to verify your
-            account.
+            We've sent a verification link and a 6-digit code to your inbox. Click the link, or enter the code
+            below if you can't open it.
         </p>
 
         @if (session('message'))
@@ -197,17 +197,34 @@
             </div>
         @endif
 
-        <form action="{{ route('verification.send') }}" method="POST" class="space-y-2.5 sm:space-y-3 mt-4 sm:mt-6">
+        <form action="{{ route('verification.code') }}" method="POST" class="space-y-2.5 sm:space-y-3 mt-4 sm:mt-6">
             @csrf
+            <label for="code" class="block text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-gray-400">
+                Verification code
+            </label>
+            <input id="code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="7"
+                pattern="[0-9 ]{6,7}" placeholder="000000" value="{{ old('code') }}" required
+                class="w-full py-2.5 sm:py-3 text-center text-xl sm:text-2xl font-bold tracking-[0.5em] rounded-lg sm:rounded-xl bg-white/5 border {{ $errors->has('code') ? 'border-red-500/50' : 'border-white/10' }} text-white placeholder-white/20 focus:outline-none focus:border-blue-400/60">
+            @error('code')
+                <p class="text-red-400 text-[11px] sm:text-xs" role="alert">{{ $message }}</p>
+            @enderror
             <button type="submit"
                 class="btn-primary py-2.5 sm:py-3.5 w-full text-[10px] sm:text-xs font-bold tracking-widest uppercase rounded-lg sm:rounded-xl">
-                Resend Verification Link
+                Verify with code
+            </button>
+        </form>
+
+        <form action="{{ route('verification.send') }}" method="POST" class="space-y-2.5 sm:space-y-3 mt-3 sm:mt-4">
+            @csrf
+            <button type="submit"
+                class="btn-ghost py-2.5 sm:py-3.5 w-full text-[10px] sm:text-xs font-bold tracking-widest uppercase rounded-lg sm:rounded-xl">
+                Resend link and code
             </button>
         </form>
 
         <div class="mt-3 sm:mt-4 pt-4 sm:pt-5 border-t border-white/5">
             <p class="text-[10px] sm:text-[11px] text-gray-400">
-                Didn't receive the email? Check your spam folder or try again in a few minutes.
+                Didn't receive the email? Check your spam folder or resend it. Each new email replaces the previous code; codes expire after 60 minutes.
             </p>
         </div>
     </div>

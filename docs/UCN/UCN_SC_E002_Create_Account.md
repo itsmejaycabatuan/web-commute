@@ -21,7 +21,7 @@
 | 2   | Guest enters an email address, a password and confirms it.                        | System masks both password inputs (eye toggle available for each).                                                                                                                                        |
 | 3   | Guest checks the "I agree to Terms & Conditions" box and clicks "Create Account". | System validates all inputs **server-side** (`required`, `email`, `unique`, `min:8`, `same`, `accepted`).                                                                                                 |
 | 4   |                                                                                   | System creates the user record in the database with an **unverified** email (`email_verified_at = null`), assigns the role **commuter**, creates an empty **wallet** for the user, and logs the Guest in. |
-| 5   |                                                                                   | System sends an automated verification email containing a signed verification link to the provided email address.                                                                                         |
+| 5   |                                                                                   | System sends an automated verification email containing a signed verification link **and a 6-digit code** to the provided email address.                                                                                         |
 | 6   |                                                                                   | System redirects the newly authenticated user to the email-verification notice page with the message *"Account created, please verify your email!"*                                                       |
 
 ---
@@ -41,7 +41,12 @@
 **A2 – Resend Verification Email**
 1. After step 6, the user closes the browser window without verifying the email.
 2. Later, the user logs in and is redirected to the email-verification page.
-3. User presses "Resend verification email"; System re-sends the verification link (throttled to 6 requests/minute).
+3. User presses "Resend link and code"; System re-sends the verification link with a **new** 6-digit code (throttled to 6 requests/minute). The previous code stops working.
+
+**A2b – Verify with the 6-digit code instead of the link**
+1. The user cannot use the link (different device, mail client strips it) and instead types the 6-digit code from the same email into the **Verification code** box on the email-verification page, then presses **Verify with code**. Spaces in the code are ignored.
+2. System checks the code (`POST /email/verify/code`, throttled to 10 requests/minute): it must be 6 digits, belong to the signed-in user, be unexpired (60 minutes, like the link) and match.
+3. System marks the email verified, discards the code, records an `email_verified` audit-trail entry (`method: code`) and redirects to the map with *"Email verified!"*. Verifying by the link also discards the code.
 
 **A3 – Driver Account**
 1. On the registration page, the user clicks the driver registration link below the "OR" divider.
@@ -82,6 +87,9 @@ The System fails to insert the user record. System displays *"A system error occ
 **E7 – Too Many Attempts (Rate Limiting)**
 The Guest submits more than **6 registration attempts per minute**. System blocks the request (HTTP 429).
 
+**E8 – Wrong, Malformed, Expired or Used-Up Verification Code**
+Entering a code that is not 6 digits shows *"The code must be 6 digits."* (or *"Enter the 6-digit code from the email."* when empty) and costs no attempt. A well-formed but wrong code shows *"That code is incorrect."*; the **5th** wrong guess burns the code (*"Too many incorrect attempts. Request a new code."*). An old code shows *"That code has expired. Request a new one."* and a user with no code shows *"There is no active code. Request a new one."* — in each case the email stays unverified and the user can resend.
+
 ---
 
 ## Known Gaps / Notes
@@ -100,4 +108,5 @@ The Guest submits more than **6 registration attempts per minute**. System block
 | Controller | `app/Http/Controllers/UserController.php::register()` |
 | Views | `resources/views/auth/register.blade.php`, `resources/views/auth/verify-email.blade.php` |
 | Verification link handling | `routes/web.php` → `verification.verify` (signed URL) |
+| Verification code | `EmailVerificationCodeController::verify` (`verification.code`), `EmailVerificationCode` model (table `email_verification_codes`, hashed, 60 min, 5 attempts), `VerifyEmailWithCode` notification, `RecordEmailVerified` listener |
 | "Buy a Ride" → register redirect | `resources/views/map.blade.php` — fare form `data-guest-register` + submit guard |

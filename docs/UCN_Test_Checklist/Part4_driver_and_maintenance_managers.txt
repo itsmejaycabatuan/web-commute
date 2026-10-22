@@ -1,0 +1,302 @@
+==============================================================================================
+ SMARTCOMMUTE (WEB COMMUTE) - USE CASE TEST CHECKLIST - PART 4 OF 5
+==============================================================================================
+
+ Source of truth : docs/UCN/UCN_SC_E0xx_*.md  (open the matching file if a step is unclear)
+ Test data       : docs/MANUAL_TEST_CHECKLIST.md + database/seeders/DevSeeder.php
+ Built           : 2026-10-22
+
+ The 5 parts (this file is Part 4):
+     1  Accounts and Access                  E001 E002 E008 E011 E022 E026
+     2  Commuter Journey                     E003 E004 E005 E006 E007
+     3  Driver Day-to-Day + Timekeeping      E009 E010 E021 E023 E013
+   > 4  Driver Mgr + Maintenance Mgr         E012 E014 E024 E015 E016 E017
+     5  Admin Tools + Dashboards             E018 E019 E020 E025 E027 E028
+
+
+----------------------------------------------------------------------------------------------
+ BEFORE YOU START (everyone)
+----------------------------------------------------------------------------------------------
+
+ 1. Load the baseline data (safe to re-run any time, it never duplicates rows):
+
+        /opt/lampp/bin/php artisan db:seed --class=DevSeeder
+
+ 2. Start the app and browse to http://127.0.0.1:8000
+
+        /opt/lampp/bin/php artisan serve
+
+    Use 127.0.0.1:8000, NOT XAMPP Apache (Apache breaks the compiled-view permissions).
+
+ 3. Password for every seeded account is:  admin123
+ 4. Login is throttled to 5 attempts per minute. If you get "Too many attempts" (429), wait a minute.
+ 5. Team members share ONE database. If two people test at once, wallet balances, shifts and
+    suspensions will change under each other. Agree who is on the server, or give each person their
+    own copy, and re-run the seeder whenever the data looks wrong.
+ 6. Use a separate browser profile (or private window) per role so sessions do not collide.
+
+ SEEDED TEST ACCOUNTS (password admin123)
+
+   Admin ............. admin@gmail.com
+   Driver manager .... drivermanager@gmail.com
+   Maintenance mgr ... maintenancemanager@gmail.com
+
+   Commuter .......... commuter@gmail.com           wallet P623, 5 rides
+   Commuter .......... maria.santos@example.com     wallet P1,430, 6 rides
+   Commuter .......... juan.delacruz@example.com    wallet P0; has pending, failed, cancelled payments
+   Commuter .......... ana.reyes@example.com        wallet P4,896; 14 payments, 12 top-ups (pagination)
+   Commuter .......... pedro.lim@example.com        SUSPENDED, wallet P85
+   Commuter .......... lara.gomez@example.com       EMAIL NOT VERIFIED, wallet P0
+
+   Driver ............ driver@gmail.com             approved, vehicle JKL-7890, NO shift today (clock in)
+   Driver ............ ramon.delacruz@example.com   approved, vehicle ABC-1234, MID-SHIFT (clock out)
+   Driver ............ liza.mercado@example.com     approved, vehicle DEF-5678, licence expires in 20 days
+   Driver ............ dante.cruz@example.com       approved, licence EXPIRED 45 days ago
+   Driver ............ carlos.bautista@example.com  SUSPENDED
+   Driver ............ elena.torres@example.com     PENDING approval
+   Driver ............ mark.ocampo@example.com      PENDING approval
+   Driver ............ nico.tan@example.com         REJECTED
+
+   Fleet: ABC-1234 Coaster (active, Ramon) | DEF-5678 County (active, Liza) | JKL-7890 HiAce (active,
+          driver@) | STU-1122 Toano (active, unassigned) | GHI-9012 NPR (maintenance) |
+          MNO-3456 L300 (inactive) | PQR-7890 Urvan (disposed)
+
+ HOW TO USE THIS CHECKLIST
+
+   - Work through your part top to bottom. Tick a box by changing [ ] to [x].
+   - If a step FAILS, change it to [F] and write what you saw on the "Notes" line (or on the line below).
+   - If a step cannot be tested, change it to [-] and say why.
+   - Every use case has three groups:  MAIN FLOW (happy path), ALTERNATE FLOWS (A1, A2...),
+     and EXCEPTIONS (E1, E2... = what happens when something goes wrong).
+   - The text after "->" is the EXPECTED result. Messages in quotes should match what the screen shows.
+   - Finish each use case with the RESULT line: tick PASS only if every step above it is [x] or [-].
+   - (*) marks a step that needs a fault to be forced (database down, mail server down, payment gateway
+     down, lost network). Do not break the server just for this - mark it [-] unless a developer
+     has staged the fault. Network loss can be simulated with the browser dev-tools "Offline" switch.
+   - "Known Gaps" in the UCN files are NOT bugs - they are documented limitations. Do not log them.
+   - Toasts (bottom-right) are how success and error messages appear. In add/edit/delete modals a
+     validation error keeps the modal open and shows the message under its own input.
+
+
+
+##############################################################################################
+ PART 4 OF 5 - DRIVER MANAGER + MAINTENANCE MANAGER
+ Use cases: E012 Manage Drivers | E014 Manage Violations | E024 Violation Code Management |
+            E015 Manage Vehicles | E016 Manage Maintenance Schedule | E017 Manage Maintenance Tasks
+ Tester: ______________________   Start: ____/____/______   Finish: ____/____/______
+##############################################################################################
+
+Notes for this part
+ - E012 / E014 / E024 are done as drivermanager@gmail.com (E012 may also be done as admin@gmail.com).
+ - E015 / E016 / E017 are done as maintenancemanager@gmail.com (admin has the same Vehicles page).
+ - Order: E024 (codes) before E014 (log uses the codes); E017 (tasks) before E016 (schedule uses the tasks).
+ - Several tests delete things. Re-run the seeder afterwards to restore them.
+
+==============================================================================================
+ UCN_SC_E012 - MANAGE DRIVERS                          Actor: Driver Manager / Admin   File: UCN_SC_E012_Manage_Drivers.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Click "PUJ Drivers" / "Drivers" in the sidebar -> the driver management page.
+ [ ] 2. -> Table with #, Driver, Status, Registered, License, Actions; a search box; status chips
+        (All / Pending / Approved / Rejected / Suspended); License Expiring / Expired chips; "Add Driver".
+        10 per page.
+
+ ALTERNATE FLOWS
+ [ ] A1. Add Driver: modal with Name, Email, Password, Confirm, License Number, License Code, Expiration
+         Date, Contact Info, License Image. NO driver-code field. Fill all, "Create Driver" -> driver is
+         created already approved, with a generated DRV-###### code; confirmation toast.
+ [ ] A2. Edit (pencil): form shows the driver code read-only and the stored licence image. Change fields,
+         optionally replace the image, "Save Changes" -> "Driver updated." There is NO edit icon on a
+         PENDING driver.
+ [ ] A3. Delete (bin): "Delete Driver?" dialog -> confirm -> "Driver removed." (try dante.cruz@, who has no
+         vehicle). A driver with payments/top-ups is anonymised instead.
+ [ ] A4. View (ID-card icon): read-only modal with identity, licence data and expiry; it has an "Edit" shortcut.
+         The License column shows Valid / "Expires in N days" (30 or fewer) / Expired; the chips filter by it.
+ [ ] A5. Suspend / Reactivate (only for an APPROVED driver): confirmation dialog with optional Reason.
+         Suspend liza.mercado@ -> "Driver suspended.", she cannot log in or clock in, and her vehicle is
+         released. Reactivate -> "Driver reactivated." and status is back to inactive.
+         While suspended, a driver already signed in is signed out on the next click.
+ [ ] A6. Pending drivers (elena.torres@, mark.ocampo@, or the one from E022) show a "Review" button.
+         Approve -> licence fields required (unique number, code, expiry), a driver code is assigned,
+         "Driver approved..." and they can now log in. Reject -> they cannot log in and see the rejected message.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / service unreachable -> action cancelled with a connection notice.
+ [ ] E2. Licence number already used (e.g. N01-23-000001) -> "The license number has already been taken."
+ [ ] E3. Empty required fields -> offending fields listed; nothing written.
+ [ ] E4. (*) Database failure -> operation cancelled and notified.
+ [ ] E5. Email already registered -> rejected on the email field.
+ [ ] E6. Password under 8 characters or mismatched confirmation -> rejected; no account created.
+ [ ] E7. Licence image that is a PDF or over 2 MB -> rejected.
+ [ ] E8. Delete a driver who still has a vehicle (ramon.delacruz@) -> a lock replaces the delete icon, and a
+         forced request gives "This driver is still assigned to a vehicle. Unassign the vehicle first."
+ [ ] E9. Approve an already-approved driver / reject an already-rejected one -> "This driver is already
+         approved." / "...already rejected."
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E024 - VIOLATION CODE MANAGEMENT               Actor: Driver Manager   File: UCN_SC_E024_Admin_Violation_Code_Management.md
+==============================================================================================
+ Use: drivermanager@gmail.com. (E014 covers the same Violation Codes page from the UI side; do the
+ role/permission checks here.)
+
+ MAIN FLOW
+ [ ] 1. Open "Violation Codes" in the sidebar (/driver-manager/violation-codes) -> list of codes.
+ [ ] 2. -> Table: Code, Violation Name, 1st / 2nd / 3rd / 4th+ Offense (P), Actions (Edit / Delete). 6 codes
+        are seeded.
+ [ ] 3. Add a new code (Code, Name, four fines) -> created and listed with a success message.
+
+ ALTERNATE FLOWS
+ [ ] A1. Logged out, open the page or submit add/edit/delete -> redirected to /login.
+ [ ] A2. Logged in as admin, driver, commuter or maintenance manager, open the URL -> HTTP 403 "Unauthorized."
+ [ ] A3. Submit with a missing field, a duplicate code, or a non-numeric fine -> back to the form with
+         field messages (e.g. "The code has already been taken.", "The first offense field must be a number.")
+         and the entered values kept.
+ [ ] A4. Delete a code that violation logs use -> "This violation code is in use by existing violation logs
+         and cannot be deleted."; code remains.
+ [ ] A5. (*) Database error on add/edit/delete -> "An error occurred while processing the violation code.
+         Please try again later."; nothing changed.
+
+ EXCEPTIONS
+ [ ] E1. Edit or delete a code id that does not exist -> "Error no violation code found."
+ [ ] E2. Add or edit with a code that already exists (editing keeps its own code fine) -> "The code has
+         already been taken."
+ [ ] E3. Blank field, or a negative / non-numeric fine -> per-field validation messages.
+ [ ] E4. Delete an in-use code -> blocked (same as A4).
+ [ ] E5. (*) Database failure -> generic error message.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E014 - MANAGE VIOLATIONS                       Actor: Driver Manager   File: UCN_SC_E014_Manage_Violations.md
+==============================================================================================
+ Use: drivermanager@gmail.com
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> driver-manager analytics.
+ [ ] 2. Click "Violation Codes" or "Violation Log" -> the matching page.
+ [ ] 3. -> Code table, or the violation log with a search bar (driver name / licence, from, to, Filter, Clear).
+
+ ALTERNATE FLOWS
+ [ ] A1. Violation Codes -> "Add Code": fill Code, Name, 1st-4th+ fines, "Create Code" ->
+         "Violation code successfully added!"
+ [ ] A2. "Bulk Add": fill 2+ rows (a row missing code or name is skipped) -> each valid row is created.
+ [ ] A3. Edit icon -> form pre-filled, button "Update Code" -> "Violation code successfully updated!"
+ [ ] A4. Delete icon -> "Delete Code?" -> "Violation code successfully deleted!" (use a code with no logs).
+ [ ] A5. Violation Log -> "New Entry": Driver, Violation Code, Offense Instance, Fine, Place, Date, Time,
+         Remarks -> "Save Entry" saves it; the modal closes as soon as it is saved.
+ [ ] A6. Log -> "Bulk Add": one driver, several rows (leave Remarks empty on some) -> "N violations logged
+         successfully."
+ [ ] A7. Search by driver name or licence number and/or a date range, "Filter" -> matching rows and an
+         updated counter; "Clear" restores everything. The Driver picker in the entry modals still lists
+         every driver.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. Duplicate code on create and on update -> "The code has already been taken."
+ [ ] E3. (*) Database failure -> operation cancelled and notified.
+ [ ] E4. Filter that matches nothing / empty log -> "No violations recorded yet" / "No violations recorded"
+         empty state (not an empty table).
+ [ ] E5. Delete a code used by a logged violation -> "This violation code is in use by existing violation
+         logs and cannot be deleted."
+ [ ] E6. Future incident date -> "The date of violation must be a date before or equal to today." (the date
+         picker is also capped at today). In bulk add the message names the row.
+ Also: a driver manager cannot open admin pages or maintenance pages (HTTP 403).
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E017 - MANAGE MAINTENANCE TASKS                Actor: Maintenance Manager   File: UCN_SC_E017_Manage_Maintenance_Tasks.md
+==============================================================================================
+ Use: maintenancemanager@gmail.com
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> maintenance-manager analytics.
+ [ ] 2. Click "Maintenance Tasks" in the sidebar -> task page with a summary strip.
+ [ ] 3. -> Table: Task Performed, Km Interval, Month Interval, Actions; "Add Task" button.
+
+ ALTERNATE FLOWS
+ [ ] A1. "Add Task" -> modal (Task Performed, Km Interval, Month Interval) -> "Create Task" -> "Task
+         successfully added!" (Km and Month may be left blank.)
+ [ ] A2. Edit icon -> pre-filled modal -> "Update Task" -> "Task successfully updated!"
+ [ ] A3. Delete icon -> "Delete Task?" -> "Delete" -> "Task successfully deleted!"
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. Blank task name, or a name over 255 characters -> offending field flagged; nothing stored.
+ [ ] E3. (*) Database failure -> operation cancelled and notified.
+ Also: there is NO "Maintenance Logs" menu item, and /vehicle-maintenance-log and /maintenance-logs return 404.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E015 - MANAGE VEHICLES                         Actor: Maintenance Manager   File: UCN_SC_E015_Manage_Vehicles.md
+==============================================================================================
+ Use: maintenancemanager@gmail.com
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> maintenance-manager analytics.
+ [ ] 2. Click "Vehicles" -> vehicle page with a summary strip and the fleet table (7 seeded vehicles).
+
+ ALTERNATE FLOWS
+ [ ] A1. "Add Vehicle": Year, Brand, Model, Plate, VIN, Fuel Type, Tank Capacity, Assigned Driver, Location,
+         Status, Acquisition Date, Expected Disposal Date -> "Vehicle successfully added." The Assigned Driver
+         list shows only approved, non-suspended drivers who hold no other vehicle.
+ [ ] A2. Edit (list or detail modal) -> pre-filled; "Save Changes" -> "Vehicle successfully updated."
+ [ ] A3. Delete an empty, unassigned vehicle (STU-1122 or one you just added) -> "Vehicle successfully deleted."
+ [ ] A4. View icon -> read-only modal with the full record and an "Edit" shortcut.
+ [ ] A5. Search, status chips (Active / Maintenance / Inactive), Fuel Type, Assigned/Unassigned and sort
+         selects -> table filters and re-orders; the row counter updates.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. Duplicate plate number -> "The plate number has already been taken."
+ [ ] E3. Set ABC-1234 to "disposed" while Ramon is clocked in -> "Cannot dispose a vehicle that a driver is
+         currently clocked into..." (works after he clocks out).
+ [ ] E4. Assign a driver to an inactive / maintenance / disposed vehicle -> refused on driver_id ("A driver
+         cannot be assigned to a vehicle with a ... status"); the driver select is disabled unless status
+         is Active. Keeping an existing driver while changing status is allowed per the UCN.
+ [ ] E5. Empty required field, year outside 1990-2030, or disposal date before acquisition date -> offending
+         fields listed; nothing written.
+ [ ] E6. Delete a vehicle with maintenance history -> "This vehicle has maintenance records and cannot be
+         deleted. Mark its status as Disposed instead." A vehicle with a driver shows a locked delete icon.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E016 - MANAGE MAINTENANCE SCHEDULE             Actor: Maintenance Manager   File: UCN_SC_E016_Manage_Maintenance_Schedule.md
+==============================================================================================
+ Use: maintenancemanager@gmail.com
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> maintenance-manager analytics.
+ [ ] 2. Click "Preventive Maintenance" -> summary strip + the selected vehicle's schedule.
+ [ ] 3. -> One card per task with interval, last service date / odometer / cost, comments, the computed next
+        due date / odometer (a mix of OK and Overdue is seeded), and a "Log" / "Update" button.
+
+ ALTERNATE FLOWS
+ [ ] A1. Click "Log"/"Update" on a card -> modal: Odometer (km), Date, Cost, Comments. Fill valid values,
+         "Save Log" -> "Preventive maintenance logged successfully!" The card, the schedule and the dashboard
+         cost summary / Service History tab update.
+ [ ] A2. Use the vehicle picker at the top -> the schedule reloads for that vehicle with its own values; logging
+         a service then applies to that vehicle. A vehicle with no history (STU-1122) shows zeros, not an error.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. Enter an odometer LOWER than the last reading -> "The odometer reading cannot be lower than the last
+         recorded reading of N km."; nothing changes.
+ [ ] E3. Leave a required field empty or malformed (odometer, date, cost) -> offending fields listed; nothing stored.
+ [ ] E4. (*) Database failure -> operation cancelled and notified.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+ PART 4 SIGN-OFF   All six use cases complete:  [ ] YES     Tester: ____________  Date: ____/____/______
+

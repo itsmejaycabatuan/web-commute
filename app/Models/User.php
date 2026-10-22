@@ -140,6 +140,12 @@ class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
         'anonymised_at' => 'datetime',
     ];
 
+    /** Emails the verification link together with a fresh 6-digit code (UCN_SC_E002 A2). */
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new \App\Notifications\VerifyEmailWithCode(EmailVerificationCode::issue($this)));
+    }
+
     public function payment()
     {
         return $this->hasMany(Payment::class, 'paid_by');

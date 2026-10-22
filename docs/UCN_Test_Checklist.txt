@@ -1,0 +1,1179 @@
+==============================================================================================
+ SMARTCOMMUTE (WEB COMMUTE) - USE CASE TEST CHECKLIST
+ The 28 Use Case Narratives (UCN_SC_E001 - E028) split into 5 parts, one part per team member
+==============================================================================================
+
+Source of truth : docs/UCN/UCN_SC_E0xx_*.md   (open the matching file if a step below is unclear)
+Test data       : docs/MANUAL_TEST_CHECKLIST.md  +  database/seeders/DevSeeder.php
+Last built      : 2026-10-22
+
+
+----------------------------------------------------------------------------------------------
+ THE 5 PARTS AT A GLANCE
+----------------------------------------------------------------------------------------------
+
+ PART  FOCUS                                   USE CASES                               ASSIGNED TO
+ ----  --------------------------------------  --------------------------------------  -----------
+  1    Accounts and Access                     E001  E002  E008  E011  E022  E026       __________
+  2    Commuter Journey (map, trip, wallet)    E003  E004  E005  E006  E007             __________
+  3    Driver Day-to-Day + Timekeeping         E009  E010  E021  E023  E013             __________
+  4    Driver Manager + Maintenance Manager    E012  E014  E024  E015  E016  E017       __________
+  5    Admin Tools + Dashboards                E018  E019  E020  E025  E027  E028       __________
+
+ Totals: 6 + 5 + 5 + 6 + 6 = 28 use cases. Every UCN appears in exactly one part.
+
+ Use case index
+   E001 Login                          Part 1     E015 Manage Vehicles                 Part 4
+   E002 Create Account                 Part 1     E016 Manage Maintenance Schedule     Part 4
+   E003 Track PUJ                      Part 2     E017 Manage Maintenance Tasks        Part 4
+   E004 Plan Trip                      Part 2     E018 Manage Commuters                Part 5
+   E005 Topup Balance                  Part 2     E019 Manage Fare Rates               Part 5
+   E006 Pay Fare                       Part 2     E020 View System Reports             Part 5
+   E007 View Payment History           Part 2     E021 Share Vehicle Location          Part 3
+   E008 Change Password                Part 1     E022 Driver Registration             Part 1
+   E009 Clock In                       Part 3     E023 Driver Dashboard Views          Part 3
+   E010 Clock Out                      Part 3     E024 Admin Violation Code Mgmt       Part 4
+   E011 Reset Password                 Part 1     E025 Profile and Dashboard Views     Part 5
+   E012 Manage Drivers                 Part 4     E026 Account Deletion                Part 1
+   E013 Manage Timekeeping             Part 3     E027 Manage Staff Accounts           Part 5
+                                                  E028 View Activity Log               Part 5
+
+
+----------------------------------------------------------------------------------------------
+ BEFORE YOU START (everyone)
+----------------------------------------------------------------------------------------------
+
+ 1. Load the baseline data (safe to re-run any time, it never duplicates rows):
+
+        /opt/lampp/bin/php artisan db:seed --class=DevSeeder
+
+ 2. Start the app and browse to http://127.0.0.1:8000
+
+        /opt/lampp/bin/php artisan serve
+
+    Use 127.0.0.1:8000, NOT XAMPP Apache (Apache breaks the compiled-view permissions).
+
+ 3. Password for every seeded account is:  admin123
+ 4. Login is throttled to 5 attempts per minute. If you get "Too many attempts" (429), wait a minute.
+ 5. Team members share ONE database. If two people test at once, wallet balances, shifts and
+    suspensions will change under each other. Agree who is on the server, or give each person their
+    own copy, and re-run the seeder whenever the data looks wrong.
+ 6. Use a separate browser profile (or private window) per role so sessions do not collide.
+
+ SEEDED TEST ACCOUNTS (password admin123)
+
+   Admin ............. admin@gmail.com
+   Driver manager .... drivermanager@gmail.com
+   Maintenance mgr ... maintenancemanager@gmail.com
+
+   Commuter .......... commuter@gmail.com           wallet P623, 5 rides
+   Commuter .......... maria.santos@example.com     wallet P1,430, 6 rides
+   Commuter .......... juan.delacruz@example.com    wallet P0; has pending, failed, cancelled payments
+   Commuter .......... ana.reyes@example.com        wallet P4,896; 14 payments, 12 top-ups (pagination)
+   Commuter .......... pedro.lim@example.com        SUSPENDED, wallet P85
+   Commuter .......... lara.gomez@example.com       EMAIL NOT VERIFIED, wallet P0
+
+   Driver ............ driver@gmail.com             approved, vehicle JKL-7890, NO shift today (clock in)
+   Driver ............ ramon.delacruz@example.com   approved, vehicle ABC-1234, MID-SHIFT (clock out)
+   Driver ............ liza.mercado@example.com     approved, vehicle DEF-5678, licence expires in 20 days
+   Driver ............ dante.cruz@example.com       approved, licence EXPIRED 45 days ago
+   Driver ............ carlos.bautista@example.com  SUSPENDED
+   Driver ............ elena.torres@example.com     PENDING approval
+   Driver ............ mark.ocampo@example.com      PENDING approval
+   Driver ............ nico.tan@example.com         REJECTED
+
+   Fleet: ABC-1234 Coaster (active, Ramon) | DEF-5678 County (active, Liza) | JKL-7890 HiAce (active,
+          driver@) | STU-1122 Toano (active, unassigned) | GHI-9012 NPR (maintenance) |
+          MNO-3456 L300 (inactive) | PQR-7890 Urvan (disposed)
+
+ HOW TO USE THIS CHECKLIST
+
+   - Work through your part top to bottom. Tick a box by changing [ ] to [x].
+   - If a step FAILS, change it to [F] and write what you saw on the "Notes" line (or on the line below).
+   - If a step cannot be tested, change it to [-] and say why.
+   - Every use case has three groups:  MAIN FLOW (happy path), ALTERNATE FLOWS (A1, A2...),
+     and EXCEPTIONS (E1, E2... = what happens when something goes wrong).
+   - The text after "->" is the EXPECTED result. Messages in quotes should match what the screen shows.
+   - Finish each use case with the RESULT line: tick PASS only if every step above it is [x] or [-].
+   - (*) marks a step that needs a fault to be forced (database down, mail server down, payment gateway
+     down, lost network). Do not break the server just for this - mark it [-] unless a developer
+     has staged the fault. Network loss can be simulated with the browser dev-tools "Offline" switch.
+   - "Known Gaps" in the UCN files are NOT bugs - they are documented limitations. Do not log them.
+   - Toasts (bottom-right) are how success and error messages appear. In add/edit/delete modals a
+     validation error keeps the modal open and shows the message under its own input.
+
+
+##############################################################################################
+ PART 1 OF 5 - ACCOUNTS AND ACCESS
+ Use cases: E001 Login | E002 Create Account | E008 Change Password | E011 Reset Password |
+            E022 Driver Registration | E026 Account Deletion
+ Tester: ______________________   Start: ____/____/______   Finish: ____/____/______
+##############################################################################################
+
+Notes for this part
+ - E002, E022 and E026 create/destroy accounts: use throw-away emails (e.g. test1@example.com).
+ - Do E026 LAST - it deletes the account you registered.
+ - E011 needs a working mail transport. Check your inbox, or storage/logs/laravel.log if MAIL_MAILER=log.
+
+==============================================================================================
+ UCN_SC_E001 - LOGIN                                   Actor: Guest         File: UCN_SC_E001_Login.md
+==============================================================================================
+ Use: commuter@gmail.com (works), plus the special accounts named in the exceptions.
+
+ MAIN FLOW
+ [ ] 1. Click "Log in" on the landing page -> login form (email + password) is shown.
+ [ ] 2. Type email + password -> password is masked; eye icon toggles it.
+ [ ] 3. Submit valid credentials -> lands on the map (/map) with a "Logged in Successfully!" toast.
+ [ ] 4. Log out, then log in as a DRIVER with an expiring/expired licence (liza.mercado@ or dante.cruz@)
+        -> a warning toast shows "Your driver's license expires in N days" / "...expired on <date>".
+        A driver with a valid licence and a commuter see no such warning.
+
+ ALTERNATE FLOWS
+ [ ] A1. Tick "Remember me", log in, close and reopen the browser -> still signed in.
+ [ ] A2. While logged out open /dashboard or /payment/history -> redirected to login; after logging in
+         you land on /map (NOT the page you asked for).
+
+ EXCEPTIONS
+ [ ] E1. (*) Database/auth service down -> "Login is unavailable right now. Please try again later."
+ [ ] E2. lara.gomez@example.com (unverified) -> redirected to the verify-email page; "Resend link and code"
+         is offered (limit 6 per minute) beside a box for the 6-digit code.
+ [ ] E3. Wrong password, then an unknown email -> BOTH show the same message "The provided credentials
+         do not match our records." (no hint which part was wrong).
+ [ ] E4. Submit with an empty field and with a malformed email -> field-level validation errors.
+ [ ] E5. Submit 6+ wrong logins inside one minute -> blocked with HTTP 429 / throttle message.
+ [ ] E6. While already logged in, open /login -> redirected to the map.
+ [ ] E7. pedro.lim@example.com (suspended) -> "This account has been suspended. Please contact the
+         administrator."
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E002 - CREATE ACCOUNT                          Actor: Guest         File: UCN_SC_E002_Create_Account.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Click "Register" -> form: email, password, confirm password, Terms checkbox.
+ [ ] 2. Enter a NEW email + matching 8+ character password -> both password fields masked (eye toggles).
+ [ ] 3. Tick "I agree to Terms & Conditions" and click "Create Account".
+ [ ] 4. -> You are logged in and sent to the verify-email page with
+        "Account created, please verify your email!"; the verification email is sent.
+ [ ] 5. Behind the scenes (ask a dev / check DB): user has role commuter, email_verified_at is empty,
+        and an empty wallet exists. Clicking the email link then lets you reach /map.
+
+ ALTERNATE FLOWS
+ [ ] A1. Logged out, open /map/guest, pick two points, click "Buy a Ride" -> sent to the registration
+         page (the picked points are remembered); register as in the main flow.
+ [ ] A2. Register, close the browser WITHOUT verifying; log in again -> verify-email page; click
+         "Resend link and code" -> a new link AND a new code are sent (limit 6 per minute).
+ [ ] A2b. On the verify-email page type the 6-digit code from the email (spaces are fine) and press "Verify with
+          code" -> toast "Email verified!" and you land on the map. The email must show BOTH the link and the code.
+          Verifying with the link instead also works, and afterwards the code no longer works.
+ [ ] A3. On the registration page click the driver-registration link under "OR" -> goes to
+         /register/driver (no commuter account is created).
+
+ EXCEPTIONS
+ [ ] E1. Use an email that already exists -> "The email has already been taken."; the email stays in the box.
+ [ ] E2. Malformed email -> "The email field must be a valid email address."
+ [ ] E3. Password under 8 characters -> "The password field must be at least 8 characters."
+ [ ] E4. Mismatched confirmation -> "The password confirmation does not match."
+ [ ] E5. Terms box unticked -> "The terms field must be accepted."
+ [ ] E6. (*) Database failure -> "A system error occurred while creating your account. Please try
+         again later." and no account is created.
+ [ ] E7. Submit 7+ registrations in one minute -> blocked with HTTP 429.
+ [ ] E8. Code checks: a code that is not 6 digits -> "The code must be 6 digits."; a wrong 6-digit code -> "That
+         code is incorrect."; 5 wrong codes in a row -> "Too many incorrect attempts. Request a new code.";
+         press "Resend link and code" and the OLD code stops working; a code older than 60 minutes ->
+         "That code has expired. Request a new one." The email stays unverified in every case.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E022 - DRIVER REGISTRATION                     Actor: Guest         File: UCN_SC_E022_Driver_Registration.md
+==============================================================================================
+ Use a licence image: a JPG/PNG under 2 MB for the happy path.
+
+ MAIN FLOW
+ [ ] 1. Open /register/driver -> form: name, email, contact, password, confirm, Terms, licence image.
+ [ ] 2. Fill name, email, contact, password -> password fields masked.
+ [ ] 3. Upload a clear JPG/JPEG/PNG (max 2 MB) -> accepted.
+ [ ] 4. Tick Terms and click "Submit Registration".
+ [ ] 5. -> Redirected to /login with a "You're registered!" dialog saying an administrator must approve
+        the account before sign-in.
+ [ ] 6. Try to log in with the new driver -> refused with the "pending approval" message and logged out.
+ [ ] 7. (Check later in Part 4 / E012) the new driver shows as PENDING in the admin driver list with a
+        DRV-###### code and the licence image opens.
+
+ ALTERNATE FLOWS
+ [ ] A1. Logged out, open /map -> redirected to login; from there follow "Register as Driver" and
+         complete the main flow.
+ [ ] A2. After registering, no verification email is sent and no "resend" step is offered (the email
+         counts as verified automatically).
+ [ ] A3. Register a second driver with the SAME licence image file -> accepted; stored as a separate file.
+
+ EXCEPTIONS
+ [ ] E1. Existing email -> "The email has already been taken."
+ [ ] E2. Malformed email -> "The email field must be a valid email address."
+ [ ] E3. Password under 8 characters -> "The password field must be at least 8 characters."
+ [ ] E4. Mismatched confirmation -> "The password confirmation does not match."
+ [ ] E5. Terms unticked -> "The terms field must be accepted."
+ [ ] E6. Missing image, a PDF, a GIF, and a file over 2 MB -> each rejected with a licence-image message
+         (e.g. "The license image must be an image of type jpg, jpeg, png.").
+ [ ] E7. (*) Database failure -> "A system error occurred while creating your driver account. Please
+         try again later." and no account is created.
+ [ ] E8. (*) Image cannot be written to disk -> same generic message as E7.
+ [ ] E9. Submit 7+ registrations in one minute -> HTTP 429.
+ Also confirm: nico.tan@example.com (rejected) logging in -> "rejected" message and logged out.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E011 - RESET PASSWORD                          Actor: Guest         File: UCN_SC_E011_Reset_Password.md
+==============================================================================================
+ Use a throw-away account you registered in E002, or commuter@gmail.com (reset it back to admin123 after).
+
+ MAIN FLOW
+ [ ] 1. On the login page click "Forgot Password" -> page with one Email box and "Send Reset Link".
+ [ ] 2. Enter a known email and send -> a status message confirms the link was sent.
+ [ ] 3. Open the email and click the link -> "Reset Password" page with New / Confirm fields.
+ [ ] 4. Type a new password -> the 4-segment strength meter updates live ("Minimum 8 characters").
+ [ ] 5. Re-type it in Confirm -> the match indicator turns on when both agree.
+ [ ] 6. Click "Reset Password" -> redirected to login with "Your password has been reset!".
+ [ ] 7. Log in with the NEW password -> works; the OLD password -> fails.
+ [ ] 8. Re-use the same reset link a second time -> rejected (token already consumed, see E5).
+ [ ] 9. (Part 5 / E028) A "Reset Password" entry exists in the Activity Log for that user.
+
+ ALTERNATE FLOWS
+ [ ] A1. Click the eye icon in a password field -> text revealed / hidden again; the meter updates on
+         every keystroke and the confirm field shows whether the two values match.
+ [ ] A2. Click "Back to login" on both the request page and the reset page -> goes to /login; nothing changed.
+
+ EXCEPTIONS
+ [ ] E1. Request with a malformed email -> "The email field must be a valid email address."; nothing is sent.
+ [ ] E2. Request with a well-formed but unknown email -> "We can't find a user with that email address."
+ [ ] E3. New password under 8 characters -> "The password must be at least 8 characters."
+ [ ] E4. Mismatched confirmation -> "The password confirmation does not match."
+ [ ] E5. Expired (60 min) or already-used link -> "This password reset token is invalid."; back on the form.
+ [ ] E6. (*) Mail server down -> no success message is shown and the link can be requested again.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E008 - CHANGE PASSWORD                         Actor: Any logged-in user   File: UCN_SC_E008_Change_Password.md
+==============================================================================================
+ Use: commuter@gmail.com first, then one staff account. RESET each password back to admin123 afterwards.
+
+ MAIN FLOW
+ [ ] 1. Open /settings -> Security section -> form: Current / New / Confirm New password.
+ [ ] 2. Enter the current password, then a new password (8+ chars) and its confirmation.
+ [ ] 3. Click "Update Password" -> toast "Password changed successfully."
+ [ ] 4. Sign in from a second browser BEFORE the change, change the password in the first, then reload the
+        second -> the second session is signed out; the first stays signed in.
+ [ ] 5. Log out and log in with the new password -> works; the old one fails.
+
+ ALTERNATE FLOWS
+ [ ] A1. Repeat the main flow as a driver, driver manager, maintenance manager and admin -> the staff
+         settings layout appears; same fields, same rules, same result.
+ [ ] A2. Press "Log out other devices" -> toast "All other sessions have been terminated."; password unchanged.
+
+ EXCEPTIONS
+ [ ] E1. Wrong current password -> "The password is incorrect."; nothing changes.
+ [ ] E2. New password under 8 characters -> "The password must be at least 8 characters."
+ [ ] E3. Mismatched confirmation -> "The password confirmation does not match."
+ [ ] E4. (*) Database failure -> "Password could not be changed. Please try again later."
+ [ ] E5. Logged out, open /settings -> redirected to login.
+ Also: new password identical to the current one -> rejected ("must be different from your current password").
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E026 - ACCOUNT DELETION                        Actor: Any logged-in user   File: UCN_SC_E026_Account_Deletion.md
+==============================================================================================
+ DESTRUCTIVE. Use throw-away accounts you registered yourself. Never the seeded accounts.
+
+ MAIN FLOW
+ [ ] 1. Register a brand-new commuter (never paid, never topped up). Open Settings -> "Delete Account"
+        and confirm the browser prompt.
+ [ ] 2. -> You are signed out, redirected to /login with "Account deleted successfully."
+ [ ] 3. Log in with the deleted email + password -> fails.
+ [ ] 4. As admin: the account is gone from PUJ Commuters; the Activity Log shows "Deleted own account"
+        with outcome "deleted".
+
+ ALTERNATE / VARIANT CASES
+ [ ] A1. Logged out, send a DELETE to /delete-account (or open it) -> redirected to /login; nothing deleted.
+ [ ] V1. Account WITH payments or top-ups and wallet P0: delete -> signed out; login fails; the admin
+         ledger still lists its payments under deleted-<id>@deleted.invalid; Activity Log outcome
+         "anonymised". The same email can be registered again as a fresh, empty account.
+ [ ] V2. Account with money in the wallet: delete -> REFUSED with "Your wallet still holds PHP N. Use it
+         up before deleting..."; you stay signed in and nothing changes.
+ [ ] A2. (*) Database failure while deleting -> falls through to the default 500 page (documented behaviour).
+ [ ] A3. (*) Any other unhandled error -> 500 page.
+
+ EXCEPTIONS
+ [ ] E1. Not authenticated -> redirected to /login, deletion never attempted (same as A1).
+ [ ] E2. (*) Database delete failure -> 500 page, no friendly message.
+ [ ] E3. (*) Unexpected controller error -> 500 page.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+ PART 1 SIGN-OFF   All six use cases complete:  [ ] YES     Tester: ____________  Date: ____/____/______
+
+
+##############################################################################################
+ PART 2 OF 5 - COMMUTER JOURNEY (MAP, TRIP, WALLET, PAYMENTS)
+ Use cases: E003 Track PUJ | E004 Plan Trip | E005 Topup Balance | E006 Pay Fare |
+            E007 View Payment History
+ Tester: ______________________   Start: ____/____/______   Finish: ____/____/______
+##############################################################################################
+
+Notes for this part
+ - E003 and E004 start as a GUEST (/map/guest, logged out). E005 - E007 are for logged-in commuters.
+ - Guests get only 3 fare calculations per day (stored in the browser). Clear browser storage between runs.
+ - Seeded PUJ pings last only 5 minutes. If no markers show, re-run the seeder, or have a driver broadcast
+   (see Part 3 / E021) from a second browser.
+ - E006 / E005 change wallet balances. Re-run the seeder if the numbers get confusing.
+ - GCash/Maya fares go to the PayMongo sandbox only when PAYMONGO_ENABLED=true (see docs/PAYMONGO_SETUP.md).
+   With it off, the payment is recorded as paid straight away (E006 A2). Ask which mode you are on.
+
+==============================================================================================
+ UCN_SC_E003 - TRACK PUJ                               Actor: Guest         File: UCN_SC_E003_Track_PUJ.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Logged out, open /map/guest and allow location access -> interactive map with navigation, pitch
+        and locate (pin) controls.
+ [ ] 2. -> The map centres on you (zoom 15) once the first position arrives.
+ [ ] 3. -> PUJ markers appear: GREEN = available, RED = unavailable. Toggling a driver's availability
+        recolours the marker within a few seconds.
+ [ ] 4. Click a PUJ marker -> info popup.
+ [ ] 5. -> Popup shows plate/route, an approximate (about 200 m blurred) location, the driver's status
+        (Available / Unavailable) and the ETA to you.
+
+ ALTERNATE FLOWS
+ [ ] A1. With location on, a floating "Nearest PUJ" indicator (ETA + distance) shows at the bottom; tap it
+         -> the map flies to that PUJ and opens its popup.
+ [ ] A2. Tap the locate (pin) control -> the map centres on you and keeps refreshing ETAs.
+
+ EXCEPTIONS (banner text appears on the map; only the highest-priority banner shows)
+ [ ] E1. No PUJ has reported in the last 5 minutes -> "No PUJs available" banner; it clears by itself when
+         a PUJ appears.
+ [ ] E2. Block location permission -> "Location access needed" banner; map and markers still work, only
+         centring and ETA are lost.
+ [ ] E3. (*) Map service fails to load -> "Map service unavailable" banner.
+ [ ] E4. Set the browser to Offline -> "No internet connection" banner; polling stops and resumes by
+         itself when you go back online.
+ [ ] Priority check: offline beats map-service beats routing-service beats location-denied beats no-puj.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E004 - PLAN TRIP                               Actor: Guest / Commuter   File: UCN_SC_E004_Plan_Trip.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Open the sidebar on the map -> fare calculator with origin, destination, distance and fare fields.
+ [ ] 2. Choose an origin and a destination (by search or by tapping the map) -> Point A and Point B markers appear.
+ [ ] 3. -> A driving route is drawn and the map zooms to fit it.
+ [ ] 4. -> Distance (km) and BOTH the regular and the discounted fare show; discounted is lower.
+
+ ALTERNATE FLOWS
+ [ ] A1. Tap "Set pick-up", then tap the map (and the same for destination) -> marker placed and the
+         address is filled in.
+ [ ] A2. Type 2+ characters in a field -> up to 6 matches inside the service area; pick one -> marker
+         placed and the trip calculated.
+ [ ] A3. Press "Reset Route" -> both points, the route line and the distance/fare are cleared.
+ [ ] A4. Press "Buy a Ride" with both points set:
+           as GUEST    -> sent to the registration page (points remembered);
+           as COMMUTER -> sent to the payment page with the distance and fare.
+ [ ] A5. As a guest do 3 fare calculations, then a 4th -> blocked with the daily-limit modal.
+
+ EXCEPTIONS
+ [ ] E1. (*) No fare rates for the current period -> distance still shown, fare shows 0.
+ [ ] E2. Search for nonsense -> "No results found" in the dropdown and a "Location not found" banner
+         (clears after about 6 seconds).
+ [ ] E3. (*) Routing service fails -> "Route unavailable" banner; distance and fare are cleared.
+ [ ] E4. Browser Offline -> offline banner; no routing call is attempted.
+ [ ] E5. Press "Buy a Ride" without both points -> "Pick-up point and destination is required."
+ [ ] E6. Daily limit reached (same as A5) -> the limit modal; the calculation is cancelled.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E005 - TOPUP BALANCE                           Actor: Commuter      File: UCN_SC_E005_Topup_Balance.md
+==============================================================================================
+ Use: commuter@gmail.com (P623).  A4 needs admin@gmail.com.
+
+ MAIN FLOW
+ [ ] 1. Click the "+" button -> top-up page with balance, a custom-amount box and presets.
+ [ ] 2. Pick P50 / P100 / P200 / P500 -> the preset highlights; typing a custom value clears the highlight.
+ [ ] 3. Choose GCash or Maya and click "Confirm Payment".
+ [ ] 4. -> Toast "Successfully topped up!" and the balance rises by exactly that amount.
+ [ ] 5. -> The top-up appears in Top-up History with the right amount and method.
+
+ ALTERNATE FLOWS
+ [ ] A1. Type a custom amount (for example 75.50) -> accepted between P10 and P100,000.
+ [ ] A2. Switch the payment method before confirming -> history records the newly chosen method.
+ [ ] A3. Open /payment/topup/history -> list with search (ID), filters (method, date range) and the
+         total added. As ana.reyes@ the 12 rows paginate (10 per page).
+ [ ] A4. As ADMIN open /topups -> every top-up of every status with a Status column; filters for
+         search, status, method, date range and amount range; the "funds added" total counts COMPLETED only.
+
+ EXCEPTIONS
+ [ ] E1. Submit a method other than GCash/Maya (edit the form) -> "The selected payment-method is invalid."
+ [ ] E2. Amount of 5, 0, -20, abc, empty, 100001 -> rejected, e.g. "The amount must be at least 10."; balance unchanged.
+ [ ] E3. Repeat the SAME amount + method within 2 minutes -> "This top-up was already processed. Please
+         wait a moment..."; balance unchanged.
+ [ ] E4. (*) Wallet update fails -> "Top-up failed. Please try again later."
+ [ ] E5. Submit 6+ top-ups in one minute (use different amounts) -> blocked with HTTP 429.
+ [ ] E6. Covered by E3 + E5 (duplicate and rate-limit protection) - tick when both pass.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E006 - PAY FARE                                Actor: Commuter      File: UCN_SC_E006_Pay_Fare.md
+==============================================================================================
+ Use: commuter@gmail.com. juan.delacruz@ (P0) for the empty-wallet and mixed-status cases.
+
+ MAIN FLOW A - WALLET
+ [ ] 1. Plan a trip and click "Buy a Ride" -> checkout page with the Final Fare, your balance and the
+        GCash / Maya / Wallet cards.
+ [ ] 2. Click a method card -> it highlights and the others clear.
+ [ ] 3. Choose Wallet and click "Confirm Payment".
+ [ ] 4. -> Redirected to a receipt with "Payment successful"; balance drops by exactly the fare; the
+        payment is listed in history as paid.
+
+ MAIN FLOW B - GCASH / MAYA (needs PAYMONGO_ENABLED=true + sandbox keys)
+ [ ] 5. Pick GCash or Maya -> you are sent to PayMongo's hosted sandbox checkout; a PENDING payment is
+        recorded; the wallet is NOT touched.
+ [ ] 6. Complete the sandbox payment -> returned to /payment/returned, then to the receipt (status paid).
+
+ ALTERNATE FLOWS
+ [ ] A1. Click another method card before confirming -> highlight moves; the new method is used.
+ [ ] A2. With the gateway OFF, pick GCash/Maya -> no external call; recorded as paid, receipt shown.
+ [ ] A3a. A gateway payment left pending for 12+ hours -> becomes "cancelled" ("Expired: not completed
+          within 12 hours.") next time history / the admin ledger / a checkout page opens (or run
+          php artisan payments:expire-pending). Ask a dev to back-date a pending row to test.
+ [ ] A3. Refresh the receipt after paying -> same receipt, no second charge, balance unchanged.
+ [ ] A4. Cancel at the PayMongo checkout -> returned to /payment/cancelled, payment marked cancelled
+         ("Cancelled at checkout."); nothing charged.
+ [ ] A5. Pay by Wallet -> the card shows the live balance; fare subtracted; method stored as "Wallet".
+
+ EXCEPTIONS
+ [ ] E1. Submit a method other than GCash/Maya/Wallet (edit the form) -> validation message; no payment.
+ [ ] E2. As juan.delacruz@ (P0) pay by Wallet -> "You don't have enough balance"; nothing charged.
+ [ ] E3. Double-click Pay, press Back and re-submit, or refresh -> only ONE charge; a paid fare reopens its
+         receipt ("This fare has already been paid"); a pending one opens "Confirming your payment" with
+         a warning.
+ [ ] E4. (*) Gateway down / times out -> "The payment service is unavailable right now. Please try again."
+         No payment row, funds kept.
+ [ ] E5. Decline / fail at the sandbox -> payment marked failed ("The payment was declined by the gateway.").
+ [ ] E6. Let a checkout session expire -> payment marked cancelled ("The checkout session expired.").
+ [ ] E7. (*) Send a webhook with a bad signature -> HTTP 401; no payment touched. (Developer test.)
+ [ ] E8. (*) Payment record creation fails -> "There was a problem trying to process the payment"; balance unchanged.
+ [ ] E9. (*) Commuter without a wallet row -> HTTP 404 rather than a crash. (Developer test.)
+ [ ] E10. (*) No published fare rates -> "Fares are unavailable right now. Please try again later."
+ Also check as juan.delacruz@: history shows paid, pending, failed and cancelled rows with distinct labels;
+ opening the pending row shows the "processing" screen and does NOT claim success.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E007 - VIEW PAYMENT HISTORY                    Actor: Commuter      File: UCN_SC_E007_View_Payment_History.md
+==============================================================================================
+ Use: ana.reyes@example.com (14 payments - good for paging), commuter@gmail.com, and a brand-new commuter.
+
+ MAIN FLOW
+ [ ] 1. Open /payment/history -> only YOUR payments, newest first, plus balance and "total spent".
+ [ ] 2. Scroll / page down -> 10 receipts per page; filters and search survive paging.
+ [ ] 3. Tap a transaction -> receipt at /payment/receipt/{id} with route, distance, method, transaction id
+        (#SC-XXXXXXXX), fare and paid-at.
+
+ ALTERNATE FLOWS
+ [ ] A1. Open another row (list or "Back to History") -> that payment's receipt.
+ [ ] A2. Click the "+" / wallet button next to the balance -> /payment/topup/history; going back returns
+         to /payment/history.
+ [ ] A3. Use a Quick Range (7 / 30 / 90 days) and an explicit from/to date, then "Apply Filters" ->
+         only payments inside the period are listed.
+ [ ] A4. Search by a transaction id and by a destination word -> matching records only.
+ [ ] A5. On a receipt click "Download Receipt" -> a PNG named Receipt-#SC-XXXXXXXX.png downloads
+         (nothing is uploaded to the server).
+
+ EXCEPTIONS
+ [ ] E1. A commuter who never paid -> empty state "No transactions found" (no error, no empty table).
+ [ ] E2. A search/filter that matches nothing -> same empty state with a "Clear Filters" button that restores the list.
+ [ ] E3. Change the id in a receipt URL to another commuter's payment, or to a non-existent id -> HTTP 404.
+ [ ] E4. (*) Server/network error -> not handled explicitly (a failed query shows an empty list). Mark [-].
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+ PART 2 SIGN-OFF   All five use cases complete:  [ ] YES     Tester: ____________  Date: ____/____/______
+
+
+##############################################################################################
+ PART 3 OF 5 - DRIVER DAY-TO-DAY + TIMEKEEPING
+ Use cases: E009 Clock In | E010 Clock Out | E021 Share Vehicle Location |
+            E023 Driver Dashboard Views | E013 Manage Timekeeping (Driver Manager)
+ Tester: ______________________   Start: ____/____/______   Finish: ____/____/______
+##############################################################################################
+
+Notes for this part
+ - Do them in this order: E009 -> E021 -> E010 -> E023 -> E013. Clock-in feeds the shift that E010 closes
+   and that E013/E023 then display.
+ - driver@gmail.com has NO shift today (use for clock-in). ramon.delacruz@ is MID-SHIFT (use for clock-out).
+ - E021 needs two browsers: a driver on the map, and a commuter/guest watching it. It also needs
+   location permission and the live-update (Pusher) service running.
+ - Clock-in happens ONCE per day. After you clock in as driver@, re-run the seeder to test it again.
+
+==============================================================================================
+ UCN_SC_E009 - CLOCK IN                                Actor: Driver        File: UCN_SC_E009_Clock_In.md
+==============================================================================================
+ Use: driver@gmail.com
+
+ MAIN FLOW
+ [ ] 1. Log in and open the map's left sidebar -> Availability card (Active/Inactive), Today's Shift card
+        and a "Weekly Log" link.
+ [ ] 2. Click "Clock In" on Today's Shift.
+ [ ] 3. -> Notice "Clocked in at HH:MM AM/PM." The card switches to "In Progress" and shows Time In;
+        driver status becomes active (visible to commuters).
+
+ ALTERNATE FLOWS
+ [ ] A1. After clocking in, the Clock In button is gone; replay the request (or use a stale page) ->
+         "You have already clocked in today." and nothing is written.
+ [ ] A2. (*) A user with the driver role but no driver profile -> "Driver profile not found."
+
+ EXCEPTIONS
+ [ ] E1. (*) Database failure -> "Clock-in failed. Please try again later."; no write, status unchanged.
+ [ ] E2. (*) Driver profile missing -> "Driver profile not found." (same as A2).
+ [ ] E3. Already clocked in -> "You have already clocked in today." (same as A1).
+ Also: carlos.bautista@ (suspended) cannot even log in, so cannot clock in.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E021 - SHARE VEHICLE LOCATION                  Actor: Driver        File: UCN_SC_E021_Share_Vehicle_Location.md
+==============================================================================================
+ Use: driver@gmail.com (vehicle JKL-7890) on browser 1; commuter@gmail.com or a guest on browser 2.
+
+ MAIN FLOW
+ [ ] 1. Driver opens the map and allows location -> map for a driver; "GPS: Broadcasting" (not "Not broadcasting").
+ [ ] 2. -> Every ~2 seconds the browser sends the position (watch Network tab: POST /track/vehicle/broadcast
+        returns 200 {success:true}).
+ [ ] 3. On browser 2 the driver's PUJ marker appears and moves; its position is blurred within about 200 m.
+ [ ] 4. Driver toggles Available / Unavailable -> within a few seconds the marker turns green / red and
+        the popup says Available / Unavailable.
+ [ ] 5. Stop broadcasting; after 5 minutes the marker disappears from the map (freshness window).
+
+ ALTERNATE FLOWS
+ [ ] A1. Re-send the same payload (same timestamp) -> 200 {success:true, duplicate:true}; no new row.
+ [ ] A2. (*) Database write fails -> 409 {retry:true, retry_after:5, "Temporary failure - retrying in 5
+         seconds."}; one delayed re-publish follows. Developer test.
+ [ ] A3. A driver with NO assigned vehicle opens the map -> never broadcasts and does not appear on the map.
+ [ ] A4. (local environment only) As admin, add / toggle / remove a developer marker on the map; commuters see
+         only the active ones. In a non-local environment this feature is absent.
+
+ EXCEPTIONS
+ [ ] E1. Send a payload with a non-numeric latitude -> HTTP 422 with field errors; nothing written.
+ [ ] E2. Call the endpoint as a guest, a commuter, a manager, or a driver with no profile -> HTTP 403
+         ("Sign in as a driver..." / "Only drivers can broadcast a vehicle location.").
+ [ ] E3. Broadcast a vehicle that is not yours, or a vehicle that is not active (inactive / maintenance /
+         disposed) -> HTTP 403 "This vehicle is not assigned to you."; map shows "GPS: Not broadcasting".
+ [ ] E4. Suspend the driver (see Part 4 / E012) while they are broadcasting -> HTTP 403 "Your account is
+         suspended."; marker stops updating immediately.
+ [ ] E5. Take the driver's browser Offline -> a console warning only; the vehicle keeps its last position until
+         the 5-minute window closes; no retry.
+ [ ] E6. (*) A queued retry with a missing key -> nothing is published. Developer test.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E010 - CLOCK OUT                               Actor: Driver        File: UCN_SC_E010_Clock_Out.md
+==============================================================================================
+ Use: ramon.delacruz@example.com (mid-shift), or driver@ after clocking in during E009.
+
+ MAIN FLOW
+ [ ] 1. Open the map sidebar -> Today's Shift shows "In Progress" with Time In.
+ [ ] 2. Click "Clock Out".
+ [ ] 3. -> Notice "Clocked out at HH:MM AM/PM. Total: X..." ; card changes to "Shift Complete" with the total
+        hours; driver status becomes inactive (no longer shown as available).
+ [ ] 4. Open the Weekly Log -> the closed shift is listed for the week with hours and overtime.
+
+ ALTERNATE FLOWS
+ [ ] A1. Press Clock Out with no open shift (replay / stale page) -> "No active shift found to clock out."
+ [ ] A2. A shift longer than 8 hours -> overtime = hours - 8 and the card shows "+N.N OT". (Ask a dev to
+         back-date time_in, or use the seeded overtime day.)
+ [ ] A3. (*) Driver role without a driver profile -> "Driver profile not found."
+
+ EXCEPTIONS
+ [ ] E1. (*) Database failure -> "Clock-out failed. Please try again later."; shift stays open.
+ [ ] E2. No active shift -> "No active shift found to clock out." (same as A1).
+ [ ] E3. (*) Driver profile missing -> "Driver profile not found." (same as A3).
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E023 - DRIVER DASHBOARD VIEWS                  Actor: Driver        File: UCN_SC_E023_Driver_Dashboard_Views.md
+==============================================================================================
+ Use: driver@gmail.com (4 violations), plus ramon.delacruz@ (2 violations).
+
+ MAIN FLOW
+ [ ] 1. Click "Timekeeping" in the sidebar (/timekeeping) -> this week's records with weekly totals.
+ [ ] 2. -> Weekly summary card (hours, overtime, progress) and a day-by-day table: date, in, out, hours,
+        overtime, status (Complete / Active / Absent...). Seeded rows include an overtime, a sick and a
+        vacation day; the totals add up.
+ [ ] 3. Click Previous Week / Next Week / Today -> the view changes week accordingly.
+ [ ] 4. Click "Violations" (/violations) -> list of the driver's violations.
+ [ ] 5. -> Summary cards (total violations, total fines, latest) and a table: type, code, offense count,
+        date, location, fine, penalty, remarks. Penalties show the right colour (suspension / impound red,
+        warning / community service amber).
+ [ ] 6. Flip the Active / Inactive status switch in the header -> status is saved and the header reflects it.
+
+ ALTERNATE FLOWS
+ [ ] A1. Logged out, open /timekeeping, /violations or submit /status -> redirected to /login.
+ [ ] A2. Submit a status other than active/inactive (e.g. maintenance) -> rejected with a validation error.
+ [ ] A3. (*) Database error while loading -> "Time-keeping failed. Please try again later." (or the
+         violations equivalent); no partial data.
+ [ ] A4. (*) Driver profile missing -> "Driver profile not found."
+
+ EXCEPTIONS
+ [ ] E1. (*) No driver profile -> redirected to the map with "Driver profile not found." (status update:
+         "Driver not found."); nothing written.
+ [ ] E2. Invalid or empty status -> "The status field must be either active or inactive."; record unchanged.
+ [ ] E3. (*) Query failure -> logged, generic "failed. Please try again later." message, no data.
+ [ ] E4. (*) Any other unhandled error -> 500 page.
+ Also: a driver cannot open /commuters, /vehicles or /reports (HTTP 403).
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E013 - MANAGE TIMEKEEPING                      Actor: Driver Manager   File: UCN_SC_E013_Manage_Timekeeping.md
+==============================================================================================
+ Use: drivermanager@gmail.com
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> driver-manager analytics.
+ [ ] 2. Click "Time Keeping" in the sidebar -> the timekeeping page.
+ [ ] 3. -> Table with columns: #, Driver & Date, Shift, Hours, Overtime, Type; type filter chips and a
+        "New Entry" button. The shifts you clocked in/out in E009/E010 are listed.
+
+ ALTERNATE FLOWS
+ [ ] A1. "New Entry" -> modal with Driver, Date, Time In, Time Out (or toggle "Log Leave" for Sick /
+         Vacation). Save a normal shift (in 06:00, out 14:00) -> "Time entry saved successfully."; hours = 8,
+         overtime = 0. Save 06:00 - 16:00 -> overtime = 2.
+ [ ] A1b. Log a Sick Leave and a Vacation Leave -> saved with zero hours and no times.
+ [ ] A2. Click the chips All / Regular / Sick / Vacation / Overtime -> table filters instantly and the
+         counter updates; Overtime = overtime greater than 0.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / service unreachable -> action cancelled; you are asked to check your connection.
+ [ ] E2. Submit without a driver or date -> the offending fields are listed; nothing stored.
+ [ ] E3. (*) Database failure -> operation cancelled and a notice shown.
+ [ ] E4. Clock-out earlier than or equal to clock-in -> "The clock-out time must be later than the clock-in time."
+ [ ] E5. A shift that overlaps an existing entry for that driver and date -> "This shift overlaps an
+         existing time entry for the driver on that date."
+ Also: only one of in/out given for a shift is rejected. A driver manager cannot open admin pages
+ (/commuters, /reports) or maintenance pages (HTTP 403).
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+ PART 3 SIGN-OFF   All five use cases complete:  [ ] YES     Tester: ____________  Date: ____/____/______
+
+
+##############################################################################################
+ PART 4 OF 5 - DRIVER MANAGER + MAINTENANCE MANAGER
+ Use cases: E012 Manage Drivers | E014 Manage Violations | E024 Violation Code Management |
+            E015 Manage Vehicles | E016 Manage Maintenance Schedule | E017 Manage Maintenance Tasks
+ Tester: ______________________   Start: ____/____/______   Finish: ____/____/______
+##############################################################################################
+
+Notes for this part
+ - E012 / E014 / E024 are done as drivermanager@gmail.com (E012 may also be done as admin@gmail.com).
+ - E015 / E016 / E017 are done as maintenancemanager@gmail.com (admin has the same Vehicles page).
+ - Order: E024 (codes) before E014 (log uses the codes); E017 (tasks) before E016 (schedule uses the tasks).
+ - Several tests delete things. Re-run the seeder afterwards to restore them.
+
+==============================================================================================
+ UCN_SC_E012 - MANAGE DRIVERS                          Actor: Driver Manager / Admin   File: UCN_SC_E012_Manage_Drivers.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Click "PUJ Drivers" / "Drivers" in the sidebar -> the driver management page.
+ [ ] 2. -> Table with #, Driver, Status, Registered, License, Actions; a search box; status chips
+        (All / Pending / Approved / Rejected / Suspended); License Expiring / Expired chips; "Add Driver".
+        10 per page.
+
+ ALTERNATE FLOWS
+ [ ] A1. Add Driver: modal with Name, Email, Password, Confirm, License Number, License Code, Expiration
+         Date, Contact Info, License Image. NO driver-code field. Fill all, "Create Driver" -> driver is
+         created already approved, with a generated DRV-###### code; confirmation toast.
+ [ ] A2. Edit (pencil): form shows the driver code read-only and the stored licence image. Change fields,
+         optionally replace the image, "Save Changes" -> "Driver updated." There is NO edit icon on a
+         PENDING driver.
+ [ ] A3. Delete (bin): "Delete Driver?" dialog -> confirm -> "Driver removed." (try dante.cruz@, who has no
+         vehicle). A driver with payments/top-ups is anonymised instead.
+ [ ] A4. View (ID-card icon): read-only modal with identity, licence data and expiry; it has an "Edit" shortcut.
+         The License column shows Valid / "Expires in N days" (30 or fewer) / Expired; the chips filter by it.
+ [ ] A5. Suspend / Reactivate (only for an APPROVED driver): confirmation dialog with optional Reason.
+         Suspend liza.mercado@ -> "Driver suspended.", she cannot log in or clock in, and her vehicle is
+         released. Reactivate -> "Driver reactivated." and status is back to inactive.
+         While suspended, a driver already signed in is signed out on the next click.
+ [ ] A6. Pending drivers (elena.torres@, mark.ocampo@, or the one from E022) show a "Review" button.
+         Approve -> licence fields required (unique number, code, expiry), a driver code is assigned,
+         "Driver approved..." and they can now log in. Reject -> they cannot log in and see the rejected message.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / service unreachable -> action cancelled with a connection notice.
+ [ ] E2. Licence number already used (e.g. N01-23-000001) -> "The license number has already been taken."
+ [ ] E3. Empty required fields -> offending fields listed; nothing written.
+ [ ] E4. (*) Database failure -> operation cancelled and notified.
+ [ ] E5. Email already registered -> rejected on the email field.
+ [ ] E6. Password under 8 characters or mismatched confirmation -> rejected; no account created.
+ [ ] E7. Licence image that is a PDF or over 2 MB -> rejected.
+ [ ] E8. Delete a driver who still has a vehicle (ramon.delacruz@) -> a lock replaces the delete icon, and a
+         forced request gives "This driver is still assigned to a vehicle. Unassign the vehicle first."
+ [ ] E9. Approve an already-approved driver / reject an already-rejected one -> "This driver is already
+         approved." / "...already rejected."
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E024 - VIOLATION CODE MANAGEMENT               Actor: Driver Manager   File: UCN_SC_E024_Admin_Violation_Code_Management.md
+==============================================================================================
+ Use: drivermanager@gmail.com. (E014 covers the same Violation Codes page from the UI side; do the
+ role/permission checks here.)
+
+ MAIN FLOW
+ [ ] 1. Open "Violation Codes" in the sidebar (/driver-manager/violation-codes) -> list of codes.
+ [ ] 2. -> Table: Code, Violation Name, 1st / 2nd / 3rd / 4th+ Offense (P), Actions (Edit / Delete). 6 codes
+        are seeded.
+ [ ] 3. Add a new code (Code, Name, four fines) -> created and listed with a success message.
+
+ ALTERNATE FLOWS
+ [ ] A1. Logged out, open the page or submit add/edit/delete -> redirected to /login.
+ [ ] A2. Logged in as admin, driver, commuter or maintenance manager, open the URL -> HTTP 403 "Unauthorized."
+ [ ] A3. Submit with a missing field, a duplicate code, or a non-numeric fine -> back to the form with
+         field messages (e.g. "The code has already been taken.", "The first offense field must be a number.")
+         and the entered values kept.
+ [ ] A4. Delete a code that violation logs use -> "This violation code is in use by existing violation logs
+         and cannot be deleted."; code remains.
+ [ ] A5. (*) Database error on add/edit/delete -> "An error occurred while processing the violation code.
+         Please try again later."; nothing changed.
+
+ EXCEPTIONS
+ [ ] E1. Edit or delete a code id that does not exist -> "Error no violation code found."
+ [ ] E2. Add or edit with a code that already exists (editing keeps its own code fine) -> "The code has
+         already been taken."
+ [ ] E3. Blank field, or a negative / non-numeric fine -> per-field validation messages.
+ [ ] E4. Delete an in-use code -> blocked (same as A4).
+ [ ] E5. (*) Database failure -> generic error message.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E014 - MANAGE VIOLATIONS                       Actor: Driver Manager   File: UCN_SC_E014_Manage_Violations.md
+==============================================================================================
+ Use: drivermanager@gmail.com
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> driver-manager analytics.
+ [ ] 2. Click "Violation Codes" or "Violation Log" -> the matching page.
+ [ ] 3. -> Code table, or the violation log with a search bar (driver name / licence, from, to, Filter, Clear).
+
+ ALTERNATE FLOWS
+ [ ] A1. Violation Codes -> "Add Code": fill Code, Name, 1st-4th+ fines, "Create Code" ->
+         "Violation code successfully added!"
+ [ ] A2. "Bulk Add": fill 2+ rows (a row missing code or name is skipped) -> each valid row is created.
+ [ ] A3. Edit icon -> form pre-filled, button "Update Code" -> "Violation code successfully updated!"
+ [ ] A4. Delete icon -> "Delete Code?" -> "Violation code successfully deleted!" (use a code with no logs).
+ [ ] A5. Violation Log -> "New Entry": Driver, Violation Code, Offense Instance, Fine, Place, Date, Time,
+         Remarks -> "Save Entry" saves it; the modal closes as soon as it is saved.
+ [ ] A6. Log -> "Bulk Add": one driver, several rows (leave Remarks empty on some) -> "N violations logged
+         successfully."
+ [ ] A7. Search by driver name or licence number and/or a date range, "Filter" -> matching rows and an
+         updated counter; "Clear" restores everything. The Driver picker in the entry modals still lists
+         every driver.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. Duplicate code on create and on update -> "The code has already been taken."
+ [ ] E3. (*) Database failure -> operation cancelled and notified.
+ [ ] E4. Filter that matches nothing / empty log -> "No violations recorded yet" / "No violations recorded"
+         empty state (not an empty table).
+ [ ] E5. Delete a code used by a logged violation -> "This violation code is in use by existing violation
+         logs and cannot be deleted."
+ [ ] E6. Future incident date -> "The date of violation must be a date before or equal to today." (the date
+         picker is also capped at today). In bulk add the message names the row.
+ Also: a driver manager cannot open admin pages or maintenance pages (HTTP 403).
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E017 - MANAGE MAINTENANCE TASKS                Actor: Maintenance Manager   File: UCN_SC_E017_Manage_Maintenance_Tasks.md
+==============================================================================================
+ Use: maintenancemanager@gmail.com
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> maintenance-manager analytics.
+ [ ] 2. Click "Maintenance Tasks" in the sidebar -> task page with a summary strip.
+ [ ] 3. -> Table: Task Performed, Km Interval, Month Interval, Actions; "Add Task" button.
+
+ ALTERNATE FLOWS
+ [ ] A1. "Add Task" -> modal (Task Performed, Km Interval, Month Interval) -> "Create Task" -> "Task
+         successfully added!" (Km and Month may be left blank.)
+ [ ] A2. Edit icon -> pre-filled modal -> "Update Task" -> "Task successfully updated!"
+ [ ] A3. Delete icon -> "Delete Task?" -> "Delete" -> "Task successfully deleted!"
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. Blank task name, or a name over 255 characters -> offending field flagged; nothing stored.
+ [ ] E3. (*) Database failure -> operation cancelled and notified.
+ Also: there is NO "Maintenance Logs" menu item, and /vehicle-maintenance-log and /maintenance-logs return 404.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E015 - MANAGE VEHICLES                         Actor: Maintenance Manager   File: UCN_SC_E015_Manage_Vehicles.md
+==============================================================================================
+ Use: maintenancemanager@gmail.com
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> maintenance-manager analytics.
+ [ ] 2. Click "Vehicles" -> vehicle page with a summary strip and the fleet table (7 seeded vehicles).
+
+ ALTERNATE FLOWS
+ [ ] A1. "Add Vehicle": Year, Brand, Model, Plate, VIN, Fuel Type, Tank Capacity, Assigned Driver, Location,
+         Status, Acquisition Date, Expected Disposal Date -> "Vehicle successfully added." The Assigned Driver
+         list shows only approved, non-suspended drivers who hold no other vehicle.
+ [ ] A2. Edit (list or detail modal) -> pre-filled; "Save Changes" -> "Vehicle successfully updated."
+ [ ] A3. Delete an empty, unassigned vehicle (STU-1122 or one you just added) -> "Vehicle successfully deleted."
+ [ ] A4. View icon -> read-only modal with the full record and an "Edit" shortcut.
+ [ ] A5. Search, status chips (Active / Maintenance / Inactive), Fuel Type, Assigned/Unassigned and sort
+         selects -> table filters and re-orders; the row counter updates.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. Duplicate plate number -> "The plate number has already been taken."
+ [ ] E3. Set ABC-1234 to "disposed" while Ramon is clocked in -> "Cannot dispose a vehicle that a driver is
+         currently clocked into..." (works after he clocks out).
+ [ ] E4. Assign a driver to an inactive / maintenance / disposed vehicle -> refused on driver_id ("A driver
+         cannot be assigned to a vehicle with a ... status"); the driver select is disabled unless status
+         is Active. Keeping an existing driver while changing status is allowed per the UCN.
+ [ ] E5. Empty required field, year outside 1990-2030, or disposal date before acquisition date -> offending
+         fields listed; nothing written.
+ [ ] E6. Delete a vehicle with maintenance history -> "This vehicle has maintenance records and cannot be
+         deleted. Mark its status as Disposed instead." A vehicle with a driver shows a locked delete icon.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E016 - MANAGE MAINTENANCE SCHEDULE             Actor: Maintenance Manager   File: UCN_SC_E016_Manage_Maintenance_Schedule.md
+==============================================================================================
+ Use: maintenancemanager@gmail.com
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> maintenance-manager analytics.
+ [ ] 2. Click "Preventive Maintenance" -> summary strip + the selected vehicle's schedule.
+ [ ] 3. -> One card per task with interval, last service date / odometer / cost, comments, the computed next
+        due date / odometer (a mix of OK and Overdue is seeded), and a "Log" / "Update" button.
+
+ ALTERNATE FLOWS
+ [ ] A1. Click "Log"/"Update" on a card -> modal: Odometer (km), Date, Cost, Comments. Fill valid values,
+         "Save Log" -> "Preventive maintenance logged successfully!" The card, the schedule and the dashboard
+         cost summary / Service History tab update.
+ [ ] A2. Use the vehicle picker at the top -> the schedule reloads for that vehicle with its own values; logging
+         a service then applies to that vehicle. A vehicle with no history (STU-1122) shows zeros, not an error.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. Enter an odometer LOWER than the last reading -> "The odometer reading cannot be lower than the last
+         recorded reading of N km."; nothing changes.
+ [ ] E3. Leave a required field empty or malformed (odometer, date, cost) -> offending fields listed; nothing stored.
+ [ ] E4. (*) Database failure -> operation cancelled and notified.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+ PART 4 SIGN-OFF   All six use cases complete:  [ ] YES     Tester: ____________  Date: ____/____/______
+
+
+##############################################################################################
+ PART 5 OF 5 - ADMIN TOOLS + DASHBOARDS
+ Use cases: E018 Manage Commuters | E027 Manage Staff Accounts | E019 Manage Fare Rates |
+            E020 View System Reports | E028 View Activity Log | E025 Profile and Dashboard Views
+ Tester: ______________________   Start: ____/____/______   Finish: ____/____/______
+##############################################################################################
+
+Notes for this part
+ - All admin cases use admin@gmail.com. E025 additionally needs one login per role.
+ - Do E028 (Activity Log) AFTER the others: it reads back the entries those actions created.
+ - E018 / E027 delete accounts and E019 changes fare rates. Re-run the seeder afterwards (it restores
+   lara.gomez@ and the baseline data). Note the fare table before you edit it.
+ - The Activity Log shows 127.0.0.1 as the IP on a local server - that is correct.
+ - UCN E025's alternate flows A2/A3 say a wrong role gets a 500, but its exceptions E1/E2 say a redirect to the
+   map with a toast. Record what you actually see.
+
+==============================================================================================
+ UCN_SC_E018 - MANAGE COMMUTERS                        Actor: Admin         File: UCN_SC_E018_Manage_Commuters.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> admin analytics.
+ [ ] 2. Click "PUJ Commuters" -> commuter page with the registered-account count.
+ [ ] 3. -> Table: #, Commuter, Status, Registered, Balance, Actions; search; chips All / Verified / Pending /
+        Active / Suspended; "Add Commuter". All 6 seeded commuters appear with correct status (pedro =
+        Suspended, lara = unverified). 10 per page.
+
+ ALTERNATE FLOWS
+ [ ] A1. "Add Commuter": Email, Password, Confirm, "Mark email as verified" toggle. The modal checks input
+         while you type and sends nothing while invalid. Valid -> "Create Commuter" -> account created.
+ [ ] A2. Edit icon: change email, optionally set a new password (blank keeps the current one), toggle
+         verification, "Save Changes" -> "Commuter updated."
+ [ ] A3. Delete icon: "Delete Commuter?" ("This action is permanent...") -> confirm. lara.gomez@ (P0) ->
+         "Commuter removed." A commuter with payments but P0 is anonymised and the ledger kept.
+ [ ] A4. Suspend icon on maria.santos@ -> confirm; badge turns Suspended; she cannot log in. Reactivate ->
+         she can sign in again.
+ [ ] A5. View icon -> details page (/commuters/{id}) with wallet balance, fares paid, total spent, registration
+         / verification / suspension dates, last fare, payments and top-ups.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. Empty required field -> offending fields listed; nothing written.
+ [ ] E3. (*) Database failure -> operation cancelled and notified.
+ [ ] E4. Email already registered -> rejected on the email field.
+ [ ] E5. Invalid email format -> "The email field must be a valid email address."
+ [ ] E6. Password under 8 characters -> "Password must be at least 8 characters."
+ [ ] E7. Mismatched confirmation -> "The password confirmation does not match." (under the password field).
+ [ ] E8. Delete pedro.lim@ (P85 balance) -> "Cannot delete commuter with a balance of PHP N. Settle the wallet first."
+ [ ] E9. Delete or suspend your OWN admin account -> "You cannot delete/suspend your own account."
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E027 - MANAGE STAFF ACCOUNTS                   Actor: Admin         File: UCN_SC_E027_Manage_Staff_Accounts.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Click "Staff" in the sidebar -> staff list, 10 per page, with the count of staff and of suspended accounts.
+ [ ] 2. Search by email, filter by role and by status (Active / Suspended), press Filter -> list narrows and
+        the filters survive paging; "Clear" restores the full list.
+
+ ALTERNATE FLOWS
+ [ ] A1. "Add Staff": Email, Role (driver_manager / maintenance_manager), Password, Confirm. The modal checks
+         while typing. Valid -> "Staff account created."; an Activity Log "created" entry names the role.
+ [ ] A2. Edit icon: change email and/or role, optionally a new password (blank keeps it) -> "Staff account
+         updated."; the old role is replaced.
+ [ ] A3. Suspend then reactivate a staff account and confirm -> "... has been suspended." / "... has been
+         reactivated."; a suspended member who is signed in is signed out on the next click and cannot log in.
+ [ ] A4. Delete icon -> "Delete staff account?" -> "Staff account removed."; Activity Log "deleted" entry has the
+         email and role.
+
+ EXCEPTIONS
+ [ ] E1. Duplicate email, short password, mismatched confirmation, or a role outside the two allowed -> modal stays
+         OPEN, each message appears under its own input, and a toast says "Please correct the highlighted
+         fields and try again."; nothing stored.
+ [ ] E2. Suspend or delete your own account -> "You cannot suspend/delete your own account."
+ [ ] E3. Target a user who is not a staff account (edit the id in the request) -> HTTP 404.
+ [ ] E4. (*) Database failure -> "A database error occurred. ..."
+ [ ] E5. Open /staff as a driver manager, maintenance manager, driver or commuter -> HTTP 403; as a guest -> login.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E019 - MANAGE FARE RATES                       Actor: Admin         File: UCN_SC_E019_Manage_Fare_Rates.md
+==============================================================================================
+ Write down the current rates (or screenshot them) before editing.
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> admin analytics.
+ [ ] 2. Click "Fare Rates" -> page with the tier count and the min / max fare strip (50 seeded tiers).
+ [ ] 3. -> Table: Distance (km), Regular, Discount; "Edit Rates" button; PDF upload form.
+
+ ALTERNATE FLOWS
+ [ ] A1. Upload an official LFTFRB fare-guide PDF with "Select File" + "Upload" -> "File uploaded successfully!"
+         and the tiers for 1-25 km and 27-51 km are loaded. (Needs the Python virtualenv; ask a dev for a
+         sample PDF.)
+ [ ] A2. "Edit Rates" -> Regular / Discount cells become number inputs and an "Editing Mode" save bar shows.
+         Edit one or several, "Save Changes" -> "Rates updated successfully". Then a commuter's fare
+         calculation (Part 2 / E004) shows the new price.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. Save with no rate rows at all -> "There are no rates to save."; nothing written.
+ [ ] E3. (*) Database failure -> operation cancelled and notified.
+ [ ] E4. Set a Regular or Discount value to 0 or below -> "A fare rate must be greater than zero." /
+         "A discount rate must be greater than zero."; every earlier value is kept.
+ [ ] E5. Upload with no file, or a non-PDF -> validation message ("A fare document file is required." /
+         "...must be a PDF"); nothing stored.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E020 - VIEW SYSTEM REPORTS                     Actor: Admin         File: UCN_SC_E020_View_System_Reports.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> admin analytics.
+ [ ] 2. Click "Reports & Analytics" -> report-type selector, from / to dates, "Generate Report", "Export CSV".
+ [ ] 3. Pick a type and a range covering the last 30 days, "Generate Report" -> Financial Overview (revenue,
+        top-ups, transaction count, daily revenue chart); Driver Performance (total / active drivers, top 5 by
+        hours, status distribution); Maintenance report. Each renders. Financial revenue counts PAID payments only.
+
+ ALTERNATE FLOWS
+ [ ] A1. Switch the type and/or dates and regenerate -> the report re-renders; "Export CSV" is disabled until the
+         new report has been generated.
+ [ ] A2. After generating, "Export CSV" -> a CSV (smartcommute_<type>_report_<YYYY-MM-DD>.csv) downloads; rows
+         match the screen; columns differ per type (financial: Date, Type, Reference ID, Amount, User).
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. (*) Aggregation too slow / fails -> "The database is taking too long to generate this report. Please try
+         a shorter date range."; no partial report.
+ [ ] E3. A range with nothing in it (e.g. 10 years ago) -> "No data found for the selected report type and date
+         range." above zeroed figures (not an error).
+ [ ] E4. If the newest transaction is over a day old -> warning "Some of the data may not be included in the
+         analytics..." (re-seed or wait a day to see this).
+ [ ] E5. Start date later than end date -> "The start date must be before the end date."; no report.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E025 - PROFILE AND DASHBOARD VIEWS             Actor: All logged-in roles   File: UCN_SC_E025_Profile_and_Dashboard.md
+==============================================================================================
+ One login per role: commuter@gmail.com, admin@gmail.com, driver@gmail.com, drivermanager@gmail.com,
+ maintenancemanager@gmail.com.
+
+ MAIN FLOW - COMMUTER PROFILE (/profile)
+ [ ] 1. Click "Profile" -> three sections: Payments (amount, date...), Top-ups (amount, method, date) and Wallet
+        (current balance). The lists scroll and the numbers match Payment History / Top-up History.
+
+ MAIN FLOW - ADMIN DASHBOARD (/dashboard)
+ [ ] 2. -> Total Revenue (PAID payments only; seeded paid total is P634), Total Funds Added, Active Users (commuters
+        with at least one paid fare), Recent Fares, Recent Top-ups, Revenue by Day and Top-ups by Day charts.
+
+ MAIN FLOW - DRIVER DASHBOARD
+ [ ] 3. -> Driver Info, Today's Record, Weekly Summary (hours / overtime), Assigned Vehicle (plate, brand / model),
+        Recent Time-keeping (last 7 days), Recent Violations. An expiring or expired licence shows a warning.
+
+ MAIN FLOW - DRIVER MANAGER DASHBOARD
+ [ ] 4. -> List of drivers (ID, name, code, licence, expiry), time-keeping logs (in / out, hours, overtime, sick /
+        vacation) and violation logs (user, instance, fine, date, time). No driver shows as "Unknown".
+
+ MAIN FLOW - MAINTENANCE MANAGER DASHBOARD
+ [ ] 5. -> Fleet Information (plate, year, brand / model, driver), Cost Summary (total cost, services, average
+        cost / service, cost / km) and a Service History tab; choose each vehicle and the figures update.
+
+ ALTERNATE FLOWS
+ [ ] A1. Logged out, open /profile or /dashboard -> redirected to /login.
+ [ ] A2. As a driver or admin, open /profile -> expect a redirect to the map with "Profile page unavailable."
+         (the UCN also says "500" here - note what you really see).
+ [ ] A3. As a commuter, open /dashboard -> expect a redirect to the map with "Dashboard unavailable."
+         (the UCN also says "500" here - note what you really see).
+ [ ] A4. A brand-new account with no data -> widgets show "-", "0" or empty lists; the page still renders.
+ [ ] A5. (*) Database error while computing numbers -> "Dashboard could not be loaded. Please try again later."
+
+ EXCEPTIONS
+ [ ] E1. Non-commuter on /profile -> redirected to the map, "Profile page unavailable." (same as A2).
+ [ ] E2. Role not allowed on /dashboard -> redirected to the map, "Dashboard unavailable." (same as A3).
+ [ ] E3. (*) Query failure -> error page or flash saying the dashboard could not be loaded.
+ [ ] E4. (*) Any other unhandled error -> 500 page.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E028 - VIEW ACTIVITY LOG                       Actor: Admin         File: UCN_SC_E028_View_Activity_Log.md
+==============================================================================================
+ DO THIS ONE LAST. First generate some activity: sign in / out, one wrong password (e.g. commuter@gmail.com),
+ suspend + reactivate a commuter (not pedro), change a vehicle status, edit two fare rates and save, add and
+ delete a staff account, export a report CSV. Then read it all back as admin@gmail.com.
+
+ MAIN FLOW
+ [ ] 1. Click "Activity Log" in the sidebar (clipboard icon, after "Staff") -> entries newest first, 10 per page,
+        with the total, the number written today and - when there are any - a "failed sign-ins in the last 24 h"
+        link.
+ [ ] 2. -> Each row shows When (Philippine time), Who (email + role, or "Not signed in / system"), What happened
+        (category badge, event badge, readable description), Record (e.g. "Vehicle #12") and the IP address.
+ [ ] 3. Click a row -> it expands: "What changed" (Field / Before / After table; fare-rate edits show a
+        Distance / Regular / Discount table) plus extra facts (e.g. the suspension reason) and "Where it came
+        from". Click again to close.
+ [ ] 4. The entries you just caused are all present and correct: Signed in, Failed sign-in (no password in the
+        entry), Signed out, Suspended / Reactivated (naming the admin), Updated vehicle (Status only in the
+        diff), one Fare rates updated entry (saving again with no change adds none), Created / Deleted staff,
+        Report exported.
+ [ ] 5. Check things that must NOT create entries: browsing the map as guest / commuter, driver broadcasting
+        and toggling availability, opening / filtering / paging the Activity Log itself, theme or font changes.
+
+ ALTERNATE FLOWS
+ [ ] A1. Search by an email, by a word from a description, and by the email a failed sign-in tried -> the right rows.
+ [ ] A2. Pick a Category and/or an Event (e.g. Failed sign-in, Suspended, Fare rates updated) -> applied at once;
+         combines with search and dates; survives paging.
+ [ ] A3. Set from and/or to dates and Filter -> entries from the start of the first day to the end of the last day.
+ [ ] A4. Press "Clear" -> the full list returns.
+ [ ] A5. Press "Export CSV" -> smartcommute_activity_log_<YYYY-MM-DD>.csv (UTF-8; opens in Excel with the peso
+         sign and arrows intact), honours the current filters, max 10,000 rows; the export itself adds an
+         "Activity log exported" entry with the row count and filters.
+ [ ] A6. Click the "failed sign-ins in the last 24 h" link -> filtered to Event = Failed sign-in from yesterday on.
+
+ EXCEPTIONS
+ [ ] E1. As driver manager, maintenance manager, driver or commuter open /activity-log (and the export) -> HTTP 403;
+         as a guest -> redirected to login. The "Activity Log" menu item is only visible to admin.
+ [ ] E2. "To" date earlier than "From" -> "The end date must be on or after the start date."; no result; the form
+         is kept.
+ [ ] E3. Edit the URL to an unknown category or event -> rejected with a validation message; no query runs.
+ [ ] E4. Filters that match nothing -> "No entries match your filters" (or "Nothing has been recorded yet")
+         instead of an empty table.
+ [ ] E5. (*) More than 10,000 entries match the export -> only the newest 10,000 are exported. Mark [-] unless
+         you have that much data.
+ Also: light and dark mode read well; at phone width the filters stack and the table scrolls sideways.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+ PART 5 SIGN-OFF   All six use cases complete:  [ ] YES     Tester: ____________  Date: ____/____/______
+
+
+##############################################################################################
+ FINAL TALLY  (fill in when all five parts are done)
+##############################################################################################
+
+ PART   USE CASES                             PASS   FAIL   TESTER            DATE
+ ----   ------------------------------------  -----  -----  ----------------  ----------
+  1     E001 E002 E008 E011 E022 E026        ____   ____   ________________  ____/____
+  2     E003 E004 E005 E006 E007             ____   ____   ________________  ____/____
+  3     E009 E010 E013 E021 E023             ____   ____   ________________  ____/____
+  4     E012 E014 E015 E016 E017 E024        ____   ____   ________________  ____/____
+  5     E018 E019 E020 E025 E027 E028        ____   ____   ________________  ____/____
+                                             ----   ----
+                                      TOTAL  ____ / 28
+
+ FAILED STEPS (use case, step number, what you saw, who to tell):
+ ______________________________________________________________________________________________
+ ______________________________________________________________________________________________
+ ______________________________________________________________________________________________
+ ______________________________________________________________________________________________
+
+ Remember: a UCN "Known Gap" is a documented limitation, not a bug. Only log real differences between the
+ expected result written here and what the system does.

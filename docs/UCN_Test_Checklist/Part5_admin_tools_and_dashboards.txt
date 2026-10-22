@@ -1,0 +1,320 @@
+==============================================================================================
+ SMARTCOMMUTE (WEB COMMUTE) - USE CASE TEST CHECKLIST - PART 5 OF 5
+==============================================================================================
+
+ Source of truth : docs/UCN/UCN_SC_E0xx_*.md  (open the matching file if a step is unclear)
+ Test data       : docs/MANUAL_TEST_CHECKLIST.md + database/seeders/DevSeeder.php
+ Built           : 2026-10-22
+
+ The 5 parts (this file is Part 5):
+     1  Accounts and Access                  E001 E002 E008 E011 E022 E026
+     2  Commuter Journey                     E003 E004 E005 E006 E007
+     3  Driver Day-to-Day + Timekeeping      E009 E010 E021 E023 E013
+     4  Driver Mgr + Maintenance Mgr         E012 E014 E024 E015 E016 E017
+   > 5  Admin Tools + Dashboards             E018 E019 E020 E025 E027 E028
+
+
+----------------------------------------------------------------------------------------------
+ BEFORE YOU START (everyone)
+----------------------------------------------------------------------------------------------
+
+ 1. Load the baseline data (safe to re-run any time, it never duplicates rows):
+
+        /opt/lampp/bin/php artisan db:seed --class=DevSeeder
+
+ 2. Start the app and browse to http://127.0.0.1:8000
+
+        /opt/lampp/bin/php artisan serve
+
+    Use 127.0.0.1:8000, NOT XAMPP Apache (Apache breaks the compiled-view permissions).
+
+ 3. Password for every seeded account is:  admin123
+ 4. Login is throttled to 5 attempts per minute. If you get "Too many attempts" (429), wait a minute.
+ 5. Team members share ONE database. If two people test at once, wallet balances, shifts and
+    suspensions will change under each other. Agree who is on the server, or give each person their
+    own copy, and re-run the seeder whenever the data looks wrong.
+ 6. Use a separate browser profile (or private window) per role so sessions do not collide.
+
+ SEEDED TEST ACCOUNTS (password admin123)
+
+   Admin ............. admin@gmail.com
+   Driver manager .... drivermanager@gmail.com
+   Maintenance mgr ... maintenancemanager@gmail.com
+
+   Commuter .......... commuter@gmail.com           wallet P623, 5 rides
+   Commuter .......... maria.santos@example.com     wallet P1,430, 6 rides
+   Commuter .......... juan.delacruz@example.com    wallet P0; has pending, failed, cancelled payments
+   Commuter .......... ana.reyes@example.com        wallet P4,896; 14 payments, 12 top-ups (pagination)
+   Commuter .......... pedro.lim@example.com        SUSPENDED, wallet P85
+   Commuter .......... lara.gomez@example.com       EMAIL NOT VERIFIED, wallet P0
+
+   Driver ............ driver@gmail.com             approved, vehicle JKL-7890, NO shift today (clock in)
+   Driver ............ ramon.delacruz@example.com   approved, vehicle ABC-1234, MID-SHIFT (clock out)
+   Driver ............ liza.mercado@example.com     approved, vehicle DEF-5678, licence expires in 20 days
+   Driver ............ dante.cruz@example.com       approved, licence EXPIRED 45 days ago
+   Driver ............ carlos.bautista@example.com  SUSPENDED
+   Driver ............ elena.torres@example.com     PENDING approval
+   Driver ............ mark.ocampo@example.com      PENDING approval
+   Driver ............ nico.tan@example.com         REJECTED
+
+   Fleet: ABC-1234 Coaster (active, Ramon) | DEF-5678 County (active, Liza) | JKL-7890 HiAce (active,
+          driver@) | STU-1122 Toano (active, unassigned) | GHI-9012 NPR (maintenance) |
+          MNO-3456 L300 (inactive) | PQR-7890 Urvan (disposed)
+
+ HOW TO USE THIS CHECKLIST
+
+   - Work through your part top to bottom. Tick a box by changing [ ] to [x].
+   - If a step FAILS, change it to [F] and write what you saw on the "Notes" line (or on the line below).
+   - If a step cannot be tested, change it to [-] and say why.
+   - Every use case has three groups:  MAIN FLOW (happy path), ALTERNATE FLOWS (A1, A2...),
+     and EXCEPTIONS (E1, E2... = what happens when something goes wrong).
+   - The text after "->" is the EXPECTED result. Messages in quotes should match what the screen shows.
+   - Finish each use case with the RESULT line: tick PASS only if every step above it is [x] or [-].
+   - (*) marks a step that needs a fault to be forced (database down, mail server down, payment gateway
+     down, lost network). Do not break the server just for this - mark it [-] unless a developer
+     has staged the fault. Network loss can be simulated with the browser dev-tools "Offline" switch.
+   - "Known Gaps" in the UCN files are NOT bugs - they are documented limitations. Do not log them.
+   - Toasts (bottom-right) are how success and error messages appear. In add/edit/delete modals a
+     validation error keeps the modal open and shows the message under its own input.
+
+
+
+##############################################################################################
+ PART 5 OF 5 - ADMIN TOOLS + DASHBOARDS
+ Use cases: E018 Manage Commuters | E027 Manage Staff Accounts | E019 Manage Fare Rates |
+            E020 View System Reports | E028 View Activity Log | E025 Profile and Dashboard Views
+ Tester: ______________________   Start: ____/____/______   Finish: ____/____/______
+##############################################################################################
+
+Notes for this part
+ - All admin cases use admin@gmail.com. E025 additionally needs one login per role.
+ - Do E028 (Activity Log) AFTER the others: it reads back the entries those actions created.
+ - E018 / E027 delete accounts and E019 changes fare rates. Re-run the seeder afterwards (it restores
+   lara.gomez@ and the baseline data). Note the fare table before you edit it.
+ - The Activity Log shows 127.0.0.1 as the IP on a local server - that is correct.
+ - UCN E025's alternate flows A2/A3 say a wrong role gets a 500, but its exceptions E1/E2 say a redirect to the
+   map with a toast. Record what you actually see.
+
+==============================================================================================
+ UCN_SC_E018 - MANAGE COMMUTERS                        Actor: Admin         File: UCN_SC_E018_Manage_Commuters.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> admin analytics.
+ [ ] 2. Click "PUJ Commuters" -> commuter page with the registered-account count.
+ [ ] 3. -> Table: #, Commuter, Status, Registered, Balance, Actions; search; chips All / Verified / Pending /
+        Active / Suspended; "Add Commuter". All 6 seeded commuters appear with correct status (pedro =
+        Suspended, lara = unverified). 10 per page.
+
+ ALTERNATE FLOWS
+ [ ] A1. "Add Commuter": Email, Password, Confirm, "Mark email as verified" toggle. The modal checks input
+         while you type and sends nothing while invalid. Valid -> "Create Commuter" -> account created.
+ [ ] A2. Edit icon: change email, optionally set a new password (blank keeps the current one), toggle
+         verification, "Save Changes" -> "Commuter updated."
+ [ ] A3. Delete icon: "Delete Commuter?" ("This action is permanent...") -> confirm. lara.gomez@ (P0) ->
+         "Commuter removed." A commuter with payments but P0 is anonymised and the ledger kept.
+ [ ] A4. Suspend icon on maria.santos@ -> confirm; badge turns Suspended; she cannot log in. Reactivate ->
+         she can sign in again.
+ [ ] A5. View icon -> details page (/commuters/{id}) with wallet balance, fares paid, total spent, registration
+         / verification / suspension dates, last fare, payments and top-ups.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. Empty required field -> offending fields listed; nothing written.
+ [ ] E3. (*) Database failure -> operation cancelled and notified.
+ [ ] E4. Email already registered -> rejected on the email field.
+ [ ] E5. Invalid email format -> "The email field must be a valid email address."
+ [ ] E6. Password under 8 characters -> "Password must be at least 8 characters."
+ [ ] E7. Mismatched confirmation -> "The password confirmation does not match." (under the password field).
+ [ ] E8. Delete pedro.lim@ (P85 balance) -> "Cannot delete commuter with a balance of PHP N. Settle the wallet first."
+ [ ] E9. Delete or suspend your OWN admin account -> "You cannot delete/suspend your own account."
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E027 - MANAGE STAFF ACCOUNTS                   Actor: Admin         File: UCN_SC_E027_Manage_Staff_Accounts.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Click "Staff" in the sidebar -> staff list, 10 per page, with the count of staff and of suspended accounts.
+ [ ] 2. Search by email, filter by role and by status (Active / Suspended), press Filter -> list narrows and
+        the filters survive paging; "Clear" restores the full list.
+
+ ALTERNATE FLOWS
+ [ ] A1. "Add Staff": Email, Role (driver_manager / maintenance_manager), Password, Confirm. The modal checks
+         while typing. Valid -> "Staff account created."; an Activity Log "created" entry names the role.
+ [ ] A2. Edit icon: change email and/or role, optionally a new password (blank keeps it) -> "Staff account
+         updated."; the old role is replaced.
+ [ ] A3. Suspend then reactivate a staff account and confirm -> "... has been suspended." / "... has been
+         reactivated."; a suspended member who is signed in is signed out on the next click and cannot log in.
+ [ ] A4. Delete icon -> "Delete staff account?" -> "Staff account removed."; Activity Log "deleted" entry has the
+         email and role.
+
+ EXCEPTIONS
+ [ ] E1. Duplicate email, short password, mismatched confirmation, or a role outside the two allowed -> modal stays
+         OPEN, each message appears under its own input, and a toast says "Please correct the highlighted
+         fields and try again."; nothing stored.
+ [ ] E2. Suspend or delete your own account -> "You cannot suspend/delete your own account."
+ [ ] E3. Target a user who is not a staff account (edit the id in the request) -> HTTP 404.
+ [ ] E4. (*) Database failure -> "A database error occurred. ..."
+ [ ] E5. Open /staff as a driver manager, maintenance manager, driver or commuter -> HTTP 403; as a guest -> login.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E019 - MANAGE FARE RATES                       Actor: Admin         File: UCN_SC_E019_Manage_Fare_Rates.md
+==============================================================================================
+ Write down the current rates (or screenshot them) before editing.
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> admin analytics.
+ [ ] 2. Click "Fare Rates" -> page with the tier count and the min / max fare strip (50 seeded tiers).
+ [ ] 3. -> Table: Distance (km), Regular, Discount; "Edit Rates" button; PDF upload form.
+
+ ALTERNATE FLOWS
+ [ ] A1. Upload an official LFTFRB fare-guide PDF with "Select File" + "Upload" -> "File uploaded successfully!"
+         and the tiers for 1-25 km and 27-51 km are loaded. (Needs the Python virtualenv; ask a dev for a
+         sample PDF.)
+ [ ] A2. "Edit Rates" -> Regular / Discount cells become number inputs and an "Editing Mode" save bar shows.
+         Edit one or several, "Save Changes" -> "Rates updated successfully". Then a commuter's fare
+         calculation (Part 2 / E004) shows the new price.
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. Save with no rate rows at all -> "There are no rates to save."; nothing written.
+ [ ] E3. (*) Database failure -> operation cancelled and notified.
+ [ ] E4. Set a Regular or Discount value to 0 or below -> "A fare rate must be greater than zero." /
+         "A discount rate must be greater than zero."; every earlier value is kept.
+ [ ] E5. Upload with no file, or a non-PDF -> validation message ("A fare document file is required." /
+         "...must be a PDF"); nothing stored.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E020 - VIEW SYSTEM REPORTS                     Actor: Admin         File: UCN_SC_E020_View_System_Reports.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Open the dashboard -> admin analytics.
+ [ ] 2. Click "Reports & Analytics" -> report-type selector, from / to dates, "Generate Report", "Export CSV".
+ [ ] 3. Pick a type and a range covering the last 30 days, "Generate Report" -> Financial Overview (revenue,
+        top-ups, transaction count, daily revenue chart); Driver Performance (total / active drivers, top 5 by
+        hours, status distribution); Maintenance report. Each renders. Financial revenue counts PAID payments only.
+
+ ALTERNATE FLOWS
+ [ ] A1. Switch the type and/or dates and regenerate -> the report re-renders; "Export CSV" is disabled until the
+         new report has been generated.
+ [ ] A2. After generating, "Export CSV" -> a CSV (smartcommute_<type>_report_<YYYY-MM-DD>.csv) downloads; rows
+         match the screen; columns differ per type (financial: Date, Type, Reference ID, Amount, User).
+
+ EXCEPTIONS
+ [ ] E1. (*) Offline / unreachable -> action cancelled with a connection notice.
+ [ ] E2. (*) Aggregation too slow / fails -> "The database is taking too long to generate this report. Please try
+         a shorter date range."; no partial report.
+ [ ] E3. A range with nothing in it (e.g. 10 years ago) -> "No data found for the selected report type and date
+         range." above zeroed figures (not an error).
+ [ ] E4. If the newest transaction is over a day old -> warning "Some of the data may not be included in the
+         analytics..." (re-seed or wait a day to see this).
+ [ ] E5. Start date later than end date -> "The start date must be before the end date."; no report.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E025 - PROFILE AND DASHBOARD VIEWS             Actor: All logged-in roles   File: UCN_SC_E025_Profile_and_Dashboard.md
+==============================================================================================
+ One login per role: commuter@gmail.com, admin@gmail.com, driver@gmail.com, drivermanager@gmail.com,
+ maintenancemanager@gmail.com.
+
+ MAIN FLOW - COMMUTER PROFILE (/profile)
+ [ ] 1. Click "Profile" -> three sections: Payments (amount, date...), Top-ups (amount, method, date) and Wallet
+        (current balance). The lists scroll and the numbers match Payment History / Top-up History.
+
+ MAIN FLOW - ADMIN DASHBOARD (/dashboard)
+ [ ] 2. -> Total Revenue (PAID payments only; seeded paid total is P634), Total Funds Added, Active Users (commuters
+        with at least one paid fare), Recent Fares, Recent Top-ups, Revenue by Day and Top-ups by Day charts.
+
+ MAIN FLOW - DRIVER DASHBOARD
+ [ ] 3. -> Driver Info, Today's Record, Weekly Summary (hours / overtime), Assigned Vehicle (plate, brand / model),
+        Recent Time-keeping (last 7 days), Recent Violations. An expiring or expired licence shows a warning.
+
+ MAIN FLOW - DRIVER MANAGER DASHBOARD
+ [ ] 4. -> List of drivers (ID, name, code, licence, expiry), time-keeping logs (in / out, hours, overtime, sick /
+        vacation) and violation logs (user, instance, fine, date, time). No driver shows as "Unknown".
+
+ MAIN FLOW - MAINTENANCE MANAGER DASHBOARD
+ [ ] 5. -> Fleet Information (plate, year, brand / model, driver), Cost Summary (total cost, services, average
+        cost / service, cost / km) and a Service History tab; choose each vehicle and the figures update.
+
+ ALTERNATE FLOWS
+ [ ] A1. Logged out, open /profile or /dashboard -> redirected to /login.
+ [ ] A2. As a driver or admin, open /profile -> expect a redirect to the map with "Profile page unavailable."
+         (the UCN also says "500" here - note what you really see).
+ [ ] A3. As a commuter, open /dashboard -> expect a redirect to the map with "Dashboard unavailable."
+         (the UCN also says "500" here - note what you really see).
+ [ ] A4. A brand-new account with no data -> widgets show "-", "0" or empty lists; the page still renders.
+ [ ] A5. (*) Database error while computing numbers -> "Dashboard could not be loaded. Please try again later."
+
+ EXCEPTIONS
+ [ ] E1. Non-commuter on /profile -> redirected to the map, "Profile page unavailable." (same as A2).
+ [ ] E2. Role not allowed on /dashboard -> redirected to the map, "Dashboard unavailable." (same as A3).
+ [ ] E3. (*) Query failure -> error page or flash saying the dashboard could not be loaded.
+ [ ] E4. (*) Any other unhandled error -> 500 page.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E028 - VIEW ACTIVITY LOG                       Actor: Admin         File: UCN_SC_E028_View_Activity_Log.md
+==============================================================================================
+ DO THIS ONE LAST. First generate some activity: sign in / out, one wrong password (e.g. commuter@gmail.com),
+ suspend + reactivate a commuter (not pedro), change a vehicle status, edit two fare rates and save, add and
+ delete a staff account, export a report CSV. Then read it all back as admin@gmail.com.
+
+ MAIN FLOW
+ [ ] 1. Click "Activity Log" in the sidebar (clipboard icon, after "Staff") -> entries newest first, 10 per page,
+        with the total, the number written today and - when there are any - a "failed sign-ins in the last 24 h"
+        link.
+ [ ] 2. -> Each row shows When (Philippine time), Who (email + role, or "Not signed in / system"), What happened
+        (category badge, event badge, readable description), Record (e.g. "Vehicle #12") and the IP address.
+ [ ] 3. Click a row -> it expands: "What changed" (Field / Before / After table; fare-rate edits show a
+        Distance / Regular / Discount table) plus extra facts (e.g. the suspension reason) and "Where it came
+        from". Click again to close.
+ [ ] 4. The entries you just caused are all present and correct: Signed in, Failed sign-in (no password in the
+        entry), Signed out, Suspended / Reactivated (naming the admin), Updated vehicle (Status only in the
+        diff), one Fare rates updated entry (saving again with no change adds none), Created / Deleted staff,
+        Report exported.
+ [ ] 5. Check things that must NOT create entries: browsing the map as guest / commuter, driver broadcasting
+        and toggling availability, opening / filtering / paging the Activity Log itself, theme or font changes.
+
+ ALTERNATE FLOWS
+ [ ] A1. Search by an email, by a word from a description, and by the email a failed sign-in tried -> the right rows.
+ [ ] A2. Pick a Category and/or an Event (e.g. Failed sign-in, Suspended, Fare rates updated) -> applied at once;
+         combines with search and dates; survives paging.
+ [ ] A3. Set from and/or to dates and Filter -> entries from the start of the first day to the end of the last day.
+ [ ] A4. Press "Clear" -> the full list returns.
+ [ ] A5. Press "Export CSV" -> smartcommute_activity_log_<YYYY-MM-DD>.csv (UTF-8; opens in Excel with the peso
+         sign and arrows intact), honours the current filters, max 10,000 rows; the export itself adds an
+         "Activity log exported" entry with the row count and filters.
+ [ ] A6. Click the "failed sign-ins in the last 24 h" link -> filtered to Event = Failed sign-in from yesterday on.
+
+ EXCEPTIONS
+ [ ] E1. As driver manager, maintenance manager, driver or commuter open /activity-log (and the export) -> HTTP 403;
+         as a guest -> redirected to login. The "Activity Log" menu item is only visible to admin.
+ [ ] E2. "To" date earlier than "From" -> "The end date must be on or after the start date."; no result; the form
+         is kept.
+ [ ] E3. Edit the URL to an unknown category or event -> rejected with a validation message; no query runs.
+ [ ] E4. Filters that match nothing -> "No entries match your filters" (or "Nothing has been recorded yet")
+         instead of an empty table.
+ [ ] E5. (*) More than 10,000 entries match the export -> only the newest 10,000 are exported. Mark [-] unless
+         you have that much data.
+ Also: light and dark mode read well; at phone width the filters stack and the table scrolls sideways.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+ PART 5 SIGN-OFF   All six use cases complete:  [ ] YES     Tester: ____________  Date: ____/____/______
+

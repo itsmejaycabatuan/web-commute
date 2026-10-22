@@ -57,7 +57,7 @@ The user account is suspended. System cancels the login and displays *"This acco
 System fails to query or authenticate against the database. System cancels the login and displays *"Login is unavailable right now. Please try again later."* No partial session is created.
 
 **E2 – Email Not Confirmed**
-Account exists but `email_verified_at` is null. System redirects the Guest to the email-verification notice page, where a **Resend Verification** action is available (throttled to 6 requests/minute). The session is **still regenerated** before this redirect.
+Account exists but `email_verified_at` is null. System redirects the Guest to the email-verification notice page, where a **Resend link and code** action is available and the 6-digit code from the email can be entered instead of using the link (throttled to 6 requests/minute). The session is **still regenerated** before this redirect.
 
 **E3 – Invalid Credentials (covers wrong email *and* wrong password)**
 The provided email and/or password does not match. System displays the single generic message *"The provided credentials do not match our records."* and cancels the login.

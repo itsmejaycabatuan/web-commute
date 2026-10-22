@@ -1,0 +1,301 @@
+==============================================================================================
+ SMARTCOMMUTE (WEB COMMUTE) - USE CASE TEST CHECKLIST - PART 1 OF 5
+==============================================================================================
+
+ Source of truth : docs/UCN/UCN_SC_E0xx_*.md  (open the matching file if a step is unclear)
+ Test data       : docs/MANUAL_TEST_CHECKLIST.md + database/seeders/DevSeeder.php
+ Built           : 2026-10-22
+
+ The 5 parts (this file is Part 1):
+   > 1  Accounts and Access                  E001 E002 E008 E011 E022 E026
+     2  Commuter Journey                     E003 E004 E005 E006 E007
+     3  Driver Day-to-Day + Timekeeping      E009 E010 E021 E023 E013
+     4  Driver Mgr + Maintenance Mgr         E012 E014 E024 E015 E016 E017
+     5  Admin Tools + Dashboards             E018 E019 E020 E025 E027 E028
+
+
+----------------------------------------------------------------------------------------------
+ BEFORE YOU START (everyone)
+----------------------------------------------------------------------------------------------
+
+ 1. Load the baseline data (safe to re-run any time, it never duplicates rows):
+
+        /opt/lampp/bin/php artisan db:seed --class=DevSeeder
+
+ 2. Start the app and browse to http://127.0.0.1:8000
+
+        /opt/lampp/bin/php artisan serve
+
+    Use 127.0.0.1:8000, NOT XAMPP Apache (Apache breaks the compiled-view permissions).
+
+ 3. Password for every seeded account is:  admin123
+ 4. Login is throttled to 5 attempts per minute. If you get "Too many attempts" (429), wait a minute.
+ 5. Team members share ONE database. If two people test at once, wallet balances, shifts and
+    suspensions will change under each other. Agree who is on the server, or give each person their
+    own copy, and re-run the seeder whenever the data looks wrong.
+ 6. Use a separate browser profile (or private window) per role so sessions do not collide.
+
+ SEEDED TEST ACCOUNTS (password admin123)
+
+   Admin ............. admin@gmail.com
+   Driver manager .... drivermanager@gmail.com
+   Maintenance mgr ... maintenancemanager@gmail.com
+
+   Commuter .......... commuter@gmail.com           wallet P623, 5 rides
+   Commuter .......... maria.santos@example.com     wallet P1,430, 6 rides
+   Commuter .......... juan.delacruz@example.com    wallet P0; has pending, failed, cancelled payments
+   Commuter .......... ana.reyes@example.com        wallet P4,896; 14 payments, 12 top-ups (pagination)
+   Commuter .......... pedro.lim@example.com        SUSPENDED, wallet P85
+   Commuter .......... lara.gomez@example.com       EMAIL NOT VERIFIED, wallet P0
+
+   Driver ............ driver@gmail.com             approved, vehicle JKL-7890, NO shift today (clock in)
+   Driver ............ ramon.delacruz@example.com   approved, vehicle ABC-1234, MID-SHIFT (clock out)
+   Driver ............ liza.mercado@example.com     approved, vehicle DEF-5678, licence expires in 20 days
+   Driver ............ dante.cruz@example.com       approved, licence EXPIRED 45 days ago
+   Driver ............ carlos.bautista@example.com  SUSPENDED
+   Driver ............ elena.torres@example.com     PENDING approval
+   Driver ............ mark.ocampo@example.com      PENDING approval
+   Driver ............ nico.tan@example.com         REJECTED
+
+   Fleet: ABC-1234 Coaster (active, Ramon) | DEF-5678 County (active, Liza) | JKL-7890 HiAce (active,
+          driver@) | STU-1122 Toano (active, unassigned) | GHI-9012 NPR (maintenance) |
+          MNO-3456 L300 (inactive) | PQR-7890 Urvan (disposed)
+
+ HOW TO USE THIS CHECKLIST
+
+   - Work through your part top to bottom. Tick a box by changing [ ] to [x].
+   - If a step FAILS, change it to [F] and write what you saw on the "Notes" line (or on the line below).
+   - If a step cannot be tested, change it to [-] and say why.
+   - Every use case has three groups:  MAIN FLOW (happy path), ALTERNATE FLOWS (A1, A2...),
+     and EXCEPTIONS (E1, E2... = what happens when something goes wrong).
+   - The text after "->" is the EXPECTED result. Messages in quotes should match what the screen shows.
+   - Finish each use case with the RESULT line: tick PASS only if every step above it is [x] or [-].
+   - (*) marks a step that needs a fault to be forced (database down, mail server down, payment gateway
+     down, lost network). Do not break the server just for this - mark it [-] unless a developer
+     has staged the fault. Network loss can be simulated with the browser dev-tools "Offline" switch.
+   - "Known Gaps" in the UCN files are NOT bugs - they are documented limitations. Do not log them.
+   - Toasts (bottom-right) are how success and error messages appear. In add/edit/delete modals a
+     validation error keeps the modal open and shows the message under its own input.
+
+
+
+##############################################################################################
+ PART 1 OF 5 - ACCOUNTS AND ACCESS
+ Use cases: E001 Login | E002 Create Account | E008 Change Password | E011 Reset Password |
+            E022 Driver Registration | E026 Account Deletion
+ Tester: ______________________   Start: ____/____/______   Finish: ____/____/______
+##############################################################################################
+
+Notes for this part
+ - E002, E022 and E026 create/destroy accounts: use throw-away emails (e.g. test1@example.com).
+ - Do E026 LAST - it deletes the account you registered.
+ - E011 needs a working mail transport. Check your inbox, or storage/logs/laravel.log if MAIL_MAILER=log.
+
+==============================================================================================
+ UCN_SC_E001 - LOGIN                                   Actor: Guest         File: UCN_SC_E001_Login.md
+==============================================================================================
+ Use: commuter@gmail.com (works), plus the special accounts named in the exceptions.
+
+ MAIN FLOW
+ [ ] 1. Click "Log in" on the landing page -> login form (email + password) is shown.
+ [ ] 2. Type email + password -> password is masked; eye icon toggles it.
+ [ ] 3. Submit valid credentials -> lands on the map (/map) with a "Logged in Successfully!" toast.
+ [ ] 4. Log out, then log in as a DRIVER with an expiring/expired licence (liza.mercado@ or dante.cruz@)
+        -> a warning toast shows "Your driver's license expires in N days" / "...expired on <date>".
+        A driver with a valid licence and a commuter see no such warning.
+
+ ALTERNATE FLOWS
+ [ ] A1. Tick "Remember me", log in, close and reopen the browser -> still signed in.
+ [ ] A2. While logged out open /dashboard or /payment/history -> redirected to login; after logging in
+         you land on /map (NOT the page you asked for).
+
+ EXCEPTIONS
+ [ ] E1. (*) Database/auth service down -> "Login is unavailable right now. Please try again later."
+ [ ] E2. lara.gomez@example.com (unverified) -> redirected to the verify-email page; "Resend link and code"
+         is offered (limit 6 per minute) beside a box for the 6-digit code.
+ [ ] E3. Wrong password, then an unknown email -> BOTH show the same message "The provided credentials
+         do not match our records." (no hint which part was wrong).
+ [ ] E4. Submit with an empty field and with a malformed email -> field-level validation errors.
+ [ ] E5. Submit 6+ wrong logins inside one minute -> blocked with HTTP 429 / throttle message.
+ [ ] E6. While already logged in, open /login -> redirected to the map.
+ [ ] E7. pedro.lim@example.com (suspended) -> "This account has been suspended. Please contact the
+         administrator."
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E002 - CREATE ACCOUNT                          Actor: Guest         File: UCN_SC_E002_Create_Account.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Click "Register" -> form: email, password, confirm password, Terms checkbox.
+ [ ] 2. Enter a NEW email + matching 8+ character password -> both password fields masked (eye toggles).
+ [ ] 3. Tick "I agree to Terms & Conditions" and click "Create Account".
+ [ ] 4. -> You are logged in and sent to the verify-email page with
+        "Account created, please verify your email!"; the verification email is sent.
+ [ ] 5. Behind the scenes (ask a dev / check DB): user has role commuter, email_verified_at is empty,
+        and an empty wallet exists. Clicking the email link then lets you reach /map.
+
+ ALTERNATE FLOWS
+ [ ] A1. Logged out, open /map/guest, pick two points, click "Buy a Ride" -> sent to the registration
+         page (the picked points are remembered); register as in the main flow.
+ [ ] A2. Register, close the browser WITHOUT verifying; log in again -> verify-email page; click
+         "Resend link and code" -> a new link AND a new code are sent (limit 6 per minute).
+ [ ] A2b. On the verify-email page type the 6-digit code from the email (spaces are fine) and press "Verify with
+          code" -> toast "Email verified!" and you land on the map. The email must show BOTH the link and the code.
+          Verifying with the link instead also works, and afterwards the code no longer works.
+ [ ] A3. On the registration page click the driver-registration link under "OR" -> goes to
+         /register/driver (no commuter account is created).
+
+ EXCEPTIONS
+ [ ] E1. Use an email that already exists -> "The email has already been taken."; the email stays in the box.
+ [ ] E2. Malformed email -> "The email field must be a valid email address."
+ [ ] E3. Password under 8 characters -> "The password field must be at least 8 characters."
+ [ ] E4. Mismatched confirmation -> "The password confirmation does not match."
+ [ ] E5. Terms box unticked -> "The terms field must be accepted."
+ [ ] E6. (*) Database failure -> "A system error occurred while creating your account. Please try
+         again later." and no account is created.
+ [ ] E7. Submit 7+ registrations in one minute -> blocked with HTTP 429.
+ [ ] E8. Code checks: a code that is not 6 digits -> "The code must be 6 digits."; a wrong 6-digit code -> "That
+         code is incorrect."; 5 wrong codes in a row -> "Too many incorrect attempts. Request a new code.";
+         press "Resend link and code" and the OLD code stops working; a code older than 60 minutes ->
+         "That code has expired. Request a new one." The email stays unverified in every case.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E022 - DRIVER REGISTRATION                     Actor: Guest         File: UCN_SC_E022_Driver_Registration.md
+==============================================================================================
+ Use a licence image: a JPG/PNG under 2 MB for the happy path.
+
+ MAIN FLOW
+ [ ] 1. Open /register/driver -> form: name, email, contact, password, confirm, Terms, licence image.
+ [ ] 2. Fill name, email, contact, password -> password fields masked.
+ [ ] 3. Upload a clear JPG/JPEG/PNG (max 2 MB) -> accepted.
+ [ ] 4. Tick Terms and click "Submit Registration".
+ [ ] 5. -> Redirected to /login with a "You're registered!" dialog saying an administrator must approve
+        the account before sign-in.
+ [ ] 6. Try to log in with the new driver -> refused with the "pending approval" message and logged out.
+ [ ] 7. (Check later in Part 4 / E012) the new driver shows as PENDING in the admin driver list with a
+        DRV-###### code and the licence image opens.
+
+ ALTERNATE FLOWS
+ [ ] A1. Logged out, open /map -> redirected to login; from there follow "Register as Driver" and
+         complete the main flow.
+ [ ] A2. After registering, no verification email is sent and no "resend" step is offered (the email
+         counts as verified automatically).
+ [ ] A3. Register a second driver with the SAME licence image file -> accepted; stored as a separate file.
+
+ EXCEPTIONS
+ [ ] E1. Existing email -> "The email has already been taken."
+ [ ] E2. Malformed email -> "The email field must be a valid email address."
+ [ ] E3. Password under 8 characters -> "The password field must be at least 8 characters."
+ [ ] E4. Mismatched confirmation -> "The password confirmation does not match."
+ [ ] E5. Terms unticked -> "The terms field must be accepted."
+ [ ] E6. Missing image, a PDF, a GIF, and a file over 2 MB -> each rejected with a licence-image message
+         (e.g. "The license image must be an image of type jpg, jpeg, png.").
+ [ ] E7. (*) Database failure -> "A system error occurred while creating your driver account. Please
+         try again later." and no account is created.
+ [ ] E8. (*) Image cannot be written to disk -> same generic message as E7.
+ [ ] E9. Submit 7+ registrations in one minute -> HTTP 429.
+ Also confirm: nico.tan@example.com (rejected) logging in -> "rejected" message and logged out.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E011 - RESET PASSWORD                          Actor: Guest         File: UCN_SC_E011_Reset_Password.md
+==============================================================================================
+ Use a throw-away account you registered in E002, or commuter@gmail.com (reset it back to admin123 after).
+
+ MAIN FLOW
+ [ ] 1. On the login page click "Forgot Password" -> page with one Email box and "Send Reset Link".
+ [ ] 2. Enter a known email and send -> a status message confirms the link was sent.
+ [ ] 3. Open the email and click the link -> "Reset Password" page with New / Confirm fields.
+ [ ] 4. Type a new password -> the 4-segment strength meter updates live ("Minimum 8 characters").
+ [ ] 5. Re-type it in Confirm -> the match indicator turns on when both agree.
+ [ ] 6. Click "Reset Password" -> redirected to login with "Your password has been reset!".
+ [ ] 7. Log in with the NEW password -> works; the OLD password -> fails.
+ [ ] 8. Re-use the same reset link a second time -> rejected (token already consumed, see E5).
+ [ ] 9. (Part 5 / E028) A "Reset Password" entry exists in the Activity Log for that user.
+
+ ALTERNATE FLOWS
+ [ ] A1. Click the eye icon in a password field -> text revealed / hidden again; the meter updates on
+         every keystroke and the confirm field shows whether the two values match.
+ [ ] A2. Click "Back to login" on both the request page and the reset page -> goes to /login; nothing changed.
+
+ EXCEPTIONS
+ [ ] E1. Request with a malformed email -> "The email field must be a valid email address."; nothing is sent.
+ [ ] E2. Request with a well-formed but unknown email -> "We can't find a user with that email address."
+ [ ] E3. New password under 8 characters -> "The password must be at least 8 characters."
+ [ ] E4. Mismatched confirmation -> "The password confirmation does not match."
+ [ ] E5. Expired (60 min) or already-used link -> "This password reset token is invalid."; back on the form.
+ [ ] E6. (*) Mail server down -> no success message is shown and the link can be requested again.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E008 - CHANGE PASSWORD                         Actor: Any logged-in user   File: UCN_SC_E008_Change_Password.md
+==============================================================================================
+ Use: commuter@gmail.com first, then one staff account. RESET each password back to admin123 afterwards.
+
+ MAIN FLOW
+ [ ] 1. Open /settings -> Security section -> form: Current / New / Confirm New password.
+ [ ] 2. Enter the current password, then a new password (8+ chars) and its confirmation.
+ [ ] 3. Click "Update Password" -> toast "Password changed successfully."
+ [ ] 4. Sign in from a second browser BEFORE the change, change the password in the first, then reload the
+        second -> the second session is signed out; the first stays signed in.
+ [ ] 5. Log out and log in with the new password -> works; the old one fails.
+
+ ALTERNATE FLOWS
+ [ ] A1. Repeat the main flow as a driver, driver manager, maintenance manager and admin -> the staff
+         settings layout appears; same fields, same rules, same result.
+ [ ] A2. Press "Log out other devices" -> toast "All other sessions have been terminated."; password unchanged.
+
+ EXCEPTIONS
+ [ ] E1. Wrong current password -> "The password is incorrect."; nothing changes.
+ [ ] E2. New password under 8 characters -> "The password must be at least 8 characters."
+ [ ] E3. Mismatched confirmation -> "The password confirmation does not match."
+ [ ] E4. (*) Database failure -> "Password could not be changed. Please try again later."
+ [ ] E5. Logged out, open /settings -> redirected to login.
+ Also: new password identical to the current one -> rejected ("must be different from your current password").
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E026 - ACCOUNT DELETION                        Actor: Any logged-in user   File: UCN_SC_E026_Account_Deletion.md
+==============================================================================================
+ DESTRUCTIVE. Use throw-away accounts you registered yourself. Never the seeded accounts.
+
+ MAIN FLOW
+ [ ] 1. Register a brand-new commuter (never paid, never topped up). Open Settings -> "Delete Account"
+        and confirm the browser prompt.
+ [ ] 2. -> You are signed out, redirected to /login with "Account deleted successfully."
+ [ ] 3. Log in with the deleted email + password -> fails.
+ [ ] 4. As admin: the account is gone from PUJ Commuters; the Activity Log shows "Deleted own account"
+        with outcome "deleted".
+
+ ALTERNATE / VARIANT CASES
+ [ ] A1. Logged out, send a DELETE to /delete-account (or open it) -> redirected to /login; nothing deleted.
+ [ ] V1. Account WITH payments or top-ups and wallet P0: delete -> signed out; login fails; the admin
+         ledger still lists its payments under deleted-<id>@deleted.invalid; Activity Log outcome
+         "anonymised". The same email can be registered again as a fresh, empty account.
+ [ ] V2. Account with money in the wallet: delete -> REFUSED with "Your wallet still holds PHP N. Use it
+         up before deleting..."; you stay signed in and nothing changes.
+ [ ] A2. (*) Database failure while deleting -> falls through to the default 500 page (documented behaviour).
+ [ ] A3. (*) Any other unhandled error -> 500 page.
+
+ EXCEPTIONS
+ [ ] E1. Not authenticated -> redirected to /login, deletion never attempted (same as A1).
+ [ ] E2. (*) Database delete failure -> 500 page, no friendly message.
+ [ ] E3. (*) Unexpected controller error -> 500 page.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+ PART 1 SIGN-OFF   All six use cases complete:  [ ] YES     Tester: ____________  Date: ____/____/______
+

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CommuterController;
+use App\Http\Controllers\EmailVerificationCodeController;
 use App\Http\Controllers\Admin\DriverApprovalController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\StaffController;
@@ -101,8 +102,12 @@ Route::get('/email/verify', function () {
 Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
 
-    return back()->with('message', 'Verification link sent!');
+    return back()->with('message', 'A new verification link and code have been sent.');
 })->middleware(['auth', 'throttle:6.1'])->name('verification.send');
+
+// UCN_SC_E002 A2: the 6-digit code from the same email, for a user who cannot use the link.
+Route::post('/email/verify/code', [EmailVerificationCodeController::class, 'verify'])
+    ->middleware(['auth', 'throttle:10,1'])->name('verification.code');
 
 Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
     $latestFare = Fare::get()->last();

@@ -57,7 +57,7 @@ What the system **shall do**, one requirement per use case. Each requirement is 
 
 Satisfied when:
 - a wrong email and a wrong password get the **same** message, and empty or malformed fields are rejected before the database is queried;
-- a suspended account is refused, and an unverified user is held on the email-verification page (which can resend the link);
+- a suspended account is refused, and an unverified user is held on the email-verification page (which can resend the link and code, or take the code);
 - a user can ask to be remembered on a device; a visitor opening a protected page is sent to login, and a signed-in user opening login is sent to the map;
 - a driver whose licence expires within 30 days, or has expired, is warned at **every** sign-in;
 - every sign-in, failed sign-in (with the email tried, never the password) and blocked sign-in is recorded in the audit trail (see FR-E028).
@@ -70,7 +70,7 @@ Satisfied when:
 
 Satisfied when:
 - the email is unique and well-formed, the password is at least 8 characters and confirmed, and the terms are accepted — each failure gets its own message and creates nothing;
-- on success the user (unverified, `commuter` role) and an empty wallet are created together or not at all, the user is signed in, and a signed verification link is emailed (re-sendable, throttled);
+- on success the user (unverified, `commuter` role) and an empty wallet are created together or not at all, the user is signed in, and an email carrying a signed verification link and a 6-digit code (valid 60 minutes, hashed in storage, burned after 5 wrong guesses) is sent — re-sendable and throttled, a new email replaces the old code, and either the link or the code verifies the address;
 - a Guest who pressed *Buy a Ride* on the map is taken to registration with the chosen pick-up and destination kept;
 - registration is rate-limited and recorded in the audit trail.
 

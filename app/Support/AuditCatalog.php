@@ -37,6 +37,7 @@ class AuditCatalog
         'password_set_by_admin' => ['Password set by admin', 'warn'],
         'sessions_revoked' => ['Other devices signed out', 'info'],
         'registered' => ['Registered', 'ok'],
+        'email_verified' => ['Email verified', 'ok'],
         'created' => ['Created', 'ok'],
         'updated' => ['Updated', 'info'],
         'deleted' => ['Deleted', 'danger'],

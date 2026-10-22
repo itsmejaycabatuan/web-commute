@@ -1,0 +1,275 @@
+==============================================================================================
+ SMARTCOMMUTE (WEB COMMUTE) - USE CASE TEST CHECKLIST - PART 2 OF 5
+==============================================================================================
+
+ Source of truth : docs/UCN/UCN_SC_E0xx_*.md  (open the matching file if a step is unclear)
+ Test data       : docs/MANUAL_TEST_CHECKLIST.md + database/seeders/DevSeeder.php
+ Built           : 2026-10-22
+
+ The 5 parts (this file is Part 2):
+     1  Accounts and Access                  E001 E002 E008 E011 E022 E026
+   > 2  Commuter Journey                     E003 E004 E005 E006 E007
+     3  Driver Day-to-Day + Timekeeping      E009 E010 E021 E023 E013
+     4  Driver Mgr + Maintenance Mgr         E012 E014 E024 E015 E016 E017
+     5  Admin Tools + Dashboards             E018 E019 E020 E025 E027 E028
+
+
+----------------------------------------------------------------------------------------------
+ BEFORE YOU START (everyone)
+----------------------------------------------------------------------------------------------
+
+ 1. Load the baseline data (safe to re-run any time, it never duplicates rows):
+
+        /opt/lampp/bin/php artisan db:seed --class=DevSeeder
+
+ 2. Start the app and browse to http://127.0.0.1:8000
+
+        /opt/lampp/bin/php artisan serve
+
+    Use 127.0.0.1:8000, NOT XAMPP Apache (Apache breaks the compiled-view permissions).
+
+ 3. Password for every seeded account is:  admin123
+ 4. Login is throttled to 5 attempts per minute. If you get "Too many attempts" (429), wait a minute.
+ 5. Team members share ONE database. If two people test at once, wallet balances, shifts and
+    suspensions will change under each other. Agree who is on the server, or give each person their
+    own copy, and re-run the seeder whenever the data looks wrong.
+ 6. Use a separate browser profile (or private window) per role so sessions do not collide.
+
+ SEEDED TEST ACCOUNTS (password admin123)
+
+   Admin ............. admin@gmail.com
+   Driver manager .... drivermanager@gmail.com
+   Maintenance mgr ... maintenancemanager@gmail.com
+
+   Commuter .......... commuter@gmail.com           wallet P623, 5 rides
+   Commuter .......... maria.santos@example.com     wallet P1,430, 6 rides
+   Commuter .......... juan.delacruz@example.com    wallet P0; has pending, failed, cancelled payments
+   Commuter .......... ana.reyes@example.com        wallet P4,896; 14 payments, 12 top-ups (pagination)
+   Commuter .......... pedro.lim@example.com        SUSPENDED, wallet P85
+   Commuter .......... lara.gomez@example.com       EMAIL NOT VERIFIED, wallet P0
+
+   Driver ............ driver@gmail.com             approved, vehicle JKL-7890, NO shift today (clock in)
+   Driver ............ ramon.delacruz@example.com   approved, vehicle ABC-1234, MID-SHIFT (clock out)
+   Driver ............ liza.mercado@example.com     approved, vehicle DEF-5678, licence expires in 20 days
+   Driver ............ dante.cruz@example.com       approved, licence EXPIRED 45 days ago
+   Driver ............ carlos.bautista@example.com  SUSPENDED
+   Driver ............ elena.torres@example.com     PENDING approval
+   Driver ............ mark.ocampo@example.com      PENDING approval
+   Driver ............ nico.tan@example.com         REJECTED
+
+   Fleet: ABC-1234 Coaster (active, Ramon) | DEF-5678 County (active, Liza) | JKL-7890 HiAce (active,
+          driver@) | STU-1122 Toano (active, unassigned) | GHI-9012 NPR (maintenance) |
+          MNO-3456 L300 (inactive) | PQR-7890 Urvan (disposed)
+
+ HOW TO USE THIS CHECKLIST
+
+   - Work through your part top to bottom. Tick a box by changing [ ] to [x].
+   - If a step FAILS, change it to [F] and write what you saw on the "Notes" line (or on the line below).
+   - If a step cannot be tested, change it to [-] and say why.
+   - Every use case has three groups:  MAIN FLOW (happy path), ALTERNATE FLOWS (A1, A2...),
+     and EXCEPTIONS (E1, E2... = what happens when something goes wrong).
+   - The text after "->" is the EXPECTED result. Messages in quotes should match what the screen shows.
+   - Finish each use case with the RESULT line: tick PASS only if every step above it is [x] or [-].
+   - (*) marks a step that needs a fault to be forced (database down, mail server down, payment gateway
+     down, lost network). Do not break the server just for this - mark it [-] unless a developer
+     has staged the fault. Network loss can be simulated with the browser dev-tools "Offline" switch.
+   - "Known Gaps" in the UCN files are NOT bugs - they are documented limitations. Do not log them.
+   - Toasts (bottom-right) are how success and error messages appear. In add/edit/delete modals a
+     validation error keeps the modal open and shows the message under its own input.
+
+
+
+##############################################################################################
+ PART 2 OF 5 - COMMUTER JOURNEY (MAP, TRIP, WALLET, PAYMENTS)
+ Use cases: E003 Track PUJ | E004 Plan Trip | E005 Topup Balance | E006 Pay Fare |
+            E007 View Payment History
+ Tester: ______________________   Start: ____/____/______   Finish: ____/____/______
+##############################################################################################
+
+Notes for this part
+ - E003 and E004 start as a GUEST (/map/guest, logged out). E005 - E007 are for logged-in commuters.
+ - Guests get only 3 fare calculations per day (stored in the browser). Clear browser storage between runs.
+ - Seeded PUJ pings last only 5 minutes. If no markers show, re-run the seeder, or have a driver broadcast
+   (see Part 3 / E021) from a second browser.
+ - E006 / E005 change wallet balances. Re-run the seeder if the numbers get confusing.
+ - GCash/Maya fares go to the PayMongo sandbox only when PAYMONGO_ENABLED=true (see docs/PAYMONGO_SETUP.md).
+   With it off, the payment is recorded as paid straight away (E006 A2). Ask which mode you are on.
+
+==============================================================================================
+ UCN_SC_E003 - TRACK PUJ                               Actor: Guest         File: UCN_SC_E003_Track_PUJ.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Logged out, open /map/guest and allow location access -> interactive map with navigation, pitch
+        and locate (pin) controls.
+ [ ] 2. -> The map centres on you (zoom 15) once the first position arrives.
+ [ ] 3. -> PUJ markers appear: GREEN = available, RED = unavailable. Toggling a driver's availability
+        recolours the marker within a few seconds.
+ [ ] 4. Click a PUJ marker -> info popup.
+ [ ] 5. -> Popup shows plate/route, an approximate (about 200 m blurred) location, the driver's status
+        (Available / Unavailable) and the ETA to you.
+
+ ALTERNATE FLOWS
+ [ ] A1. With location on, a floating "Nearest PUJ" indicator (ETA + distance) shows at the bottom; tap it
+         -> the map flies to that PUJ and opens its popup.
+ [ ] A2. Tap the locate (pin) control -> the map centres on you and keeps refreshing ETAs.
+
+ EXCEPTIONS (banner text appears on the map; only the highest-priority banner shows)
+ [ ] E1. No PUJ has reported in the last 5 minutes -> "No PUJs available" banner; it clears by itself when
+         a PUJ appears.
+ [ ] E2. Block location permission -> "Location access needed" banner; map and markers still work, only
+         centring and ETA are lost.
+ [ ] E3. (*) Map service fails to load -> "Map service unavailable" banner.
+ [ ] E4. Set the browser to Offline -> "No internet connection" banner; polling stops and resumes by
+         itself when you go back online.
+ [ ] Priority check: offline beats map-service beats routing-service beats location-denied beats no-puj.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E004 - PLAN TRIP                               Actor: Guest / Commuter   File: UCN_SC_E004_Plan_Trip.md
+==============================================================================================
+
+ MAIN FLOW
+ [ ] 1. Open the sidebar on the map -> fare calculator with origin, destination, distance and fare fields.
+ [ ] 2. Choose an origin and a destination (by search or by tapping the map) -> Point A and Point B markers appear.
+ [ ] 3. -> A driving route is drawn and the map zooms to fit it.
+ [ ] 4. -> Distance (km) and BOTH the regular and the discounted fare show; discounted is lower.
+
+ ALTERNATE FLOWS
+ [ ] A1. Tap "Set pick-up", then tap the map (and the same for destination) -> marker placed and the
+         address is filled in.
+ [ ] A2. Type 2+ characters in a field -> up to 6 matches inside the service area; pick one -> marker
+         placed and the trip calculated.
+ [ ] A3. Press "Reset Route" -> both points, the route line and the distance/fare are cleared.
+ [ ] A4. Press "Buy a Ride" with both points set:
+           as GUEST    -> sent to the registration page (points remembered);
+           as COMMUTER -> sent to the payment page with the distance and fare.
+ [ ] A5. As a guest do 3 fare calculations, then a 4th -> blocked with the daily-limit modal.
+
+ EXCEPTIONS
+ [ ] E1. (*) No fare rates for the current period -> distance still shown, fare shows 0.
+ [ ] E2. Search for nonsense -> "No results found" in the dropdown and a "Location not found" banner
+         (clears after about 6 seconds).
+ [ ] E3. (*) Routing service fails -> "Route unavailable" banner; distance and fare are cleared.
+ [ ] E4. Browser Offline -> offline banner; no routing call is attempted.
+ [ ] E5. Press "Buy a Ride" without both points -> "Pick-up point and destination is required."
+ [ ] E6. Daily limit reached (same as A5) -> the limit modal; the calculation is cancelled.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E005 - TOPUP BALANCE                           Actor: Commuter      File: UCN_SC_E005_Topup_Balance.md
+==============================================================================================
+ Use: commuter@gmail.com (P623).  A4 needs admin@gmail.com.
+
+ MAIN FLOW
+ [ ] 1. Click the "+" button -> top-up page with balance, a custom-amount box and presets.
+ [ ] 2. Pick P50 / P100 / P200 / P500 -> the preset highlights; typing a custom value clears the highlight.
+ [ ] 3. Choose GCash or Maya and click "Confirm Payment".
+ [ ] 4. -> Toast "Successfully topped up!" and the balance rises by exactly that amount.
+ [ ] 5. -> The top-up appears in Top-up History with the right amount and method.
+
+ ALTERNATE FLOWS
+ [ ] A1. Type a custom amount (for example 75.50) -> accepted between P10 and P100,000.
+ [ ] A2. Switch the payment method before confirming -> history records the newly chosen method.
+ [ ] A3. Open /payment/topup/history -> list with search (ID), filters (method, date range) and the
+         total added. As ana.reyes@ the 12 rows paginate (10 per page).
+ [ ] A4. As ADMIN open /topups -> every top-up of every status with a Status column; filters for
+         search, status, method, date range and amount range; the "funds added" total counts COMPLETED only.
+
+ EXCEPTIONS
+ [ ] E1. Submit a method other than GCash/Maya (edit the form) -> "The selected payment-method is invalid."
+ [ ] E2. Amount of 5, 0, -20, abc, empty, 100001 -> rejected, e.g. "The amount must be at least 10."; balance unchanged.
+ [ ] E3. Repeat the SAME amount + method within 2 minutes -> "This top-up was already processed. Please
+         wait a moment..."; balance unchanged.
+ [ ] E4. (*) Wallet update fails -> "Top-up failed. Please try again later."
+ [ ] E5. Submit 6+ top-ups in one minute (use different amounts) -> blocked with HTTP 429.
+ [ ] E6. Covered by E3 + E5 (duplicate and rate-limit protection) - tick when both pass.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E006 - PAY FARE                                Actor: Commuter      File: UCN_SC_E006_Pay_Fare.md
+==============================================================================================
+ Use: commuter@gmail.com. juan.delacruz@ (P0) for the empty-wallet and mixed-status cases.
+
+ MAIN FLOW A - WALLET
+ [ ] 1. Plan a trip and click "Buy a Ride" -> checkout page with the Final Fare, your balance and the
+        GCash / Maya / Wallet cards.
+ [ ] 2. Click a method card -> it highlights and the others clear.
+ [ ] 3. Choose Wallet and click "Confirm Payment".
+ [ ] 4. -> Redirected to a receipt with "Payment successful"; balance drops by exactly the fare; the
+        payment is listed in history as paid.
+
+ MAIN FLOW B - GCASH / MAYA (needs PAYMONGO_ENABLED=true + sandbox keys)
+ [ ] 5. Pick GCash or Maya -> you are sent to PayMongo's hosted sandbox checkout; a PENDING payment is
+        recorded; the wallet is NOT touched.
+ [ ] 6. Complete the sandbox payment -> returned to /payment/returned, then to the receipt (status paid).
+
+ ALTERNATE FLOWS
+ [ ] A1. Click another method card before confirming -> highlight moves; the new method is used.
+ [ ] A2. With the gateway OFF, pick GCash/Maya -> no external call; recorded as paid, receipt shown.
+ [ ] A3a. A gateway payment left pending for 12+ hours -> becomes "cancelled" ("Expired: not completed
+          within 12 hours.") next time history / the admin ledger / a checkout page opens (or run
+          php artisan payments:expire-pending). Ask a dev to back-date a pending row to test.
+ [ ] A3. Refresh the receipt after paying -> same receipt, no second charge, balance unchanged.
+ [ ] A4. Cancel at the PayMongo checkout -> returned to /payment/cancelled, payment marked cancelled
+         ("Cancelled at checkout."); nothing charged.
+ [ ] A5. Pay by Wallet -> the card shows the live balance; fare subtracted; method stored as "Wallet".
+
+ EXCEPTIONS
+ [ ] E1. Submit a method other than GCash/Maya/Wallet (edit the form) -> validation message; no payment.
+ [ ] E2. As juan.delacruz@ (P0) pay by Wallet -> "You don't have enough balance"; nothing charged.
+ [ ] E3. Double-click Pay, press Back and re-submit, or refresh -> only ONE charge; a paid fare reopens its
+         receipt ("This fare has already been paid"); a pending one opens "Confirming your payment" with
+         a warning.
+ [ ] E4. (*) Gateway down / times out -> "The payment service is unavailable right now. Please try again."
+         No payment row, funds kept.
+ [ ] E5. Decline / fail at the sandbox -> payment marked failed ("The payment was declined by the gateway.").
+ [ ] E6. Let a checkout session expire -> payment marked cancelled ("The checkout session expired.").
+ [ ] E7. (*) Send a webhook with a bad signature -> HTTP 401; no payment touched. (Developer test.)
+ [ ] E8. (*) Payment record creation fails -> "There was a problem trying to process the payment"; balance unchanged.
+ [ ] E9. (*) Commuter without a wallet row -> HTTP 404 rather than a crash. (Developer test.)
+ [ ] E10. (*) No published fare rates -> "Fares are unavailable right now. Please try again later."
+ Also check as juan.delacruz@: history shows paid, pending, failed and cancelled rows with distinct labels;
+ opening the pending row shows the "processing" screen and does NOT claim success.
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+==============================================================================================
+ UCN_SC_E007 - VIEW PAYMENT HISTORY                    Actor: Commuter      File: UCN_SC_E007_View_Payment_History.md
+==============================================================================================
+ Use: ana.reyes@example.com (14 payments - good for paging), commuter@gmail.com, and a brand-new commuter.
+
+ MAIN FLOW
+ [ ] 1. Open /payment/history -> only YOUR payments, newest first, plus balance and "total spent".
+ [ ] 2. Scroll / page down -> 10 receipts per page; filters and search survive paging.
+ [ ] 3. Tap a transaction -> receipt at /payment/receipt/{id} with route, distance, method, transaction id
+        (#SC-XXXXXXXX), fare and paid-at.
+
+ ALTERNATE FLOWS
+ [ ] A1. Open another row (list or "Back to History") -> that payment's receipt.
+ [ ] A2. Click the "+" / wallet button next to the balance -> /payment/topup/history; going back returns
+         to /payment/history.
+ [ ] A3. Use a Quick Range (7 / 30 / 90 days) and an explicit from/to date, then "Apply Filters" ->
+         only payments inside the period are listed.
+ [ ] A4. Search by a transaction id and by a destination word -> matching records only.
+ [ ] A5. On a receipt click "Download Receipt" -> a PNG named Receipt-#SC-XXXXXXXX.png downloads
+         (nothing is uploaded to the server).
+
+ EXCEPTIONS
+ [ ] E1. A commuter who never paid -> empty state "No transactions found" (no error, no empty table).
+ [ ] E2. A search/filter that matches nothing -> same empty state with a "Clear Filters" button that restores the list.
+ [ ] E3. Change the id in a receipt URL to another commuter's payment, or to a non-existent id -> HTTP 404.
+ [ ] E4. (*) Server/network error -> not handled explicitly (a failed query shows an empty list). Mark [-].
+
+ RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
+ Notes: ______________________________________________________________________________________
+
+ PART 2 SIGN-OFF   All five use cases complete:  [ ] YES     Tester: ____________  Date: ____/____/______
+
