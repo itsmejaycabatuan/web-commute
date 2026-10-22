@@ -381,7 +381,12 @@
                         <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#333]">Fines</span>
                     </div>
                     <p class="text-2xl sm:text-3xl font-black">₱{{ number_format($totalFines, 0) }}</p>
-                    <p class="text-[8px] text-[#444] mt-0.5">total amount</p>
+                    <p class="text-[8px] text-[#444] mt-0.5">
+                        outstanding
+                        @if ($paidFines > 0)
+                            · ₱{{ number_format($paidFines, 0) }} paid
+                        @endif
+                    </p>
                 </div>
 
                 <!-- Latest Violation -->
@@ -486,8 +491,16 @@
                                     </div>
                                 </div>
                                 <div class="text-right shrink-0">
-                                    <p class="text-[12px] font-black text-red-400">₱{{ number_format($v['fine'], 0) }}
-                                    </p>
+                                    @if ($v['paymentStatus'] === 'paid')
+                                        <p class="text-[12px] font-black text-emerald-400">₱0</p>
+                                        <p class="text-[8px] text-[#444] line-through">₱{{ number_format($v['fine'], 0) }}</p>
+                                    @else
+                                        <p class="text-[12px] font-black text-red-400">₱{{ number_format($v['fine'], 0) }}
+                                        </p>
+                                    @endif
+                                    <div class="mt-1">
+                                        @include('partials.violation-payment', ['v' => $v, 'align' => 'justify-end'])
+                                    </div>
                                 </div>
                             </div>
 
@@ -618,9 +631,19 @@
                                         </div>
                                     </td>
                                     <td class="px-4 sm:px-6 py-3 text-right">
-                                        <div class="flex items-baseline justify-end gap-1">
-                                            <span
-                                                class="text-[11px] font-bold text-[#ccc]">₱{{ number_format($v['fine'], 2) }}</span>
+                                        <div class="flex items-baseline justify-end gap-1.5">
+                                            @if ($v['paymentStatus'] === 'paid')
+                                                <span
+                                                    class="text-[11px] font-bold text-emerald-400">₱{{ number_format($v['outstanding'], 2) }}</span>
+                                                <span
+                                                    class="text-[8px] text-[#444] line-through">₱{{ number_format($v['fine'], 2) }}</span>
+                                            @else
+                                                <span
+                                                    class="text-[11px] font-bold text-[#ccc]">₱{{ number_format($v['fine'], 2) }}</span>
+                                            @endif
+                                        </div>
+                                        <div class="mt-1">
+                                            @include('partials.violation-payment', ['v' => $v, 'align' => 'justify-end'])
                                         </div>
                                         <div class="text-[8px] text-red-400/60 font-medium mt-0.5">
                                             {{ $v['penalty'] ?: '' }}</div>
@@ -665,8 +688,7 @@
                 @if ($totalViolations > 0)
                     <div class="px-4 sm:px-6 py-4 border-t border-[#1e1e1e] flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#333]">Total
-                                accumulated
+                            <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-[#333]">Outstanding
                                 fines</span>
                         </div>
                         <span class="text-sm font-black text-amber-400">₱{{ number_format($totalFines, 2) }}</span>

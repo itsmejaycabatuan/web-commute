@@ -601,7 +601,7 @@
                                 <i class="fa-solid fa-money-bill text-[8px] text-emerald-400"></i>
                             </div>
                             <span
-                                class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Total
+                                class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Outstanding
                                 Violation Fines</span>
                         </div>
                         <span class="text-xl sm:text-2xl font-black tracking-tight"
@@ -791,8 +791,9 @@
                                                 x-text="v.user_name"></p>
                                         </div>
                                         <div class="text-right shrink-0">
-                                            <p class="text-[10px] sm:text-[11px] font-bold text-red-400"
-                                                x-text="formatCurrency(v.violation_fine)"></p>
+                                            <p class="text-[10px] sm:text-[11px] font-bold"
+                                                :class="v.payment_status === 'paid' ? 'text-emerald-400' : 'text-red-400'"
+                                                x-text="v.payment_status === 'paid' ? 'Paid' : formatCurrency(v.violation_fine)"></p>
                                             <p class="text-[7px] sm:text-[8px] text-[#444] font-bold uppercase"
                                                 x-text="v.created_at + ', ' + v.time"></p>
                                         </div>
@@ -955,7 +956,8 @@
                         vacationDays: tk.reduce((s, t) => s + t.vacation, 0),
                         totalHours: tk.reduce((s, t) => s + t.hours_worked, 0),
                         totalViolations: viol.length,
-                        totalFines: viol.reduce((s, v) => s + v.violation_fine, 0),
+                        // A fine marked paid no longer counts toward what is outstanding.
+                        totalFines: viol.reduce((s, v) => s + (v.payment_status === 'paid' ? 0 : v.violation_fine), 0),
                     };
                 },
 

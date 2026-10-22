@@ -815,14 +815,14 @@ class BugFixRegressionTest extends TestCase
         $this->assertStringContainsString('min-height: 100%', $html);
     }
 
-    // ───────────────────── 24. maintenance log retired ─────────────────────
+    // ───────────────────── 24. maintenance log ─────────────────────
 
-    public function test_there_is_no_vehicle_maintenance_log_left()
+    public function test_the_vehicle_maintenance_log_has_its_own_maintenance_manager_page()
     {
-        $this->assertFileDoesNotExist(app_path('Models/VehicleMaintenanceLog.php'));
-        $this->assertFalse(\Schema::hasTable('vehicle_maintenance_logs'));
+        $this->assertFileExists(app_path('Models/VehicleMaintenanceLog.php'));
+        $this->assertTrue(\Schema::hasTable('vehicle_maintenance_logs'));
+        $this->assertTrue(Route::has('maintenance-manager.maintenance-logs'));
         $this->assertFalse(Route::has('maintenance-manager.vehicle-maintenance-log'));
-        $this->assertFalse(Route::has('maintenance-manager.maintenance-logs'));
     }
 
     public function test_logging_a_preventive_service_feeds_the_fleet_summary()

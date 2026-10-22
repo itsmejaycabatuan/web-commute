@@ -8,6 +8,7 @@ use App\Models\FareRate;
 use App\Models\Payment;
 use App\Models\TimeKeeping;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Models\Wallet;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -187,6 +188,7 @@ class UcnRegressionTest extends TestCase
     public function test_driver_cannot_clock_in_twice_in_one_day()
     {
         [$user, $driver] = $this->driver('inactive');
+        Vehicle::factory()->create(['driver_id' => $driver->id, 'status' => 'active']);
 
         $this->actingAs($user)->withoutMiddleware(VerifyCsrfToken::class)
             ->post(route('driver.timekeeping.clock-in'))

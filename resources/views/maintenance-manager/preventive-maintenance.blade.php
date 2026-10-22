@@ -182,9 +182,9 @@
 <body class="antialiased text-gray-900 dark:text-white bg-white dark:bg-[#050505]" x-data="{
     showModal: false,
     taskName: '',
-    form: { vehicle_id: '{{ $vehicle?->id ?? '' }}', task_id: '', last_service_odo: '', last_service_date: '', last_service_cost: '', comments: '' },
+    form: { vehicle_id: '{{ $vehicle?->id ?? '' }}', task_id: '', last_service_odo: '', last_service_date: '', last_service_cost: '', comments: '', performed_by: '', invoice_number: '' },
     openLogModal(taskId, name) {
-        this.form = { vehicle_id: '{{ $vehicle?->id ?? '' }}', task_id: String(taskId), last_service_odo: '', last_service_date: '', last_service_cost: '', comments: '' };
+        this.form = { vehicle_id: '{{ $vehicle?->id ?? '' }}', task_id: String(taskId), last_service_odo: '', last_service_date: '', last_service_cost: '', comments: '', performed_by: '', invoice_number: '' };
         this.taskName = name;
         this.showModal = true;
     }
@@ -595,17 +595,6 @@
                     </button>
                 </div>
                 <div class="flex-1 overflow-y-auto px-6 sm:px-8 py-5 sm:py-6 space-y-4 sm:space-y-5">
-                    @if ($errors->any())
-                        <div
-                            class="bg-rose-500/5 border border-rose-500/15 text-rose-600 dark:text-rose-400 text-[9px] sm:text-[10px] font-medium px-4 py-3 rounded-xl flex items-start gap-2">
-                            <i class="fa-solid fa-circle-exclamation shrink-0 mt-0.5 text-[10px]"></i>
-                            <ul class="list-disc list-inside space-y-0.5">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
                     <div class="grid grid-cols-2 gap-3 sm:gap-4">
                         <div>
                             <label
@@ -639,6 +628,26 @@
                             <input type="number" name="last_service_cost" x-model="form.last_service_cost"
                                 min="0" step="0.01" placeholder="0.00" required
                                 class="form-input w-full rounded-xl pl-8 pr-4 py-2.5 text-[10px] sm:text-xs font-mono">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                            <label
+                                class="flex items-center gap-2 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555] mb-2">
+                                <span class="w-[3px] h-3 rounded-sm bg-gray-400 dark:bg-[#333] shrink-0"></span>Performed By
+                            </label>
+                            <input type="text" name="performed_by" x-model="form.performed_by" maxlength="255"
+                                placeholder="e.g. Cebu Auto Care"
+                                class="form-input w-full rounded-xl px-4 py-2.5 text-[10px] sm:text-xs">
+                        </div>
+                        <div>
+                            <label
+                                class="flex items-center gap-2 text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555] mb-2">
+                                <span class="w-[3px] h-3 rounded-sm bg-gray-400 dark:bg-[#333] shrink-0"></span>Invoice No.
+                            </label>
+                            <input type="text" name="invoice_number" x-model="form.invoice_number" maxlength="100"
+                                placeholder="e.g. INV-1001"
+                                class="form-input w-full rounded-xl px-4 py-2.5 text-[10px] sm:text-xs font-mono">
                         </div>
                     </div>
                     <div>

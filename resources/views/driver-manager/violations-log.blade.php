@@ -487,8 +487,16 @@
                                         </div>
                                     </div>
                                 </div>
-                                <span
-                                    class="text-[11px] font-bold text-red-400 shrink-0">₱{{ number_format($v['fine'], 0) }}</span>
+                                <div class="text-right shrink-0">
+                                    @if ($v['paymentStatus'] === 'paid')
+                                        <span class="block text-[11px] font-bold text-emerald-400">₱0</span>
+                                        <span
+                                            class="block text-[8px] text-[#444] line-through">₱{{ number_format($v['fine'], 0) }}</span>
+                                    @else
+                                        <span
+                                            class="text-[11px] font-bold text-red-400">₱{{ number_format($v['fine'], 0) }}</span>
+                                    @endif
+                                </div>
                             </div>
                             <div class="flex items-center justify-between px-3.5 py-2 border-t border-[#161616]">
                                 <div class="flex items-center gap-2 min-w-0">
@@ -506,6 +514,9 @@
                                     <p class="text-[8px] text-[#333] italic truncate">"{{ $v['remarks'] }}"</p>
                                 </div>
                             @endif
+                            <div class="px-3.5 py-2 border-t border-[#161616]">
+                                @include('partials.violation-payment', ['v' => $v, 'align' => 'justify-between'])
+                            </div>
                         </div>
                     @empty
                         <div class="flex flex-col items-center justify-center py-16">
@@ -524,7 +535,7 @@
 
                 <!-- ═══ Desktop Table View ═══ -->
                 <div class="hidden lg:block overflow-x-auto">
-                    <table class="w-full text-left min-w-[850px]">
+                    <table class="w-full text-left min-w-[880px]">
                         <thead>
                             <tr
                                 class="text-[8px] sm:text-[9px] uppercase tracking-[0.15em] text-[#444] border-b border-[#1e1e1e]">
@@ -533,6 +544,7 @@
                                 <th class="px-4 sm:px-6 py-3 font-bold">Violation</th>
                                 <th class="px-4 sm:px-6 py-3 font-bold">Date & Location</th>
                                 <th class="px-4 sm:px-6 py-3 font-bold text-right">Fine</th>
+                                <th class="px-4 sm:px-6 py-3 font-bold text-right">Payment</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-[#1a1a1a]">
@@ -619,15 +631,25 @@
                                         </div>
                                     </td>
                                     <td class="px-4 sm:px-6 py-3 text-right">
-                                        <span
-                                            class="text-[11px] font-bold text-[#ccc]">₱{{ number_format($v['fine'], 2) }}</span>
+                                        @if ($v['paymentStatus'] === 'paid')
+                                            <span
+                                                class="text-[11px] font-bold text-emerald-400">₱{{ number_format($v['outstanding'], 2) }}</span>
+                                            <div class="text-[8px] text-[#444] line-through font-medium mt-0.5">
+                                                ₱{{ number_format($v['fine'], 2) }}</div>
+                                        @else
+                                            <span
+                                                class="text-[11px] font-bold text-[#ccc]">₱{{ number_format($v['fine'], 2) }}</span>
+                                        @endif
                                         <div class="text-[8px] text-red-400/60 font-medium mt-0.5">
                                             {{ $v['penalty'] ?: '' }}</div>
+                                    </td>
+                                    <td class="px-4 sm:px-6 py-3">
+                                        @include('partials.violation-payment', ['v' => $v, 'stack' => true])
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="py-12 sm:py-16">
+                                    <td colspan="6" class="py-12 sm:py-16">
                                         <div class="flex flex-col items-center justify-center">
                                             <div
                                                 class="w-12 h-12 rounded-xl bg-[#111] border border-[#1e1e1e] flex items-center justify-center mb-3">

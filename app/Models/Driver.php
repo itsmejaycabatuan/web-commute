@@ -185,6 +185,15 @@ class Driver extends Model
     }
 
     /**
+     * A driver can only go on shift (clock in, or set themselves active) while a
+     * vehicle is assigned to them.
+     */
+    public function hasAssignedVehicle(): bool
+    {
+        return $this->vehicle()->exists();
+    }
+
+    /**
      * UCN_SC_E012 — a suspended driver is refused at sign-in and may not clock in.
      */
     public function isSuspended(): bool

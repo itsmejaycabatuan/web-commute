@@ -40,7 +40,7 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 
 > **Renumbering (October 2026).** The set used to run E001 – E029 with a hole at **E025**, the separate *vehicle
 > maintenance log* use case, which was retired when its data moved into the preventive-maintenance record (see
-> UCN_SC_E016). The four sheets after the hole were moved down by one so the numbers are contiguous and equal the
+> UCN_SC_E016; the log itself has since returned as a panel on that page, but not as a use case). The four sheets after the hole were moved down by one so the numbers are contiguous and equal the
 > number of sheets: **Profile and Dashboard Views E026→E025, Account Deletion E027→E026, Manage Staff Accounts
 > E028→E027, View Activity Log E029→E028.** Anything written before this change (older documents, `UCN.zip`,
 > commit messages) uses the old numbers for those four.

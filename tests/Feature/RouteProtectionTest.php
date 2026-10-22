@@ -160,11 +160,12 @@ class RouteProtectionTest extends TestCase
         $this->actingAs($this->userWithRole('driver'))->get('/timekeeping')->assertOk();
     }
 
-    public function test_the_retired_maintenance_log_pages_no_longer_exist()
+    public function test_the_old_maintenance_log_url_does_not_exist_and_the_new_one_is_maintenance_manager_only()
     {
         $manager = $this->userWithRole('maintenance_manager');
 
         $this->actingAs($manager)->get('/vehicle-maintenance-log')->assertNotFound();
-        $this->actingAs($manager)->get('/maintenance-logs')->assertNotFound();
+        $this->actingAs($manager)->get('/maintenance-logs')->assertOk();
+        $this->actingAs($this->userWithRole('admin'))->get('/maintenance-logs')->assertForbidden();
     }
 }

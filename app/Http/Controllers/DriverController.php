@@ -22,6 +22,8 @@ use Illuminate\Validation\ValidationException;
 
 class DriverController extends Controller
 {
+    private const NO_VEHICLE_MESSAGE = 'You have no vehicle assigned yet, so you cannot clock in or set your status to active. Please contact the Maintenance Manager.';
+
     public function create()
     {
 
@@ -200,6 +202,10 @@ class DriverController extends Controller
             return back()->with('error', 'Your account is suspended. Please contact the administrator.');
         }
 
+        if (! $driver->hasAssignedVehicle()) {
+            return back()->with('error', self::NO_VEHICLE_MESSAGE);
+        }
+
         $exists = TimeKeeping::where('driver_id', $driver->id)
             ->whereDate('date', today())
             ->exists();
@@ -282,6 +288,11 @@ class DriverController extends Controller
             return back()->with('error', 'Driver not found.');
         }
 
+        // Going active means being on the road, which needs a vehicle. Going inactive never does.
+        if ($request->status === 'active' && ! $driver->hasAssignedVehicle()) {
+            return back()->with('error', self::NO_VEHICLE_MESSAGE);
+        }
+
         $driver->update(['status' => $request->status]);
 
         return back()->with('success', 'You have successfully set your driver status');
@@ -323,12 +334,17 @@ class DriverController extends Controller
                     'date' => Carbon::parse($v->date_of_violation)->format('d F, Y'),
                     'time' => Carbon::parse($v->time_of_violation)->format('h:i A'),
                     'fine' => (float) $v->violation_fine,
+                    'paymentStatus' => $v->isPaid() ? ViolationLog::PAID : ViolationLog::UNPAID,
+                    'outstanding' => $v->outstandingFine(),
+                    'paidAt' => $v->paid_at?->format('d M, Y h:i A'),
                     'penalty' => $v->additional_penalties,
                     'penaltyColor' => $this->getPenaltyColor($v->additional_penalties),
                 ];
             });
 
-        $totalFines = $violations->sum('fine');
+        // What is still owed: a fine marked paid no longer counts.
+        $totalFines = $violations->sum('outstanding');
+        $paidFines = $violations->sum(fn ($v) => $v['paymentStatus'] === ViolationLog::PAID ? $v['fine'] : 0);
         $totalViolations = $violations->count();
         $latestViolation = $violations->first();
 
@@ -342,7 +358,7 @@ class DriverController extends Controller
             ['path' => request()->url(), 'query' => request()->query()]
         );
 
-        return view('driver.violations', compact('violations', 'totalFines', 'totalViolations', 'latestViolation'));
+        return view('driver.violations', compact('violations', 'totalFines', 'paidFines', 'totalViolations', 'latestViolation'));
     }
 
     private function getPenaltyColor($penalty)

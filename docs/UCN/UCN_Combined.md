@@ -947,10 +947,10 @@ A guest reaching `/settings` is redirected to the login page by the `auth` + `ve
 | **Secondary Actor**   | System                                                                                                                                                                |
 | **Goal**               | Allow the driver to clock in to the system and start their shift.                                                                                                     |
 | **Trigger**           | Driver clicks the **"Clock In"** button on the **Today's Shift** card in the map's left sidebar.                                                                        |
-| **Preconditions**     | 1. Driver is authenticated and registered to the system.<br>2. The driver has no timekeeping record for today yet.<br>3. The System is operational.                |
+| **Preconditions**     | 1. Driver is authenticated and registered to the system.<br>2. The driver has no timekeeping record for today yet.<br>3. A vehicle is assigned to the driver.<br>4. The System is operational.                |
 | **Supporting Actors** | Timekeeping ledger, Driver record                                                                                                                                     |
 
-> **Vehicles are intentionally not a precondition.** A driver's vehicle is assigned by staff **at registration/approval time**, so there is no per-shift assignment to check at clock-in.
+> **A vehicle is a precondition.** A driver can only go on shift while a vehicle is assigned to them (staff assign it from the Vehicles page). Without one, the **Clock In** button is disabled, the Availability toggle cannot be switched on, and the map's left sidebar says so; a replayed request is refused with *"You have no vehicle assigned yet, so you cannot clock in or set your status to active. Please contact the Maintenance Manager."* Going **inactive** never needs a vehicle.
 
 ---
 
@@ -997,13 +997,16 @@ See A2 — the driver has no `Driver` record. System responds with *"Driver prof
 **E3 – Already Clocked In**
 See A1 — *"You have already clocked in today."*
 
+**E4 – No Vehicle Assigned**
+The driver has no vehicle. System performs **no** write, leaves the status unchanged and responds with the *no vehicle assigned* message above. The same rule applies to switching the Availability toggle to **active** (`POST /status`).
+
 ---
 
 ### Known Gaps / Notes
 
 - **One shift per day, enforced.** `clockIn` rejects a second record for the same date, so a driver **cannot** clock in twice (e.g. an AM and a PM shift). Multi-split shifts would need a different uniqueness rule.
 - **No GPS / location verification.** The original precondition *"the driver's device GPS is enabled and permissions are granted"* is **not checked** — clock-in works from any device, anywhere.
-- **No shift/vehicle assignment check** (deliberate — vehicles are assigned by staff at registration, see note above). The clock-in is therefore **not** tied to the vehicle the driver will actually take out.
+- **The vehicle check is "has one assigned"**, not "has an active one": a driver whose only vehicle is under maintenance can still clock in (the map then reads *Vehicle not active* and GPS broadcasting stays off). Clock-in is not tied to which vehicle the driver takes out.
 - **No manager approval or overtime validation** — a driver may clock in at any hour, and a shift longer than 8 hours is only flagged as overtime at clock-out (UCN_SC_E010).
 - **Clock-in and status are two separate writes.** If the record is created but the `drivers.status` update fails, the driver has a shift but stays offline.
 - Time is stored as a formatted **string** (`h:i A`) in a `date` column, while clock-out re-parses it with `Carbon::parse(..., 'Asia/Manila')` — string time storage is fragile across locales/DST-free zones.
@@ -1279,7 +1282,7 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 
 **A4 – View Driver Details**
 1. In the list, the actor clicks the ID-card icon on a driver row.
-2. System displays a read-only modal with the driver's identity, licence data and expiry.
+2. System displays a read-only modal with the driver's identity, licence data and expiry, followed by the driver's **Timekeeping** (latest 10 days, with total days / hours / overtime) and **Violations** (latest 10, with fine, **Paid / Unpaid** status and the outstanding total). Both are fetched when the modal opens (`GET /drivers/{id}/records`), so the list itself stays light.
 3. From that modal the actor may jump straight into A2 (**"Edit"**).
 4. The list has a **License** column: a badge reads *Valid*, *Expires in N days* (30 days or fewer) or *Expired*, with the expiry date below it, and the **License Expiring** / **License Expired** filter chips narrow the list. The **View** modal shows the same state on its *Expires* card (red date + *Expired* badge, or amber *Expires in N days*). The driver sees the warning on their own dashboard and at every sign-in. The Add / Edit modals check the same things the registration form does while typing: e-mail format, password length (8) and confirmation, a Philippine mobile number (`+63`, `9XX XXX XXXX`, formatted as you type) and a JPG / PNG licence image of at most 2 MB; the server repeats every check.
 
@@ -1544,6 +1547,12 @@ The shift being written shares part of the day with an entry that already exists
 2. System narrows the log server-side to matching rows (driver name or licence `LIKE`, and `date_of_violation` within the range) and updates the entry counter; **Clear** restores the full log.
 3. The *Driver* picker used by the entry modals is **not** filtered — it always lists every driver.
 
+**A8 – Mark a Fine Paid (or Unpaid)**
+1. In the **Violation Log**, each row shows a **Paid** / **Unpaid** badge and a **Mark Paid** button (**Mark Unpaid** once paid).
+2. Driver Manager clicks **Mark Paid** (`PATCH /violations-log/{id}/payment`, `payment_status` = `paid`).
+3. System sets `payment_status = paid` and stamps `paid_at`, confirms *"Fine marked as paid. The outstanding balance was reduced."* and writes an audit entry. The original fine stays on record (struck through) but the row now counts **₱0** and the driver's **outstanding** totals — their dashboard, the violations page and the Driver Manager dashboard — drop by that amount.
+4. **Mark Unpaid** reverses it (an entry marked the wrong way is refused: *"This fine is already marked as paid."* / *"…unpaid."*). Only the Driver Manager can do this; drivers and the Admin see the status read-only.
+
 ---
 
 ### Postconditions
@@ -1584,6 +1593,7 @@ At least one violation log references the code. System refuses the deletion with
 - **Rejected applications cannot be re-approved** — the reject action is one-way in the UI (`is_rejected` has no counterpart action on the drivers page).
 - The *offense instance* is free choice (1–4 in the bulk form, `min:1` in the single form) and is not derived from how many times that code was previously logged against the driver.
 - Additional penalties are stored as free text; nothing derives them from the offense level.
+- **Payment is a flag, not a ledger**: there is no partial payment, no payment date entry, no receipt — a fine is paid or it is not.
 
 ---
 
@@ -1750,7 +1760,7 @@ Vehicle issues (E3/E4 map removal, driver detachment, disposal guards) are now e
 > - The page does **not** show a "list of maintenance services to be logged"; it is a per-vehicle schedule board: a vehicle picker plus one card per maintenance task showing *last serviced*, *odometer*, *cost* and the computed **next due date / next due odometer**.
 > - The buttons are **"Log"** (or **"Update"** once logged) per task card and **"Save Log"** in the modal — not *"Log button"* / *"Save Log button"* on a list row.
 > - **E2 (invalid odometer reading)** is now enforced: a reading lower than the last recorded one for that vehicle is rejected.
-> - The separate *vehicle maintenance log* (formerly its own use case, numbered E025 until the October 2026 renumbering — see the UCN README) was **retired**: the preventive-maintenance record now holds each service's date, odometer and cost, and the fleet cost/kilometre analytics and the reports read it directly.
+> - The *vehicle maintenance log* (formerly its own use case, numbered E025 until the October 2026 renumbering — see the UCN README) is **back, as a page of its own** (**"Maintenance Logs"** on the Maintenance Manager's sidebar, `GET /maintenance-logs`, Maintenance Manager only — the Admin and every other role get 403) rather than a use case of its own: the schedule keeps only the latest service per task, so every service logged is also written to `vehicle_maintenance_logs` and listed there per vehicle (newest first, 10 per page). The Preventive Maintenance page itself no longer shows the log. The fleet cost/kilometre analytics and the reports still read the schedule rows.
 
 ---
 
@@ -1770,10 +1780,10 @@ Vehicle issues (E3/E4 map removal, driver detachment, disposal guards) are now e
 
 **A1 – Log a Scheduled Service**
 1. In the schedule, the Maintenance Manager clicks **"Log"** (or **"Update"**) on a task card.
-2. System displays the **Log Service** modal: *Odometer (km)*, *Date*, *Cost*, *Comments*.
+2. System displays the **Log Service** modal: *Odometer (km)*, *Date*, *Cost*, *Performed by* and *Invoice no.* (both optional), *Comments*.
 3. Maintenance Manager fills the fields and clicks **"Save Log"**.
-4. System validates `vehicle_id` **required, exists**, `task_id` **required, exists**, `last_service_odo` **required, integer, min 0**, `last_service_date` **required, date**, `last_service_cost` **required, numeric, min 0**, `comments` **nullable**.
-5. System checks the odometer against the last reading recorded for that vehicle (E2), then **upserts** the `preventive_maintenances` row for *(vehicle, task)*.
+4. System validates `vehicle_id` **required, exists**, `task_id` **required, exists**, `last_service_odo` **required, integer, min 0**, `last_service_date` **required, date**, `last_service_cost` **required, numeric, min 0**, `comments` **nullable**, `performed_by` **nullable, max 255**, `invoice_number` **nullable, max 100**.
+5. System checks the odometer against the last reading recorded for that vehicle (E2), then — in one transaction — **upserts** the `preventive_maintenances` row for *(vehicle, task)* **and appends a `vehicle_maintenance_logs` row** for the service.
 6. System confirms *"Preventive maintenance logged successfully!"*
 
 **A2 – Log a Service for a Different Vehicle**
@@ -1812,7 +1822,7 @@ The insert or update fails at the database level. System cancels the operation a
 ### Known Gaps / Notes
 
 - **The summary is per vehicle, per calendar year** — there is no cross-vehicle roll-up page and no year picker (the current year is always used).
-- **The schedule is per task, not per service**: logging a task again **overwrites** that task's last-service row, so only the most recent service per task is kept.
+- **The schedule is per task, not per service**: logging a task again **overwrites** that task's last-service row. The history is kept in the **Maintenance Logs** page (`vehicle_maintenance_logs`), which is append-only: there is no edit or delete for a log entry, and a log entry outlives the schedule row it came from (`maintenance_id` is cleared, not cascaded). Services that were on the schedule when the log was re-introduced were copied in as its first entries; earlier overwritten services cannot be recovered.
 - **Next-due values are computed on the fly** in the view; nothing is persisted, so changing a task's interval retroactively changes every vehicle's projected due date.
 - The vehicle picker falls back to the first vehicle when the requested one no longer exists, and renders an empty board when the fleet is empty.
 - There is no notification when a task becomes overdue.

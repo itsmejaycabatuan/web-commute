@@ -1,7 +1,7 @@
 # Entity-Relationship Diagrams — SmartCommute
 
 Two views of the same database, both generated from the final state of `database/migrations/*.php`
-(41 migrations; later `ALTER`s applied; `vehicle_maintenance_logs`, `routes` and `fleets`, which migrations drop, are not shown):
+(41 migrations when the diagrams were drawn; later `ALTER`s applied; `routes` and `fleets`, which migrations drop, are not shown. **Added since, not yet redrawn in the images:** `vehicle_maintenance_logs` (append-only service history, see below) and `violation_logs.payment_status` / `paid_at`):
 
 | Diagram | Use it for | Files |
 |---|---|---|
@@ -40,6 +40,7 @@ data at the top of that script after a migration and re-run `python3 docs/diagra
 | Vehicle | `vehicles` | A fleet vehicle, optionally assigned to a driver | E015 |
 | Maintenance Task | `maintenance_tasks` | A kind of service and its km / month interval | E017 |
 | Preventive Maintenance | `preventive_maintenances` | Last service of one task on one vehicle — the junction that makes Vehicle ↔ Task many-to-many | E016 |
+| Vehicle Maintenance Log | `vehicle_maintenance_logs` | Every service ever logged (append-only history); `maintenance_id` is nullable and cleared, not cascaded, when its schedule row goes | E016 |
 | Vehicle Location | `vehicle_locations` | A vehicle's latest broadcast position | E021, E003 |
 
 ### Relationships
@@ -57,6 +58,9 @@ data at the top of that script after a migration and re-run `python3 docs/diagra
 | Violation Code | Violation Log | `violation_logs.vc_id` | classifies | cascade |
 | Vehicle | Preventive Maintenance | `preventive_maintenances.vehicle_id` | is serviced by | cascade |
 | Maintenance Task | Preventive Maintenance | `preventive_maintenances.task_id` | is performed in | cascade |
+| Vehicle | Vehicle Maintenance Log | `vehicle_maintenance_logs.vehicle_id` | has history | cascade |
+| Maintenance Task | Vehicle Maintenance Log | `vehicle_maintenance_logs.maintenance_task_id` | is performed in | cascade |
+| Preventive Maintenance | Vehicle Maintenance Log | `vehicle_maintenance_logs.maintenance_id` (nullable) | was logged from | set null |
 | Fare | Fare Rate | `fare_rates.fare_id` | contains | cascade |
 | User | Vehicle Location | `vehicle_locations.user_id` (nullable) | broadcasts | cascade |
 | Vehicle | Vehicle Location | `vehicle_locations.vehicle_id` | reports — **no foreign key** (dashed) | none |

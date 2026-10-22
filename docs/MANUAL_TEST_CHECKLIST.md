@@ -205,7 +205,10 @@ Log in as `maintenancemanager@gmail.com`.
 - [x] **Preventive maintenance:** the schedule shows a mix of OK and Overdue items. Log a service with an odometer **lower** than the last reading and get an error naming that reading.
 - [x] A valid entry updates the schedule, the dashboard's cost summary and its *Service History* tab.
 - [x] **Maintenance tasks:** add, edit and delete a task. A blank name is rejected, and miles/months may be blank.
-- [x] There is no *Maintenance Logs* menu item and `/vehicle-maintenance-log` and `/maintenance-logs` answer 404: the vehicle maintenance log was retired in favour of preventive maintenance.
+- [x] There is no *Maintenance Logs* menu item and `/vehicle-maintenance-log` answers 404. **Maintenance Logs** is a Maintenance Manager menu item (`/maintenance-logs`; any other role gets 403). Log the same task twice on Preventive Maintenance: the schedule row shows the latest service, the Maintenance Logs page lists both.
+- [x] A driver with no vehicle (Elena Torres) sees the amber *no vehicle assigned* notice on the map; **Clock In** is disabled and the Availability toggle can only be switched off.
+- [x] Violation Log → **Mark Paid** turns the badge green and the row to ₱0.00 (original struck through); the driver's *Outstanding* totals drop. **Mark Unpaid** restores them.
+- [x] Drivers → ID-card icon: the modal lists the driver's timekeeping and violations.
 
 ## 7. Cross-cutting
 

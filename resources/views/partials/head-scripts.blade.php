@@ -120,7 +120,7 @@
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.store('sidebar', {
-            open: false,
+            open: true, // the navigation sidebar starts expanded
             isDark: false,
             fontSize: (function() {
                 const intToLabel = {

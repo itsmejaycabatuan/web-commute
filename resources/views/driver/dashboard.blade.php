@@ -165,7 +165,7 @@
                             <i class="fa-solid fa-peso-sign text-[8px] text-rose-500 dark:text-rose-400"></i>
                         </div>
                         <span
-                            class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Violation
+                            class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Outstanding
                             Fines</span>
                     </div>
                     <span
@@ -568,8 +568,9 @@
                                         </div>
                                     </div>
                                     <div class="text-right shrink-0">
-                                        <p class="text-[10px] sm:text-[11px] font-bold text-red-500 dark:text-red-400"
-                                            x-text="formatFine(v.fine)"></p>
+                                        <p class="text-[10px] sm:text-[11px] font-bold"
+                                            :class="v.paymentStatus === 'paid' ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'"
+                                            x-text="v.paymentStatus === 'paid' ? 'Paid' : formatFine(v.fine)"></p>
                                         <p class="text-[7px] sm:text-[8px] text-gray-400 dark:text-[#444] font-medium mt-0.5"
                                             x-text="v.date"></p>
                                     </div>
@@ -603,20 +604,6 @@
                                 Actions</span>
                         </div>
                         <div class="space-y-2">
-                            <a
-                                class="flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] transition group cursor-pointer">
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/15 flex items-center justify-center">
-                                        <i class="fa-solid fa-bus text-[9px] text-blue-500 dark:text-blue-400"></i>
-                                    </div>
-                                    <span
-                                        class="text-[10px] font-bold text-gray-600 dark:text-[#888] group-hover:text-gray-900 dark:group-hover:text-white transition">My
-                                        Vehicle</span>
-                                </div>
-                                <i
-                                    class="fa-solid fa-chevron-right text-[8px] text-gray-300 dark:text-[#555] group-hover:text-gray-500 dark:group-hover:text-[#777] transition"></i>
-                            </a>
                             <a href="{{ route('driver.timekeeping') }}"
                                 class="flex items-center justify-between p-3 sm:p-3.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] transition group cursor-pointer">
                                 <div class="flex items-center gap-3">

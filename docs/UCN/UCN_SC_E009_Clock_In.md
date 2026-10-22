@@ -8,10 +8,10 @@
 | **Secondary Actor**   | System                                                                                                                                                                |
 | **Goal**               | Allow the driver to clock in to the system and start their shift.                                                                                                     |
 | **Trigger**           | Driver clicks the **"Clock In"** button on the **Today's Shift** card in the map's left sidebar.                                                                        |
-| **Preconditions**     | 1. Driver is authenticated and registered to the system.<br>2. The driver has no timekeeping record for today yet.<br>3. The System is operational.                |
+| **Preconditions**     | 1. Driver is authenticated and registered to the system.<br>2. The driver has no timekeeping record for today yet.<br>3. A vehicle is assigned to the driver.<br>4. The System is operational.                |
 | **Supporting Actors** | Timekeeping ledger, Driver record                                                                                                                                     |
 
-> **Vehicles are intentionally not a precondition.** A driver's vehicle is assigned by staff **at registration/approval time**, so there is no per-shift assignment to check at clock-in.
+> **A vehicle is a precondition.** A driver can only go on shift while a vehicle is assigned to them (staff assign it from the Vehicles page). Without one, the **Clock In** button is disabled, the Availability toggle cannot be switched on, and the map's left sidebar says so; a replayed request is refused with *"You have no vehicle assigned yet, so you cannot clock in or set your status to active. Please contact the Maintenance Manager."* Going **inactive** never needs a vehicle.
 
 ---
 
@@ -58,13 +58,16 @@ See A2 — the driver has no `Driver` record. System responds with *"Driver prof
 **E3 – Already Clocked In**
 See A1 — *"You have already clocked in today."*
 
+**E4 – No Vehicle Assigned**
+The driver has no vehicle. System performs **no** write, leaves the status unchanged and responds with the *no vehicle assigned* message above. The same rule applies to switching the Availability toggle to **active** (`POST /status`).
+
 ---
 
 ## Known Gaps / Notes
 
 - **One shift per day, enforced.** `clockIn` rejects a second record for the same date, so a driver **cannot** clock in twice (e.g. an AM and a PM shift). Multi-split shifts would need a different uniqueness rule.
 - **No GPS / location verification.** The original precondition *"the driver's device GPS is enabled and permissions are granted"* is **not checked** — clock-in works from any device, anywhere.
-- **No shift/vehicle assignment check** (deliberate — vehicles are assigned by staff at registration, see note above). The clock-in is therefore **not** tied to the vehicle the driver will actually take out.
+- **The vehicle check is "has one assigned"**, not "has an active one": a driver whose only vehicle is under maintenance can still clock in (the map then reads *Vehicle not active* and GPS broadcasting stays off). Clock-in is not tied to which vehicle the driver takes out.
 - **No manager approval or overtime validation** — a driver may clock in at any hour, and a shift longer than 8 hours is only flagged as overtime at clock-out (UCN_SC_E010).
 - **Clock-in and status are two separate writes.** If the record is created but the `drivers.status` update fails, the driver has a shift but stays offline.
 - Time is stored as a formatted **string** (`h:i A`) in a `date` column, while clock-out re-parses it with `Carbon::parse(..., 'Asia/Manila')` — string time storage is fragile across locales/DST-free zones.

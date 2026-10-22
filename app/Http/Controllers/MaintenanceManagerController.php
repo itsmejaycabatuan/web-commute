@@ -7,9 +7,11 @@ use App\Models\MaintenanceTask;
 use App\Models\PreventiveMaintenance;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\VehicleMaintenanceLog;
 use Auth;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class MaintenanceManagerController extends Controller
@@ -46,6 +48,27 @@ class MaintenanceManagerController extends Controller
         ));
     }
 
+    /**
+     * The maintenance log: every service ever logged for a vehicle, newest first.
+     * Maintenance Manager only (see the route group).
+     */
+    public function maintenanceLogs(Request $request)
+    {
+        $vehicles = Vehicle::orderBy('plate_number')->get();
+        $vehicle = $vehicles->firstWhere('id', (int) $request->query('vehicle_id')) ?? $vehicles->first();
+
+        $logs = $vehicle
+            ? VehicleMaintenanceLog::with('maintenanceTask')
+                ->where('vehicle_id', $vehicle->id)
+                ->orderByDesc('service_date')
+                ->orderByDesc('id')
+                ->paginate(10)
+                ->withQueryString()
+            : null;
+
+        return view('maintenance-manager.maintenance-logs', compact('vehicles', 'vehicle', 'logs'));
+    }
+
     public function preventiveMaintenanceStore(Request $request)
     {
         $validated = $request->validate([
@@ -55,6 +78,8 @@ class MaintenanceManagerController extends Controller
             'last_service_date' => 'required|date',
             'last_service_cost' => 'required|numeric|min:0',
             'comments' => 'nullable|string|max:500',
+            'performed_by' => 'nullable|string|max:255',
+            'invoice_number' => 'nullable|string|max:100',
         ]);
 
         // E2 — Invalid odometer reading: a reading may never be lower than the
@@ -71,15 +96,36 @@ class MaintenanceManagerController extends Controller
             ]);
         }
 
-        // E4 — Database error: nothing is stored and the Maintenance Manager is told.
+        // E4 — Database error: the schedule entry and its log record are written
+        // together or not at all, and the Maintenance Manager is told.
         try {
-            PreventiveMaintenance::updateOrCreate(
-                [
+            DB::transaction(function () use ($validated) {
+                $maintenance = PreventiveMaintenance::updateOrCreate(
+                    [
+                        'vehicle_id' => $validated['vehicle_id'],
+                        'task_id' => $validated['task_id'],
+                    ],
+                    collect($validated)->only([
+                        'last_service_odo',
+                        'last_service_date',
+                        'last_service_cost',
+                        'comments',
+                    ])->all()
+                );
+
+                // The schedule only remembers the latest service; the log keeps every one.
+                VehicleMaintenanceLog::create([
+                    'maintenance_id' => $maintenance->id,
                     'vehicle_id' => $validated['vehicle_id'],
-                    'task_id' => $validated['task_id'],
-                ],
-                $validated
-            );
+                    'maintenance_task_id' => $validated['task_id'],
+                    'service_date' => $validated['last_service_date'],
+                    'mileage_at_service' => (int) $validated['last_service_odo'],
+                    'performed_by' => $validated['performed_by'] ?? null,
+                    'cost' => $validated['last_service_cost'],
+                    'invoice_number' => $validated['invoice_number'] ?? null,
+                    'remarks' => $validated['comments'] ?? null,
+                ]);
+            });
         } catch (QueryException $e) {
             return $this->writeFailed($e, 'The scheduled service was not saved.');
         }

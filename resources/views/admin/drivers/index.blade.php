@@ -60,6 +60,9 @@
                     viewHasLicense: false,
                     viewLicenseUrl: '',
                     viewCreatedAt: '',
+                    viewRecords: null,
+                    viewRecordsLoading: false,
+                    viewRecordsError: false,
 
                     editId: '',
                     editEmail: '',
@@ -145,8 +148,36 @@
                             viewHasLicense: d.has_license,
                             viewLicenseUrl: d.license_url || '',
                             viewCreatedAt: d.created_at || '',
+                            viewRecords: null,
+                            viewRecordsError: false,
                         });
                         this.viewModal = true;
+                        this.loadRecords(d.records_url);
+                    },
+
+                    // Timekeeping and violations are fetched when the modal opens, not
+                    // shipped with the whole drivers list.
+                    async loadRecords(url) {
+                        if (!url) return;
+                        this.viewRecordsLoading = true;
+                        const requested = this.viewDriverId;
+                        try {
+                            const res = await fetch(url, {
+                                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                credentials: 'same-origin',
+                            });
+                            if (!res.ok) throw new Error('HTTP ' + res.status);
+                            const data = await res.json();
+                            if (requested === this.viewDriverId) this.viewRecords = data;
+                        } catch (e) {
+                            if (requested === this.viewDriverId) this.viewRecordsError = true;
+                        } finally {
+                            if (requested === this.viewDriverId) this.viewRecordsLoading = false;
+                        }
+                    },
+
+                    money(n) {
+                        return '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                     },
 
                     openEdit(d) {
@@ -339,6 +370,7 @@
                 'update_url' => route('drivers.update', $d->id),
                 'delete_url' => route('drivers.destroy', $d->id),
                 'suspension_url' => route('drivers.suspension', $d->id),
+                'records_url' => route('drivers.records', $d->id),
             ];
         })
         ->values();
@@ -1094,6 +1126,128 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- ── Timekeeping & violations ── -->
+                    <div class="mt-8 space-y-6">
+                        <div x-show="viewRecordsLoading" class="flex items-center justify-center gap-2 py-6 text-[10px] text-gray-400 dark:text-[#555]">
+                            <i class="fa-solid fa-circle-notch fa-spin text-[10px]"></i> Loading timekeeping and violations…
+                        </div>
+                        <p x-show="viewRecordsError" x-cloak
+                            class="py-4 text-center text-[10px] font-bold text-red-500 dark:text-red-400">
+                            Timekeeping and violations could not be loaded. Close this window and try again.
+                        </p>
+
+                        <template x-if="viewRecords">
+                            <div class="space-y-6">
+
+                                <!-- Timekeeping -->
+                                <section>
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <div class="w-6 h-6 rounded-md bg-amber-500/10 border border-amber-500/15 flex items-center justify-center">
+                                                <i class="fa-solid fa-clock text-[8px] text-amber-500 dark:text-amber-400"></i>
+                                            </div>
+                                            <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Timekeeping</span>
+                                        </div>
+                                        <div class="flex-1 h-px bg-gray-200 dark:bg-[#1e1e1e]"></div>
+                                        <span class="text-[8px] font-bold text-gray-400 dark:text-[#444] shrink-0"
+                                            x-text="viewRecords.timekeeping_summary.days + ' days · ' + viewRecords.timekeeping_summary.hours + ' hrs' + (viewRecords.timekeeping_summary.overtime > 0 ? ' · ' + viewRecords.timekeeping_summary.overtime + ' OT' : '')"></span>
+                                    </div>
+                                    <div class="rounded-xl border border-gray-200 dark:border-[#1e1e1e] overflow-x-auto">
+                                        <table class="w-full text-left min-w-[420px]">
+                                            <thead>
+                                                <tr class="text-[7px] uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] bg-gray-50 dark:bg-[#0a0a0a]">
+                                                    <th class="px-3 py-2 font-bold">Date</th>
+                                                    <th class="px-3 py-2 font-bold">In</th>
+                                                    <th class="px-3 py-2 font-bold">Out</th>
+                                                    <th class="px-3 py-2 font-bold text-right">Hours</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-100 dark:divide-[#161616]">
+                                                <template x-for="(t, i) in viewRecords.timekeeping" :key="i">
+                                                    <tr>
+                                                        <td class="px-3 py-2 text-[10px] font-bold text-gray-600 dark:text-[#aaa] whitespace-nowrap">
+                                                            <span x-text="t.date"></span>
+                                                            <span x-show="t.leave" class="ml-1 text-[7px] uppercase text-blue-500 dark:text-blue-400" x-text="t.leave"></span>
+                                                        </td>
+                                                        <td class="px-3 py-2 text-[10px] font-mono text-gray-500 dark:text-[#888] whitespace-nowrap" x-text="t.time_in"></td>
+                                                        <td class="px-3 py-2 text-[10px] font-mono whitespace-nowrap"
+                                                            :class="t.time_out || t.leave ? 'text-gray-500 dark:text-[#888]' : 'text-amber-500 dark:text-amber-400'"
+                                                            x-text="t.time_out || (t.leave ? '—' : 'On shift')"></td>
+                                                        <td class="px-3 py-2 text-right text-[10px] font-bold font-mono text-gray-700 dark:text-[#ccc] whitespace-nowrap">
+                                                            <span x-text="t.hours.toFixed(1)"></span>
+                                                            <span x-show="t.overtime > 0" class="text-[8px] text-amber-500 dark:text-amber-400" x-text="'+' + t.overtime.toFixed(1) + ' OT'"></span>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                                <tr x-show="viewRecords.timekeeping.length === 0">
+                                                    <td colspan="4" class="px-3 py-5 text-center text-[10px] text-gray-400 dark:text-[#444]">No timekeeping records yet</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <p x-show="viewRecords.timekeeping_summary.days > viewRecords.timekeeping.length" class="mt-2 text-[8px] text-gray-400 dark:text-[#444]"
+                                        x-text="'Showing the latest ' + viewRecords.timekeeping.length + ' of ' + viewRecords.timekeeping_summary.days + ' days'"></p>
+                                </section>
+
+                                <!-- Violations -->
+                                <section>
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <div class="w-6 h-6 rounded-md bg-rose-500/10 border border-rose-500/15 flex items-center justify-center">
+                                                <i class="fa-solid fa-triangle-exclamation text-[8px] text-rose-500 dark:text-rose-400"></i>
+                                            </div>
+                                            <span class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Violations</span>
+                                        </div>
+                                        <div class="flex-1 h-px bg-gray-200 dark:bg-[#1e1e1e]"></div>
+                                        <span class="text-[8px] font-bold text-gray-400 dark:text-[#444] shrink-0"
+                                            x-text="viewRecords.violation_summary.count + (viewRecords.violation_summary.count === 1 ? ' violation' : ' violations') + ' · ' + money(viewRecords.violation_summary.outstanding) + ' outstanding'"></span>
+                                    </div>
+                                    <div class="rounded-xl border border-gray-200 dark:border-[#1e1e1e] overflow-x-auto">
+                                        <table class="w-full text-left min-w-[480px]">
+                                            <thead>
+                                                <tr class="text-[7px] uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] bg-gray-50 dark:bg-[#0a0a0a]">
+                                                    <th class="px-3 py-2 font-bold">Violation</th>
+                                                    <th class="px-3 py-2 font-bold">Date</th>
+                                                    <th class="px-3 py-2 font-bold text-right">Fine</th>
+                                                    <th class="px-3 py-2 font-bold text-right">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-gray-100 dark:divide-[#161616]">
+                                                <template x-for="(v, i) in viewRecords.violations" :key="i">
+                                                    <tr>
+                                                        <td class="px-3 py-2">
+                                                            <span class="block text-[10px] font-bold text-gray-700 dark:text-[#ccc] truncate max-w-[200px]" x-text="v.name"></span>
+                                                            <span class="text-[7px] font-mono uppercase text-gray-400 dark:text-[#444]" x-text="v.code + ' · offense ' + v.offense"></span>
+                                                        </td>
+                                                        <td class="px-3 py-2 text-[10px] text-gray-500 dark:text-[#888] whitespace-nowrap" x-text="v.date"></td>
+                                                        <td class="px-3 py-2 text-right whitespace-nowrap">
+                                                            <span class="text-[10px] font-bold font-mono"
+                                                                :class="v.status === 'paid' ? 'text-emerald-500 dark:text-emerald-400' : 'text-gray-700 dark:text-[#ccc]'"
+                                                                x-text="money(v.outstanding)"></span>
+                                                            <span x-show="v.status === 'paid'" class="block text-[8px] text-gray-400 dark:text-[#444] line-through" x-text="money(v.fine)"></span>
+                                                        </td>
+                                                        <td class="px-3 py-2 text-right">
+                                                            <span class="inline-block text-[7px] px-2 py-0.5 rounded-md font-bold uppercase border"
+                                                                :class="v.status === 'paid'
+                                                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/15'
+                                                                    : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/15'"
+                                                                x-text="v.status === 'paid' ? 'Paid' : 'Unpaid'"></span>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                                <tr x-show="viewRecords.violations.length === 0">
+                                                    <td colspan="4" class="px-3 py-5 text-center text-[10px] text-gray-400 dark:text-[#444]">No violations on record</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <p x-show="viewRecords.violation_summary.count > viewRecords.violations.length" class="mt-2 text-[8px] text-gray-400 dark:text-[#444]"
+                                        x-text="'Showing the latest ' + viewRecords.violations.length + ' of ' + viewRecords.violation_summary.count + ' violations'"></p>
+                                </section>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>

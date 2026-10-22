@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $vc_id
  * @property string $violation_instance
  * @property string $violation_fine
+ * @property string $payment_status
+ * @property \Illuminate\Support\Carbon|null $paid_at
  * @property string|null $additional_penalties
  * @property string $date_of_violation
  * @property string $time_of_violation
@@ -46,17 +48,45 @@ class ViolationLog extends Model
     use Audited;
     use HasFactory;
 
+    public const UNPAID = 'unpaid';
+    public const PAID = 'paid';
+
     protected $fillable = [
         'user_id',
         'vc_id',
         'violation_instance',
         'violation_fine',
+        'payment_status',
+        'paid_at',
         'additional_penalties',
         'date_of_violation',
         'time_of_violation',
         'place_of_violation',
         'remarks',
     ];
+
+    protected $casts = [
+        'paid_at' => 'datetime',
+    ];
+
+    public function isPaid(): bool
+    {
+        return $this->payment_status === self::PAID;
+    }
+
+    /**
+     * What the driver still owes for this violation: the fine until it is
+     * marked paid, nothing afterwards.
+     */
+    public function outstandingFine(): float
+    {
+        return $this->isPaid() ? 0.0 : (float) $this->violation_fine;
+    }
+
+    public function scopeUnpaid($query)
+    {
+        return $query->where('payment_status', self::UNPAID);
+    }
 
     public function user()
     {
@@ -74,11 +104,20 @@ class ViolationLog extends Model
 
     protected function auditAttributes(): array
     {
-        return ['user_id', 'vc_id', 'violation_instance', 'violation_fine', 'additional_penalties', 'date_of_violation', 'time_of_violation', 'place_of_violation', 'remarks'];
+        return ['user_id', 'vc_id', 'violation_instance', 'violation_fine', 'payment_status', 'additional_penalties', 'date_of_violation', 'time_of_violation', 'place_of_violation', 'remarks'];
     }
 
     protected function auditLabel(): string
     {
         return 'violation #'.$this->getKey();
+    }
+
+    protected function auditDescription(string $event): string
+    {
+        if ($event === 'updated' && $this->isDirty('payment_status')) {
+            return ($this->isPaid() ? 'Marked ' : 'Reopened ').$this->auditLabel().($this->isPaid() ? ' as paid' : ' as unpaid');
+        }
+
+        return ucfirst($event).' '.$this->auditLabel();
     }
 }

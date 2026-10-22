@@ -76,6 +76,12 @@
 2. System narrows the log server-side to matching rows (driver name or licence `LIKE`, and `date_of_violation` within the range) and updates the entry counter; **Clear** restores the full log.
 3. The *Driver* picker used by the entry modals is **not** filtered — it always lists every driver.
 
+**A8 – Mark a Fine Paid (or Unpaid)**
+1. In the **Violation Log**, each row shows a **Paid** / **Unpaid** badge and a **Mark Paid** button (**Mark Unpaid** once paid).
+2. Driver Manager clicks **Mark Paid** (`PATCH /violations-log/{id}/payment`, `payment_status` = `paid`).
+3. System sets `payment_status = paid` and stamps `paid_at`, confirms *"Fine marked as paid. The outstanding balance was reduced."* and writes an audit entry. The original fine stays on record (struck through) but the row now counts **₱0** and the driver's **outstanding** totals — their dashboard, the violations page and the Driver Manager dashboard — drop by that amount.
+4. **Mark Unpaid** reverses it (an entry marked the wrong way is refused: *"This fine is already marked as paid."* / *"…unpaid."*). Only the Driver Manager can do this; drivers and the Admin see the status read-only.
+
 ---
 
 ## Postconditions
@@ -116,6 +122,7 @@ At least one violation log references the code. System refuses the deletion with
 - **Rejected applications cannot be re-approved** — the reject action is one-way in the UI (`is_rejected` has no counterpart action on the drivers page).
 - The *offense instance* is free choice (1–4 in the bulk form, `min:1` in the single form) and is not derived from how many times that code was previously logged against the driver.
 - Additional penalties are stored as free text; nothing derives them from the offense level.
+- **Payment is a flag, not a ledger**: there is no partial payment, no payment date entry, no receipt — a fine is paid or it is not.
 
 ---
 

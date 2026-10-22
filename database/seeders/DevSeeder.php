@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\UserPreference;
 use App\Models\Vehicle;
 use App\Models\VehicleLocation;
+use App\Models\VehicleMaintenanceLog;
 use App\Models\ViolationCode;
 use App\Models\ViolationLog;
 use App\Models\Wallet;
@@ -472,6 +473,9 @@ class DevSeeder extends Seeder
                     'vc_id' => ViolationCode::where('code', $code)->value('id'),
                     'violation_instance' => (string) $n,
                     'violation_fine' => $fine($code, $n),
+                    // Fines a month old or more have been settled; recent ones are still owed.
+                    'payment_status' => $daysAgo >= 30 ? ViolationLog::PAID : ViolationLog::UNPAID,
+                    'paid_at' => $daysAgo >= 30 ? $at->copy()->addDays(3) : null,
                     'additional_penalties' => $penalty,
                     'date_of_violation' => $at->toDateString(),
                     'time_of_violation' => $time,
@@ -527,7 +531,7 @@ class DevSeeder extends Seeder
                     continue;
                 }
 
-                PreventiveMaintenance::updateOrCreate(
+                $maintenance = PreventiveMaintenance::updateOrCreate(
                     ['vehicle_id' => $vehicle->id, 'task_id' => $task($name)],
                     [
                         'last_service_odo' => $odo,
@@ -537,6 +541,22 @@ class DevSeeder extends Seeder
                     ]
                 );
 
+                // The log keeps every service, including the ones the schedule has since overwritten.
+                VehicleMaintenanceLog::updateOrCreate(
+                    [
+                        'vehicle_id' => $vehicle->id,
+                        'maintenance_task_id' => $task($name),
+                        'service_date' => $date->toDateString(),
+                        'mileage_at_service' => $odo,
+                    ],
+                    [
+                        'maintenance_id' => $maintenance->id,
+                        'performed_by' => $by,
+                        'cost' => $cost,
+                        'invoice_number' => $invoice,
+                        'remarks' => $remarks,
+                    ]
+                );
             }
         }
     }

@@ -21,9 +21,11 @@
 @php
     $toastFlash = [];
 
+    // An error toast is skipped on the client when the form already shows the same text
+    // (`covers` lists what to look for), so one problem is never reported twice.
     foreach (['success' => 'success', 'error' => 'error', 'warning' => 'warning', 'message' => 'info'] as $key => $type) {
         if (session()->has($key) && is_string(session($key)) && session($key) !== '') {
-            $toastFlash[] = ['type' => $type, 'message' => session($key)];
+            $toastFlash[] = ['type' => $type, 'message' => session($key), 'covers' => $type === 'error' ? [session($key)] : []];
         }
     }
 
@@ -33,15 +35,17 @@
             'message' => $errors->count() === 1
                 ? $errors->first()
                 : 'Please correct the highlighted fields and try again.',
+            'covers' => array_values(array_unique($errors->all())),
         ];
     }
 @endphp
 
 <style>
+    /* Top-right on desktop, across the top on a phone. */
     .app-toast-stack {
         position: fixed;
         right: 1.5rem;
-        bottom: 1.5rem;
+        top: 1.5rem;
         z-index: 2147483000;
         display: flex;
         flex-direction: column;
@@ -55,8 +59,7 @@
         .app-toast-stack {
             right: 1rem;
             left: 1rem;
-            /* clear the mobile bottom navigation bar */
-            bottom: 5.25rem;
+            top: 1rem;
             align-items: stretch;
         }
     }
@@ -66,40 +69,52 @@
         display: flex;
         align-items: center;
         gap: .75rem;
-        padding: .875rem 1.25rem;
+        padding: .625rem .625rem .625rem 1.25rem;
         border-radius: .75rem;
         border: 1px solid;
         box-shadow: 0 20px 40px -12px rgba(0, 0, 0, .35);
         font: 700 11px/1.35 system-ui, -apple-system, 'Segoe UI', sans-serif;
         max-width: 26rem;
+        /* On a phone the toast spans the screen: the message takes the width, the X stays at the far end. */
+        width: max-content;
         animation: app-toast-in .3s ease-out both;
         transition: opacity .25s ease, transform .25s ease;
     }
 
-    .app-toast.is-leaving {
-        opacity: 0;
-        transform: translateY(.75rem) scale(.96);
+    @media (max-width: 767px) {
+        .app-toast {
+            width: auto;
+            max-width: none;
+        }
     }
 
-    .app-toast__icon {
-        width: 1.5rem;
-        height: 1.5rem;
-        border-radius: .375rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        font-size: 10px;
+    .app-toast.is-leaving {
+        opacity: 0;
+        transform: translateY(-.75rem) scale(.96);
+    }
+
+    .app-toast__text {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        padding: .125rem 0;
     }
 
     .app-toast__close {
-        margin-left: .25rem;
-        opacity: .5;
+        flex: 0 0 auto;
+        margin-left: auto;
+        width: 1.5rem;
+        height: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: .375rem;
+        opacity: .55;
         background: none;
         border: 0;
         color: inherit;
         cursor: pointer;
-        font-size: 11px;
+        font: 400 20px/1 system-ui, -apple-system, 'Segoe UI', sans-serif;
     }
 
     .app-toast__close:hover {
@@ -112,18 +127,10 @@
         color: #047857;
     }
 
-    .app-toast--success .app-toast__icon {
-        background: rgba(16, 185, 129, .15);
-    }
-
     .app-toast--error {
         background: #fff1f2;
         border-color: #fecdd3;
         color: #be123c;
-    }
-
-    .app-toast--error .app-toast__icon {
-        background: rgba(244, 63, 94, .15);
     }
 
     .app-toast--warning {
@@ -132,24 +139,16 @@
         color: #b45309;
     }
 
-    .app-toast--warning .app-toast__icon {
-        background: rgba(245, 158, 11, .15);
-    }
-
     .app-toast--info {
         background: #eff6ff;
         border-color: #bfdbfe;
         color: #1d4ed8;
     }
 
-    .app-toast--info .app-toast__icon {
-        background: rgba(59, 130, 246, .15);
-    }
-
     @keyframes app-toast-in {
         from {
             opacity: 0;
-            transform: translateY(.75rem) scale(.96);
+            transform: translateY(-.75rem) scale(.96);
         }
 
         to {
@@ -241,12 +240,7 @@
     (function () {
         if (window.Toast) return;
 
-        var ICONS = {
-            success: 'fa-solid fa-check',
-            error: 'fa-solid fa-xmark',
-            warning: 'fa-solid fa-exclamation',
-            info: 'fa-solid fa-info'
-        };
+        var TYPES = { success: 1, error: 1, warning: 1, info: 1 };
         var STORE_KEY = 'app-pending-toast';
         var stack = null;
 
@@ -272,7 +266,7 @@
         }
 
         function show(message, type, duration) {
-            type = ICONS[type] ? type : 'info';
+            type = TYPES[type] ? type : 'info';
             var host = ensureStack();
             if (!host || !message) return null;
 
@@ -280,23 +274,19 @@
             el.className = 'app-toast app-toast--' + type;
             el.setAttribute('role', type === 'error' ? 'alert' : 'status');
 
-            var icon = document.createElement('span');
-            icon.className = 'app-toast__icon';
-            icon.innerHTML = '<i class="' + ICONS[type] + '"></i>';
-
             var text = document.createElement('span');
+            text.className = 'app-toast__text';
             text.textContent = message;
 
             var close = document.createElement('button');
             close.type = 'button';
             close.className = 'app-toast__close';
             close.setAttribute('aria-label', 'Dismiss notification');
-            close.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            close.textContent = '\u00d7'; // no icon font needed
             close.addEventListener('click', function () {
                 dismiss(el);
             });
 
-            el.appendChild(icon);
             el.appendChild(text);
             el.appendChild(close);
             host.appendChild(el);
@@ -335,14 +325,32 @@
             } catch (e) { /* ignore */ }
         }
 
+        /* True when every message is already written somewhere on the page (an error
+           under a field, a form's error box). Hidden text (closed modal, x-show) is not
+           counted: innerText only returns what is rendered. */
+        function alreadyOnPage(messages) {
+            if (!messages || !messages.length || !document.body) return false;
+            var text = (document.body.innerText || '').replace(/\s+/g, ' ');
+            return messages.every(function (m) {
+                return text.indexOf(String(m).replace(/\s+/g, ' ').trim()) !== -1;
+            });
+        }
+
         function showServerFlash() {
             var node = document.getElementById('app-flash-data');
             if (!node) return;
+            var items;
             try {
-                JSON.parse(node.textContent || '[]').forEach(function (item) {
+                items = JSON.parse(node.textContent || '[]');
+            } catch (e) { return; }
+
+            // Wait a tick so Alpine has hidden whatever x-show hides before we look.
+            setTimeout(function () {
+                items.forEach(function (item) {
+                    if (item.type === 'error' && alreadyOnPage(item.covers)) return;
                     show(item.message, item.type);
                 });
-            } catch (e) { /* ignore */ }
+            }, 60);
         }
 
         function boot() {
@@ -463,6 +471,10 @@
             if (firstField && firstField.focus && firstField.offsetParent !== null) {
                 try { firstField.focus({ preventScroll: false }); } catch (e) { /* ignore */ }
             }
+
+            // True when the form itself now shows the problem (under a field or in its
+            // error box), so no separate toast is needed.
+            return form.offsetParent !== null && (!!firstField || orphans.length > 0);
         }
 
         function setBusy(form, submitter, busy) {
@@ -543,10 +555,13 @@
             try { data = await response.json(); } catch (e) { /* non-JSON body */ }
 
             if (response.status === 422 && data.errors) {
-                showErrors(form, data.errors);
-                var count = Object.keys(data.errors).length;
-                show(count === 1 ? [].concat(data.errors[Object.keys(data.errors)[0]])[0] :
-                    'Please correct the highlighted fields and try again.', 'error');
+                // The messages appear in the form; a toast is only the fallback when they could not.
+                var covered = showErrors(form, data.errors);
+                if (!covered) {
+                    var count = Object.keys(data.errors).length;
+                    show(count === 1 ? [].concat(data.errors[Object.keys(data.errors)[0]])[0] :
+                        'Please correct the highlighted fields and try again.', 'error');
+                }
                 form.dispatchEvent(new CustomEvent('ajax-form:invalid', { bubbles: true, detail: data }));
                 return;
             }
@@ -603,7 +618,7 @@
             // (The reject / delete style forms have no rules and go straight through.)
             var firstInvalid = form.querySelector('[data-rules]') ? validateForm(form) : null;
             if (firstInvalid) {
-                show('Please correct the highlighted fields and try again.', 'error');
+                // Each problem is already written under its field, so no toast.
                 if (firstInvalid.focus) try { firstInvalid.focus(); } catch (err) { /* ignore */ }
                 return;
             }

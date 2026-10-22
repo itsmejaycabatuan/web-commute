@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Driver;
+use App\Models\TimeKeeping;
 use App\Models\User;
+use App\Models\ViolationLog;
 use App\Support\Audit;
 use Illuminate\Database\QueryException;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -66,6 +69,58 @@ class DriverApprovalController extends Controller
     public function create()
     {
         return view('admin.drivers.create');
+    }
+
+    /**
+     * The timekeeping and violation history shown in the "view driver" modal.
+     * Loaded on demand, so the drivers list itself stays light.
+     */
+    public function records(Driver $driver)
+    {
+        $entries = TimeKeeping::where('driver_id', $driver->id)
+            ->orderByDesc('date')
+            ->orderByDesc('id');
+
+        $timekeeping = (clone $entries)->take(10)->get()->map(fn (TimeKeeping $t) => [
+            'date' => Carbon::parse($t->date)->format('M d, Y'),
+            'time_in' => $t->time_in ?: '—',
+            'time_out' => $t->time_out ?: null,
+            'hours' => (float) ($t->hours_worked ?? 0),
+            'overtime' => (float) ($t->overtime_hours ?? 0),
+            'leave' => $t->sick ? 'Sick' : ($t->vacation ? 'Vacation' : null),
+        ])->values();
+
+        $violationLogs = ViolationLog::with('violationCode')
+            ->where('user_id', $driver->user_id)
+            ->orderByDesc('date_of_violation')
+            ->orderByDesc('id')
+            ->get();
+
+        $violations = $violationLogs->take(10)->map(fn (ViolationLog $v) => [
+            'code' => $v->violationCode?->code ?? 'N/A',
+            'name' => $v->violationCode?->violation_name ?? 'Unknown',
+            'offense' => (int) $v->violation_instance,
+            'date' => Carbon::parse($v->date_of_violation)->format('M d, Y'),
+            'place' => $v->place_of_violation,
+            'fine' => (float) $v->violation_fine,
+            'outstanding' => $v->outstandingFine(),
+            'status' => $v->isPaid() ? ViolationLog::PAID : ViolationLog::UNPAID,
+        ])->values();
+
+        return response()->json([
+            'timekeeping' => $timekeeping,
+            'timekeeping_summary' => [
+                'days' => (clone $entries)->count(),
+                'hours' => round((float) TimeKeeping::where('driver_id', $driver->id)->sum('hours_worked'), 1),
+                'overtime' => round((float) TimeKeeping::where('driver_id', $driver->id)->sum('overtime_hours'), 1),
+            ],
+            'violations' => $violations,
+            'violation_summary' => [
+                'count' => $violationLogs->count(),
+                'issued' => (float) $violationLogs->sum('violation_fine'),
+                'outstanding' => (float) $violationLogs->sum(fn (ViolationLog $v) => $v->outstandingFine()),
+            ],
+        ]);
     }
 
     public function store(Request $request)

@@ -16,7 +16,7 @@
 > - The page does **not** show a "list of maintenance services to be logged"; it is a per-vehicle schedule board: a vehicle picker plus one card per maintenance task showing *last serviced*, *odometer*, *cost* and the computed **next due date / next due odometer**.
 > - The buttons are **"Log"** (or **"Update"** once logged) per task card and **"Save Log"** in the modal — not *"Log button"* / *"Save Log button"* on a list row.
 > - **E2 (invalid odometer reading)** is now enforced: a reading lower than the last recorded one for that vehicle is rejected.
-> - The separate *vehicle maintenance log* (formerly its own use case, numbered E025 until the October 2026 renumbering — see the UCN README) was **retired**: the preventive-maintenance record now holds each service's date, odometer and cost, and the fleet cost/kilometre analytics and the reports read it directly.
+> - The *vehicle maintenance log* (formerly its own use case, numbered E025 until the October 2026 renumbering — see the UCN README) is **back, as a page of its own** (**"Maintenance Logs"** on the Maintenance Manager's sidebar, `GET /maintenance-logs`, Maintenance Manager only — the Admin and every other role get 403) rather than a use case of its own: the schedule keeps only the latest service per task, so every service logged is also written to `vehicle_maintenance_logs` and listed there per vehicle (newest first, 10 per page). The Preventive Maintenance page itself no longer shows the log. The fleet cost/kilometre analytics and the reports still read the schedule rows.
 
 ---
 
@@ -36,10 +36,10 @@
 
 **A1 – Log a Scheduled Service**
 1. In the schedule, the Maintenance Manager clicks **"Log"** (or **"Update"**) on a task card.
-2. System displays the **Log Service** modal: *Odometer (km)*, *Date*, *Cost*, *Comments*.
+2. System displays the **Log Service** modal: *Odometer (km)*, *Date*, *Cost*, *Performed by* and *Invoice no.* (both optional), *Comments*.
 3. Maintenance Manager fills the fields and clicks **"Save Log"**.
-4. System validates `vehicle_id` **required, exists**, `task_id` **required, exists**, `last_service_odo` **required, integer, min 0**, `last_service_date` **required, date**, `last_service_cost` **required, numeric, min 0**, `comments` **nullable**.
-5. System checks the odometer against the last reading recorded for that vehicle (E2), then **upserts** the `preventive_maintenances` row for *(vehicle, task)*.
+4. System validates `vehicle_id` **required, exists**, `task_id` **required, exists**, `last_service_odo` **required, integer, min 0**, `last_service_date` **required, date**, `last_service_cost` **required, numeric, min 0**, `comments` **nullable**, `performed_by` **nullable, max 255**, `invoice_number` **nullable, max 100**.
+5. System checks the odometer against the last reading recorded for that vehicle (E2), then — in one transaction — **upserts** the `preventive_maintenances` row for *(vehicle, task)* **and appends a `vehicle_maintenance_logs` row** for the service.
 6. System confirms *"Preventive maintenance logged successfully!"*
 
 **A2 – Log a Service for a Different Vehicle**
@@ -78,7 +78,7 @@ The insert or update fails at the database level. System cancels the operation a
 ## Known Gaps / Notes
 
 - **The summary is per vehicle, per calendar year** — there is no cross-vehicle roll-up page and no year picker (the current year is always used).
-- **The schedule is per task, not per service**: logging a task again **overwrites** that task's last-service row, so only the most recent service per task is kept.
+- **The schedule is per task, not per service**: logging a task again **overwrites** that task's last-service row. The history is kept in the **Maintenance Logs** page (`vehicle_maintenance_logs`), which is append-only: there is no edit or delete for a log entry, and a log entry outlives the schedule row it came from (`maintenance_id` is cleared, not cascaded). Services that were on the schedule when the log was re-introduced were copied in as its first entries; earlier overwritten services cannot be recovered.
 - **Next-due values are computed on the fly** in the view; nothing is persisted, so changing a task's interval retroactively changes every vehicle's projected due date.
 - The vehicle picker falls back to the first vehicle when the requested one no longer exists, and renders an empty board when the fleet is empty.
 - There is no notification when a task becomes overdue.

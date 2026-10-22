@@ -184,6 +184,7 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
         Route::get('/drivers', [DriverApprovalController::class, 'index'])->name('drivers.index');
         Route::post('/drivers', [DriverApprovalController::class, 'store'])->name('drivers.store');
         Route::get('/drivers/create', [DriverApprovalController::class, 'create'])->name('drivers.create');
+        Route::get('/drivers/{driver}/records', [DriverApprovalController::class, 'records'])->name('drivers.records');
         Route::get('/drivers/{user}/edit', [DriverApprovalController::class, 'edit'])->name('drivers.edit');
         Route::put('/drivers/{user}', [DriverApprovalController::class, 'update'])->name('drivers.update');
         Route::delete('/drivers/{driver}', [DriverApprovalController::class, 'destroy'])->name('drivers.destroy');
@@ -227,6 +228,7 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
         Route::get('/violations-log', [DriverManagerController::class, 'violationsLog'])->name('driver-manager.violations-log');
         Route::post('/violations-log', [DriverManagerController::class, 'storeViolationLog'])->name('driver-manager.violations-log.store');
         Route::post('/violations-log/bulk', [DriverManagerController::class, 'storeViolationLogBulk'])->name('driver-manager.violations-log.store-bulk');
+        Route::patch('/violations-log/{violation}/payment', [DriverManagerController::class, 'updateViolationPayment'])->name('driver-manager.violations-log.payment');
         Route::get('/violation-codes', [DriverManagerController::class, 'violationCodes'])->name('driver-manager.violation-codes');
         Route::put('/violation-codes/{id}/update', [DriverManagerController::class, 'updateViolationCode'])->name('violation-codes.update');
         Route::post('/violation-codes/store', [DriverManagerController::class, 'storeViolationCode'])->name('violation-codes.store');
@@ -236,6 +238,7 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
     Route::middleware('role:maintenance_manager')->group(function () {
         Route::get('/preventive-maintenance', [MaintenanceManagerController::class, 'preventiveMaintenance'])->name('maintenance-manager.preventive-maintenance');
         Route::post('/preventive-maintenance', [MaintenanceManagerController::class, 'preventiveMaintenanceStore'])->name('maintenance-manager.preventive-maintenance.store');
+        Route::get('/maintenance-logs', [MaintenanceManagerController::class, 'maintenanceLogs'])->name('maintenance-manager.maintenance-logs');
         Route::get('/maintenance-tasks', [MaintenanceManagerController::class, 'maintenanceTasks'])->name('maintenance-manager.maintenance-tasks');
         Route::post('/maintenance-tasks', [MaintenanceManagerController::class, 'maintenanceTasksStore'])->name('maintenance-manager.maintenance-tasks.store');
         Route::put('/maintenance-tasks/{task}', [MaintenanceManagerController::class, 'maintenanceTasksUpdate'])->name('maintenance-manager.maintenance-tasks.update');

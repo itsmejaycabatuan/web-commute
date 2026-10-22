@@ -73,6 +73,7 @@ return [
             ['label' => 'Map', 'icon' => 'fa-map-location-dot', 'color' => 'blue', 'route' => 'map', 'mobile_label' => 'Map'],
             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'fa-gauge-high', 'color' => 'blue', 'section' => null, 'mobile_label' => 'Home'],
             ['label' => 'Preventive Maintenance', 'route' => 'maintenance-manager.preventive-maintenance', 'icon' => 'fa-calendar-days', 'color' => 'orange', 'section' => null, 'mobile_label' => 'Home'],
+            ['label' => 'Maintenance Logs', 'route' => 'maintenance-manager.maintenance-logs', 'icon' => 'fa-clock-rotate-left', 'color' => 'orange', 'section' => null, 'mobile_label' => 'Home'],
             ['label' => 'Maintenance Tasks', 'route' => 'maintenance-manager.maintenance-tasks', 'icon' => 'fa-list-check', 'color' => 'orange', 'section' => null, 'mobile_label' => 'Home'],
             ['label' => 'Vehicles', 'route' => 'vehicles.index', 'icon' => 'fa-bus', 'color' => 'cyan', 'section' => null, 'mobile_label' => 'Home'],
             ['label' => 'Account', 'section' => 'Account'],

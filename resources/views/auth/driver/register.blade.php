@@ -185,7 +185,7 @@
 </head>
 
 <body
-    class="flex relative justify-center items-center p-3 sm:p-4 md:p-6 min-h-[100svh] register-bg font-sans text-white overflow-x-hidden">
+    class="flex flex-col relative items-center p-3 sm:p-4 md:p-6 min-h-[100svh] register-bg font-sans text-white overflow-x-hidden">
 
     <!-- Decorative orbs -->
     <div
@@ -197,7 +197,7 @@
 
     <!-- Back button -->
     <a href="{{ route('register') }}"
-        class="flex absolute top-3 left-3 sm:top-5 sm:left-5 md:top-8 md:left-8 items-center gap-2 sm:gap-2.5 transition group z-10">
+        class="flex self-start shrink-0 items-center gap-2 sm:gap-2.5 mb-3 sm:mb-4 transition group z-10">
         <div
             class="flex justify-center items-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl border border-white/10 bg-white/5 backdrop-blur-md group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-300">
             <i class="text-xs sm:text-sm fa-solid fa-arrow-left text-white/60 group-hover:text-white transition"></i>
@@ -209,7 +209,7 @@
 
     <!-- Card -->
     <div
-        class="card-animate glass-card p-5 sm:p-7 md:p-8 w-full max-w-[340px] sm:max-w-[420px] rounded-2xl sm:rounded-[2rem] shadow-2xl shadow-black/30 max-h-[93svh] overflow-y-auto">
+        class="card-animate my-auto glass-card p-5 sm:p-7 md:p-8 w-full max-w-[340px] sm:max-w-[420px] rounded-2xl sm:rounded-[2rem] shadow-2xl shadow-black/30">
 
         <div class="mb-5 sm:mb-7 text-center">
             <div class="flex flex-col items-center justify-center mb-3 sm:mb-4">

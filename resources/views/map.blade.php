@@ -730,8 +730,31 @@
             position: absolute;
             top: 0;
             bottom: 0;
-            width: 100%;
+            left: 0;
+            right: 0;
             z-index: 0;
+        }
+
+        /* Between tablet and laptop width the floating header can wrap onto a second row, so the
+           side panels start lower and never run under it. */
+        @media (min-width: 768px) and (max-width: 1279px) {
+                    .sidebar-content > #left-sidebar-form,
+            .sidebar-content > #right-sidebar-content {
+                top: 8.5rem !important;
+                max-height: calc(100vh - 10.5rem) !important;
+            }
+        }
+
+        /* Toasts stack from the top; on the map they start below the floating header so they
+           never cover its buttons. */
+        html body .app-toast-stack {
+            top: 5rem;
+        }
+
+        @media (max-width: 767px) {
+            html body .app-toast-stack {
+                top: 10rem;
+            }
         }
 
         /* ═══ GLASS ═══ */
@@ -1003,6 +1026,17 @@
 
         .left.collapsed {
             transform: translateX(-300px);
+        }
+
+        /* A collapsed panel shows only its toggle tab. Without this, a 48px strip of the
+           panel stays visible beside the tab, cut off mid-card. */
+        .sidebar .sidebar-content > *:not(.sidebar-toggle) {
+            transition: opacity 0.35s ease;
+        }
+
+        .sidebar.collapsed .sidebar-content > *:not(.sidebar-toggle) {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .right.collapsed {
@@ -2452,8 +2486,24 @@
                     @endif
 
                     @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
+                        @php
+                            // No vehicle assigned: the driver can neither clock in nor go active.
+                            $driverHasVehicle = $driverHasVehicle ?? true;
+                            $canGoActive = $driverHasVehicle || $driverStatus === 'active';
+                        @endphp
                         <div id="left-sidebar-form"
                             class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)] overflow-y-auto custom-scroll p-3 pb-6">
+
+                            @unless ($driverHasVehicle)
+                                <div id="no-vehicle-notice" role="status"
+                                    class="flex items-start gap-2.5 p-3.5 rounded-2xl border border-amber-500/30 bg-amber-500/10">
+                                    <i class="fa-solid fa-triangle-exclamation text-amber-500 dark:text-amber-400 text-xs mt-0.5 shrink-0"></i>
+                                    <p class="text-[10px] leading-relaxed text-amber-800 dark:text-amber-300 font-medium">
+                                        You have no vehicle assigned yet. You can't clock in or set your status to
+                                        active until the Maintenance Manager assigns you one.
+                                    </p>
+                                </div>
+                            @endunless
 
                             <!-- ══════════ DRIVER STATUS TOGGLE CARD ══════════ -->
                             <form action="{{ route('driver.status.update') }}" method="POST" class="contents">
@@ -2461,8 +2511,8 @@
                                 <input type="hidden" name="status"
                                     value="{{ $driverStatus === 'active' ? 'inactive' : 'active' }}">
                                 <div id="driver-status-card"
-                                    class="glass-card status-card {{ $driverStatus === 'active' ? 'active' : 'inactive' }} p-5 rounded-[1.5rem] cursor-pointer select-none"
-                                    onclick="this.closest('form').submit()">
+                                    @if ($canGoActive) onclick="this.closest('form').submit()" @else aria-disabled="true" title="Assign a vehicle to this driver first" @endif
+                                    class="glass-card status-card {{ $driverStatus === 'active' ? 'active' : 'inactive' }} p-5 rounded-[1.5rem] select-none {{ $canGoActive ? 'cursor-pointer' : 'cursor-not-allowed opacity-50' }}">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-3">
                                             <div
@@ -2492,6 +2542,8 @@
                                     <p class="text-[9px] text-[#444] mt-3 leading-relaxed">
                                         @if ($driverStatus === 'active')
                                             You are visible to commuters and accepting trips.
+                                        @elseif (! $canGoActive)
+                                            Unavailable until a vehicle is assigned to you.
                                         @else
                                             Tap to go online and start accepting trips.
                                         @endif
@@ -2550,8 +2602,9 @@
                                 @if (!$todayRecord || !$todayRecord->time_in)
                                     <form action="{{ route('driver.timekeeping.clock-in') }}" method="POST">
                                         @csrf
-                                        <button type="submit"
-                                            class="w-full p-3.5 rounded-2xl text-white bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-blue">
+                                        <button type="submit" @disabled(! $driverHasVehicle)
+                                            @unless ($driverHasVehicle) title="Assign a vehicle to this driver first" @endunless
+                                            class="w-full p-3.5 rounded-2xl text-white bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-blue disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-blue-600 disabled:active:scale-100">
                                             <i class="fa-solid fa-right-to-bracket text-sm"></i>
                                             <span class="text-[10px] font-black uppercase tracking-widest">Clock
                                                 In</span>
@@ -3090,12 +3143,11 @@ _updateBadges: function() {
 
                     </script>
 
-                    @if (
-                        (Auth::check() && Auth::user()->roles[0]->name === 'admin') ||
-                            Auth::check() && (Auth::user()->roles[0]->name === 'commuter'))
+                    {{-- Dev tools are an admin-only, local-only aid; commuters never see them. --}}
+                    @if (Auth::check() && Auth::user()->roles[0]->name === 'admin')
                         @env('local')
                             <div id="left-sidebar-form"
-    class="absolute top-24 left-[368px] w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)] overflow-y-auto custom-scroll p-3 pb-6">
+                                class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)] overflow-y-auto custom-scroll p-3 pb-6">
 
                                 <!-- ══════════ DEV TOOLS: DUMMY DRIVER MARKERS ══════════ -->
                                 <div class="glass-card p-5 rounded-[1.5rem] border-purple-500/15">
@@ -4003,7 +4055,7 @@ sim._lastEtaUpdate = null;
                                     <div
                                         class="w-full h-9 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-400 text-[9px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 mb-3">
                                         <i class="fa-solid fa-triangle-exclamation text-[9px]"></i>
-                                        No vehicle assigned
+                                        {{ ($driverHasVehicle ?? false) ? 'Vehicle not active' : 'No vehicle assigned' }}
                                     </div>
                                 @endunless
                                 <div id="live-location-info" class="text-[10px] text-[#555] space-y-1.5">
@@ -4800,6 +4852,12 @@ sim._lastEtaUpdate = null;
                 }
                 const el = document.getElementById(side);
                 el.classList.toggle('collapsed');
+                // On a narrow map two open panels (and their tabs) would sit on top of each other:
+                // opening one folds the other away.
+                if (!el.classList.contains('collapsed') && document.getElementById('map').clientWidth < 860) {
+                    const other = document.getElementById(side === 'left' ? 'right' : 'left');
+                    if (other && !other.classList.contains('collapsed')) window.toggleSidebar(side === 'left' ? 'right' : 'left');
+                }
                 const icon = el.querySelector('.sidebar-toggle i');
                 if (side === 'left') {
                     icon.className = el.classList.contains('collapsed') ?

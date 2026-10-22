@@ -226,6 +226,10 @@ class DriverManagerController extends Controller
                     'date' => Carbon::parse($v->date_of_violation)->format('d F, Y'),
                     'time' => Carbon::parse($v->time_of_violation)->format('h:i A'),
                     'fine' => (float) $v->violation_fine,
+                    'paymentStatus' => $v->isPaid() ? ViolationLog::PAID : ViolationLog::UNPAID,
+                    'outstanding' => $v->outstandingFine(),
+                    'paidAt' => $v->paid_at?->format('d M, Y h:i A'),
+                    'paymentUrl' => route('driver-manager.violations-log.payment', $v->id),
                     'penalty' => $v->additional_penalties,
                     'penaltyColor' => $this->getPenaltyColor($v->additional_penalties),
                 ];
@@ -270,6 +274,40 @@ class DriverManagerController extends Controller
         }
 
         return back()->with('success', 'Violation logged!');
+    }
+
+    /**
+     * Mark a violation's fine as paid (or back to unpaid if it was a mistake).
+     * The fine itself stays on record; once paid it no longer counts toward the
+     * driver's outstanding balance.
+     */
+    public function updateViolationPayment(Request $request, ViolationLog $violation)
+    {
+        $validated = $request->validate([
+            'payment_status' => 'required|in:'.ViolationLog::PAID.','.ViolationLog::UNPAID,
+        ], [
+            'payment_status.required' => 'Choose whether the fine is paid or unpaid.',
+            'payment_status.in' => 'The payment status must be paid or unpaid.',
+        ]);
+
+        $paid = $validated['payment_status'] === ViolationLog::PAID;
+
+        if ($violation->isPaid() === $paid) {
+            return back()->with('error', 'This fine is already marked as '.($paid ? 'paid' : 'unpaid').'.');
+        }
+
+        try {
+            $violation->update([
+                'payment_status' => $validated['payment_status'],
+                'paid_at' => $paid ? now() : null,
+            ]);
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The payment status was not updated.');
+        }
+
+        return back()->with('success', $paid
+            ? 'Fine marked as paid. The outstanding balance was reduced.'
+            : 'Fine marked as unpaid again.');
     }
 
     public function storeViolationLogBulk(Request $request)

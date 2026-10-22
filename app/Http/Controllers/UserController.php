@@ -106,14 +106,13 @@ class UserController extends Controller
                 'driverStatus' => $driverStatus,
                 // Only an active vehicle can be driven (and broadcast) live.
                 'driverVehicleId' => $driver->vehicle()->where('status', 'active')->first()?->id,
+                // Clocking in and going active both need a vehicle assigned to the driver.
+                'driverHasVehicle' => $driver->hasAssignedVehicle(),
             ]);
         }
 
         if ($role == 'commuter') {
             $obfuscatedMarkers = collect();
-            $dummyMarkers = app()->environment('local')
-            ? DevMarker::where('user_id', Auth::id())->latest()->get()
-            : collect();
             if (app()->environment('local')) {
                 $rawMarkers = DevMarker::where('status', 'active')->get();
                 $obfuscatedMarkers = $rawMarkers->map(function ($m) {
@@ -133,7 +132,6 @@ class UserController extends Controller
             }
 
             return view('map', [
-                'dummyMarkers' => $dummyMarkers,
                 'rates' => $rates,
                 'recentReceipts' => $recentReceipts,
                 'balance' => $wallet->balance ?? 0.00,
@@ -252,12 +250,14 @@ class UserController extends Controller
                         'date' => Carbon::parse($v->date_of_violation)->format('M d, Y'),
                         'time' => Carbon::parse($v->time_of_violation)->format('g:i A'),
                         'fine' => (float) $v->violation_fine,
+                        'paymentStatus' => $v->isPaid() ? ViolationLog::PAID : ViolationLog::UNPAID,
                         'penalty' => $v->additional_penalties,
                     ];
                 });
 
             $totalViolations = ViolationLog::where('user_id', $userId)->count();
-            $totalViolationFines = ViolationLog::where('user_id', $userId)->sum('violation_fine');
+            // Fines marked paid come off the balance the driver still owes.
+            $totalViolationFines = ViolationLog::where('user_id', $userId)->unpaid()->sum('violation_fine');
 
             return view('driver.dashboard', [
                 'driver' => $driver,
@@ -304,6 +304,7 @@ class UserController extends Controller
                 'user_name' => $v->user->name ?? 'Unknown',
                 'violation_instance' => $v->violation_instance,
                 'violation_fine' => (float) ($v->violation_fine ?? 0),
+                'payment_status' => $v->isPaid() ? ViolationLog::PAID : ViolationLog::UNPAID,
                 'created_at' => $v->created_at ? $v->created_at->format('M d, Y') : '',
                 'time' => $v->created_at ? $v->created_at->format('g:i A') : '',
             ])->values();
