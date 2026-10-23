@@ -146,6 +146,24 @@ class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
         $this->notify(new \App\Notifications\VerifyEmailWithCode(EmailVerificationCode::issue($this)));
     }
 
+    /**
+     * Send the verification email without letting a mail-server problem break the request that asked
+     * for it (registration, sign-in, resend). Returns false, and logs the cause, when it could not be sent.
+     */
+    public function sendVerificationEmailSafely(): bool
+    {
+        try {
+            $this->sendEmailVerificationNotification();
+
+            return true;
+        } catch (\Throwable $e) {
+            report($e);
+            \Illuminate\Support\Facades\Log::error('The verification email could not be sent.', ['area' => 'Verification', 'user_id' => $this->id, 'exception' => $e->getMessage()]);
+
+            return false;
+        }
+    }
+
     public function payment()
     {
         return $this->hasMany(Payment::class, 'paid_by');
@@ -276,7 +294,8 @@ class User extends Authenticatable implements CanResetPassword, MustVerifyEmail
 
             if ($driver = $this->driver()->first()) {
                 // Release the vehicle first: deleting the driver would cascade into the fleet record.
-                $driver->vehicle()->update(['driver_id' => null]);
+                $driver->vehicle()->detach();
+                $driver->dutyDays()->delete();
 
                 if ($driver->license_image_path) {
                     \Illuminate\Support\Facades\Storage::disk('public')->delete($driver->license_image_path);

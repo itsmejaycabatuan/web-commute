@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Non_Functional_Requirements.md",
+                "file": "AUTOMATED_FEATURES.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Non_Functional_Requirements"
+              "title": "AUTOMATED_FEATURES"
             }
           }
         ]
@@ -83,7 +83,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "585314b6635d2cd2",
@@ -190,6 +191,7 @@
   },
   "active": "9f89179a0caa52b5",
   "lastOpenFiles": [
+    "Non_Functional_Requirements.md",
     "MANUAL_TEST_CHECKLIST.md",
     "Functional_Requirements.md",
     "UCN/UCN_SC_E028_View_Activity_Log.md",
@@ -207,7 +209,6 @@
     "diagrams/erd_full.dot",
     "diagrams/erd_full.png",
     "diagrams/erd_summary.png",
-    "Non_Functional_Requirements.md",
     "AUDIT_TRAIL.md.tmp.5327.f984b1fe02a2",
     "UCN/UCN_Combined.md",
     "Use_Case_Diagram.md",

@@ -22,8 +22,6 @@ use Illuminate\Validation\ValidationException;
 
 class DriverController extends Controller
 {
-    private const NO_VEHICLE_MESSAGE = 'You have no vehicle assigned yet, so you cannot clock in or set your status to active. Please contact the Maintenance Manager.';
-
     public function create()
     {
 
@@ -202,8 +200,9 @@ class DriverController extends Controller
             return back()->with('error', 'Your account is suspended. Please contact the administrator.');
         }
 
-        if (! $driver->hasAssignedVehicle()) {
-            return back()->with('error', self::NO_VEHICLE_MESSAGE);
+        // No vehicle, or today is the co-driver's day on a shared vehicle.
+        if ($block = $driver->dutyBlock()) {
+            return back()->with('error', $block);
         }
 
         $exists = TimeKeeping::where('driver_id', $driver->id)
@@ -217,6 +216,7 @@ class DriverController extends Controller
         try {
             TimeKeeping::create([
                 'driver_id' => $driver->id,
+                'vehicle_id' => $driver->assignedVehicle()?->id,
                 'date' => today()->toDateString(),
                 'time_in' => now()->timezone('Asia/Manila')->format('h:i A'),
             ]);
@@ -288,9 +288,10 @@ class DriverController extends Controller
             return back()->with('error', 'Driver not found.');
         }
 
-        // Going active means being on the road, which needs a vehicle. Going inactive never does.
-        if ($request->status === 'active' && ! $driver->hasAssignedVehicle()) {
-            return back()->with('error', self::NO_VEHICLE_MESSAGE);
+        // Going active means being on the road: it needs a vehicle, and on a shared one, your duty day.
+        // Going inactive never does.
+        if ($request->status === 'active' && ($block = $driver->dutyBlock())) {
+            return back()->with('error', $block);
         }
 
         $driver->update(['status' => $request->status]);

@@ -13,7 +13,6 @@ use Illuminate\Support\Carbon;
  * App\\Models\\Vehicle
  *
  * @property int $id
- * @property int|null $driver_id
  * @property int|null $year
  * @property string|null $brand
  * @property string|null $model
@@ -27,8 +26,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $exp_disposal_date
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read Driver|null $driver
- * @property-read mixed $driver_name
+ * @property-read Collection<int, Driver> $drivers
  * @property-read Collection<int, VehicleMaintenanceLog> $maintenanceLogs
  * @property-read Collection<int, PreventiveMaintenance> $preventiveMaintenances
  * @property-read int|null $preventive_maintenances_count
@@ -60,7 +58,6 @@ class Vehicle extends Model
     use HasFactory;
 
     protected $fillable = [
-        'driver_id',
         'year',
         'brand',
         'model',
@@ -81,14 +78,44 @@ class Vehicle extends Model
         'exp_disposal_date' => 'date',
     ];
 
-    public function driver()
+    /** A vehicle is shared by at most this many drivers, who take turns day by day. */
+    public const MAX_DRIVERS = 2;
+
+    /** The drivers assigned to this vehicle (one or two). */
+    public function drivers()
     {
-        return $this->belongsTo(Driver::class);
+        return $this->belongsToMany(Driver::class, 'driver_vehicle')->withTimestamps()->withPivot('id');
     }
 
-    public function getDriverNameAttribute()
+    /** The Maintenance Manager's roster: which of the drivers drives it on which date. */
+    public function dutyDays()
     {
-        return $this->driver?->name;
+        return $this->hasMany(VehicleDutyDay::class);
+    }
+
+    /** Names of the assigned drivers, e.g. "Ramon Dela Cruz & Liza Mercado". Null when unassigned. */
+    public function getDriverNameAttribute(): ?string
+    {
+        $names = $this->drivers->sortBy('pivot.id')->pluck('name')->filter()->all();
+
+        return $names ? implode(' & ', $names) : null;
+    }
+
+    /**
+     * The driver who may drive this vehicle on a date. With one driver that is always them. With two it
+     * is whoever the roster names for that date — and nobody if the roster has no line for it.
+     */
+    public function dutyDriverOn(\DateTimeInterface|string|null $date = null): ?Driver
+    {
+        $drivers = $this->drivers;
+
+        if ($drivers->count() <= 1) {
+            return $drivers->first();
+        }
+
+        $day = $this->dutyDays()->whereDate('duty_date', Carbon::parse($date ?? today())->toDateString())->first();
+
+        return $day ? $drivers->firstWhere('id', $day->driver_id) : null;
     }
 
     // app/Models/Vehicle.php
@@ -110,7 +137,7 @@ class Vehicle extends Model
 
     protected function auditAttributes(): array
     {
-        return ['driver_id', 'year', 'brand', 'model', 'plate_number', 'status', 'fuel_type', 'tank_capacity', 'vin', 'location', 'acquisition_date', 'exp_disposal_date'];
+        return ['year', 'brand', 'model', 'plate_number', 'status', 'fuel_type', 'tank_capacity', 'vin', 'location', 'acquisition_date', 'exp_disposal_date'];
     }
 
     protected function auditLabel(): string

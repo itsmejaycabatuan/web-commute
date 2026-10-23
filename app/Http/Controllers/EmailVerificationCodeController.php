@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\EmailVerificationCode;
+use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 
@@ -14,6 +15,26 @@ class EmailVerificationCodeController extends Controller
         EmailVerificationCode::LOCKED => 'Too many incorrect attempts. Request a new code.',
         EmailVerificationCode::MISSING => 'There is no active code. Request a new one.',
     ];
+
+    /**
+     * The link in the email. It is signed and carries the user's id and an email hash, so it works
+     * without being signed in (people open it on their phone, or in another browser) and ends on a
+     * plain "email verified, you can close this page" screen.
+     */
+    public function link(Request $request, string $id, string $hash)
+    {
+        $user = User::findOrFail($id);
+
+        abort_unless(hash_equals(sha1($user->getEmailForVerification()), $hash), 403);
+
+        $alreadyVerified = $user->hasVerifiedEmail();
+
+        if (! $alreadyVerified && $user->markEmailAsVerified()) {
+            event(new Verified($user));
+        }
+
+        return view('auth.email-verified', ['alreadyVerified' => $alreadyVerified]);
+    }
 
     /** UCN_SC_E002 A2: verify the email with the 6-digit code instead of the link. */
     public function verify(Request $request)

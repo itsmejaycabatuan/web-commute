@@ -75,12 +75,28 @@ class VehicleTrackingController extends Controller
             ], 403);
         }
 
+        // The system closed this shift because the driver never clocked out: the feed stops with it.
+        if ($user->driver->shiftWasAutoClosed()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Your shift was closed automatically. Clock in on your next shift to resume.',
+            ], 403);
+        }
+
         $vehicle = Vehicle::find($validated['vehicle_id']);
 
-        if (! $vehicle || $vehicle->driver_id !== $user->driver->id) {
+        if (! $vehicle || ! $vehicle->drivers()->where('drivers.id', $user->driver->id)->exists()) {
             return response()->json([
                 'success' => false,
                 'message' => 'This vehicle is not assigned to you.',
+            ], 403);
+        }
+
+        // A shared vehicle is only driven by the driver whose duty day it is.
+        if (($vehicle->dutyDriverOn()?->id) !== $user->driver->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Today is not your duty day on this vehicle.',
             ], 403);
         }
 
@@ -209,7 +225,7 @@ class VehicleTrackingController extends Controller
             ->unique('vehicle_id');
 
         $vehicles = $locations->map(function ($location) {
-            $vehicle = Vehicle::with('driver')->find($location->vehicle_id);
+            $vehicle = Vehicle::with('drivers')->find($location->vehicle_id);
 
             // Guests/commuters must never receive the raw GPS coordinates
             $private = LocationPrivacy::obfuscate(
@@ -229,7 +245,7 @@ class VehicleTrackingController extends Controller
                 'route_name' => $vehicle->location ?? 'N/A',
                 // The driver's availability toggle (active / inactive): drives the
                 // marker colour and the status line in the popup.
-                'driver_status' => $vehicle?->driver?->status ?? 'unknown',
+                'driver_status' => $this->dutyDriverStatus($vehicle),
                 'speed' => $location->speed,
                 'accuracy' => $location->accuracy,
                 'last_update' => $location->last_update ? (string) $location->last_update : null,
@@ -240,5 +256,20 @@ class VehicleTrackingController extends Controller
             'success' => true,
             'vehicles' => $vehicles,
         ]);
+    }
+
+    /**
+     * Availability of the vehicle's driver for the marker: the driver on duty today, or, when the
+     * roster names nobody, the first of its drivers that is active.
+     */
+    private function dutyDriverStatus(?Vehicle $vehicle): string
+    {
+        if (! $vehicle || $vehicle->drivers->isEmpty()) {
+            return 'unknown';
+        }
+
+        $onDuty = $vehicle->dutyDriverOn();
+
+        return ($onDuty ?? $vehicle->drivers->firstWhere('status', 'active') ?? $vehicle->drivers->first())->status ?? 'unknown';
     }
 }

@@ -3,15 +3,23 @@
 namespace Database\Factories;
 
 use App\Models\Driver;
+use App\Models\Vehicle;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 class VehicleFactory extends Factory
 {
+    /** Assign driver(s) to the vehicle once it is created (a vehicle starts with none). */
+    public function withDriver(int|Driver ...$drivers): static
+    {
+        return $this->afterCreating(function (Vehicle $vehicle) use ($drivers) {
+            $vehicle->drivers()->attach(array_map(fn ($d) => $d instanceof Driver ? $d->id : $d, $drivers));
+        });
+    }
+
     public function definition(): array
     {
         return [
-            'driver_id' => Driver::factory(),
             'year' => fake()->numberBetween(2010, 2024),
             'brand' => fake()->randomElement(['Toyota', 'Honda', 'Ford', 'Hyundai']),
             'model' => fake()->word(),

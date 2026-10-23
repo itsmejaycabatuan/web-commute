@@ -412,7 +412,7 @@ one (it then becomes part of the matching `FR-Exxx`), defer it or drop it.
 | GAP-11 | A Driver Manager shall be able to edit or delete a time entry, and to adjust a driver's self-recorded shift. | Entries are immutable; corrections are impossible. | FR-E010, FR-E013 |
 | GAP-12 | Shifts shall be allowed to span midnight and a driver to have more than one shift per day. | Overnight shifts are rejected; one shift per day is enforced. | FR-E009, FR-E013 |
 | GAP-13 | Clock-in and clock-out shall verify the driver's location and vehicle. | Any device, anywhere, can clock in or out. | FR-E009, FR-E010 |
-| GAP-14 | The Maintenance Manager shall be notified when a task becomes overdue, and the schedule shall keep service history rather than overwrite it. | No overdue alert; only the latest service per task survives. | FR-E016 |
+| GAP-14 | The schedule shall keep service history rather than overwrite it. | Only the latest service per task survives in the schedule (the Maintenance Logs page keeps the history). Overdue alerts now exist — see UCN_SC_E016. | FR-E016 |
 | GAP-15 | Maintenance tasks shall be deactivatable instead of deletable, and unique by name. | Deleting a task erases its cost history; duplicates are allowed. | FR-E017 |
 | GAP-16 | Suspensions shall support an expiry or automatic reactivation, and commuter suspension shall record a reason. | Suspension is open-ended; commuters carry no reason. | FR-E012, FR-E018 |
 | GAP-17 | A rejected driver application shall be re-approvable, and approval shall be reversible. | Reject is one-way in the UI; "un-approve" is commented out. | FR-E012, FR-E014 |

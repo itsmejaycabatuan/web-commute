@@ -430,6 +430,30 @@
                                         <span
                                             class="text-[8px] sm:text-[9px] font-mono text-gray-500 dark:text-[#555]">{{ $vehicle->vin ?? 'N/A' }}</span>
                                     </div>
+                                    @if (! empty($coDriver))
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span
+                                                class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Shared
+                                                with</span>
+                                            <span
+                                                class="text-[8px] sm:text-[9px] font-bold text-gray-600 dark:text-[#888] truncate">{{ $coDriver->name }}</span>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span
+                                                class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Your
+                                                next duty</span>
+                                            <span
+                                                class="text-[8px] sm:text-[9px] font-bold {{ empty($dutyBlock) ? 'text-emerald-500 dark:text-emerald-400' : 'text-gray-600 dark:text-[#888]' }}">
+                                                @if (empty($dutyBlock))
+                                                    Today
+                                                @elseif (! empty($nextDuty))
+                                                    {{ $nextDuty->format('D, M j') }}
+                                                @else
+                                                    Not scheduled
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>

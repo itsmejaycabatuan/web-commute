@@ -124,14 +124,15 @@ class ThirdRoundRegressionTest extends TestCase
 
         $this->actingAs($manager)->get(route('vehicles.index'))->assertOk()
             ->assertSee('availableDrivers', false)
-            ->assertSee('d in availableDrivers', false);
+            ->assertSee('d in driversFor(1)', false)
+            ->assertSee('d in driversFor(2)', false);
     }
 
     public function test_a_driver_cannot_be_given_a_second_vehicle()
     {
         $manager = $this->userWithRole('maintenance_manager');
         $driver = Driver::factory()->approved()->create();
-        Vehicle::factory()->create(['status' => 'active', 'driver_id' => $driver->id]);
+        Vehicle::factory()->withDriver($driver->id)->create(['status' => 'active']);
 
         $this->actingAs($manager)->postJson(route('vehicles.store'), [
             'year' => 2022, 'brand' => 'Toyota', 'model' => 'Hiace', 'plate_number' => 'DUP-'.random_int(1000, 9999),
@@ -143,14 +144,14 @@ class ThirdRoundRegressionTest extends TestCase
     {
         $manager = $this->userWithRole('maintenance_manager');
         $driver = Driver::factory()->approved()->create();
-        $vehicle = Vehicle::factory()->create(['status' => 'active', 'driver_id' => $driver->id]);
+        $vehicle = Vehicle::factory()->withDriver($driver->id)->create(['status' => 'active']);
 
         $this->actingAs($manager)->patchJson(route('vehicles.update', $vehicle), [
             'year' => 2022, 'brand' => 'Toyota', 'model' => 'Hiace', 'plate_number' => $vehicle->plate_number,
             'status' => 'active', 'acquisition_date' => '2022-01-01', 'driver_id' => $driver->id,
         ])->assertOk();
 
-        $this->assertSame($driver->id, $vehicle->fresh()->driver_id);
+        $this->assertSame([$driver->id], $vehicle->fresh()->drivers()->pluck('drivers.id')->all());
     }
 
     public function test_a_pending_or_suspended_driver_cannot_be_assigned_by_force()

@@ -56,7 +56,7 @@ class DriverApprovalController extends Controller
                 'users.email',
             ])
             ->addSelect(DB::raw('CASE WHEN drivers.license_image_data IS NOT NULL AND LENGTH(drivers.license_image_data) > 0 THEN 1 ELSE 0 END as has_license_in_db'))
-            ->addSelect(DB::raw('(SELECT COUNT(*) FROM vehicles WHERE vehicles.driver_id = drivers.id) as vehicles_count'))
+            ->addSelect(DB::raw('(SELECT COUNT(*) FROM driver_vehicle WHERE driver_vehicle.driver_id = drivers.id) as vehicles_count'))
             ->orderByDesc('drivers.created_at')
             ->get()
             // Pending registrations first, then rejected, then approved drivers.

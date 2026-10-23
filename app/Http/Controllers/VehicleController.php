@@ -5,6 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Driver;
 use App\Models\TimeKeeping;
 use App\Models\Vehicle;
+use App\Models\VehicleDutyDay;
+use App\Services\MaintenanceDueService;
+use App\Support\Audit;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -18,7 +23,10 @@ class VehicleController extends Controller
 
     public function index()
     {
-        $vehicles = Vehicle::with('driver')->latest()->get()->map(fn ($vehicle) => $this->formatVehicle($vehicle));
+        $due = app(MaintenanceDueService::class)->fleet();
+
+        $vehicles = Vehicle::with('drivers')->latest()->get()
+            ->map(fn ($vehicle) => $this->formatVehicle($vehicle, $due->get($vehicle->id)));
 
         // Only drivers who can actually drive: approved and not suspended. The page
         // further hides the ones already assigned to another vehicle.
@@ -42,11 +50,16 @@ class VehicleController extends Controller
      * The vehicle payload shared by the page and the JSON responses the
      * page's fetch() calls read (add / edit / delete from the modal).
      */
-    private function formatVehicle(Vehicle $vehicle): array
+    private function formatVehicle(Vehicle $vehicle, ?array $due = null): array
     {
+        $ordered = $vehicle->drivers->sortBy('pivot.id')->values();
+
         return [
             'id' => $vehicle->id,
-            'driver_id' => $vehicle->driver_id,
+            // Up to two drivers share a vehicle; `driver_id` / `second_driver_id` feed the form's two selects.
+            'driver_id' => $ordered->get(0)?->id,
+            'second_driver_id' => $ordered->get(1)?->id,
+            'driver_ids' => $ordered->pluck('id')->all(),
             'year' => $vehicle->year,
             'brand' => $vehicle->brand,
             'model' => $vehicle->model,
@@ -60,7 +73,10 @@ class VehicleController extends Controller
             'acquisition_date_raw' => $vehicle->acquisition_date?->toDateString(),
             'exp_disposal_date' => $vehicle->exp_disposal_date?->format('M d, Y'),
             'exp_disposal_date_raw' => $vehicle->exp_disposal_date?->toDateString(),
-            'driver_name' => $vehicle->driver?->name,
+            'driver_name' => $vehicle->driver_name,
+            'driver_names' => $ordered->pluck('name')->all(),
+            'maintenance_overdue' => $due ? $due['overdue']->pluck('task')->all() : [],
+            'maintenance_due_soon' => $due ? $due['due_soon']->pluck('task')->all() : [],
             'created_at' => $vehicle->created_at?->format('M d, Y'),
             'updated_at' => $vehicle->updated_at?->format('M d, Y'),
         ];
@@ -77,25 +93,28 @@ class VehicleController extends Controller
             'fuel_type' => 'nullable|string|max:50',
             'tank_capacity' => 'nullable|string|max:20',
             'driver_id' => ['nullable', 'exists:drivers,id'],
+            'second_driver_id' => ['nullable', 'exists:drivers,id', 'different:driver_id'],
             'location' => 'nullable|string|max:150',
             'status' => 'required|in:active,maintenance,inactive,disposed',
             'acquisition_date' => 'required|date',
             'exp_disposal_date' => 'nullable|date|after:acquisition_date',
         ]);
 
-        $this->assertDriverAssignable($validated['status'], $validated['driver_id'] ?? null);
+        $driverIds = $this->driverIds($validated);
+        $this->assertDriversAssignable($validated['status'], $driverIds);
 
-        // Postcondition: a unit taken out of service loses its driver.
+        // Postcondition: a unit taken out of service loses its drivers.
         if (! in_array($validated['status'], self::ASSIGNABLE_STATUSES, true)) {
-            $validated['driver_id'] = null;
+            $driverIds = [];
         }
 
-        $vehicle = Vehicle::create($validated);
+        $vehicle = Vehicle::create(Arr::except($validated, ['driver_id', 'second_driver_id']));
+        $this->syncDrivers($vehicle, $driverIds);
 
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Vehicle successfully added.',
-                'vehicle' => $this->formatVehicle($vehicle->load('driver')),
+                'vehicle' => $this->formatVehicle($vehicle->load('drivers')),
             ], 201);
         }
 
@@ -113,26 +132,30 @@ class VehicleController extends Controller
             'fuel_type' => 'nullable|string|max:50',
             'tank_capacity' => 'nullable|string|max:20',
             'driver_id' => ['nullable', 'exists:drivers,id'],
+            'second_driver_id' => ['nullable', 'exists:drivers,id', 'different:driver_id'],
             'location' => 'nullable|string|max:150',
             'status' => 'required|in:active,maintenance,inactive,disposed',
             'acquisition_date' => 'required|date',
             'exp_disposal_date' => 'nullable|date|after:acquisition_date',
         ]);
 
-        $this->assertDriverAssignable($validated['status'], $validated['driver_id'] ?? null, $vehicle);
+        $driverIds = $this->driverIds($validated);
+        $this->assertDriversAssignable($validated['status'], $driverIds, $vehicle);
         $this->assertNotDisposedWhileInUse($vehicle, $validated['status']);
+        $this->assertServiceNotOverdue($vehicle, $validated['status']);
 
-        // Postcondition: a unit taken out of service loses its driver.
+        // Postcondition: a unit taken out of service loses its drivers.
         if (! in_array($validated['status'], self::ASSIGNABLE_STATUSES, true)) {
-            $validated['driver_id'] = null;
+            $driverIds = [];
         }
 
-        $vehicle->update($validated);
+        $vehicle->update(Arr::except($validated, ['driver_id', 'second_driver_id']));
+        $this->syncDrivers($vehicle, $driverIds);
 
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Vehicle successfully updated.',
-                'vehicle' => $this->formatVehicle($vehicle->load('driver')),
+                'vehicle' => $this->formatVehicle($vehicle->load('drivers')),
             ]);
         }
 
@@ -142,9 +165,9 @@ class VehicleController extends Controller
     public function destroy(Request $request, Vehicle $vehicle)
     {
 
-        // A vehicle that still has a driver cannot be removed: unassign it first.
-        if ($vehicle->driver_id) {
-            $message = 'This vehicle is assigned to a driver and cannot be deleted. Unassign the driver first.';
+        // A vehicle that still has a driver cannot be removed: unassign them first.
+        if ($vehicle->drivers()->exists()) {
+            $message = 'This vehicle is assigned to a driver and cannot be deleted. Unassign the drivers first.';
 
             if ($request->expectsJson()) {
                 return response()->json(['message' => $message], 409);
@@ -177,44 +200,108 @@ class VehicleController extends Controller
         return back()->with('success', 'Vehicle successfully deleted.');
     }
 
-    /**
-     * E4 — Assigning an out-of-service vehicle: a driver may only be assigned
-     * to an active unit.
-     */
-    private function assertDriverAssignable(?string $status, ?int $driverId, ?Vehicle $vehicle = null): void
+    /** The (at most two) driver ids from the form, without blanks or repeats. */
+    private function driverIds(array $validated): array
     {
-        if (! $driverId) {
+        return collect([$validated['driver_id'] ?? null, $validated['second_driver_id'] ?? null])
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * E4 — Assigning an out-of-service vehicle: drivers may only be assigned to an active unit; and
+     * each must be able to drive, and hold only this one vehicle.
+     */
+    private function assertDriversAssignable(?string $status, array $driverIds, ?Vehicle $vehicle = null): void
+    {
+        $current = $vehicle ? $vehicle->drivers()->pluck('drivers.id')->all() : [];
+
+        foreach ($driverIds as $i => $driverId) {
+            $field = $i === 0 ? 'driver_id' : 'second_driver_id';
+
+            // Keeping a current driver while taking the unit out of service is allowed — they are
+            // simply detached once the status is saved.
+            if (in_array($driverId, $current, true)) {
+                continue;
+            }
+
+            if (! in_array($status, self::ASSIGNABLE_STATUSES, true)) {
+                throw ValidationException::withMessages([
+                    $field => 'A driver cannot be assigned to a vehicle with a '.strtolower((string) $status).' status.',
+                ]);
+            }
+
+            $driver = Driver::find($driverId);
+
+            if ($driver && (! $driver->is_approved || $driver->is_rejected || $driver->isSuspended())) {
+                throw ValidationException::withMessages([
+                    $field => 'Only an approved driver who is not suspended can be assigned to a vehicle.',
+                ]);
+            }
+
+            // One vehicle per driver.
+            $held = DB::table('driver_vehicle')
+                ->where('driver_id', $driverId)
+                ->when($vehicle, fn ($q) => $q->where('vehicle_id', '!=', $vehicle->id))
+                ->exists();
+
+            if ($held) {
+                throw ValidationException::withMessages([
+                    $field => 'That driver is already assigned to another vehicle.',
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Make the vehicle's drivers exactly these, and keep its duty roster in step: a driver who leaves
+     * drops off the roster from today on, and a vehicle left with one driver needs no roster.
+     */
+    private function syncDrivers(Vehicle $vehicle, array $driverIds): void
+    {
+        $before = array_map('intval', $vehicle->drivers()->pluck('drivers.id')->all());
+        $after = array_map('intval', $driverIds);
+        sort($before);
+        sort($after);
+
+        if ($before === $after) {
             return;
         }
 
-        // Keeping the current driver while taking the unit out of service is
-        // allowed — the driver is simply detached once the status is saved.
-        if ($vehicle && $vehicle->driver_id === $driverId) {
+        $vehicle->drivers()->sync($driverIds);
+
+        $future = VehicleDutyDay::where('vehicle_id', $vehicle->id)->whereDate('duty_date', '>=', today());
+
+        if (count($after) < Vehicle::MAX_DRIVERS) {
+            (clone $future)->delete();
+        } else {
+            (clone $future)->whereNotIn('driver_id', $after)->delete();
+        }
+
+        Audit::log(Audit::FLEET, 'drivers_assigned', 'Set the drivers of vehicle '.($vehicle->plate_number ?: '#'.$vehicle->id), $vehicle, [
+            'drivers_before' => $before,
+            'drivers_after' => $after,
+        ]);
+    }
+
+    /**
+     * With MAINTENANCE_BLOCK_ACTIVE_WHEN_OVERDUE on, a unit that is not in service cannot go back to
+     * Active while a preventive-maintenance service is overdue: log the service first.
+     */
+    private function assertServiceNotOverdue(Vehicle $vehicle, ?string $newStatus): void
+    {
+        if (! config('maintenance.block_active_when_overdue') || $newStatus !== 'active' || $vehicle->status === 'active') {
             return;
         }
 
-        if (! in_array($status, self::ASSIGNABLE_STATUSES, true)) {
+        $overdue = app(MaintenanceDueService::class)->forVehicle($vehicle)['overdue'];
+
+        if ($overdue->isNotEmpty()) {
             throw ValidationException::withMessages([
-                'driver_id' => 'A driver cannot be assigned to a vehicle with a '.strtolower((string) $status).' status.',
-            ]);
-        }
-
-        $driver = Driver::find($driverId);
-
-        if ($driver && (! $driver->is_approved || $driver->is_rejected || $driver->isSuspended())) {
-            throw ValidationException::withMessages([
-                'driver_id' => 'Only an approved driver who is not suspended can be assigned to a vehicle.',
-            ]);
-        }
-
-        // One vehicle per driver.
-        $held = Vehicle::where('driver_id', $driverId)
-            ->when($vehicle, fn ($q) => $q->where('id', '!=', $vehicle->id))
-            ->exists();
-
-        if ($held) {
-            throw ValidationException::withMessages([
-                'driver_id' => 'That driver is already assigned to another vehicle.',
+                'status' => 'This vehicle cannot go active while a service is overdue ('.$overdue->pluck('task')->join(', ').'). Log the service first.',
             ]);
         }
     }
@@ -225,11 +312,11 @@ class VehicleController extends Controller
      */
     private function assertNotDisposedWhileInUse(Vehicle $vehicle, ?string $newStatus): void
     {
-        if ($newStatus !== 'disposed' || ! $vehicle->driver_id) {
+        if ($newStatus !== 'disposed' || ! $vehicle->drivers()->exists()) {
             return;
         }
 
-        $onShift = TimeKeeping::where('driver_id', $vehicle->driver_id)
+        $onShift = TimeKeeping::whereIn('driver_id', $vehicle->drivers()->pluck('drivers.id'))
             ->whereDate('date', today())
             ->whereNull('time_out')
             ->exists();

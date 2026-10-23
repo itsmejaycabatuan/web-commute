@@ -135,7 +135,7 @@
 </head>
 
 <body
-    class="flex relative justify-center items-center p-3 sm:p-4 md:p-6 min-h-[100svh] login-bg font-sans text-white overflow-x-hidden">
+    class="flex flex-col relative items-center p-3 sm:p-4 md:p-6 min-h-[100svh] login-bg font-sans text-white overflow-x-hidden">
 
     <!-- Decorative orbs -->
     <div
@@ -147,7 +147,7 @@
 
     <!-- Logout button -->
     <form action="{{ route('users.logout') }}" method="POST"
-        class="absolute top-3 left-3 sm:top-5 sm:left-5 md:top-8 md:left-8 z-10">
+        class="self-start shrink-0 mb-3 sm:mb-4 z-10">
         @csrf
         <button type="submit" class="flex items-center gap-2 sm:gap-2.5 group transition">
             <div
@@ -162,7 +162,7 @@
 
     <!-- Card -->
     <div
-        class="card-animate glass-card p-5 sm:p-7 md:p-10 w-full max-w-[340px] sm:max-w-[420px] rounded-2xl sm:rounded-[2rem] shadow-2xl shadow-black/30 text-center">
+        class="card-animate my-auto glass-card p-5 sm:p-7 md:p-10 w-full max-w-[340px] sm:max-w-[420px] rounded-2xl sm:rounded-[2rem] shadow-2xl shadow-black/30 text-center">
 
         <div class="flex justify-center mb-4 sm:mb-6">
             <div class="relative envelope-animate">

@@ -52,7 +52,7 @@ class FourthRoundRegressionTest extends TestCase
         $driver = Driver::factory()->approved()->create(['user_id' => $user->id, 'status' => $status]);
 
         if ($withVehicle) {
-            Vehicle::factory()->create(['driver_id' => $driver->id, 'status' => 'active']);
+            Vehicle::factory()->withDriver($driver->id)->create(['status' => 'active']);
         }
 
         return [$user->fresh(), $driver];
@@ -142,7 +142,7 @@ class FourthRoundRegressionTest extends TestCase
     public function test_every_logged_service_is_kept_in_the_maintenance_log()
     {
         $manager = $this->userWithRole('maintenance_manager');
-        $vehicle = Vehicle::factory()->create(['status' => 'active', 'driver_id' => null]);
+        $vehicle = Vehicle::factory()->create(['status' => 'active']);
         $task = MaintenanceTask::create(['tasks_performed' => 'Oil Change', 'miles_between_service' => 5000, 'months_between_service' => 6]);
 
         foreach ([[1000, '2026-03-01', 1200], [6200, '2026-09-01', 1350]] as [$odo, $date, $cost]) {
@@ -217,7 +217,7 @@ class FourthRoundRegressionTest extends TestCase
     public function test_a_rejected_service_is_not_logged()
     {
         $manager = $this->userWithRole('maintenance_manager');
-        $vehicle = Vehicle::factory()->create(['status' => 'active', 'driver_id' => null]);
+        $vehicle = Vehicle::factory()->create(['status' => 'active']);
         $task = MaintenanceTask::create(['tasks_performed' => 'Brakes', 'miles_between_service' => 5000, 'months_between_service' => 6]);
 
         $this->actingAs($manager)->post(route('maintenance-manager.preventive-maintenance.store'), [
@@ -435,5 +435,70 @@ class FourthRoundRegressionTest extends TestCase
         $html = $this->actingAs($this->userWithRole('admin'))->get(route('dashboard'))->assertOk()->getContent();
 
         $this->assertMatchesRegularExpression("/Alpine\.store\('sidebar', \{\s*open: true/", $html);
+    }
+
+    // ───────────── verification email ─────────────
+
+    public function test_registering_sends_the_verification_email_and_survives_a_mail_failure()
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+        $this->post(route('users.register'), ['email' => 'new1@example.com', 'password' => 'password1', 'confirm-password' => 'password1', 'terms' => 'on'])
+            ->assertRedirect(route('verification.notice'));
+        \Illuminate\Support\Facades\Notification::assertSentTo(User::where('email', 'new1@example.com')->first(), \App\Notifications\VerifyEmailWithCode::class);
+
+        // A broken mail server must not turn the sign-up into an error page.
+        auth()->logout();
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Registered::class, fn () => throw new \RuntimeException('smtp down'));
+        $this->post(route('users.register'), ['email' => 'new2@example.com', 'password' => 'password1', 'confirm-password' => 'password1', 'terms' => 'on'])
+            ->assertRedirect(route('verification.notice'))
+            ->assertSessionHas('error');
+        $this->assertNotNull(User::where('email', 'new2@example.com')->first());
+    }
+
+    public function test_signing_in_unverified_sends_a_fresh_verification_email_once()
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+        $user = User::factory()->unverified()->create(['password' => bcrypt('password1')])->assignRole('commuter');
+
+        $this->post(route('users.login'), ['email' => $user->email, 'password' => 'password1'])->assertRedirect(route('verification.notice'));
+        \Illuminate\Support\Facades\Notification::assertSentToTimes($user, \App\Notifications\VerifyEmailWithCode::class, 1);
+
+        // A second sign-in straight away does not send another.
+        auth()->logout();
+        $this->post(route('users.login'), ['email' => $user->email, 'password' => 'password1']);
+        \Illuminate\Support\Facades\Notification::assertSentToTimes($user, \App\Notifications\VerifyEmailWithCode::class, 1);
+    }
+
+    protected function verifyUrl(User $user, ?string $hash = null): string
+    {
+        return \Illuminate\Support\Facades\URL::temporarySignedRoute('verification.verify', now()->addMinutes(60), [
+            'id' => $user->id,
+            'hash' => $hash ?? sha1($user->getEmailForVerification()),
+        ]);
+    }
+
+    public function test_the_email_link_verifies_without_a_session_and_shows_the_close_this_page_screen()
+    {
+        $user = User::factory()->unverified()->create()->assignRole('commuter');
+
+        $this->get($this->verifyUrl($user))
+            ->assertOk()
+            ->assertSee('Email verified')
+            ->assertSee('You can now close this page');
+
+        $this->assertTrue($user->fresh()->hasVerifiedEmail());
+
+        // Opening it again just says so.
+        $this->get($this->verifyUrl($user))->assertOk()->assertSee('already verified');
+    }
+
+    public function test_a_tampered_or_unsigned_verification_link_verifies_nothing()
+    {
+        $user = User::factory()->unverified()->create()->assignRole('commuter');
+
+        $this->get($this->verifyUrl($user, sha1('someone-else@example.com')))->assertForbidden();
+        $this->get('/email/verify/'.$user->id.'/'.sha1($user->getEmailForVerification()))->assertForbidden();
+
+        $this->assertFalse($user->fresh()->hasVerifiedEmail());
     }
 }

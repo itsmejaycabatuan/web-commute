@@ -208,6 +208,7 @@ Log in as `maintenancemanager@gmail.com`.
 - [x] There is no *Maintenance Logs* menu item and `/vehicle-maintenance-log` answers 404. **Maintenance Logs** is a Maintenance Manager menu item (`/maintenance-logs`; any other role gets 403). Log the same task twice on Preventive Maintenance: the schedule row shows the latest service, the Maintenance Logs page lists both.
 - [x] A driver with no vehicle (Elena Torres) sees the amber *no vehicle assigned* notice on the map; **Clock In** is disabled and the Availability toggle can only be switched off.
 - [x] Violation Log → **Mark Paid** turns the badge green and the row to ₱0.00 (original struck through); the driver's *Outstanding* totals drop. **Mark Unpaid** restores them.
+- [ ] Two drivers on one vehicle (Vehicles → edit → second driver select): **Duty Roster** → Generate, swap a day, Save. The rostered driver can clock in; the co-driver sees *"Today is …'s day"* and a disabled Clock In. A one-driver vehicle needs no roster.
 - [x] Drivers → ID-card icon: the modal lists the driver's timekeeping and violations.
 
 ## 7. Cross-cutting
@@ -294,3 +295,10 @@ Destructive: use throwaway accounts you registered, not the seeded ones. Automat
 - [ ] **No history → really deleted.** Register a commuter that never paid or topped up, delete it: it is gone (admin *PUJ Commuters* never lists it, *Activity Log* says `outcome: deleted`).
 - [ ] **Admin removes a commuter.** *PUJ Commuters* → delete a commuter with a payment and zero balance → toast "Commuter removed. Their payments and top-ups were kept for the records." and an *Anonymised* entry in the Activity Log naming you. A commuter with a balance is still refused ("Cannot delete commuter with a balance of PHP…").
 - [ ] **Staff.** Add then delete a staff account: still *Deleted* (no payments), unchanged.
+
+## 8. Pay on board (QR codes)
+
+- [ ] Admin → **QR Codes**: press **Generate QR Code** (no form: a new *Code #n* appears), see its QR, **Print** opens a printable sheet, **Switch off** / **Switch on**, **Delete**. Other roles get 403.
+- [ ] Commuter: map → **Buy a Ride** with no valid scan lands on **Scan the QR code**; after scanning (camera, typed token, or opening the link with the phone camera) the checkout opens for the same trip and shows *Verified on board*.
+- [ ] A random QR code, a switched-off code and a deleted code are all refused.
+- [ ] After paying, the next fare needs a new scan; a scan older than 15 minutes is refused. A replayed payment still shows its receipt.

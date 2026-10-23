@@ -598,6 +598,8 @@ Covered by E5 (request-level) and E3 (duplicate-level). Automated credential-stu
 
 > **Scope note — the gateway is optional and flag-controlled.** `config/paymongo.php` defaults to **disabled**, which preserves the original behaviour: a gateway method is recorded as a *declared* method and the commuter goes straight to the receipt. With `PAYMONGO_ENABLED=true` and **sandbox test keys** (`sk_test_`/`pk_test_`) the fare is settled through PayMongo's hosted checkout at **zero cost** — see `docs/PAYMONGO_SETUP.md`. A production deploy would use live keys.
 >
+> **Pay on board — scan a QR code first.** The Admin generates QR codes (**QR Codes** on the Admin sidebar, `GET /qr-codes`: **Generate QR Code** makes a new code in one click — no label, no vehicle; print, switch off, delete; `php artisan db:seed` also creates one ready-made code via `QrCodeSeeder`) and they are put up inside the PUJ. Pressing **"Buy a Ride"** no longer opens the checkout straight away: unless the commuter has a **valid scan**, the system keeps the trip and sends them to **Scan the QR code** (`GET /payment/scan`), where they scan with the in-app camera, type the code, or use their phone's own camera app (the code is a link, `/ride/scan/{token}`). *Any* active code made by the system works — it is not tied to a vehicle. A scan lasts **15 minutes** and covers **one fare**: the payment that uses it marks it spent (`qr_scans.used_at`, `payment_id`), so the next ride needs another scan. A code that is unknown, switched off or deleted is refused (*\"That QR code isn't valid. Scan one of the QR codes inside the PUJ.\"*), and `process` refuses a payment without a fresh scan even if the checkout URL is replayed. The rule is `config/qr.php` (`REQUIRE_QR_SCAN`, default on; `QR_SCAN_VALID_MINUTES`). It proves the commuter holds a code from inside the vehicle, not that they are physically on board — there is no location check.
+>
 > **Boarding permission is still not issued** — see *Known Gaps*.
 
 ---
@@ -947,10 +949,10 @@ A guest reaching `/settings` is redirected to the login page by the `auth` + `ve
 | **Secondary Actor**   | System                                                                                                                                                                |
 | **Goal**               | Allow the driver to clock in to the system and start their shift.                                                                                                     |
 | **Trigger**           | Driver clicks the **"Clock In"** button on the **Today's Shift** card in the map's left sidebar.                                                                        |
-| **Preconditions**     | 1. Driver is authenticated and registered to the system.<br>2. The driver has no timekeeping record for today yet.<br>3. A vehicle is assigned to the driver.<br>4. The System is operational.                |
+| **Preconditions**     | 1. Driver is authenticated and registered to the system.<br>2. The driver has no timekeeping record for today yet.<br>3. A vehicle is assigned to the driver and, if it is shared by two drivers, today is the driver's duty day on the roster.<br>4. The System is operational.                |
 | **Supporting Actors** | Timekeeping ledger, Driver record                                                                                                                                     |
 
-> **A vehicle is a precondition.** A driver can only go on shift while a vehicle is assigned to them (staff assign it from the Vehicles page). Without one, the **Clock In** button is disabled, the Availability toggle cannot be switched on, and the map's left sidebar says so; a replayed request is refused with *"You have no vehicle assigned yet, so you cannot clock in or set your status to active. Please contact the Maintenance Manager."* Going **inactive** never needs a vehicle.
+> **A vehicle — and, on a shared one, your duty day — is a precondition.** A driver can only go on shift while a vehicle is assigned to them (staff assign it from the Vehicles page), and when two drivers share it, only on a day the Maintenance Manager's duty roster gives to them (UCN_SC_E015 A6): otherwise *"Today is [co-driver]'s day on this vehicle…"* or, with no roster line, *"No duty roster is set…"*. Without one, the **Clock In** button is disabled, the Availability toggle cannot be switched on, and the map's left sidebar says so; a replayed request is refused with *"You have no vehicle assigned yet, so you cannot clock in or set your status to active. Please contact the Maintenance Manager."* Going **inactive** never needs a vehicle.
 
 ---
 
@@ -1097,6 +1099,7 @@ See A3 — *"Driver profile not found."*
 
 ### Known Gaps / Notes
 
+- **A forgotten clock-out is closed automatically.** `php artisan shifts:auto-close` (every 15 minutes) closes any shift with no `time_out` that has been open longer than `TIMEKEEPING_AUTO_CLOSE_AFTER_HOURS` (default 14) or that is still open after midnight (`TIMEKEEPING_AUTO_CLOSE_AT_MIDNIGHT`). Nobody knows when the driver really stopped, so the entry is credited `TIMEKEEPING_AUTO_CLOSE_CREDIT_HOURS` (default 8, never more than has elapsed) with **no overtime**, stamped `auto_closed_at`, and left for the Driver Manager to review (UCN_SC_E013). The driver is set inactive (unless a newer shift is open), the vehicle's live location is removed and it is marked offline, and the driver's phone can no longer broadcast the vehicle's position until their next shift.
 - **No GPS / location verification** — a driver can clock out from anywhere, and nothing confirms the vehicle actually stopped.
 - **Duration is measured from `time_in` parsed out of a formatted string** (`Carbon::parse($record->date . ' ' . $record->time_in, 'Asia/Manila')`). A `time_in` written by the driver-manager screen in a different format/timezone will skew the hours; storing real datetimes would remove this fragility.
 - **`hours_worked` is rounded to 2 decimals**, and breaks are not considered — the value is a raw difference between clock-in and clock-out.
@@ -1446,6 +1449,7 @@ The shift being written shares part of the day with an entry that already exists
 
 ### Known Gaps / Notes
 
+- **Auto-closed shifts need a review.** Shifts closed by the system (UCN_SC_E010) show an *Auto-closed* badge, count toward the *Needs review* filter, and have a **Mark reviewed** button (`PATCH /time-keeping/{entry}/review`, recorded in the audit trail). Review only acknowledges the entry — the hours it carries are the credited regular shift, and there is still no way to edit them (see the note below).
 - **Shifts cannot span midnight.** An overnight shift (e.g. 22:00 → 06:00) is rejected by E4; the manager must split it into two dated entries.
 - **No overlap check against the driver's own clock-in** (UCN_SC_E009) — a manager entry and a self-clocked entry on the same day are only blocked when they genuinely overlap in time.
 - **Entries are immutable**: there is no edit or delete for a manager-entered row; only the driver's own clock-out (E010) fills in `time_out`.
@@ -1591,7 +1595,7 @@ At least one violation log references the code. System refuses the deletion with
 - **No unique index on `violation_codes.code`** — uniqueness is a validation rule only, so a concurrent double submit could still slip a duplicate through.
 - **The log is paginated on the server, 10 entries per page**; the driver / date filters travel with the page links (`withQueryString`). There is no ordering option, only *latest first*.
 - **Rejected applications cannot be re-approved** — the reject action is one-way in the UI (`is_rejected` has no counterpart action on the drivers page).
-- The *offense instance* is free choice (1–4 in the bulk form, `min:1` in the single form) and is not derived from how many times that code was previously logged against the driver.
+- **The offense instance is pre-selected, not enforced.** When the Driver Manager picks a driver and a violation type, the form selects the next offense (1st, 2nd, 3rd, 4th+) from how many times that code was already logged against the driver — and, in the bulk form, from the entries above it in the same batch — and fills in the matching fine. The manager can still change it, and the server accepts 1–4 (`min:1` in the single form), so a manual override is stored as chosen.
 - Additional penalties are stored as free text; nothing derives them from the offense level.
 - **Payment is a flag, not a ledger**: there is no partial payment, no payment date entry, no receipt — a fine is paid or it is not.
 
@@ -1628,7 +1632,8 @@ At least one violation log references the code. System refuses the deletion with
 > **Corrections vs. the original narrative**
 > - **The vehicle page is restricted to the `maintenance_manager` and `admin` roles.** It used to sit in the shared authenticated group, so any signed-in role (commuter, driver, …) could open it; the routes now carry `role:maintenance_manager|admin` and the admin menu has a *Vehicles* item.
 > - **Only an `active` vehicle can carry a driver.** *Inactive*, *maintenance* and *disposed* units cannot be assigned (the driver select is disabled in the form), and moving a vehicle to any of them releases its driver.
-> - **An assigned vehicle cannot be deleted** (the delete icon is locked and the server answers 409): unassign the driver first.
+> - **An assigned vehicle cannot be deleted** (the delete icon is locked and the server answers 409): unassign the drivers first.
+> - **Two drivers can share a vehicle** and take turns day by day. The form has **two driver selects** (the second optional; never the same person twice; each driver holds one vehicle only). The assignment lives in `driver_vehicle` (it replaced `vehicles.driver_id`). Who drives on which day is the **duty roster** (A6 below).
 > - **E3 (cannot dispose an active vehicle)** and **E4 (cannot assign an under-maintenance vehicle)** were not enforced in the original narrative and are now blocked by the controller.
 > - The postcondition *"removed from the live tracking map"* is now implemented: the map endpoint filters on vehicle status, so a unit set to **maintenance** or **disposed** drops off immediately instead of lingering until its last GPS ping ages out.
 > - The postcondition *"marked Disposed, historical logs preserved"* is enforced by refusing to hard-delete a vehicle that has service history (E6).
@@ -1672,6 +1677,12 @@ At least one violation log references the code. System refuses the deletion with
 1. In the list, the Maintenance Manager clicks the view icon.
 2. System displays a read-only modal with the full vehicle record.
 3. The modal offers **"Edit"** to jump straight into A2.
+
+**A6 – Keep the Duty Roster of a Shared Vehicle**
+1. For a vehicle with two drivers, the Maintenance Manager opens **Duty Roster** (`GET /duty-roster`, Maintenance Manager only) and picks the vehicle; the page shows *On duty today* and 28 days at a time (previous / next / today).
+2. **Generate an alternating schedule**: start date (not in the past), *Drives first*, number of days (2–120). The two drivers take turns; it replaces whatever those days held.
+3. **Swap or clear a day**: the *Swap* button hands a day to the other driver, the dropdown sets or clears it by hand; **Save roster** stores the change (past days are history and are ignored). Every change is audited (*Duty roster updated*).
+4. **Effect:** a driver can only clock in, switch to *Active* or broadcast the vehicle's location on a day the roster gives to them. On the co-driver's day the map says *"Today is [name]'s day on this vehicle"*; with no roster line for today: *"No duty roster is set…"*. A vehicle with one driver needs no roster. Removing a driver (or suspending / deleting them) drops them from the roster from today on and leaves the co-driver on the vehicle; each shift records the vehicle it was worked on (`time_keepings.vehicle_id`).
 
 **A5 – Search / Filter the Fleet**
 1. Maintenance Manager uses the search box, the status chips (*Active / Maintenance / Inactive*), the *All Fuel Types* and *All Vehicles* (assigned / unassigned) selects, or the sort select (*Newest First / Oldest First / Brand A–Z*).
@@ -1825,7 +1836,7 @@ The insert or update fails at the database level. System cancels the operation a
 - **The schedule is per task, not per service**: logging a task again **overwrites** that task's last-service row. The history is kept in the **Maintenance Logs** page (`vehicle_maintenance_logs`), which is append-only: there is no edit or delete for a log entry, and a log entry outlives the schedule row it came from (`maintenance_id` is cleared, not cascaded). Services that were on the schedule when the log was re-introduced were copied in as its first entries; earlier overwritten services cannot be recovered.
 - **Next-due values are computed on the fly** in the view; nothing is persisted, so changing a task's interval retroactively changes every vehicle's projected due date.
 - The vehicle picker falls back to the first vehicle when the requested one no longer exists, and renders an empty board when the fleet is empty.
-- There is no notification when a task becomes overdue.
+- **Overdue and due-soon services are pushed, not just displayed.** A service is *due soon* within `MAINTENANCE_DUE_SOON_DAYS` (7) days or `MAINTENANCE_DUE_SOON_KM` (500) km, and *overdue* once its date has passed or the vehicle's latest logged odometer reading has reached its next-due reading (the system has no live odometer, so a later service on the same vehicle supplies the reading). Tasks with no interval are never due. `php artisan maintenance:due-alerts` (daily, 07:00) emails every Maintenance Manager a digest, and overdue vehicles are flagged on the Vehicles page and the dashboard. With `MAINTENANCE_BLOCK_ACTIVE_WHEN_OVERDUE=true` (off by default) a vehicle with an overdue service cannot be set back to Active until the service is logged. Emails need the scheduler running (`schedule:run` from cron).
 
 ---
 

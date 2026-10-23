@@ -120,7 +120,7 @@ At least one violation log references the code. System refuses the deletion with
 - **No unique index on `violation_codes.code`** — uniqueness is a validation rule only, so a concurrent double submit could still slip a duplicate through.
 - **The log is paginated on the server, 10 entries per page**; the driver / date filters travel with the page links (`withQueryString`). There is no ordering option, only *latest first*.
 - **Rejected applications cannot be re-approved** — the reject action is one-way in the UI (`is_rejected` has no counterpart action on the drivers page).
-- The *offense instance* is free choice (1–4 in the bulk form, `min:1` in the single form) and is not derived from how many times that code was previously logged against the driver.
+- **The offense instance is pre-selected, not enforced.** When the Driver Manager picks a driver and a violation type, the form selects the next offense (1st, 2nd, 3rd, 4th+) from how many times that code was already logged against the driver — and, in the bulk form, from the entries above it in the same batch — and fills in the matching fine. The manager can still change it, and the server accepts 1–4 (`min:1` in the single form), so a manual override is stored as chosen.
 - Additional penalties are stored as free text; nothing derives them from the offense level.
 - **Payment is a flag, not a ledger**: there is no partial payment, no payment date entry, no receipt — a fine is paid or it is not.
 

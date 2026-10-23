@@ -194,6 +194,14 @@
             </span>
         </div>
 
+        @if (! empty($scannedCode))
+            <div
+                class="fade-1 mb-4 flex items-center justify-center gap-2 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                <i class="fa-solid fa-qrcode text-[10px]"></i>
+                Verified on board
+            </div>
+        @endif
+
         <!-- Main Card -->
         <div
             class="card-animate bg-white dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 xl:p-8 relative overflow-hidden shadow-lg dark:shadow-black/40">

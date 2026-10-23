@@ -68,6 +68,7 @@ See A3 — *"Driver profile not found."*
 
 ## Known Gaps / Notes
 
+- **A forgotten clock-out is closed automatically.** `php artisan shifts:auto-close` (every 15 minutes) closes any shift with no `time_out` that has been open longer than `TIMEKEEPING_AUTO_CLOSE_AFTER_HOURS` (default 14) or that is still open after midnight (`TIMEKEEPING_AUTO_CLOSE_AT_MIDNIGHT`). Nobody knows when the driver really stopped, so the entry is credited `TIMEKEEPING_AUTO_CLOSE_CREDIT_HOURS` (default 8, never more than has elapsed) with **no overtime**, stamped `auto_closed_at`, and left for the Driver Manager to review (UCN_SC_E013). The driver is set inactive (unless a newer shift is open), the vehicle's live location is removed and it is marked offline, and the driver's phone can no longer broadcast the vehicle's position until their next shift.
 - **No GPS / location verification** — a driver can clock out from anywhere, and nothing confirms the vehicle actually stopped.
 - **Duration is measured from `time_in` parsed out of a formatted string** (`Carbon::parse($record->date . ' ' . $record->time_in, 'Asia/Manila')`). A `time_in` written by the driver-manager screen in a different format/timezone will skew the hours; storing real datetimes would remove this fragility.
 - **`hours_worked` is rounded to 2 decimals**, and breaks are not considered — the value is a raw difference between clock-in and clock-out.

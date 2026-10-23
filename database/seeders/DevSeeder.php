@@ -227,7 +227,7 @@ class DevSeeder extends Seeder
         $driver = fn (string $email) => Driver::whereHas('user', fn ($q) => $q->where('email', $email))->value('id');
 
         $fleet = [
-            ['plate_number' => 'ABC-1234', 'year' => 2021, 'brand' => 'Toyota', 'model' => 'Coaster', 'status' => 'active', 'fuel_type' => 'diesel', 'tank_capacity' => '90', 'vin' => 'JTGFB5G10M1000001', 'location' => 'Cebu Branch', 'acquisition_date' => '2021-03-15', 'exp_disposal_date' => '2031-03-15', 'driver' => 'ramon.delacruz@example.com'],
+            ['plate_number' => 'ABC-1234', 'year' => 2021, 'brand' => 'Toyota', 'model' => 'Coaster', 'status' => 'active', 'fuel_type' => 'diesel', 'tank_capacity' => '90', 'vin' => 'JTGFB5G10M1000001', 'location' => 'Cebu Branch', 'acquisition_date' => '2021-03-15', 'exp_disposal_date' => '2031-03-15', 'driver' => ['ramon.delacruz@example.com', 'dante.cruz@example.com']],
             ['plate_number' => 'DEF-5678', 'year' => 2022, 'brand' => 'Hyundai', 'model' => 'County', 'status' => 'active', 'fuel_type' => 'diesel', 'tank_capacity' => '80', 'vin' => 'KMFHD37H2NU000002', 'location' => 'Mandaue Depot', 'acquisition_date' => '2022-06-01', 'exp_disposal_date' => '2032-06-01', 'driver' => 'liza.mercado@example.com'],
             // Free to assign to a driver.
             ['plate_number' => 'STU-1122', 'year' => 2023, 'brand' => 'Foton', 'model' => 'Toano', 'status' => 'active', 'fuel_type' => 'diesel', 'tank_capacity' => '75', 'vin' => 'LVBV4PBB6PE000003', 'location' => 'Cebu Branch', 'acquisition_date' => '2023-01-20', 'exp_disposal_date' => '2033-01-20', 'driver' => null],
@@ -237,17 +237,46 @@ class DevSeeder extends Seeder
         ];
 
         foreach ($fleet as $row) {
-            $driverId = $row['driver'] ? $driver($row['driver']) : null;
+            $emails = (array) $row['driver'];
             unset($row['driver']);
 
-            Vehicle::updateOrCreate(
-                ['plate_number' => $row['plate_number']],
-                $row + ['driver_id' => $driverId]
-            );
+            $vehicle = Vehicle::updateOrCreate(['plate_number' => $row['plate_number']], $row);
+
+            // One or two drivers per vehicle; two take turns day by day (see dutyRoster()).
+            $vehicle->drivers()->sync(array_filter(array_map($driver, $emails)));
         }
 
         // The pre-existing demo van is the one assigned to driver@gmail.com.
         Vehicle::where('plate_number', 'JKL-7890')->update(['status' => 'active']);
+
+        $this->dutyRoster();
+    }
+
+    /**
+     * ABC-1234 is shared by Ramon and Dante, who alternate days: the roster covers 30 days either side
+     * of today, starting with Ramon on the even-numbered days since 2026-01-01.
+     */
+    private function dutyRoster(): void
+    {
+        $vehicle = Vehicle::where('plate_number', 'ABC-1234')->first();
+        $drivers = $vehicle?->drivers()->get();
+
+        if (! $drivers || $drivers->count() < 2) {
+            return;
+        }
+
+        $ramon = $drivers->first(fn ($d) => $d->user?->email === 'ramon.delacruz@example.com') ?? $drivers[0];
+        $other = $drivers->firstWhere('id', '!=', $ramon->id);
+
+        for ($i = -30; $i <= 30; $i++) {
+            $date = now()->addDays($i)->startOfDay();
+            $driverId = ((int) $date->diffInDays(\Illuminate\Support\Carbon::parse('2026-01-01'))) % 2 === 0 ? $ramon->id : $other->id;
+
+            \App\Models\VehicleDutyDay::updateOrCreate(
+                ['vehicle_id' => $vehicle->id, 'duty_date' => $date->toDateString()],
+                ['driver_id' => $driverId]
+            );
+        }
     }
 
     // ── Payments ─────────────────────────────────────────────────────────
@@ -416,19 +445,10 @@ class DevSeeder extends Seeder
 
     private function violationCodes(): void
     {
-        $codes = [
-            ['UV02', 'Reckless Driving', 2000, 5000, 10000, 10000],
-            ['UV03', 'Overloading', 1500, 3000, 5000, 5000],
-            ['UV04', 'Operating Without Franchise', 5000, 10000, 15000, 20000],
-            ['UV05', 'Failure to Display Fare Matrix', 500, 1000, 1500, 2000],
-            ['UV06', 'Refusal to Convey Passenger', 1000, 2000, 3000, 4000],
-        ];
-
-        foreach ($codes as [$code, $name, $a, $b, $c, $d]) {
-            ViolationCode::updateOrCreate(['code' => $code], [
-                'violation_name' => $name,
-                'first_offense' => $a, 'second_offense' => $b, 'third_offense' => $c, 'fourth_offense' => $d,
-            ]);
+        // The dev data logs violations against the real PUJ schedule. Only reseed
+        // it when it is missing, so re-running never wipes violations logged while testing.
+        if (ViolationCode::count() !== count(ViolationCodeSeeder::CODES)) {
+            $this->call(ViolationCodeSeeder::class);
         }
     }
 
@@ -443,15 +463,15 @@ class DevSeeder extends Seeder
             'driver@gmail.com' => [
                 ['UV01', 1, 60, '09:30:00', 'Osmena Boulevard', 'Warning', 'Ran a red light at the intersection.'],
                 ['UV01', 2, 30, '17:10:00', 'N. Bacalso Avenue', null, 'Second sign violation within 90 days.'],
-                ['UV03', 1, 14, '07:45:00', 'Colon Street', 'Community service', 'Eight passengers over capacity.'],
+                ['UV11', 1, 14, '07:45:00', 'Colon Street', 'Community service', 'Eight passengers over capacity.'],
                 ['UV02', 1, 5, '22:05:00', 'South Road Properties', 'Suspension: 7 days', 'Overspeeding near the coastal road.'],
             ],
             'ramon.delacruz@example.com' => [
-                ['UV05', 1, 20, '08:15:00', 'Mandaue City Hall', 'Warning', 'Fare matrix not displayed.'],
-                ['UV06', 1, 9, '18:40:00', 'Ayala Center Cebu', null, 'Refused a PWD passenger.'],
+                ['UV13', 1, 20, '08:15:00', 'Mandaue City Hall', 'Warning', 'Fare matrix not displayed.'],
+                ['UV09', 1, 9, '18:40:00', 'Ayala Center Cebu', null, 'Refused a PWD passenger.'],
             ],
             'dante.cruz@example.com' => [
-                ['UV04', 1, 40, '11:00:00', 'Talisay City', 'Impound: 3 days', 'Franchise paper not available at inspection.'],
+                ['UV06', 1, 40, '11:00:00', 'Talisay City', 'Impound: 3 days', 'Franchise paper not available at inspection.'],
             ],
             'carlos.bautista@example.com' => [
                 ['UV02', 1, 12, '23:20:00', 'Mactan Bridge', 'Suspension: 30 days', 'Racing another vehicle.'],

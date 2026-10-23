@@ -348,10 +348,9 @@ class UcnStaffRegressionTest extends TestCase
     public function test_a_vehicle_with_a_clocked_in_driver_cannot_be_disposed()
     {
         $driver = $this->driver();
-        $vehicle = Vehicle::factory()->create([
+        $vehicle = Vehicle::factory()->withDriver($driver->id)->create([
             'plate_number' => 'NMA-102',
             'status' => 'active',
-            'driver_id' => $driver->id,
         ]);
 
         TimeKeeping::factory()->create([
@@ -379,10 +378,9 @@ class UcnStaffRegressionTest extends TestCase
     public function test_setting_a_vehicle_to_maintenance_detaches_its_driver()
     {
         $driver = $this->driver();
-        $vehicle = Vehicle::factory()->create([
+        $vehicle = Vehicle::factory()->withDriver($driver->id)->create([
             'plate_number' => 'NMA-103',
             'status' => 'active',
-            'driver_id' => $driver->id,
         ]);
 
         $this->actingAs($this->maintenanceManager())
@@ -395,7 +393,7 @@ class UcnStaffRegressionTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertSame('maintenance', $vehicle->fresh()->status);
-        $this->assertNull($vehicle->fresh()->driver_id);
+        $this->assertSame(0, $vehicle->fresh()->drivers()->count());
     }
 
     /** Postcondition — a vehicle under maintenance drops off the live map. */

@@ -212,7 +212,7 @@ class BugFixRegressionTest extends TestCase
     public function test_a_driver_without_a_vehicle_cannot_broadcast()
     {
         [$user] = $this->driverUser(['is_approved' => 1, 'is_rejected' => 0]);
-        $vehicle = Vehicle::factory()->create(['driver_id' => null, 'status' => 'active']);
+        $vehicle = Vehicle::factory()->create(['status' => 'active']);
 
         $this->actingAs($user)
             ->postJson(route('vehicle.broadcast'), $this->broadcastPayload($user, $vehicle))
@@ -224,7 +224,7 @@ class BugFixRegressionTest extends TestCase
     public function test_a_driver_on_an_inactive_vehicle_cannot_broadcast()
     {
         [$user, $driver] = $this->driverUser(['is_approved' => 1, 'is_rejected' => 0]);
-        $vehicle = Vehicle::factory()->create(['driver_id' => $driver->id, 'status' => 'inactive']);
+        $vehicle = Vehicle::factory()->withDriver($driver->id)->create(['status' => 'inactive']);
 
         $this->actingAs($user)
             ->postJson(route('vehicle.broadcast'), $this->broadcastPayload($user, $vehicle))
@@ -537,7 +537,7 @@ class BugFixRegressionTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors('driver_id');
 
-        $vehicle = Vehicle::factory()->create(['status' => 'active', 'driver_id' => null]);
+        $vehicle = Vehicle::factory()->create(['status' => 'active']);
 
         $this->actingAs($manager)
             ->patchJson(route('vehicles.update', $vehicle), $this->vehiclePayload([
@@ -561,7 +561,7 @@ class BugFixRegressionTest extends TestCase
     {
         $manager = $this->userWithRole('maintenance_manager');
         $driver = Driver::factory()->approved()->create();
-        $vehicle = Vehicle::factory()->create(['status' => 'active', 'driver_id' => $driver->id]);
+        $vehicle = Vehicle::factory()->withDriver($driver->id)->create(['status' => 'active']);
 
         $this->actingAs($manager)
             ->patchJson(route('vehicles.update', $vehicle), $this->vehiclePayload([
@@ -569,14 +569,14 @@ class BugFixRegressionTest extends TestCase
             ]))
             ->assertOk();
 
-        $this->assertNull($vehicle->fresh()->driver_id);
+        $this->assertSame(0, $vehicle->fresh()->drivers()->count());
     }
 
     public function test_an_assigned_vehicle_cannot_be_deleted()
     {
         $manager = $this->userWithRole('maintenance_manager');
         $driver = Driver::factory()->approved()->create();
-        $vehicle = Vehicle::factory()->create(['status' => 'active', 'driver_id' => $driver->id]);
+        $vehicle = Vehicle::factory()->withDriver($driver->id)->create(['status' => 'active']);
 
         $this->actingAs($manager)
             ->deleteJson(route('vehicles.destroy', $vehicle))
@@ -588,7 +588,7 @@ class BugFixRegressionTest extends TestCase
     public function test_an_unassigned_vehicle_can_be_deleted()
     {
         $manager = $this->userWithRole('maintenance_manager');
-        $vehicle = Vehicle::factory()->create(['status' => 'active', 'driver_id' => null]);
+        $vehicle = Vehicle::factory()->create(['status' => 'active']);
 
         $this->actingAs($manager)->deleteJson(route('vehicles.destroy', $vehicle))->assertOk();
         $this->assertDatabaseMissing('vehicles', ['id' => $vehicle->id]);
@@ -599,7 +599,7 @@ class BugFixRegressionTest extends TestCase
     public function test_a_driver_holding_a_vehicle_cannot_delete_their_own_account()
     {
         [$user, $driver] = $this->driverUser(['is_approved' => 1, 'is_rejected' => 0]);
-        Vehicle::factory()->create(['status' => 'active', 'driver_id' => $driver->id]);
+        Vehicle::factory()->withDriver($driver->id)->create(['status' => 'active']);
 
         $this->actingAs($user)
             ->delete(route('users.delete-account'))
@@ -623,7 +623,7 @@ class BugFixRegressionTest extends TestCase
     {
         $admin = $this->userWithRole('admin');
         $driver = Driver::factory()->approved()->create(['expiration_date' => now()->subDays(2)->toDateString()]);
-        Vehicle::factory()->create(['status' => 'active', 'driver_id' => $driver->id]);
+        Vehicle::factory()->withDriver($driver->id)->create(['status' => 'active']);
 
         $response = $this->actingAs($admin)->get(route('drivers.index'))->assertOk();
         $row = $response->viewData('drivers')->firstWhere('id', $driver->id);
@@ -747,7 +747,7 @@ class BugFixRegressionTest extends TestCase
     {
         $admin = $this->userWithRole('admin');
         [, $driver] = $this->driverUser();
-        Vehicle::factory()->create(['status' => 'active', 'driver_id' => $driver->id]);
+        Vehicle::factory()->withDriver($driver->id)->create(['status' => 'active']);
 
         $this->actingAs($admin)
             ->deleteJson(route('drivers.destroy', ['driver' => $driver->id]))
@@ -828,7 +828,7 @@ class BugFixRegressionTest extends TestCase
     public function test_logging_a_preventive_service_feeds_the_fleet_summary()
     {
         $manager = $this->userWithRole('maintenance_manager');
-        $vehicle = Vehicle::factory()->create(['status' => 'active', 'driver_id' => null]);
+        $vehicle = Vehicle::factory()->create(['status' => 'active']);
         $task = \App\Models\MaintenanceTask::create(['tasks_performed' => 'Oil Change', 'miles_between_service' => 5000, 'months_between_service' => 6]);
 
         $this->actingAs($manager)->post(route('maintenance-manager.preventive-maintenance.store'), [
@@ -848,7 +848,7 @@ class BugFixRegressionTest extends TestCase
     public function test_a_vehicle_with_preventive_maintenance_is_still_protected_from_deletion()
     {
         $manager = $this->userWithRole('maintenance_manager');
-        $vehicle = Vehicle::factory()->create(['status' => 'active', 'driver_id' => null]);
+        $vehicle = Vehicle::factory()->create(['status' => 'active']);
         $task = \App\Models\MaintenanceTask::create(['tasks_performed' => 'Brakes', 'miles_between_service' => 5000, 'months_between_service' => 6]);
         \App\Models\PreventiveMaintenance::create([
             'vehicle_id' => $vehicle->id, 'task_id' => $task->id, 'last_service_odo' => 1,

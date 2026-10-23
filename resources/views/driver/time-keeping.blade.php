@@ -600,7 +600,7 @@
                                             <p
                                                 class="text-[11px] font-bold @if ($record && $record->hours_worked) text-[#ccc] @else text-[#282828] @endif">
                                                 @if ($record && $record->hours_worked)
-                                                    {{ number_format($record->hours_worked, 1) }}
+                                                    {{ number_format($record->hours_worked, 1) }}@if ($record->wasAutoClosed())<span class="ml-1 text-[7px] font-bold uppercase text-amber-400" title="You did not clock out, so the system closed this shift.">auto</span>@endif
                                                 @else
                                                     —
                                                 @endif

@@ -188,7 +188,7 @@ class UcnRegressionTest extends TestCase
     public function test_driver_cannot_clock_in_twice_in_one_day()
     {
         [$user, $driver] = $this->driver('inactive');
-        Vehicle::factory()->create(['driver_id' => $driver->id, 'status' => 'active']);
+        Vehicle::factory()->withDriver($driver->id)->create(['status' => 'active']);
 
         $this->actingAs($user)->withoutMiddleware(VerifyCsrfToken::class)
             ->post(route('driver.timekeeping.clock-in'))

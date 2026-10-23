@@ -8,10 +8,10 @@
 | **Secondary Actor**   | System                                                                                                                                                                |
 | **Goal**               | Allow the driver to clock in to the system and start their shift.                                                                                                     |
 | **Trigger**           | Driver clicks the **"Clock In"** button on the **Today's Shift** card in the map's left sidebar.                                                                        |
-| **Preconditions**     | 1. Driver is authenticated and registered to the system.<br>2. The driver has no timekeeping record for today yet.<br>3. A vehicle is assigned to the driver.<br>4. The System is operational.                |
+| **Preconditions**     | 1. Driver is authenticated and registered to the system.<br>2. The driver has no timekeeping record for today yet.<br>3. A vehicle is assigned to the driver and, if it is shared by two drivers, today is the driver's duty day on the roster.<br>4. The System is operational.                |
 | **Supporting Actors** | Timekeeping ledger, Driver record                                                                                                                                     |
 
-> **A vehicle is a precondition.** A driver can only go on shift while a vehicle is assigned to them (staff assign it from the Vehicles page). Without one, the **Clock In** button is disabled, the Availability toggle cannot be switched on, and the map's left sidebar says so; a replayed request is refused with *"You have no vehicle assigned yet, so you cannot clock in or set your status to active. Please contact the Maintenance Manager."* Going **inactive** never needs a vehicle.
+> **A vehicle — and, on a shared one, your duty day — is a precondition.** A driver can only go on shift while a vehicle is assigned to them (staff assign it from the Vehicles page), and when two drivers share it, only on a day the Maintenance Manager's duty roster gives to them (UCN_SC_E015 A6): otherwise *"Today is [co-driver]'s day on this vehicle…"* or, with no roster line, *"No duty roster is set…"*. Without one, the **Clock In** button is disabled, the Availability toggle cannot be switched on, and the map's left sidebar says so; a replayed request is refused with *"You have no vehicle assigned yet, so you cannot clock in or set your status to active. Please contact the Maintenance Manager."* Going **inactive** never needs a vehicle.
 
 ---
 

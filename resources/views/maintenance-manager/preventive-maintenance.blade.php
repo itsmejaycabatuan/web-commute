@@ -280,12 +280,7 @@
                     $logged = $loggedTasks->get($task->id);
                     if ($logged) {
                         $loggedCount++;
-                        $nextDate = $logged->last_service_date
-                            ? \Carbon\Carbon::parse($logged->last_service_date)->addMonths(
-                                $task->months_between_service ?? 0,
-                            )
-                            : null;
-                        if ($nextDate && $nextDate->isPast()) {
+                        if ($logged->dueStatus($currentOdo) === \App\Models\PreventiveMaintenance::OVERDUE) {
                             $overdueCount++;
                         }
                     } else {
@@ -382,20 +377,11 @@
                             @forelse($allTasks as $task)
                                 @php
                                     $logged = $loggedTasks->get($task->id);
-                                    $isOverdue = false;
-                                    $nextOdo = null;
-                                    $nextDate = null;
-                                    if ($logged) {
-                                        $nextOdo = $logged->last_service_odo + ($task->miles_between_service ?? 0);
-                                        $nextDate = $logged->last_service_date
-                                            ? \Carbon\Carbon::parse($logged->last_service_date)->addMonths(
-                                                $task->months_between_service ?? 0,
-                                            )
-                                            : null;
-                                        if ($nextDate && $nextDate->isPast()) {
-                                            $isOverdue = true;
-                                        }
-                                    }
+                                    $dueStatus = $logged ? $logged->dueStatus($currentOdo) : null;
+                                    $isOverdue = $dueStatus === \App\Models\PreventiveMaintenance::OVERDUE;
+                                    $isDueSoon = $dueStatus === \App\Models\PreventiveMaintenance::DUE_SOON;
+                                    $nextOdo = $logged?->nextDueOdo();
+                                    $nextDate = $logged?->nextDueDate();
                                 @endphp
                                 <tr
                                     class="table-row {{ !$logged ? 'bg-amber-50 dark:bg-amber-500/[0.015]' : ($isOverdue ? 'bg-rose-50 dark:bg-rose-500/[0.015]' : '') }}">
@@ -458,7 +444,7 @@
                                         @if ($logged)
                                             <span
                                                 class="text-[10px] sm:text-[11px] font-bold font-mono block {{ $isOverdue ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
-                                                {{ $isOverdue ? 'Overdue' : number_format($nextOdo) . ' km' }}
+                                                {{ $isOverdue ? 'Overdue' : ($nextOdo !== null ? number_format($nextOdo) . ' km' : '—') }}
                                             </span>
                                             @if ($nextDate)
                                                 <span
@@ -480,7 +466,11 @@
                                         @endif
                                     </td>
                                     <td class="px-4 sm:px-6 py-3.5">
-                                        @if ($logged && !$isOverdue)
+                                        @if ($logged && $isDueSoon)
+                                            <span
+                                                class="text-[8px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/15 px-2 py-0.5 rounded-md font-bold uppercase">Due
+                                                Soon</span>
+                                        @elseif ($logged && !$isOverdue)
                                             <span
                                                 class="text-[8px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/15 px-2 py-0.5 rounded-md font-bold uppercase">On
                                                 Track</span>

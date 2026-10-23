@@ -33,7 +33,31 @@ class DriverManagerController extends Controller
             ->limit(1000)
             ->get();
 
-        return view('driver-manager.time-keeping', compact('drivers', 'entries'));
+        $needsReview = TimeKeeping::needsReview()->count();
+
+        return view('driver-manager.time-keeping', compact('drivers', 'entries', 'needsReview'));
+    }
+
+    /**
+     * Confirm a shift the system closed because the driver never clocked out.
+     */
+    public function timeKeepingReview(TimeKeeping $entry)
+    {
+        if (! $entry->wasAutoClosed()) {
+            return back()->with('error', 'Only auto-closed shifts need a review.');
+        }
+
+        if ($entry->reviewed_at) {
+            return back()->with('error', 'This shift was already reviewed.');
+        }
+
+        try {
+            $entry->update(['reviewed_at' => now()]);
+        } catch (QueryException $e) {
+            return $this->writeFailed($e, 'The review was not saved.');
+        }
+
+        return back()->with('success', 'Shift marked as reviewed.');
     }
 
     public function timeKeepingStore(Request $request)
@@ -172,7 +196,8 @@ class DriverManagerController extends Controller
                 'email' => $u->email,
                 'contactInfo' => $u->driver->contact_info ?? 'N/A',
                 'licenseState' => $u->driver->licenseState(),
-            ]);
+            ])
+            ->values(); // filter() leaves gaps in the keys, which JSON-encodes as an object the form cannot .find() on
 
         // Violation codes — unchanged
         $violationCodes = ViolationCode::select('id', 'code', 'violation_name', 'first_offense', 'second_offense', 'third_offense', 'fourth_offense')
@@ -186,6 +211,14 @@ class DriverManagerController extends Controller
                 'third_offense' => (float) $v->third_offense,
                 'fourth_offense' => (float) $v->fourth_offense,
             ]);
+
+        // How many times each driver has already been logged for each code, so the
+        // form can pre-select the next offense number (1st, 2nd, 3rd, 4th+).
+        $offenseCounts = ViolationLog::selectRaw('user_id, vc_id, COUNT(*) as total')
+            ->groupBy('user_id', 'vc_id')
+            ->get()
+            ->groupBy('user_id')
+            ->map(fn ($rows) => $rows->pluck('total', 'vc_id')->map(fn ($n) => (int) $n));
 
         // Violation logs — pull driver info through user->driver
         // A7 — the log can be narrowed by driver name and/or date range.
@@ -238,6 +271,7 @@ class DriverManagerController extends Controller
         return view('driver-manager.violations-log', compact(
             'drivers',
             'violationCodes',
+            'offenseCounts',
             'violations',
             'search',
             'from',

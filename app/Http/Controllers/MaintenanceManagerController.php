@@ -18,8 +18,7 @@ class MaintenanceManagerController extends Controller
 {
     public function preventiveMaintenance(Request $request)
     {
-        $vehicles = Vehicle::with('driver')
-            ->orderBy('plate_number')
+        $vehicles = Vehicle::orderBy('plate_number')
             ->get();
 
         if ($vehicles->isEmpty()) {
@@ -28,23 +27,29 @@ class MaintenanceManagerController extends Controller
                 'vehicle' => null,
                 'allTasks' => collect(),
                 'loggedTasks' => collect(),
+                'currentOdo' => null,
             ]);
         }
 
         $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
-        $vehicle = Vehicle::with('driver')->find($selectedId) ?? $vehicles->first();
+        $vehicle = Vehicle::find($selectedId) ?? $vehicles->first();
 
         $allTasks = MaintenanceTask::orderBy('tasks_performed')->get();
 
-        $loggedTasks = PreventiveMaintenance::where('vehicle_id', $vehicle->id)
+        $loggedTasks = PreventiveMaintenance::with('maintenanceTask')
+            ->where('vehicle_id', $vehicle->id)
             ->get()
             ->keyBy('task_id');
+
+        // The latest odometer reading logged for this vehicle: what "due in 500 km" is measured from.
+        $currentOdo = $loggedTasks->max('last_service_odo');
 
         return view('maintenance-manager.preventive-maintenance', compact(
             'vehicles',
             'vehicle',
             'allTasks',
-            'loggedTasks'
+            'loggedTasks',
+            'currentOdo'
         ));
     }
 

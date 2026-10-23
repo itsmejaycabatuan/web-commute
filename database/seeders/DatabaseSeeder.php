@@ -17,5 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call(RolePermissionSeeder::class);
         $this->call(DefaultAdminSeeder::class);
         $this->call(ImportantDataSeeder::class);
+        $this->call(ViolationCodeSeeder::class);
+        $this->call(QrCodeSeeder::class);
     }
 }

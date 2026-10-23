@@ -60,7 +60,7 @@ abstract class NfrTestCase extends TestCase
         $driver = Driver::factory()->approved()->create();
         $user = User::find($driver->user_id)->assignRole('driver');
         $user->markEmailAsVerified();
-        $car = Vehicle::factory()->create($vehicle + ['status' => 'active', 'driver_id' => $driver->id]);
+        $car = Vehicle::factory()->withDriver($driver->id)->create($vehicle + ['status' => 'active']);
 
         return [$user->fresh(), $driver, $car];
     }

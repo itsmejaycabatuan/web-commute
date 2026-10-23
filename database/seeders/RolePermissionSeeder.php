@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use App\Models\ViolationCode;
 use App\Models\Wallet;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -96,15 +95,6 @@ class RolePermissionSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
-
-        $violationCode = ViolationCode::firstOrCreate([
-            'code' => 'UV01',
-            'violation_name' => 'Disregarding Traffic Sign',
-            'first_offense' => '1000',
-            'second_offense' => '1000',
-            'third_offense' => '1000',
-            'fourth_offense' => '1000',
-        ]);
 
         // Assign Roles to users here
         $markj->assignRole($adminRole);

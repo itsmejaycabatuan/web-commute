@@ -4,10 +4,13 @@ use App\Http\Controllers\Admin\CommuterController;
 use App\Http\Controllers\EmailVerificationCodeController;
 use App\Http\Controllers\Admin\DriverApprovalController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\QrCodeController;
 use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\RideVerificationController;
 use App\Http\Controllers\DevMarkerController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\DriverManagerController;
+use App\Http\Controllers\DutyRosterController;
 use App\Http\Controllers\FareController;
 use App\Http\Controllers\MaintenanceManagerController;
 use App\Http\Controllers\PaymentController;
@@ -100,7 +103,9 @@ Route::get('/email/verify', function () {
 })->middleware(['auth'])->name('verification.notice');
 
 Route::post('/email/verification-notification', function (Request $request) {
-    $request->user()->sendEmailVerificationNotification();
+    if (! $request->user()->sendVerificationEmailSafely()) {
+        return back()->with('error', "We couldn't send the email. Please try again in a moment.");
+    }
 
     return back()->with('message', 'A new verification link and code have been sent.');
 })->middleware(['auth', 'throttle:6.1'])->name('verification.send');
@@ -109,22 +114,9 @@ Route::post('/email/verification-notification', function (Request $request) {
 Route::post('/email/verify/code', [EmailVerificationCodeController::class, 'verify'])
     ->middleware(['auth', 'throttle:10,1'])->name('verification.code');
 
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $latestFare = Fare::get()->last();
-
-    $rates = FareRate::get();
-
-    if ($latestFare) {
-        $latestFareId = $latestFare->id;
-        $rates = FareRate::where('fare_id', $latestFareId)->get();
-    }
-
-    $request->fulfill();
-
-    return view('map', [
-        'rates' => $rates,
-    ]);
-})->middleware(['auth', 'signed'])->name('verification.verify');
+// The emailed link: signed, so it needs no session (see EmailVerificationCodeController::link).
+Route::get('/email/verify/{id}/{hash}', [EmailVerificationCodeController::class, 'link'])
+    ->middleware(['signed', 'throttle:20,1'])->name('verification.verify');
 
 Route::post('/logout', [UserController::class, 'logout'])->name('users.logout')->middleware('auth');
 
@@ -157,6 +149,11 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
         Route::patch('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
         Route::delete('/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
     });
+
+    // Pay on board: scan one of the system's QR codes (inside the PUJ) before paying a fare.
+    Route::get('/payment/scan', [RideVerificationController::class, 'show'])->name('payment.scan');
+    Route::post('/payment/scan', [RideVerificationController::class, 'verify'])->middleware('throttle:20,1')->name('payment.scan.verify');
+    Route::get('/ride/scan/{token}', [RideVerificationController::class, 'link'])->middleware('throttle:20,1')->name('ride.scan.link');
 
     Route::get('/payment', [PaymentController::class, 'index'])->name('payment.index');
     Route::post('/payment/process', [PaymentController::class, 'process'])->name('payment.process');
@@ -203,6 +200,13 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
         Route::get('/commuters', [CommuterController::class, 'index'])->name('commuters.index');
 
         // Staff accounts (Driver Managers and Maintenance Managers).
+        // Ride QR codes (the Admin generates them; commuters scan one before paying a fare).
+        Route::get('/qr-codes', [QrCodeController::class, 'index'])->name('qr-codes.index');
+        Route::post('/qr-codes', [QrCodeController::class, 'store'])->name('qr-codes.store');
+        Route::get('/qr-codes/{qr}', [QrCodeController::class, 'show'])->name('qr-codes.show');
+        Route::patch('/qr-codes/{qr}/toggle', [QrCodeController::class, 'toggle'])->name('qr-codes.toggle');
+        Route::delete('/qr-codes/{qr}', [QrCodeController::class, 'destroy'])->name('qr-codes.destroy');
+
         Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
         Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
         Route::put('/staff/{user}', [StaffController::class, 'update'])->name('staff.update');
@@ -225,6 +229,7 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
     Route::middleware('role:driver_manager')->group(function () {
         Route::get('/time-keeping', [DriverManagerController::class, 'timeKeeping'])->name('driver-manager.time-keeping');
         Route::post('/time-keeping', [DriverManagerController::class, 'timeKeepingStore'])->name('driver-manager.time-keeping.store');
+        Route::patch('/time-keeping/{entry}/review', [DriverManagerController::class, 'timeKeepingReview'])->name('driver-manager.time-keeping.review');
         Route::get('/violations-log', [DriverManagerController::class, 'violationsLog'])->name('driver-manager.violations-log');
         Route::post('/violations-log', [DriverManagerController::class, 'storeViolationLog'])->name('driver-manager.violations-log.store');
         Route::post('/violations-log/bulk', [DriverManagerController::class, 'storeViolationLogBulk'])->name('driver-manager.violations-log.store-bulk');
@@ -238,6 +243,9 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
     Route::middleware('role:maintenance_manager')->group(function () {
         Route::get('/preventive-maintenance', [MaintenanceManagerController::class, 'preventiveMaintenance'])->name('maintenance-manager.preventive-maintenance');
         Route::post('/preventive-maintenance', [MaintenanceManagerController::class, 'preventiveMaintenanceStore'])->name('maintenance-manager.preventive-maintenance.store');
+        Route::get('/duty-roster', [DutyRosterController::class, 'index'])->name('maintenance-manager.duty-roster');
+        Route::post('/duty-roster/{vehicle}/generate', [DutyRosterController::class, 'generate'])->name('maintenance-manager.duty-roster.generate');
+        Route::put('/duty-roster/{vehicle}', [DutyRosterController::class, 'update'])->name('maintenance-manager.duty-roster.update');
         Route::get('/maintenance-logs', [MaintenanceManagerController::class, 'maintenanceLogs'])->name('maintenance-manager.maintenance-logs');
         Route::get('/maintenance-tasks', [MaintenanceManagerController::class, 'maintenanceTasks'])->name('maintenance-manager.maintenance-tasks');
         Route::post('/maintenance-tasks', [MaintenanceManagerController::class, 'maintenanceTasksStore'])->name('maintenance-manager.maintenance-tasks.store');

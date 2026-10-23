@@ -2487,23 +2487,25 @@
 
                     @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
                         @php
-                            // No vehicle assigned: the driver can neither clock in nor go active.
+                            // No vehicle, or today is the co-driver's day on a shared one: the driver can
+                            // neither clock in nor go active (going inactive is always allowed).
                             $driverHasVehicle = $driverHasVehicle ?? true;
-                            $canGoActive = $driverHasVehicle || $driverStatus === 'active';
+                            $driverDutyBlock = $driverDutyBlock ?? null;
+                            $canClockIn = ! $driverDutyBlock;
+                            $canGoActive = $canClockIn || $driverStatus === 'active';
                         @endphp
                         <div id="left-sidebar-form"
                             class="fixed top-24 left-4 sm:left-2 w-[340px] z-40 hidden md:flex flex-col gap-3 max-h-[calc(100vh-120px)] overflow-y-auto custom-scroll p-3 pb-6">
 
-                            @unless ($driverHasVehicle)
+                            @if ($driverDutyBlock)
                                 <div id="no-vehicle-notice" role="status"
                                     class="flex items-start gap-2.5 p-3.5 rounded-2xl border border-amber-500/30 bg-amber-500/10">
                                     <i class="fa-solid fa-triangle-exclamation text-amber-500 dark:text-amber-400 text-xs mt-0.5 shrink-0"></i>
                                     <p class="text-[10px] leading-relaxed text-amber-800 dark:text-amber-300 font-medium">
-                                        You have no vehicle assigned yet. You can't clock in or set your status to
-                                        active until the Maintenance Manager assigns you one.
+                                        {{ $driverDutyBlock }}
                                     </p>
                                 </div>
-                            @endunless
+                            @endif
 
                             <!-- ══════════ DRIVER STATUS TOGGLE CARD ══════════ -->
                             <form action="{{ route('driver.status.update') }}" method="POST" class="contents">
@@ -2511,7 +2513,7 @@
                                 <input type="hidden" name="status"
                                     value="{{ $driverStatus === 'active' ? 'inactive' : 'active' }}">
                                 <div id="driver-status-card"
-                                    @if ($canGoActive) onclick="this.closest('form').submit()" @else aria-disabled="true" title="Assign a vehicle to this driver first" @endif
+                                    @if ($canGoActive) onclick="this.closest('form').submit()" @else aria-disabled="true" title="{{ $driverDutyBlock }}" @endif
                                     class="glass-card status-card {{ $driverStatus === 'active' ? 'active' : 'inactive' }} p-5 rounded-[1.5rem] select-none {{ $canGoActive ? 'cursor-pointer' : 'cursor-not-allowed opacity-50' }}">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-3">
@@ -2543,7 +2545,7 @@
                                         @if ($driverStatus === 'active')
                                             You are visible to commuters and accepting trips.
                                         @elseif (! $canGoActive)
-                                            Unavailable until a vehicle is assigned to you.
+                                            Unavailable on a day you are not on duty.
                                         @else
                                             Tap to go online and start accepting trips.
                                         @endif
@@ -2602,8 +2604,8 @@
                                 @if (!$todayRecord || !$todayRecord->time_in)
                                     <form action="{{ route('driver.timekeeping.clock-in') }}" method="POST">
                                         @csrf
-                                        <button type="submit" @disabled(! $driverHasVehicle)
-                                            @unless ($driverHasVehicle) title="Assign a vehicle to this driver first" @endunless
+                                        <button type="submit" @disabled(! $canClockIn)
+                                            @unless ($canClockIn) title="{{ $driverDutyBlock }}" @endunless
                                             class="w-full p-3.5 rounded-2xl text-white bg-blue-600 hover:bg-blue-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-blue disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-blue-600 disabled:active:scale-100">
                                             <i class="fa-solid fa-right-to-bracket text-sm"></i>
                                             <span class="text-[10px] font-black uppercase tracking-widest">Clock
@@ -4055,7 +4057,7 @@ sim._lastEtaUpdate = null;
                                     <div
                                         class="w-full h-9 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-400 text-[9px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 mb-3">
                                         <i class="fa-solid fa-triangle-exclamation text-[9px]"></i>
-                                        {{ ($driverHasVehicle ?? false) ? 'Vehicle not active' : 'No vehicle assigned' }}
+                                        {{ ($driverDutyBlock ?? null) && ($driverHasVehicle ?? false) ? 'Not on duty today' : (($driverHasVehicle ?? false) ? 'Vehicle not active' : 'No vehicle assigned') }}
                                     </div>
                                 @endunless
                                 <div id="live-location-info" class="text-[10px] text-[#555] space-y-1.5">

@@ -164,6 +164,9 @@
                 'type' => $type,
                 'sick' => (bool) $e->sick,
                 'vacation' => (bool) $e->vacation,
+                'auto_closed' => $e->wasAutoClosed(),
+                'reviewed' => $e->reviewed_at !== null,
+                'review_url' => route('driver-manager.time-keeping.review', $e->id),
             ];
         })
         ->values();
@@ -268,6 +271,16 @@
                                 class="px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest border transition">
                                 Overtime
                             </button>
+                            <button @click="setFilter('review')"
+                                :class="filter === 'review' ?
+                                    'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' :
+                                    'bg-gray-50 dark:bg-[#111] text-gray-500 dark:text-[#555] border-gray-200 dark:border-[#1e1e1e] hover:border-gray-300 dark:hover:border-[#333] hover:text-gray-700 dark:hover:text-[#888]'"
+                                class="px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest border transition">
+                                Needs review
+                                @if ($needsReview > 0)
+                                    <span class="ml-1 px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-400">{{ $needsReview }}</span>
+                                @endif
+                            </button>
                         </div>
                         <span class="text-[8px] font-bold text-gray-400 dark:text-[#333] uppercase tracking-widest"
                             x-text="filteredEntries.length + ' entries'"></span>
@@ -370,6 +383,24 @@
                                                     .type === 'regular'
                                             }"
                                             x-text="entry.type"></span>
+                                        <template x-if="entry.auto_closed">
+                                            <div class="mt-1.5 flex items-center gap-1.5">
+                                                <span
+                                                    class="text-[7px] sm:text-[8px] px-1.5 py-0.5 rounded-md font-bold uppercase border bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/15"
+                                                    title="The driver did not clock out, so the system closed this shift."
+                                                    x-text="entry.reviewed ? 'Auto-closed · reviewed' : 'Auto-closed'"></span>
+                                                <template x-if="!entry.reviewed">
+                                                    <form method="POST" :action="entry.review_url">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <button type="submit"
+                                                            class="text-[7px] sm:text-[8px] px-1.5 py-0.5 rounded-md font-bold uppercase border bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/15 hover:bg-emerald-500/20 transition">
+                                                            Mark reviewed
+                                                        </button>
+                                                    </form>
+                                                </template>
+                                            </div>
+                                        </template>
                                     </td>
                                 </tr>
                             </template>
@@ -697,6 +728,7 @@
                     // ── Computed ──
                     get filteredEntries() {
                         if (this.filter === 'all') return this.entries;
+                        if (this.filter === 'review') return this.entries.filter(e => e.auto_closed && !e.reviewed);
                         return this.entries.filter(e => e.type === this.filter);
                     },
 

@@ -38,7 +38,7 @@ class AdminControllerTest extends TestCase
     {
         $user = User::factory()->create()->assignRole('admin');
         $driver = Driver::factory()->create(['is_approved' => 1]);
-        Vehicle::factory()->create(['driver_id' => $driver->id]);
+        Vehicle::factory()->withDriver($driver->id)->create();
         Payment::factory()->count(3)->create(['price' => 100]);
 
         $response = $this->actingAs($user)->get(route('dashboard'));

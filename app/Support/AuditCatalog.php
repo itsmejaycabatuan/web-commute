@@ -38,6 +38,8 @@ class AuditCatalog
         'sessions_revoked' => ['Other devices signed out', 'info'],
         'registered' => ['Registered', 'ok'],
         'email_verified' => ['Email verified', 'ok'],
+        'drivers_assigned' => ['Drivers assigned', 'info'],
+        'duty_roster_updated' => ['Duty roster updated', 'info'],
         'created' => ['Created', 'ok'],
         'updated' => ['Updated', 'info'],
         'deleted' => ['Deleted', 'danger'],

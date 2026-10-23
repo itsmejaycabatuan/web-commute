@@ -104,10 +104,12 @@ class UserController extends Controller
                 'recentReceipts' => $recentReceipts,
                 'todayRecord' => $todayRecord,
                 'driverStatus' => $driverStatus,
-                // Only an active vehicle can be driven (and broadcast) live.
-                'driverVehicleId' => $driver->vehicle()->where('status', 'active')->first()?->id,
-                // Clocking in and going active both need a vehicle assigned to the driver.
+                // Only an active vehicle can be driven (and broadcast) live, and on a shared one only
+                // by the driver whose duty day it is.
+                'driverVehicleId' => $driver->dutyBlock() ? null : $driver->vehicle()->where('status', 'active')->first()?->id,
+                // Clocking in and going active need a vehicle assigned to the driver and, if it is shared, their duty day.
                 'driverHasVehicle' => $driver->hasAssignedVehicle(),
+                'driverDutyBlock' => $driver->dutyBlock(),
             ]);
         }
 
@@ -230,7 +232,10 @@ class UserController extends Controller
                 ->whereBetween('date', [$weekStart, $weekEnd])
                 ->sum('overtime_hours');
 
-            $vehicle = Vehicle::where('driver_id', $driver->id)->first();
+            $vehicle = $driver->assignedVehicle();
+            $coDriver = $driver->coDriver();
+            $nextDuty = $coDriver ? $driver->nextDutyDate() : null;
+            $dutyBlock = $driver->dutyBlock();
 
             // ── Violations data ──
             $violationLogs = ViolationLog::with('violationCode')
@@ -266,6 +271,9 @@ class UserController extends Controller
                 'weekHours' => $weekHours,
                 'weekOvertime' => $weekOvertime,
                 'vehicle' => $vehicle,
+                'coDriver' => $coDriver,
+                'nextDuty' => $nextDuty,
+                'dutyBlock' => $dutyBlock,
                 'total_distance' => $total_distance ?? 0,
                 'violationLogs' => $violationLogs,
                 'totalViolations' => $totalViolations,
@@ -315,27 +323,31 @@ class UserController extends Controller
         if ($role == 'maintenance_manager') {
             // The dashboard shows the same fleet maintenance summary as the full
             // page (/fleet-maintenance-log) so the two can never disagree.
-            $vehicles = Vehicle::with('driver')
+            $vehicles = Vehicle::query()
                 ->orderBy('plate_number')
                 ->get();
 
             $drivers = Driver::orderBy('name')->get();
 
+            // Fleet-wide overdue / due-soon services, so the dashboard flags them without anyone opening the schedule.
+            $maintenanceAlerts = app(\App\Services\MaintenanceDueService::class)->fleet();
+
             if ($vehicles->isEmpty()) {
                 return view('maintenance-manager.dashboard', array_merge(
-                    ['vehicles' => collect(), 'drivers' => $drivers, 'vehicle' => null],
+                    ['vehicles' => collect(), 'drivers' => $drivers, 'vehicle' => null, 'maintenanceAlerts' => $maintenanceAlerts],
                     $fleet->emptySummary(),
                 ));
             }
 
             $selectedId = $request->query('vehicle_id', $vehicles->first()->id);
-            $vehicle = Vehicle::with('driver')->find($selectedId) ?? $vehicles->first();
+            $vehicle = Vehicle::find($selectedId) ?? $vehicles->first();
 
             return view('maintenance-manager.dashboard', array_merge(
                 [
                     'vehicles' => $vehicles,
                     'drivers' => $drivers,
                     'vehicle' => $vehicle,
+                    'maintenanceAlerts' => $maintenanceAlerts,
                 ],
                 $fleet->summaryFor($vehicle),
             ));
@@ -544,7 +556,16 @@ class UserController extends Controller
             ]);
         }
 
-        event(new Registered($user));
+        // The verification email goes out through the Registered event. A mail-server problem must
+        // not abort the sign-up: the account exists, so tell them to use "Resend" instead.
+        $mailSent = true;
+        try {
+            event(new Registered($user));
+        } catch (\Throwable $e) {
+            $mailSent = false;
+            report($e);
+            \Illuminate\Support\Facades\Log::error('The verification email could not be sent.', ['area' => 'Register', 'user_id' => $user->id, 'exception' => $e->getMessage()]);
+        }
 
         Audit::log(Audit::ACCOUNT, 'registered', 'Registered commuter account '.$user->email, $user, [
             'role' => 'commuter',
@@ -553,7 +574,11 @@ class UserController extends Controller
 
         Auth::login($user);
 
-        return redirect()->route('verification.notice')->with('success', 'Account created, please verify your email!');
+        $response = redirect()->route('verification.notice')->with('success', 'Account created, please verify your email!');
+
+        return $mailSent
+            ? $response
+            : $response->with('error', "We couldn't send the verification email just now. Press Resend to try again.");
     }
 
     public function login(Request $request)
@@ -612,6 +637,16 @@ class UserController extends Controller
         ], $user);
 
         if (! $user->hasVerifiedEmail()) {
+            // They have to verify now, so make sure an email is on its way: send a fresh one unless
+            // one went out in the last minute (e.g. they only just registered).
+            $recent = \App\Models\EmailVerificationCode::where('user_id', $user->id)
+                ->where('updated_at', '>', now()->subMinute())->exists();
+
+            if (! $recent && ! $user->sendVerificationEmailSafely()) {
+                return redirect()->route('verification.notice')
+                    ->with('error', "We couldn't send the verification email just now. Press Resend to try again.");
+            }
+
             return redirect()->route('verification.notice');
         }
 

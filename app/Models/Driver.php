@@ -179,9 +179,64 @@ class Driver extends Model
         return $this->hasMany(TimeKeeping::class);
     }
 
+    /** The vehicle this driver is assigned to (as a collection of at most one: shared vehicles have two drivers). */
     public function vehicle()
     {
-        return $this->hasMany(Vehicle::class);
+        return $this->belongsToMany(Vehicle::class, 'driver_vehicle')->withTimestamps();
+    }
+
+    /** The driver's own duty days, from the vehicle rosters. */
+    public function dutyDays()
+    {
+        return $this->hasMany(VehicleDutyDay::class);
+    }
+
+    /** The one vehicle this driver is assigned to, if any. */
+    public function assignedVehicle(): ?Vehicle
+    {
+        return $this->vehicle()->first();
+    }
+
+    /** The driver sharing this driver's vehicle, if there is one. */
+    public function coDriver(): ?Driver
+    {
+        $vehicle = $this->assignedVehicle();
+
+        return $vehicle?->drivers()->where('drivers.id', '!=', $this->id)->first();
+    }
+
+    /**
+     * Why this driver may not go on shift today, or null if they may: no vehicle assigned, or the vehicle
+     * is shared and today is not their duty day. Used by clock-in, the availability toggle, the map and
+     * the location broadcast.
+     */
+    public function dutyBlock(\DateTimeInterface|string|null $date = null): ?string
+    {
+        $vehicle = $this->assignedVehicle();
+
+        if (! $vehicle) {
+            return 'You have no vehicle assigned yet, so you cannot clock in or set your status to active. Please contact the Maintenance Manager.';
+        }
+
+        $duty = $vehicle->dutyDriverOn($date);
+
+        if ($duty && $duty->id === $this->id) {
+            return null;
+        }
+
+        if ($duty) {
+            return "Today is {$duty->name}'s day on this vehicle ({$vehicle->plate_number}). You can drive it on your own duty days.";
+        }
+
+        return "No duty roster is set for {$vehicle->plate_number} today, so you cannot clock in or set your status to active. Please contact the Maintenance Manager.";
+    }
+
+    /** The next date (today included) on which this driver is rostered, for the dashboard. */
+    public function nextDutyDate(): ?\Illuminate\Support\Carbon
+    {
+        $date = $this->dutyDays()->whereDate('duty_date', '>=', today())->orderBy('duty_date')->value('duty_date');
+
+        return $date ? \Illuminate\Support\Carbon::parse($date) : null;
     }
 
     /**
@@ -191,6 +246,21 @@ class Driver extends Model
     public function hasAssignedVehicle(): bool
     {
         return $this->vehicle()->exists();
+    }
+
+    /**
+     * True while the driver's last shift was closed by the system (they never clocked out) and they
+     * have not started a new one, so their phone must stop sending the vehicle's position.
+     */
+    public function shiftWasAutoClosed(): bool
+    {
+        if (TimeKeeping::open()->where('driver_id', $this->id)->exists()) {
+            return false;
+        }
+
+        return TimeKeeping::where('driver_id', $this->id)
+            ->where('auto_closed_at', '>=', now()->subHours(12))
+            ->exists();
     }
 
     /**
@@ -214,7 +284,9 @@ class Driver extends Model
             'status' => 'suspended',
         ])->save();
 
-        $this->vehicle()->update(['driver_id' => null]);
+        // Off the vehicle, and off its roster from today on (past duty days stay as history).
+        $this->vehicle()->detach();
+        $this->dutyDays()->whereDate('duty_date', '>=', today())->delete();
     }
 
     public function unsuspend(): void

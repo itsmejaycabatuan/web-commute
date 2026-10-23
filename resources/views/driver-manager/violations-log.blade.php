@@ -763,6 +763,11 @@
                                 <option value="3">3rd Offense</option>
                                 <option value="4">4th+ Offense</option>
                             </select>
+                            <p x-show="form.priorOffenses !== null" x-cloak
+                                class="mt-1.5 text-[9px] text-[#555]"
+                                x-text="form.priorOffenses === 0
+                                    ? 'Auto-selected: no earlier record of this violation for this driver.'
+                                    : 'Auto-selected: ' + form.priorOffenses + ' earlier ' + (form.priorOffenses === 1 ? 'record' : 'records') + ' of this violation. You can change it.'"></p>
                         </div>
                         <input type="hidden" name="violation_fine" :value="form.violationFine">
                         <div x-show="form.violationFine > 0"
@@ -918,7 +923,7 @@
                                                     class="block mb-1 text-[7px] font-bold uppercase tracking-[0.15em] text-[#333]">Violation
                                                     Type <span class="text-red-400/60">*</span></label>
                                                 <select :name="'violations[' + index + '][vc_id]'" x-model="row.vcId"
-                                                    @change="calculateBulkRowFine(index)"
+                                                    @change="onBulkViolationChange(index)"
                                                     class="w-full px-3 py-2.5 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[10px] text-gray-900 dark:text-white focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition pr-10">
                                                     <option value="">Select violation...</option>
                                                     <template x-for="vc in violationCodes" :key="vc.id">
@@ -940,6 +945,9 @@
                                                     <option value="3">3rd Offense</option>
                                                     <option value="4">4th+ Offense</option>
                                                 </select>
+                                                <p x-show="row.priorOffenses !== null" x-cloak
+                                                    class="mt-1 text-[8px] text-[#555]"
+                                                    x-text="'Auto: ' + row.priorOffenses + ' earlier'"></p>
                                             </div>
                                             <div>
                                                 <label
@@ -1071,6 +1079,7 @@
                     id: ++rowIdCounter,
                     vcId: '',
                     offenseCount: '',
+                    priorOffenses: null,
                     fine: 0,
                     location: '',
                     date: new Date().toISOString().split('T')[0],
@@ -1083,11 +1092,14 @@
                 showBulkModal: false,
                 drivers: @json($drivers),
                 violationCodes: @json($violationCodes),
+                // { userId: { violationCodeId: earlier offences } } — drives the auto-selected offense.
+                offenseCounts: @json($offenseCounts),
                 selectedDriver: null,
                 form: {
                     driverId: '{{ old('user_id') }}',
                     violationCodeId: '{{ old('vc_id') }}',
                     offenseCount: '{{ old('violation_instance') }}',
+                    priorOffenses: null,
                     violationFine: 0,
                     location: '{{ old('place_of_violation') }}',
                     date: '{{ old('date_of_violation') }}' || new Date().toISOString().split('T')[0],
@@ -1107,8 +1119,11 @@
                 init() {
                     if (window.__openViolationModal) {
                         this.showModal = true;
-                        if (this.form.violationCodeId && this.form.offenseCount) this.calculateFine();
+                        // Keep the offense the manager submitted; only fresh selections auto-pick it.
+                        const submittedOffense = this.form.offenseCount;
                         if (this.form.driverId) this.onDriverChange();
+                        this.form.offenseCount = submittedOffense;
+                        if (this.form.violationCodeId && this.form.offenseCount) this.calculateFine();
                     }
                     @if (session('bulk_validation_failed'))
                         this.showBulkModal = true;
@@ -1122,6 +1137,7 @@
                         driverId: '',
                         violationCodeId: '',
                         offenseCount: '',
+                        priorOffenses: null,
                         violationFine: 0,
                         location: '',
                         date: new Date().toISOString().split('T')[0],
@@ -1141,10 +1157,30 @@
                     } else {
                         this.selectedDriver = null;
                     }
+                    if (this.form.violationCodeId) this.onViolationChange();
                 },
 
                 onViolationChange() {
+                    this.autoSelectOffense();
                     this.calculateFine();
+                },
+
+                // Earlier offences this driver already has for the code, plus any
+                // `pending` entries queued in the same batch.
+                priorOffenses(driverId, codeId, pending = 0) {
+                    if (!driverId || !codeId) return 0;
+                    return ((this.offenseCounts[driverId] || {})[codeId] || 0) + pending;
+                },
+
+                // 1st/2nd/3rd offence is picked from the driver's history; 4th covers "4th+".
+                nextOffense(prior) {
+                    return String(Math.min(prior + 1, 4));
+                },
+
+                autoSelectOffense() {
+                    if (!this.form.driverId || !this.form.violationCodeId) return;
+                    this.form.priorOffenses = this.priorOffenses(this.form.driverId, this.form.violationCodeId);
+                    this.form.offenseCount = this.nextOffense(this.form.priorOffenses);
                 },
 
                 calculateFine() {
@@ -1179,6 +1215,21 @@
                     } else {
                         this.bulk.selectedDriver = null;
                     }
+                    this.bulk.rows.forEach((_, i) => this.autoSelectBulkOffense(i));
+                },
+
+                // An entry's offense follows the driver's history and the entries above it in this batch.
+                autoSelectBulkOffense(index) {
+                    const row = this.bulk.rows[index];
+                    if (!this.bulk.driverId || !row.vcId) return;
+                    const earlier = this.bulk.rows.slice(0, index).filter(r => r.vcId == row.vcId).length;
+                    row.priorOffenses = this.priorOffenses(this.bulk.driverId, row.vcId, earlier);
+                    row.offenseCount = this.nextOffense(row.priorOffenses);
+                    this.calculateBulkRowFine(index);
+                },
+
+                onBulkViolationChange(index) {
+                    this.bulk.rows.forEach((_, i) => this.autoSelectBulkOffense(i));
                 },
 
                 addBulkRow() {

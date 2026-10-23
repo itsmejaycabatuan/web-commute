@@ -14,7 +14,8 @@
 > **Corrections vs. the original narrative**
 > - **The vehicle page is restricted to the `maintenance_manager` and `admin` roles.** It used to sit in the shared authenticated group, so any signed-in role (commuter, driver, …) could open it; the routes now carry `role:maintenance_manager|admin` and the admin menu has a *Vehicles* item.
 > - **Only an `active` vehicle can carry a driver.** *Inactive*, *maintenance* and *disposed* units cannot be assigned (the driver select is disabled in the form), and moving a vehicle to any of them releases its driver.
-> - **An assigned vehicle cannot be deleted** (the delete icon is locked and the server answers 409): unassign the driver first.
+> - **An assigned vehicle cannot be deleted** (the delete icon is locked and the server answers 409): unassign the drivers first.
+> - **Two drivers can share a vehicle** and take turns day by day. The form has **two driver selects** (the second optional; never the same person twice; each driver holds one vehicle only). The assignment lives in `driver_vehicle` (it replaced `vehicles.driver_id`). Who drives on which day is the **duty roster** (A6 below).
 > - **E3 (cannot dispose an active vehicle)** and **E4 (cannot assign an under-maintenance vehicle)** were not enforced in the original narrative and are now blocked by the controller.
 > - The postcondition *"removed from the live tracking map"* is now implemented: the map endpoint filters on vehicle status, so a unit set to **maintenance** or **disposed** drops off immediately instead of lingering until its last GPS ping ages out.
 > - The postcondition *"marked Disposed, historical logs preserved"* is enforced by refusing to hard-delete a vehicle that has service history (E6).
@@ -58,6 +59,12 @@
 1. In the list, the Maintenance Manager clicks the view icon.
 2. System displays a read-only modal with the full vehicle record.
 3. The modal offers **"Edit"** to jump straight into A2.
+
+**A6 – Keep the Duty Roster of a Shared Vehicle**
+1. For a vehicle with two drivers, the Maintenance Manager opens **Duty Roster** (`GET /duty-roster`, Maintenance Manager only) and picks the vehicle; the page shows *On duty today* and 28 days at a time (previous / next / today).
+2. **Generate an alternating schedule**: start date (not in the past), *Drives first*, number of days (2–120). The two drivers take turns; it replaces whatever those days held.
+3. **Swap or clear a day**: the *Swap* button hands a day to the other driver, the dropdown sets or clears it by hand; **Save roster** stores the change (past days are history and are ignored). Every change is audited (*Duty roster updated*).
+4. **Effect:** a driver can only clock in, switch to *Active* or broadcast the vehicle's location on a day the roster gives to them. On the co-driver's day the map says *"Today is [name]'s day on this vehicle"*; with no roster line for today: *"No duty roster is set…"*. A vehicle with one driver needs no roster. Removing a driver (or suspending / deleting them) drops them from the roster from today on and leaves the co-driver on the vehicle; each shift records the vehicle it was worked on (`time_keepings.vehicle_id`).
 
 **A5 – Search / Filter the Fleet**
 1. Maintenance Manager uses the search box, the status chips (*Active / Maintenance / Inactive*), the *All Fuel Types* and *All Vehicles* (assigned / unassigned) selects, or the sort select (*Newest First / Oldest First / Brand A–Z*).

@@ -280,6 +280,33 @@
                 </select>
             </div>
 
+            <!-- ══════════ MAINTENANCE ALERTS ══════════ -->
+            @if ($maintenanceAlerts->isNotEmpty())
+                <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] p-4 sm:p-5 mb-5 sm:mb-6 border-l-2 {{ $maintenanceAlerts->contains(fn ($r) => $r['overdue']->isNotEmpty()) ? 'border-l-rose-500' : 'border-l-amber-500' }}">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555]">
+                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Maintenance needs attention
+                        </span>
+                        <a href="{{ route('maintenance-manager.preventive-maintenance') }}"
+                            class="text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Open schedule</a>
+                    </div>
+                    <ul class="space-y-2">
+                        @foreach ($maintenanceAlerts as $row)
+                            <li class="flex flex-wrap items-center gap-2 text-[10px]">
+                                <a href="{{ route('maintenance-manager.preventive-maintenance', ['vehicle_id' => $row['vehicle']->id]) }}"
+                                    class="font-mono font-bold text-gray-700 dark:text-[#ccc]">{{ $row['vehicle']->plate_number }}</a>
+                                @foreach ($row['overdue'] as $item)
+                                    <span class="px-1.5 py-0.5 rounded-md border bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/15 font-bold">{{ $item['task'] }} · overdue</span>
+                                @endforeach
+                                @foreach ($row['due_soon'] as $item)
+                                    <span class="px-1.5 py-0.5 rounded-md border bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/15 font-bold">{{ $item['task'] }} · due soon</span>
+                                @endforeach
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <!-- ══════════ VEHICLE INFORMATION CARD ══════════ -->
             <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] p-4 sm:p-6 mb-5 sm:mb-6">
                 <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">

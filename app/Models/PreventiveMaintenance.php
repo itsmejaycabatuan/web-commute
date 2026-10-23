@@ -68,6 +68,57 @@ class PreventiveMaintenance extends Model
         return $this->belongsTo(MaintenanceTask::class, 'task_id');
     }
 
+    public const OVERDUE = 'overdue';
+    public const DUE_SOON = 'due_soon';
+    public const OK = 'ok';
+
+    /** The date the next service falls due; null when the task has no time interval or was never dated. */
+    public function nextDueDate(): ?Carbon
+    {
+        $months = $this->maintenanceTask?->months_between_service;
+
+        if (! $this->last_service_date || ! $months) {
+            return null;
+        }
+
+        return $this->last_service_date->copy()->addMonths((int) $months);
+    }
+
+    /** The odometer reading the next service falls due at; null when the task has no distance interval. */
+    public function nextDueOdo(): ?int
+    {
+        $km = $this->maintenanceTask?->miles_between_service;
+
+        if ($this->last_service_odo === null || ! $km) {
+            return null;
+        }
+
+        return (int) $this->last_service_odo + (int) $km;
+    }
+
+    /**
+     * 'overdue', 'due_soon' or 'ok'. $currentOdo is the vehicle's latest recorded odometer reading;
+     * without it only the date can make a service due.
+     */
+    public function dueStatus(?int $currentOdo = null): string
+    {
+        $date = $this->nextDueDate();
+        $odo = $this->nextDueOdo();
+        $soonDays = (int) config('maintenance.due_soon_days', 7);
+        $soonKm = (int) config('maintenance.due_soon_km', 500);
+
+        if (($date && $date->lt(today())) || ($odo !== null && $currentOdo !== null && $currentOdo >= $odo)) {
+            return self::OVERDUE;
+        }
+
+        if (($date && $date->lte(today()->addDays($soonDays)))
+            || ($odo !== null && $currentOdo !== null && $odo - $currentOdo <= $soonKm)) {
+            return self::DUE_SOON;
+        }
+
+        return self::OK;
+    }
+
     public function maintenanceLogs()
     {
         return $this->hasMany(VehicleMaintenanceLog::class, 'maintenance_id');

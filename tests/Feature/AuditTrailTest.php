@@ -75,7 +75,7 @@ class AuditTrailTest extends TestCase
     public function test_a_vehicle_heartbeat_and_driver_availability_are_not_audited()
     {
         $driver = Driver::factory()->approved()->create();
-        $vehicle = Vehicle::factory()->create(['status' => 'active', 'driver_id' => $driver->id]);
+        $vehicle = Vehicle::factory()->withDriver($driver->id)->create(['status' => 'active']);
         $before = $this->newEntryCount();
 
         Vehicle::where('id', $vehicle->id)->update(['is_active' => false]); // what the scheduler does
@@ -318,7 +318,7 @@ class AuditTrailTest extends TestCase
         $this->assertEquals(1, $approval->properties['attributes']['is_approved']);
 
         $driver = Driver::factory()->approved()->create();
-        $vehicle = Vehicle::factory()->create(['status' => 'active', 'driver_id' => $driver->id]);
+        $vehicle = Vehicle::factory()->withDriver($driver->id)->create(['status' => 'active']);
 
         $this->actingAs($admin)->patch(route('drivers.suspension', ['driver' => $driver->id]), ['suspension_reason' => 'Unsafe driving']);
         $this->actingAs($admin)->patch(route('drivers.suspension', ['driver' => $driver->id]));

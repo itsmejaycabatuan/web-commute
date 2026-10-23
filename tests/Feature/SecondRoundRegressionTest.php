@@ -79,7 +79,7 @@ class SecondRoundRegressionTest extends TestCase
         $driver = Driver::factory()->create([
             'user_id' => $user->id, 'is_approved' => 1, 'is_rejected' => 0, 'status' => $status,
         ]);
-        $vehicle = Vehicle::factory()->create(['status' => 'active', 'driver_id' => $driver->id]);
+        $vehicle = Vehicle::factory()->withDriver($driver->id)->create(['status' => 'active']);
 
         VehicleLocation::create([
             'vehicle_id' => $vehicle->id, 'user_id' => $user->id, 'latitude' => 10.3157,

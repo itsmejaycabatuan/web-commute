@@ -111,7 +111,7 @@ class UcnSuspensionTest extends TestCase
     public function test_a_suspended_driver_cannot_broadcast_a_location()
     {
         [$user, $driver] = $this->driverWithProfile();
-        $vehicle = Vehicle::factory()->create(['driver_id' => $driver->id]);
+        $vehicle = Vehicle::factory()->withDriver($driver->id)->create();
 
         $driver->suspend();
 
@@ -130,11 +130,11 @@ class UcnSuspensionTest extends TestCase
     public function test_suspending_a_driver_detaches_their_vehicle()
     {
         [, $driver] = $this->driverWithProfile();
-        $vehicle = Vehicle::factory()->create(['driver_id' => $driver->id]);
+        $vehicle = Vehicle::factory()->withDriver($driver->id)->create();
 
         $driver->suspend();
 
-        $this->assertNull($vehicle->fresh()->driver_id);
+        $this->assertSame(0, $vehicle->fresh()->drivers()->count());
     }
 
     public function test_a_suspended_driver_can_be_reactivated()
@@ -157,7 +157,7 @@ class UcnSuspensionTest extends TestCase
     public function test_a_driver_holding_a_vehicle_cannot_be_deleted()
     {
         [, $driver] = $this->driverWithProfile();
-        Vehicle::factory()->create(['driver_id' => $driver->id]);
+        Vehicle::factory()->withDriver($driver->id)->create();
 
         $this->actingAs($this->admin())
             ->withoutMiddleware(VerifyCsrfToken::class)

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Models\QrScan;
 use App\Models\TopupHistory;
 use App\Models\Wallet;
 use App\Services\FareCalculator;
@@ -48,6 +49,17 @@ class PaymentController extends Controller
             'destination.required' => 'Pick-up point and destination is required.',
         ]);
 
+        // Pay on board: the checkout only opens for a commuter who has scanned one of the system's
+        // QR codes inside the PUJ. The trip is kept so it is picked up again after the scan.
+        $scan = QrScan::currentFor($userId);
+
+        if (config('qr.required') && ! $scan) {
+            $request->session()->put('qr_trip', $request->only('pickup', 'destination', 'distance', 'price-regular'));
+
+            return redirect()->route('payment.scan')
+                ->with('warning', 'Scan the QR code inside the PUJ to pay your fare.');
+        }
+
         // Display the SERVER-priced fare; the calculator's figure is only a hint.
         $price = (float) $validated['price-regular'];
         try {
@@ -74,6 +86,7 @@ class PaymentController extends Controller
             'price' => $price,
             'balance' => $balance,
             'inFlightPayment' => $inFlight,
+            'scannedCode' => $scan?->qrCode,
         ]);
     }
 
@@ -104,6 +117,14 @@ class PaymentController extends Controller
             return $this->replayedPayment($existing);
         }
 
+        // Pay on board: a fare is only taken against a fresh scan of one of the system's QR codes.
+        $scan = QrScan::currentFor($userId);
+
+        if (config('qr.required') && ! $scan) {
+            return redirect()->route('payment.scan')
+                ->with('error', 'Scan the QR code inside the PUJ to pay your fare.');
+        }
+
         // The fare is RE-PRICED server-side from the published rate table; the
         // amount posted by the browser is never trusted.
         try {
@@ -116,7 +137,7 @@ class PaymentController extends Controller
 
         // ── Gateway method (GCash / Maya) ────────────────────────────────
         if ($this->paymongo->isGatewayMethod($method) && $this->paymongo->enabled()) {
-            return $this->startGatewayPayment($userId, $validated, $method, $transactionId, $amount);
+            return $this->startGatewayPayment($userId, $validated, $method, $transactionId, $amount, $scan);
         }
 
         // ── Wallet (or gateway method with the gateway disabled) ─────────
@@ -150,6 +171,9 @@ class PaymentController extends Controller
         }
 
         if ($payment) {
+            // The scan is spent: one scan covers one fare.
+            $scan?->update(['used_at' => now(), 'payment_id' => $payment->id]);
+
             $wallet->update([
                 'balance' => $newBalance,
             ]);
@@ -189,7 +213,7 @@ class PaymentController extends Controller
      * commuter to the hosted checkout page. The payment row is written as
      * `pending` and only settles via the webhook or the return URL.
      */
-    protected function startGatewayPayment(int $userId, array $validated, string $method, string $transactionId, float $amount): \Illuminate\Http\RedirectResponse
+    protected function startGatewayPayment(int $userId, array $validated, string $method, string $transactionId, float $amount, ?QrScan $scan = null): \Illuminate\Http\RedirectResponse
     {
         try {
             // One call: PayMongo creates the payment intent as part of the
@@ -217,7 +241,7 @@ class PaymentController extends Controller
         }
 
         try {
-            Payment::create([
+            $pending = Payment::create([
                 'paid_by' => $userId,
                 'starting_point' => $validated['pickup'],
                 'destination' => $validated['destination'],
@@ -234,6 +258,8 @@ class PaymentController extends Controller
 
             return back()->with('error', 'There was a problem starting the payment');
         }
+
+        $scan?->update(['used_at' => now(), 'payment_id' => $pending->id]);
 
         // The commuter leaves for PayMongo's hosted checkout.
         return redirect()->away($session['checkout_url']);

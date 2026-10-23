@@ -540,6 +540,22 @@
                                                                 x-text="'• ' + v.fuel_type"></span>
                                                         </template>
                                                     </div>
+                                                    <template x-if="v.maintenance_overdue && v.maintenance_overdue.length">
+                                                        <a :href="'{{ route('maintenance-manager.preventive-maintenance') }}?vehicle_id=' + v.id"
+                                                            :title="'Overdue: ' + v.maintenance_overdue.join(', ')"
+                                                            class="inline-flex items-center gap-1 mt-1 text-[7px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/15">
+                                                            <i class="fa-solid fa-triangle-exclamation text-[7px]"></i>
+                                                            <span x-text="v.maintenance_overdue.length + ' service' + (v.maintenance_overdue.length === 1 ? '' : 's') + ' overdue'"></span>
+                                                        </a>
+                                                    </template>
+                                                    <template x-if="!(v.maintenance_overdue && v.maintenance_overdue.length) && v.maintenance_due_soon && v.maintenance_due_soon.length">
+                                                        <a :href="'{{ route('maintenance-manager.preventive-maintenance') }}?vehicle_id=' + v.id"
+                                                            :title="'Due soon: ' + v.maintenance_due_soon.join(', ')"
+                                                            class="inline-flex items-center gap-1 mt-1 text-[7px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/15">
+                                                            <i class="fa-solid fa-clock text-[7px]"></i>
+                                                            <span x-text="v.maintenance_due_soon.length + ' due soon'"></span>
+                                                        </a>
+                                                    </template>
                                                 </div>
                                             </div>
                                         </td>
@@ -557,7 +573,7 @@
                                                             'text-gray-300 dark:text-[#333]'"></i>
                                                 </div>
                                                 <span
-                                                    class="text-[9px] sm:text-[10px] font-bold truncate max-w-[120px]"
+                                                    class="text-[9px] sm:text-[10px] font-bold truncate max-w-[160px]" :title="v.driver_name || ''"
                                                     :class="v.driver_name ? 'text-gray-700 dark:text-[#ccc]' :
                                                         'text-gray-400 dark:text-[#444]'"
                                                     x-text="v.driver_name || 'Unassigned'"></span>
@@ -1109,16 +1125,34 @@
                                     class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#333] mb-3 flex items-center gap-2">
                                     <i class="fa-solid fa-user text-[7px]"></i> Driver Assignment
                                 </p>
-                                <select x-model="editForm.driver_id" :disabled="editForm.status !== 'active'"
-                                    class="form-input form-select w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                                    <option value="">— No Driver Assigned —</option>
-                                    <template x-for="d in availableDrivers" :key="d.id">
-                                        <option :value="String(d.id)" x-text="d.name + ' (' + d.email + ')'">
-                                        </option>
-                                    </template>
-                                </select>
-<p x-show="!editForm.status || editForm.status === 'active' ? false : true" class="mt-1.5 text-[9px] font-semibold text-gray-400 dark:text-[#555]">A driver can only be assigned to an active vehicle.</p>
-<p x-show="editErrors.driver_id" x-text="[].concat(editErrors.driver_id || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
+                                <div class="space-y-2.5">
+                                    <div>
+                                        <select x-model="editForm.driver_id" :disabled="editForm.status !== 'active'"
+                                            aria-label="First driver"
+                                            class="form-input form-select w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <option value="">— No Driver Assigned —</option>
+                                            <template x-for="d in driversFor(1)" :key="d.id">
+                                                <option :value="String(d.id)" x-text="d.name + ' (' + d.email + ')'"></option>
+                                            </template>
+                                        </select>
+                                        <p x-show="editErrors.driver_id" x-text="[].concat(editErrors.driver_id || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
+                                    </div>
+                                    <div>
+                                        <select x-model="editForm.second_driver_id"
+                                            :disabled="editForm.status !== 'active' || !editForm.driver_id"
+                                            aria-label="Second driver (optional)"
+                                            class="form-input form-select w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <option value="">— No second driver —</option>
+                                            <template x-for="d in driversFor(2)" :key="d.id">
+                                                <option :value="String(d.id)" x-text="d.name + ' (' + d.email + ')'"></option>
+                                            </template>
+                                        </select>
+                                        <p x-show="editErrors.second_driver_id" x-text="[].concat(editErrors.second_driver_id || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
+                                    </div>
+                                </div>
+                                <p x-show="editForm.status !== 'active'" class="mt-1.5 text-[9px] font-semibold text-gray-400 dark:text-[#555]">A driver can only be assigned to an active vehicle.</p>
+                                <p class="mt-1.5 text-[9px] text-gray-400 dark:text-[#444]">Up to two drivers can share a vehicle and take turns
+                                    day by day: set who drives on which day on the Duty Roster page.</p>
                             </div>
 
                             <!-- Status -->
@@ -1290,6 +1324,7 @@
                     tank_capacity: '',
                     location: '',
                     driver_id: '',
+                    second_driver_id: '',
                     status: 'active',
                 },
                 editErrors: {},
@@ -1313,9 +1348,15 @@
                 // (the vehicle being edited keeps its own driver in the list).
                 get availableDrivers() {
                     const taken = new Set(this.vehicles
-                        .filter(v => v.driver_id && String(v.id) !== String(this.editId))
-                        .map(v => String(v.driver_id)));
+                        .filter(v => String(v.id) !== String(this.editId))
+                        .flatMap(v => (v.driver_ids || []).map(String)));
                     return this.drivers.filter(d => !taken.has(String(d.id)));
+                },
+
+                // The two selects: neither lists the driver already chosen in the other.
+                driversFor(slot) {
+                    const other = String(slot === 1 ? this.editForm.second_driver_id : this.editForm.driver_id);
+                    return this.availableDrivers.filter(d => String(d.id) !== other || !other);
                 },
 
                 get hasActiveFilters() {
@@ -1438,7 +1479,7 @@
 
                     // A vehicle that is not active cannot carry a driver.
                     this.$watch('editForm.status', status => {
-                        if (status !== 'active') this.editForm.driver_id = '';
+                        if (status !== 'active') this.editForm.driver_id = this.editForm.second_driver_id = '';
                     });
                 },
 
@@ -1455,6 +1496,7 @@
                         tank_capacity: '',
                         location: '',
                         driver_id: '',
+                        second_driver_id: '',
                         status: 'active',
                         acquisition_date: '',
                         exp_disposal_date: '',
@@ -1476,6 +1518,7 @@
                         tank_capacity: v.tank_capacity || '',
                         location: v.location || '',
                         driver_id: v.driver_id ? String(v.driver_id) : '',
+                        second_driver_id: v.second_driver_id ? String(v.second_driver_id) : '',
                         status: v.status || 'active',
                         acquisition_date: v.acquisition_date_raw || '',
                         exp_disposal_date: v.exp_disposal_date_raw || '',

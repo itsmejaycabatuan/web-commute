@@ -77,6 +77,7 @@ The shift being written shares part of the day with an entry that already exists
 
 ## Known Gaps / Notes
 
+- **Auto-closed shifts need a review.** Shifts closed by the system (UCN_SC_E010) show an *Auto-closed* badge, count toward the *Needs review* filter, and have a **Mark reviewed** button (`PATCH /time-keeping/{entry}/review`, recorded in the audit trail). Review only acknowledges the entry — the hours it carries are the credited regular shift, and there is still no way to edit them (see the note below).
 - **Shifts cannot span midnight.** An overnight shift (e.g. 22:00 → 06:00) is rejected by E4; the manager must split it into two dated entries.
 - **No overlap check against the driver's own clock-in** (UCN_SC_E009) — a manager entry and a self-clocked entry on the same day are only blocked when they genuinely overlap in time.
 - **Entries are immutable**: there is no edit or delete for a manager-entered row; only the driver's own clock-out (E010) fills in `time_out`.
