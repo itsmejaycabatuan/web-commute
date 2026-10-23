@@ -210,7 +210,8 @@ class FourthRoundRegressionTest extends TestCase
             $html = $this->get(route($route))->assertOk()->getContent();
 
             $this->assertStringNotContainsString('flex absolute top-3 left-3', $html, "$route: the back link must not float over the form");
-            $this->assertStringContainsString('self-start', $html);
+            // The shell renders the back link in the top bar of the form column, in normal flow.
+            $this->assertStringContainsString('class="au-back"', $html, "$route: the back link is part of the page flow");
         }
     }
 
@@ -434,7 +435,8 @@ class FourthRoundRegressionTest extends TestCase
     {
         $html = $this->actingAs($this->userWithRole('admin'))->get(route('dashboard'))->assertOk()->getContent();
 
-        $this->assertMatchesRegularExpression("/Alpine\.store\('sidebar', \{\s*open: true/", $html);
+        // Expanded on desktop widths; tablets (< 1100px) start on the slim icon rail so the page keeps its room.
+        $this->assertMatchesRegularExpression("/Alpine\.store\('sidebar', \{[^}]*?open: window\.innerWidth >= 1100/s", $html);
     }
 
     // ───────────── verification email ─────────────

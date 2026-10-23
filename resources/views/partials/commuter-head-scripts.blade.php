@@ -1,3 +1,5 @@
+@include('partials.theme')
+
 {{-- commuter-head-scripts.blade.php --}}
 
 {{-- Theme & Font Size detection MUST run immediately to prevent flash --}}
@@ -44,8 +46,9 @@
         theme: {
             extend: {
                 fontFamily: {
-                    sans: ['Inter', 'sans-serif']
-                }
+                    sans: window.SC_FONT
+                },
+                colors: window.SC_COLORS
             }
         }
     }

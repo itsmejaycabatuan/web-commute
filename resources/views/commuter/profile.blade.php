@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartCommute | User Profile</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
@@ -18,7 +18,7 @@
             padding: 0;
             height: 100%;
             width: 100%;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             overflow-x: hidden;
         }
 
@@ -172,7 +172,7 @@
     </div>
 
     <!-- ══════════ MAIN CONTENT ══════════ -->
-    <div class="pt-[4.25rem] sm:pt-24 pb-8 sm:pb-10 max-w-6xl mx-auto px-3.5 sm:px-5 lg:px-6">
+    <div class="pt-[5.75rem] sm:pt-28 pb-8 sm:pb-10 max-w-6xl mx-auto px-3.5 sm:px-5 lg:px-6">
 
         <!-- ── User Info Card (mobile) ── -->
         <div class="xl:hidden mb-5 sm:mb-6">

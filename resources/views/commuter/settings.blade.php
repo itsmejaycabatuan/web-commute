@@ -9,7 +9,7 @@
 
     @include('partials.commuter-head-scripts')
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
@@ -31,7 +31,7 @@
             padding: 0;
             height: 100%;
             width: 100%;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             overflow-x: hidden;
         }
 
@@ -104,8 +104,8 @@
         }
 
         .form-input:focus {
-            border-color: rgba(59, 130, 246, 0.4);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
         }
 
         .dark .form-input {
@@ -155,7 +155,7 @@
         }
 
         .toggle-track.active {
-            background: #3b82f6;
+            background: #6366f1;
         }
 
         .dark .toggle-track {
@@ -163,7 +163,7 @@
         }
 
         .dark .toggle-track.active {
-            background: #2563eb;
+            background: #4f46e5;
         }
 
         .toggle-thumb {
@@ -206,8 +206,8 @@
         }
 
         .dark .nav-item.active {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.2);
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
         }
 
         ::-webkit-scrollbar {
@@ -236,13 +236,13 @@
 
         .font-size-btn.active {
             background: #ffffff;
-            color: #1d4ed8;
+            color: #4338ca;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .dark .font-size-btn.active {
             background: #1a1a1a;
-            color: #60a5fa;
+            color: #a5b4fc;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
         }
     </style>
@@ -273,7 +273,7 @@
     </header>
 
     <!-- ══════════ MAIN CONTENT ══════════ -->
-    <div class="pt-[4.25rem] sm:pt-24 pb-8 sm:pb-10 max-w-5xl mx-auto px-3.5 sm:px-5 lg:px-6">
+    <div class="pt-[5.75rem] sm:pt-28 pb-8 sm:pb-10 max-w-5xl mx-auto px-3.5 sm:px-5 lg:px-6">
 
         <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6 items-start">
 

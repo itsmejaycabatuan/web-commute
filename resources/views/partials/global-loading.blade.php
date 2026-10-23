@@ -28,7 +28,7 @@
         height: 100%;
         width: 35%;
         border-radius: 0 999px 999px 0;
-        background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+        background: linear-gradient(90deg, #6366f1, #a5b4fc, #6366f1);
         animation: app-bar-slide 1.1s ease-in-out infinite;
     }
 
@@ -75,21 +75,21 @@
         padding: 1.75rem 2.25rem;
         border-radius: 1.25rem;
         background: rgba(255, 255, 255, 0.97);
-        border: 1px solid #e2e8f0;
+        border: 1px solid #e4e7f3;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
     }
 
     .dark .app-loading-card {
-        background: rgba(17, 17, 17, 0.97);
-        border-color: #222222;
+        background: rgba(18, 21, 42, 0.97);
+        border-color: #242a4a;
     }
 
     .app-loading-spinner {
         width: 2.25rem;
         height: 2.25rem;
         border-radius: 50%;
-        border: 3px solid rgba(59, 130, 246, 0.2);
-        border-top-color: #3b82f6;
+        border: 3px solid rgba(99, 102, 241, 0.2);
+        border-top-color: #6366f1;
         animation: app-spin 0.7s linear infinite;
     }
 

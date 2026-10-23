@@ -18,7 +18,7 @@
             {{-- "Three Dots" Separator --}}
             @if (is_string($element))
                 <span
-                    class="w-8 h-8 flex items-center justify-center text-xs text-slate-400 dark:text-white/30">{{ $element }}</span>
+                    class="w-8 h-8 flex items-center justify-center text-xs text-slate-400 dark:text-white/60">{{ $element }}</span>
             @endif
 
             {{-- Array Of Links --}}

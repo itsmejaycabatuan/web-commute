@@ -14,21 +14,9 @@
             document.documentElement.classList.remove('dark');
         }
     </script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     @include('partials.head-scripts')
@@ -39,7 +27,7 @@
             margin: 0;
             padding: 0;
             height: 100%;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             overflow-x: hidden;
             background: #f8fafc;
         }
@@ -316,7 +304,7 @@
 
         /* ═══ ACCENT PRESERVATION ═══ */
         .text-blue-400 {
-            color: #3b82f6 !important;
+            color: #6366f1 !important;
         }
 
         .text-emerald-400 {
@@ -726,16 +714,16 @@
                             class="p-3 rounded-xl bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-[10px] font-bold text-[#ccc]" x-text="selectedDriver.name"></p>
+                                    <p class="text-[10px] font-bold text-[#ccc]" x-text="selectedDriver?.name"></p>
                                     <p class="text-[8px] text-[#444]"
-                                        x-text="selectedDriver.license + ' · Exp: ' + selectedDriver.expirationDate">
+                                        x-text="selectedDriver?.license + ' · Exp: ' + selectedDriver?.expirationDate">
                                     </p>
                                 </div>
                                 <span class="text-[7px] sm:text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-md"
-                                    :class="selectedDriver.isExpired ? 'bg-red-500/10 text-red-400 border border-red-500/15' :
-                                        selectedDriver.licenseState === 'expiring' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/15' :
+                                    :class="selectedDriver?.isExpired ? 'bg-red-500/10 text-red-400 border border-red-500/15' :
+                                        selectedDriver?.licenseState === 'expiring' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/15' :
                                         'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'"
-                                    x-text="selectedDriver.isExpired ? 'Expired' : (selectedDriver.licenseState === 'expiring' ? 'Expiring soon' : 'Valid')"></span>
+                                    x-text="selectedDriver?.isExpired ? 'Expired' : (selectedDriver?.licenseState === 'expiring' ? 'Expiring soon' : 'Valid')"></span>
                             </div>
                         </div>
                         <div>
@@ -874,17 +862,17 @@
                                     class="mt-3 flex items-center justify-between">
                                     <div>
                                         <p class="text-[10px] font-bold text-[#ccc]"
-                                            x-text="bulk.selectedDriver.name"></p>
+                                            x-text="bulk.selectedDriver?.name"></p>
                                         <p class="text-[8px] text-[#444]"
-                                            x-text="bulk.selectedDriver.license + ' · Exp: ' + bulk.selectedDriver.expirationDate">
+                                            x-text="bulk.selectedDriver?.license + ' · Exp: ' + bulk.selectedDriver?.expirationDate">
                                         </p>
                                     </div>
                                     <span class="text-[7px] sm:text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-md"
-                                        :class="bulk.selectedDriver.isExpired ?
+                                        :class="bulk.selectedDriver?.isExpired ?
                                             'bg-red-500/10 text-red-400 border border-red-500/15' :
-                                            bulk.selectedDriver.licenseState === 'expiring' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/15' :
+                                            bulk.selectedDriver?.licenseState === 'expiring' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/15' :
                                             'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'"
-                                        x-text="bulk.selectedDriver.isExpired ? 'Expired' : (bulk.selectedDriver.licenseState === 'expiring' ? 'Expiring soon' : 'Valid')"></span>
+                                        x-text="bulk.selectedDriver?.isExpired ? 'Expired' : (bulk.selectedDriver?.licenseState === 'expiring' ? 'Expiring soon' : 'Valid')"></span>
                                 </div>
                             </div>
 

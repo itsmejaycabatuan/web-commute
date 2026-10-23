@@ -1,0 +1,790 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   SmartCommute — "Aurora" design system
+   ────────────────────────────────────────────────────────────────────────────
+   One stylesheet that re-skins every console page. The Blade views keep their
+   Tailwind utility classes; this file re-points those utilities (hard-coded
+   greys, tiny type sizes, boxy radii, accent stripes) at the tokens below, so
+   changing a token here changes the whole product.
+
+   Loaded last (partials/theme.blade.php) and written with `:root:root` so it
+   wins over page-level <style> blocks without sprinkling !important everywhere.
+
+   Sections
+     1. Tokens (light / dark)
+     2. Base: font, canvas, scrollbar, focus, motion
+     3. Surfaces: cards, panels, chips, hairlines
+     4. Type scale + weight / tracking / case
+     5. Radii
+     6. Hard-coded dark greys → tokens
+     7. Accent stripes → corner glow
+     8. Controls: buttons, inputs, tables, modals, badges
+     9. Reusable components (.sc-*)
+    10. Generated type scale (tiny arbitrary sizes → readable sizes)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. TOKENS ───────────────────────────────────────────────────────────── */
+:root {
+    --sc-font: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+    --sc-bg: #f1f2f9;
+    --sc-surface: #ffffff;
+    --sc-surface-2: #f6f7fc;
+    --sc-surface-3: #eceef8;
+    --sc-line: #e4e7f3;
+    --sc-line-strong: #d3d8ea;
+
+    --sc-ink: #0d1020;
+    --sc-ink-2: #3a4160;
+    --sc-mute: #5a6283;
+
+    --sc-brand: #4f46e5;
+    --sc-brand-hi: #6366f1;
+    --sc-brand-2: #7c3aed;
+    --sc-brand-soft: #eef0ff;
+    --sc-brand-text: #4338ca;
+    --sc-grad: linear-gradient(135deg, #5b5bf5 0%, #7c3aed 100%);
+    --sc-grad-warm: linear-gradient(135deg, #6366f1 0%, #a855f7 55%, #ec4899 100%);
+
+    --sc-shadow-1: 0 1px 2px rgba(20, 24, 60, .05);
+    --sc-shadow-2: 0 1px 2px rgba(20, 24, 60, .04), 0 12px 32px -14px rgba(52, 56, 140, .22);
+    --sc-shadow-3: 0 30px 70px -24px rgba(40, 44, 120, .38);
+    --sc-ring: 0 0 0 4px rgba(99, 102, 241, .20);
+
+    --sc-nav-bg: linear-gradient(185deg, #171a38 0%, #0d0f24 100%);
+
+    --sc-glow-a: rgba(99, 102, 241, .14);
+    --sc-glow-b: rgba(236, 72, 153, .07);
+    --sc-glow-c: rgba(34, 211, 238, .08);
+}
+
+:root.dark {
+    --sc-bg: #0a0c18;
+    --sc-surface: #12152a;
+    --sc-surface-2: #181c36;
+    --sc-surface-3: #1f2442;
+    --sc-line: #242a4a;
+    --sc-line-strong: #323963;
+
+    --sc-ink: #eef0ff;
+    --sc-ink-2: #c5cbe8;
+    --sc-mute: #9aa3c7;
+
+    --sc-brand: #818cf8;
+    --sc-brand-hi: #a5b4fc;
+    --sc-brand-2: #a78bfa;
+    --sc-brand-soft: rgba(129, 140, 248, .14);
+    --sc-brand-text: #a5b4fc;
+
+    --sc-shadow-1: 0 1px 2px rgba(0, 0, 0, .4);
+    --sc-shadow-2: 0 1px 2px rgba(0, 0, 0, .35), 0 16px 40px -16px rgba(0, 0, 0, .65);
+    --sc-shadow-3: 0 34px 80px -26px rgba(0, 0, 0, .8);
+    --sc-ring: 0 0 0 4px rgba(129, 140, 248, .28);
+
+    --sc-nav-bg: linear-gradient(185deg, #131633 0%, #0a0c1e 100%);
+
+    --sc-glow-a: rgba(99, 102, 241, .20);
+    --sc-glow-b: rgba(168, 85, 247, .10);
+    --sc-glow-c: rgba(34, 211, 238, .06);
+}
+
+/* ── 2. BASE ─────────────────────────────────────────────────────────────── */
+:root:root,
+:root:root body {
+    font-family: var(--sc-font);
+}
+
+:root:root body {
+    color: var(--sc-ink);
+    background:
+        radial-gradient(900px 520px at 6% -8%, var(--sc-glow-a), transparent 62%),
+        radial-gradient(760px 460px at 104% 2%, var(--sc-glow-b), transparent 60%),
+        radial-gradient(700px 420px at 50% 112%, var(--sc-glow-c), transparent 60%),
+        var(--sc-bg) !important;
+    background-attachment: fixed !important;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+:root:root body::after {
+    background-color: transparent !important;
+}
+
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+}
+
+::selection {
+    background: rgba(99, 102, 241, .28);
+}
+
+/* Slim, quiet scrollbars */
+:root:root ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+:root:root ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+:root:root ::-webkit-scrollbar-thumb {
+    background: var(--sc-line-strong);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+:root:root ::-webkit-scrollbar-thumb:hover {
+    background: var(--sc-mute);
+    background-clip: content-box;
+}
+
+/* Keyboard focus is always visible and on-brand */
+:root:root :focus-visible {
+    outline: 2px solid var(--sc-brand-hi);
+    outline-offset: 2px;
+    border-radius: inherit;
+}
+
+/* Page entrance */
+@keyframes sc-rise {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes sc-fade {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+main.sidebar-transition {
+    animation: sc-rise .5s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ── 3. SURFACES ─────────────────────────────────────────────────────────── */
+:root:root .glass-card,
+:root:root .glass-panel {
+    background: var(--sc-surface) !important;
+    border: 1px solid var(--sc-line) !important;
+    box-shadow: var(--sc-shadow-2) !important;
+    backdrop-filter: none;
+}
+
+:root:root .glass-card {
+    transition: transform .25s cubic-bezier(.16, 1, .3, 1), box-shadow .25s ease, border-color .25s ease;
+}
+
+:root:root a.glass-card:hover,
+:root:root button.glass-card:hover,
+:root:root .glass-card.hover-lift:hover {
+    transform: translateY(-2px);
+    border-color: var(--sc-line-strong) !important;
+    box-shadow: var(--sc-shadow-3) !important;
+}
+
+:root:root .inner-card {
+    background: var(--sc-surface-2) !important;
+    border: 1px solid var(--sc-line) !important;
+}
+
+:root:root .inner-card-hover:hover {
+    background: var(--sc-surface-3) !important;
+    border-color: var(--sc-line-strong) !important;
+}
+
+:root:root .icon-box {
+    background: var(--sc-brand-soft) !important;
+    border: 1px solid transparent !important;
+}
+
+:root:root .badge-inactive {
+    background: var(--sc-surface-3) !important;
+    color: var(--sc-mute) !important;
+    border: 1px solid var(--sc-line) !important;
+}
+
+:root:root .border-subtle,
+:root:root .border-faint {
+    border-color: var(--sc-line) !important;
+}
+
+:root:root .divide-subtle> :not([hidden])~ :not([hidden]) {
+    border-color: var(--sc-line) !important;
+}
+
+:root:root .table-row:hover {
+    background: var(--sc-surface-2) !important;
+}
+
+/* ── 3b. BREATHING ROOM ──────────────────────────────────────────────────────
+   Cards have big rounded corners now, so the old 12–16px gutters read as cramped.
+   Any grid whose children are cards gets a roomier gutter (16px on phones, 20px, 24px on desktops). */
+:root:root .grid:has(> .glass-card),
+:root:root .grid:has(> .glass-panel),
+:root:root .grid:has(> .inner-card) {
+    gap: 1rem;
+}
+
+@media (min-width: 640px) {
+
+    :root:root .grid:has(> .glass-card),
+    :root:root .grid:has(> .glass-panel),
+    :root:root .grid:has(> .inner-card) {
+        gap: 1.25rem;
+    }
+}
+
+@media (min-width: 1024px) {
+
+    :root:root .grid:has(> .glass-card),
+    :root:root .grid:has(> .glass-panel),
+    :root:root .grid:has(> .inner-card) {
+        gap: 1.5rem;
+    }
+}
+
+/* Light-mode neutrals used by the views, pulled onto the cooler palette */
+:root:root:not(.dark) .bg-white {
+    background-color: var(--sc-surface);
+}
+
+:root:root:not(.dark) .bg-gray-50,
+:root:root:not(.dark) .bg-slate-50 {
+    background-color: var(--sc-surface-2);
+}
+
+:root:root:not(.dark) .bg-gray-100,
+:root:root:not(.dark) .bg-slate-100 {
+    background-color: var(--sc-surface-3);
+}
+
+:root:root:not(.dark) .border-gray-200,
+:root:root:not(.dark) .border-slate-200,
+:root:root:not(.dark) .border-gray-100,
+:root:root:not(.dark) .border-slate-100 {
+    border-color: var(--sc-line);
+}
+
+:root:root:not(.dark) .border-gray-300,
+:root:root:not(.dark) .border-slate-300 {
+    border-color: var(--sc-line-strong);
+}
+
+:root:root:not(.dark) .text-gray-900,
+:root:root:not(.dark) .text-slate-900 {
+    color: var(--sc-ink);
+}
+
+:root:root:not(.dark) .text-gray-800,
+:root:root:not(.dark) .text-gray-700,
+:root:root:not(.dark) .text-slate-800,
+:root:root:not(.dark) .text-slate-700 {
+    color: var(--sc-ink-2);
+}
+
+/* ── 4. TYPE: weight, tracking, case ─────────────────────────────────────── */
+/* 900 is too shouty at small sizes in this face; 800 keeps the hierarchy without the weight. */
+:root:root .font-black {
+    font-weight: 800;
+}
+
+/* Micro-labels were ALL CAPS with wide tracking. Sentence case reads faster and looks current. */
+:root:root .uppercase {
+    text-transform: none;
+}
+
+:root:root .tracking-widest,
+:root:root .tracking-wider,
+:root:root .tracking-wide,
+:root:root [class*="tracking-["] {
+    letter-spacing: .01em;
+}
+
+:root:root .tracking-tight {
+    letter-spacing: -.02em;
+}
+
+:root:root .tracking-tighter {
+    letter-spacing: -.035em;
+}
+
+:root:root h1,
+:root:root h2 {
+    letter-spacing: -.02em;
+}
+
+:root:root .font-mono {
+    font-family: ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+    font-feature-settings: 'zero' 1;
+}
+
+:root:root .tabular-nums,
+:root:root .font-mono {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── 5. RADII ────────────────────────────────────────────────────────────── */
+:root:root .rounded-md {
+    border-radius: 10px;
+}
+
+:root:root .rounded-lg {
+    border-radius: 12px;
+}
+
+:root:root .rounded-xl {
+    border-radius: 16px;
+}
+
+:root:root .rounded-2xl {
+    border-radius: 20px;
+}
+
+:root:root .rounded-\[1rem\] {
+    border-radius: 18px;
+}
+
+:root:root .rounded-\[1\.25rem\] {
+    border-radius: 22px;
+}
+
+:root:root .rounded-\[1\.5rem\] {
+    border-radius: 24px;
+}
+
+:root:root .rounded-\[1\.75rem\] {
+    border-radius: 26px;
+}
+
+:root:root .rounded-\[2rem\] {
+    border-radius: 30px;
+}
+
+/* ── 6. HARD-CODED DARK GREYS → TOKENS ───────────────────────────────────── */
+/* Surfaces (the views paint dark mode with raw hex; this keeps them on the navy palette). */
+:root:root .bg-\[\#050505\],
+:root:root .dark\:bg-\[\#050505\] {
+    background-color: var(--sc-bg);
+}
+
+:root:root .bg-\[\#0a0a0a\],
+:root:root .bg-\[\#0e0e0e\],
+:root:root.dark .dark\:bg-\[\#0a0a0a\] {
+    background-color: #0f1226;
+}
+
+:root:root .bg-\[\#111\],
+:root:root .bg-\[\#161616\],
+:root:root.dark .dark\:bg-\[\#111\],
+:root:root.dark .dark\:bg-\[\#161616\] {
+    background-color: var(--sc-surface);
+}
+
+:root:root .bg-\[\#1a1a1a\],
+:root:root .bg-\[\#1c1c1c\],
+:root:root .bg-\[\#1e1e1e\],
+:root:root.dark .dark\:bg-\[\#1a1a1a\],
+:root:root.dark .dark\:bg-\[\#1c1c1c\],
+:root:root.dark .dark\:bg-\[\#1e1e1e\] {
+    background-color: var(--sc-surface-2);
+}
+
+:root:root .bg-\[\#222\],
+:root:root.dark .dark\:bg-\[\#222\] {
+    background-color: var(--sc-surface-3);
+}
+
+:root:root .bg-\[\#333\],
+:root:root.dark .dark\:bg-\[\#333\] {
+    background-color: var(--sc-line-strong);
+}
+
+:root:root .bg-\[\#555\],
+:root:root.dark .dark\:bg-\[\#555\] {
+    background-color: #4a5278;
+}
+
+/* Hairlines */
+:root:root .border-\[\#1e1e1e\],
+:root:root .border-\[\#1a1a1a\],
+:root:root .border-\[\#161616\],
+:root:root .border-\[\#151515\],
+:root:root.dark .dark\:border-\[\#1e1e1e\],
+:root:root.dark .dark\:border-\[\#1a1a1a\],
+:root:root.dark .dark\:border-\[\#222\] {
+    border-color: var(--sc-line);
+}
+
+:root:root .border-\[\#222\],
+:root:root .border-\[\#2a2a2a\],
+:root:root.dark .dark\:border-\[\#2a2a2a\] {
+    border-color: var(--sc-line-strong);
+}
+
+:root:root .border-\[\#333\] {
+    border-color: var(--sc-line-strong);
+}
+
+:root:root.dark .dark\:divide-\[\#1a1a1a\]> :not([hidden])~ :not([hidden]),
+:root:root .divide-\[\#1a1a1a\]> :not([hidden])~ :not([hidden]) {
+    border-color: var(--sc-line);
+}
+
+/* Dark-mode neutral Tailwind greys → navy */
+:root:root.dark .dark\:bg-gray-900,
+:root:root.dark .dark\:bg-gray-950 {
+    background-color: var(--sc-surface);
+}
+
+:root:root.dark .dark\:bg-gray-800 {
+    background-color: var(--sc-surface-2);
+}
+
+:root:root.dark .dark\:bg-gray-700 {
+    background-color: var(--sc-surface-3);
+}
+
+:root:root.dark .dark\:border-gray-800,
+:root:root.dark .dark\:border-gray-900 {
+    border-color: var(--sc-line);
+}
+
+:root:root.dark .dark\:border-gray-700,
+:root:root.dark .dark\:border-gray-600 {
+    border-color: var(--sc-line-strong);
+}
+
+/* Faint white text (white/20–50) is unreadable on the navy surfaces; lift it to a legible muted tone. */
+:root:root.dark .dark\:text-white\/20,
+:root:root.dark .dark\:text-white\/25,
+:root:root.dark .dark\:text-white\/30,
+:root:root.dark .dark\:text-white\/40,
+:root:root.dark .text-white\/20,
+:root:root.dark .text-white\/30,
+:root:root.dark .text-white\/40 {
+    color: rgb(255 255 255 / .62);
+}
+
+:root:root.dark .dark\:text-white\/50,
+:root:root.dark .text-white\/50 {
+    color: rgb(255 255 255 / .7);
+}
+
+/* ── 7. ACCENT STRIPES → CORNER GLOW ─────────────────────────────────────── */
+/* Cards used a 4px coloured left edge to carry meaning. With big rounded corners that edge
+   looks bent, so the same hue now glows from the top-left corner instead. */
+:root:root:root:root [class*="border-l-"].glass-card,
+:root:root:root:root [class*="border-l-"].glass-panel,
+:root:root:root:root [class*="border-l-"].inner-card {
+    --tone: 148 163 184;
+    border-left-width: 1px !important;
+    border-left-color: rgb(var(--tone) / .45) !important;
+    background-image: radial-gradient(220px 120px at 0% 0%, rgb(var(--tone) / .13), transparent 72%) !important;
+}
+
+:root:root:root:root .border-l-red-500 {
+    --tone: var(--cc-red);
+}
+
+:root:root:root:root .border-l-rose-500 {
+    --tone: var(--cc-rose);
+}
+
+:root:root:root:root .border-l-orange-500 {
+    --tone: var(--cc-orange);
+}
+
+:root:root:root:root .border-l-amber-500 {
+    --tone: var(--cc-amber);
+}
+
+:root:root:root:root .border-l-emerald-500 {
+    --tone: var(--cc-emerald);
+}
+
+:root:root:root:root .border-l-teal-500 {
+    --tone: var(--cc-teal);
+}
+
+:root:root:root:root .border-l-cyan-500 {
+    --tone: var(--cc-cyan);
+}
+
+:root:root:root:root .border-l-blue-500 {
+    --tone: var(--cc-blue);
+}
+
+:root:root:root:root .border-l-purple-500 {
+    --tone: var(--cc-purple);
+}
+
+/* Stripes on elements that are not cards keep a slim, rounded edge */
+:root:root:root:root [class*="border-l-"]:not(.glass-card):not(.glass-panel):not(.inner-card) {
+    border-left-width: 3px !important;
+}
+
+/* ── 8. CONTROLS ─────────────────────────────────────────────────────────── */
+/* Primary buttons / brand tiles: one gradient everywhere the brand fill is used. */
+:root:root:root .text-white.bg-blue-500,
+:root:root:root .text-white.bg-blue-600,
+:root:root:root .text-white.bg-indigo-500,
+:root:root:root .text-white.bg-indigo-600 {
+    background-image: var(--sc-grad);
+    box-shadow: 0 8px 20px -8px rgba(79, 70, 229, .65), inset 0 1px 0 rgba(255, 255, 255, .18);
+    border-color: transparent;
+}
+
+:root:root:root .text-white.hover\:bg-blue-400:hover,
+:root:root:root .text-white.hover\:bg-blue-500:hover,
+:root:root:root .text-white.hover\:bg-blue-600:hover,
+:root:root:root .text-white.hover\:bg-blue-700:hover {
+    background-image: linear-gradient(135deg, #4f46e5 0%, #6d28d9 100%);
+}
+
+button,
+a[class*="bg-"],
+[role="button"] {
+    transition: transform .15s ease, box-shadow .2s ease, background-color .2s ease, border-color .2s ease, color .2s ease, opacity .2s ease;
+}
+
+button:not(:disabled):active,
+a[class*="bg-"]:active {
+    transform: scale(.98);
+}
+
+button:disabled {
+    cursor: not-allowed;
+}
+
+/* Inputs: roomy, rounded, with a soft brand ring */
+:root:root input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]),
+:root:root select,
+:root:root textarea {
+    border-radius: 14px;
+    transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+:root:root input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+:root:root select:focus,
+:root:root textarea:focus {
+    outline: none;
+    border-color: var(--sc-brand-hi) !important;
+    box-shadow: var(--sc-ring) !important;
+}
+
+:root:root input[type="checkbox"],
+:root:root input[type="radio"] {
+    accent-color: var(--sc-brand);
+}
+
+/* Tables: quiet headers, airy rows */
+:root:root table thead th,
+:root:root table th {
+    font-weight: 600;
+    color: var(--sc-mute);
+    text-transform: none;
+}
+
+:root:root table tbody tr {
+    transition: background-color .15s ease;
+}
+
+:root:root table tbody tr:hover {
+    background-color: var(--sc-surface-2);
+}
+
+/* Modal scrims blur what is behind them */
+:root:root .fixed.inset-0[class*="bg-black/"] {
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+/* Status chips: pill-shaped, even when authored as rounded-md */
+:root:root span[class*="bg-"][class*="/10"][class*="rounded"],
+:root:root span[class*="bg-"][class*="/15"][class*="rounded"] {
+    border-radius: 999px;
+}
+
+/* Page title scale: the big heading on every console page */
+:root:root main h1 {
+    letter-spacing: -.03em;
+}
+
+/* ── 9. REUSABLE COMPONENTS ──────────────────────────────────────────────── */
+.sc-card {
+    background: var(--sc-surface);
+    border: 1px solid var(--sc-line);
+    border-radius: 24px;
+    box-shadow: var(--sc-shadow-2);
+}
+
+.sc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--sc-brand-soft);
+    color: var(--sc-brand-text);
+}
+
+.sc-gradient-text {
+    background: var(--sc-grad-warm);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.sc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    height: 48px;
+    padding: 0 1.4rem;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--sc-grad);
+    box-shadow: 0 12px 26px -10px rgba(79, 70, 229, .7), inset 0 1px 0 rgba(255, 255, 255, .22);
+    cursor: pointer;
+    border: 0;
+}
+
+.sc-btn:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+
+.sc-btn-ghost {
+    background: var(--sc-surface);
+    color: var(--sc-ink);
+    border: 1px solid var(--sc-line-strong);
+    box-shadow: var(--sc-shadow-1);
+}
+
+.sc-field {
+    width: 100%;
+    height: 50px;
+    padding: 0 1rem;
+    border-radius: 14px;
+    border: 1px solid var(--sc-line-strong);
+    background: var(--sc-surface);
+    color: var(--sc-ink);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.sc-field::placeholder {
+    color: var(--sc-mute);
+    opacity: .8;
+}
+
+.sc-label {
+    display: block;
+    margin-bottom: .45rem;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sc-ink-2);
+}
+
+.sc-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--sc-brand-text);
+}
+
+.sc-eyebrow::before {
+    content: '';
+    width: 22px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--sc-grad);
+}
+
+/* ── 9b. MAP & COMMUTER CONTROLS (hand-styled in map.blade.php) ──────────── */
+:root:root .mobile-fab {
+    border-radius: 20px;
+}
+
+:root:root .mobile-fab-left {
+    background: var(--sc-grad);
+    box-shadow: 0 16px 30px -10px rgba(79, 70, 229, .75), inset 0 1px 0 rgba(255, 255, 255, .25);
+}
+
+:root:root .mobile-fab-right {
+    background: var(--sc-surface);
+    border: 1px solid var(--sc-line);
+    color: var(--sc-ink-2);
+    box-shadow: var(--sc-shadow-2);
+}
+
+:root:root.dark .mobile-fab-right {
+    background: var(--sc-surface);
+    border-color: var(--sc-line);
+    color: var(--sc-ink);
+}
+
+/* Header controls on the map: round, soft, consistent with the rest */
+:root:root .theme-toggle-btn,
+:root:root .header-btn {
+    border-radius: 999px;
+}
+
+:root:root .mobile-sheet-close {
+    border-radius: 50%;
+    background: var(--sc-surface-3);
+    color: var(--sc-ink-2);
+}
+
+/* ── 10. GENERATED TYPE SCALE ────────────────────────────────────────────── */
+/*__TYPE_SCALE__*/
+/* Source sizes (5–17px) → comfortable sizes. Icons using text-[Npx] scale with them. */
+:root:root .text-\[5px\]{font-size:11px}
+:root:root .text-\[6px\]{font-size:11px}
+:root:root .text-\[7px\]{font-size:11px}
+:root:root .text-\[8px\]{font-size:11px}
+:root:root .text-\[9px\]{font-size:12px}
+:root:root .text-\[10px\]{font-size:12.5px}
+:root:root .text-\[11px\]{font-size:13.5px}
+:root:root .text-\[12px\]{font-size:14px}
+:root:root .text-\[13px\]{font-size:14.5px}
+:root:root .text-\[14px\]{font-size:15.5px}
+:root:root .text-\[15px\]{font-size:16px}
+:root:root .text-\[16px\]{font-size:17px}
+:root:root .text-\[17px\]{font-size:18px}
+@media (min-width:640px){:root:root .sm\:text-\[5px\]{font-size:11px}:root:root .sm\:text-\[8px\]{font-size:11px}:root:root .sm\:text-\[9px\]{font-size:12px}:root:root .sm\:text-\[10px\]{font-size:12.5px}:root:root .sm\:text-\[11px\]{font-size:13.5px}:root:root .sm\:text-\[12px\]{font-size:14px}}
+@media (min-width:768px){:root:root .md\:text-\[10px\]{font-size:12.5px}}

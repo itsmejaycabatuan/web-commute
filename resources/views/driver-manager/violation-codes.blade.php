@@ -14,21 +14,9 @@
             document.documentElement.classList.remove('dark');
         }
     </script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     @include('partials.head-scripts')
@@ -39,7 +27,7 @@
             margin: 0;
             padding: 0;
             height: 100%;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             overflow-x: hidden;
             background: #f8fafc;
         }
@@ -324,7 +312,7 @@
 
         /* ═══ ACCENT PRESERVATION ═══ */
         .text-blue-400 {
-            color: #3b82f6 !important;
+            color: #6366f1 !important;
         }
 
         .text-emerald-400 {

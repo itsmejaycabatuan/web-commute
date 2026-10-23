@@ -8,7 +8,7 @@
 
     @include('partials.commuter-head-scripts')
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
@@ -19,7 +19,7 @@
             padding: 0;
             height: 100%;
             width: 100%;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             overflow-x: hidden;
             background-color: #f8fafc;
         }
@@ -75,8 +75,8 @@
 
         input:focus,
         select:focus {
-            border-color: rgba(59, 130, 246, 0.4) !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+            border-color: rgba(99, 102, 241, 0.4) !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
         }
 
         .section-toggle-icon {
@@ -142,7 +142,7 @@
             height: 32px;
             padding: 0 8px;
             border-radius: 8px;
-            font-size: 10px;
+            font-size: 12.5px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -177,9 +177,9 @@
 
         .pagination .active {
             color: #fff;
-            background: #2563eb;
-            border-color: #2563eb;
-            box-shadow: 0 2px 12px rgba(37, 99, 235, 0.25);
+            background: #4f46e5;
+            border-color: #4f46e5;
+            box-shadow: 0 2px 12px rgba(79, 70, 229, 0.25);
         }
 
         .pagination .disabled {
@@ -245,7 +245,7 @@
     </header>
 
     <!-- ══════════ MAIN CONTENT ══════════ -->
-    <div class="pt-[4.25rem] sm:pt-24 pb-8 sm:pb-10 max-w-6xl mx-auto px-3.5 sm:px-5 lg:px-6">
+    <div class="pt-[5.75rem] sm:pt-28 pb-8 sm:pb-10 max-w-6xl mx-auto px-3.5 sm:px-5 lg:px-6">
 
         <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6 items-start">
 

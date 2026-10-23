@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     @include('partials.head-scripts')
@@ -19,8 +19,9 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif']
-                    }
+                        sans: window.SC_FONT
+                    },
+                    colors: window.SC_COLORS
                 }
             }
         }
@@ -31,7 +32,7 @@
             margin: 0;
             padding: 0;
             height: 100%;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             overflow-x: hidden;
         }
 
@@ -80,13 +81,13 @@
         }
 
         .tab-active {
-            color: #1d4ed8;
-            border-bottom: 2px solid #3b82f6;
+            color: #4338ca;
+            border-bottom: 2px solid #6366f1;
         }
 
         .dark .tab-active {
             color: #fff;
-            border-bottom: 2px solid #3b82f6;
+            border-bottom: 2px solid #6366f1;
         }
 
         .tab-inactive {
@@ -1134,7 +1135,7 @@
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-2">
                                             <div class="w-2 h-2 rounded-sm"
-                                                style="background: {{ ['rgba(59,130,246,0.7)', 'rgba(16,185,129,0.7)', 'rgba(245,158,11,0.7)', 'rgba(239,68,68,0.7)', 'rgba(168,85,247,0.7)', 'rgba(236,72,153,0.7)', 'rgba(20,184,166,0.7)', 'rgba(249,115,22,0.7)'][$i % 8] }}">
+                                                style="background: {{ ['rgba(99, 102, 241,0.7)', 'rgba(16,185,129,0.7)', 'rgba(245,158,11,0.7)', 'rgba(239,68,68,0.7)', 'rgba(168,85,247,0.7)', 'rgba(236,72,153,0.7)', 'rgba(20,184,166,0.7)', 'rgba(249,115,22,0.7)'][$i % 8] }}">
                                             </div>
                                             <span
                                                 class="text-[9px] font-bold text-gray-600 dark:text-[#666] truncate max-w-[140px]">{{ $label }}</span>
@@ -1183,9 +1184,9 @@
                         labels: @json($chartMonthLabels),
                         datasets: [{
                             data: @json($chartMonthlyData),
-                            backgroundColor: isDark ? 'rgba(59,130,246,0.5)' :
-                                'rgba(59,130,246,0.65)',
-                            hoverBackgroundColor: 'rgba(59,130,246,0.8)',
+                            backgroundColor: isDark ? 'rgba(99, 102, 241,0.5)' :
+                                'rgba(99, 102, 241,0.65)',
+                            hoverBackgroundColor: 'rgba(99, 102, 241,0.8)',
                             borderRadius: 4,
                             borderSkipped: false,
                             maxBarThickness: 32,
@@ -1267,7 +1268,7 @@
                         datasets: [{
                             data: @json($donutData),
                             backgroundColor: [
-                                'rgba(59,130,246,0.7)', 'rgba(16,185,129,0.7)',
+                                'rgba(99, 102, 241,0.7)', 'rgba(16,185,129,0.7)',
                                 'rgba(245,158,11,0.7)',
                                 'rgba(239,68,68,0.7)', 'rgba(168,85,247,0.7)',
                                 'rgba(236,72,153,0.7)',

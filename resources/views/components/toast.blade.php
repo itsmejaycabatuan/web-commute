@@ -142,7 +142,7 @@
     .app-toast--info {
         background: #eff6ff;
         border-color: #bfdbfe;
-        color: #1d4ed8;
+        color: #4338ca;
     }
 
     @keyframes app-toast-in {

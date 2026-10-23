@@ -6,11 +6,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartCommute | Live Map</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.18.0/dist/maplibre-gl.css' />
-    <script src="https://unpkg.com/@maplibre/maplibre-gl-directions@latest/dist/maplibre-gl-directions.js"></script>
     <script src='https://unpkg.com/maplibre-gl@5.18.0/dist/maplibre-gl.js'></script>
     <script src="https://unpkg.com/laravel-echo@1.15.3/dist/echo.iife.js"></script>
     <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
@@ -42,7 +41,7 @@
             padding: 0;
             height: 100%;
             width: 100%;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             overflow: hidden;
             background: #f1f5f9;
         }
@@ -87,7 +86,7 @@
             --ov-title: #0f172a;
             --ov-text: #475569;
             --ov-dim: #5d6676;
-            --ov-accent: #1d4ed8;
+            --ov-accent: #4338ca;
         }
 
         .dark #map-alert,
@@ -101,7 +100,7 @@
             --ov-title: #eeeeee;
             --ov-text: #b8b8b8;
             --ov-dim: #a3a3a3;
-            --ov-accent: #60a5fa;
+            --ov-accent: #a5b4fc;
         }
 
         /* ═══ MAP STATUS BANNER (E1 no PUJ / E2 permission / E3 map / E4 offline) ═══ */
@@ -124,7 +123,7 @@
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--ov-border);
             box-shadow: var(--ov-shadow);
-            font-family: Inter, sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             /* Purely informational: never swallow map drags / marker clicks. */
             pointer-events: none;
             animation: mapAlertIn 0.25s ease;
@@ -160,7 +159,7 @@
         }
 
         #map-alert .ma-title {
-            font-size: 10px;
+            font-size: 12.5px;
             font-weight: 700;
             letter-spacing: 0.12em;
             text-transform: uppercase;
@@ -169,7 +168,7 @@
         }
 
         #map-alert .ma-msg {
-            font-size: 10px;
+            font-size: 12.5px;
             line-height: 1.5;
             color: var(--ov-text);
             margin: 0;
@@ -261,7 +260,7 @@
         }
 
         .nv-label {
-            font-size: 8px;
+            font-size: 11px;
             color: var(--ov-dim);
             font-weight: 600;
             text-transform: uppercase;
@@ -278,7 +277,7 @@
         }
 
         .nv-distance {
-            font-size: 10px;
+            font-size: 12.5px;
             color: var(--ov-text);
             font-weight: 500;
             margin-left: auto;
@@ -288,7 +287,7 @@
 
         .nv-arrow {
             color: var(--ov-dim);
-            font-size: 10px;
+            font-size: 12.5px;
             margin-left: 4px;
             transition: color 0.2s;
             flex-shrink: 0;
@@ -310,8 +309,8 @@
             --pp-muted: #586172;
             --pp-dim: #5d6676;
             --pp-divider: #e2e8f0;
-            --pp-chip: rgba(59, 130, 246, 0.06);
-            --pp-chip-border: rgba(59, 130, 246, 0.18);
+            --pp-chip: rgba(99, 102, 241, 0.06);
+            --pp-chip-border: rgba(99, 102, 241, 0.18);
             --pp-eta-chip: rgba(16, 185, 129, 0.08);
             --pp-eta-border: rgba(16, 185, 129, 0.2);
             z-index: 25;
@@ -325,8 +324,8 @@
             --pp-muted: #9ca3af;
             --pp-dim: #9a9a9a;
             --pp-divider: #1e1e1e;
-            --pp-chip: rgba(59, 130, 246, 0.06);
-            --pp-chip-border: rgba(59, 130, 246, 0.12);
+            --pp-chip: rgba(99, 102, 241, 0.06);
+            --pp-chip-border: rgba(99, 102, 241, 0.12);
             --pp-eta-chip: rgba(16, 185, 129, 0.08);
             --pp-eta-border: rgba(16, 185, 129, 0.14);
         }
@@ -363,7 +362,7 @@
         }
 
         .puj-popup .pp {
-            font-family: Inter, sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             width: 216px;
             max-width: 100%;
             box-sizing: border-box;
@@ -383,7 +382,7 @@
             height: 30px;
             flex: 0 0 30px;
             border-radius: 9px;
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(99, 102, 241, 0.1);
             border: 1px solid var(--pp-chip-border);
             display: flex;
             align-items: center;
@@ -398,7 +397,7 @@
 
         .puj-popup .pp-title {
             margin: 0;
-            font-size: 11.5px;
+            font-size: 13px;
             font-weight: 700;
             color: var(--pp-text);
             line-height: 1.25;
@@ -409,7 +408,7 @@
 
         .puj-popup .pp-sub {
             margin: 2px 0 0;
-            font-size: 8.5px;
+            font-size: 11px;
             font-weight: 700;
             letter-spacing: 0.08em;
             text-transform: uppercase;
@@ -427,7 +426,7 @@
             border-radius: 8px;
             background: var(--pp-chip);
             border: 1px solid var(--pp-chip-border);
-            font-size: 8.5px;
+            font-size: 11px;
             font-weight: 600;
             color: var(--pp-muted);
             white-space: nowrap;
@@ -440,7 +439,7 @@
             align-items: center;
             gap: 6px;
             margin-top: 8px;
-            font-size: 8.5px;
+            font-size: 11px;
             font-weight: 700;
             letter-spacing: 0.1em;
             text-transform: uppercase;
@@ -456,7 +455,7 @@
         .puj-popup .pp-status .lbl {
             color: var(--pp-dim);
             margin-left: auto;
-            font-size: 7.5px;
+            font-size: 11px;
             letter-spacing: 0.1em;
         }
 
@@ -493,7 +492,7 @@
         }
 
         .puj-popup .pp-eta-main {
-            font-size: 11px;
+            font-size: 13px;
             font-weight: 700;
             line-height: 1.3;
             white-space: nowrap;
@@ -503,7 +502,7 @@
 
         .puj-popup .pp-eta-sub {
             margin-top: 2px;
-            font-size: 8px;
+            font-size: 11px;
             color: var(--pp-muted);
             white-space: nowrap;
             overflow: hidden;
@@ -512,7 +511,7 @@
 
         .puj-popup .pp-eta-label {
             flex: 0 0 auto;
-            font-size: 7px;
+            font-size: 11px;
             font-weight: 700;
             letter-spacing: 0.12em;
             text-transform: uppercase;
@@ -522,7 +521,7 @@
         .puj-popup .pp-accuracy {
             margin-top: 6px;
             text-align: center;
-            font-size: 7px;
+            font-size: 11px;
             color: var(--pp-dim);
         }
 
@@ -541,7 +540,7 @@
 
         .puj-popup .pp-row .k {
             flex: 0 0 auto;
-            font-size: 7.5px;
+            font-size: 11px;
             color: var(--pp-dim);
             font-weight: 700;
             letter-spacing: 0.1em;
@@ -550,7 +549,7 @@
 
         .puj-popup .pp-row .v {
             min-width: 0;
-            font-size: 9.5px;
+            font-size: 12px;
             color: var(--pp-muted);
             font-weight: 600;
             white-space: nowrap;
@@ -570,7 +569,7 @@
             padding: 8px 10px;
             border-radius: 10px;
             margin-bottom: 8px;
-            font-size: 8px;
+            font-size: 11px;
             font-weight: 700;
             letter-spacing: 0.12em;
             text-transform: uppercase;
@@ -578,7 +577,7 @@
 
         .puj-popup .pp-driver-status .lbl {
             margin-left: auto;
-            font-size: 7px;
+            font-size: 11px;
             color: var(--pp-dim);
         }
 
@@ -594,9 +593,9 @@
             transform: translateX(-50%);
             padding: 1px 6px;
             border-radius: 6px;
-            font-size: 8px;
+            font-size: 11px;
             font-weight: 700;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             white-space: nowrap;
             z-index: 10;
             pointer-events: none;
@@ -667,7 +666,7 @@
             width: 32px;
             height: 28px;
             border-radius: 8px;
-            font-size: 10px;
+            font-size: 12.5px;
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -685,8 +684,8 @@
         }
 
         .sim-speed-btn.active {
-            background: #2563eb;
-            border-color: #2563eb;
+            background: #4f46e5;
+            border-color: #4f46e5;
             color: white;
         }
 
@@ -702,18 +701,18 @@
         }
 
         .dark .sim-speed-btn.active {
-            background: #2563eb;
-            border-color: #2563eb;
+            background: #4f46e5;
+            border-color: #4f46e5;
             color: white;
         }
 
         @keyframes sim-pulse-ring {
             0% {
-                box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4);
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
             }
 
             100% {
-                box-shadow: 0 0 0 14px rgba(37, 99, 235, 0);
+                box-shadow: 0 0 0 14px rgba(79, 70, 229, 0);
             }
         }
 
@@ -846,8 +845,8 @@
         }
 
         .map-input:focus {
-            border-color: #2563eb !important;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+            border-color: #4f46e5 !important;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important;
             outline: none;
         }
 
@@ -865,10 +864,10 @@
         .custom-vehicle-marker {
             width: 34px;
             height: 34px;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
             border: 3px solid white;
             border-radius: 50%;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.6), 0 0 40px rgba(99, 102, 241, 0.2);
             cursor: pointer;
             transition: box-shadow 0.3s ease;
             pointer-events: auto;
@@ -878,7 +877,7 @@
         }
 
         .custom-vehicle-marker:hover {
-            box-shadow: 0 0 25px rgba(59, 130, 246, 0.8), 0 0 50px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.8), 0 0 50px rgba(99, 102, 241, 0.3);
         }
 
         .custom-vehicle-marker i {
@@ -938,11 +937,11 @@
 
             0%,
             100% {
-                box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(59, 130, 246, 0.2);
+                box-shadow: 0 0 20px rgba(99, 102, 241, 0.6), 0 0 40px rgba(99, 102, 241, 0.2);
             }
 
             50% {
-                box-shadow: 0 0 30px rgba(59, 130, 246, 0.8), 0 0 60px rgba(59, 130, 246, 0.3), 0 0 0 12px rgba(59, 130, 246, 0);
+                box-shadow: 0 0 30px rgba(99, 102, 241, 0.8), 0 0 60px rgba(99, 102, 241, 0.3), 0 0 0 12px rgba(99, 102, 241, 0);
             }
         }
 
@@ -957,8 +956,8 @@
         }
 
         .rounded-rect:hover {
-            color: #2563eb;
-            border-color: #2563eb;
+            color: #4f46e5;
+            border-color: #4f46e5;
             background: #f1f5f9;
         }
 
@@ -970,8 +969,8 @@
         }
 
         .dark .rounded-rect:hover {
-            color: #60a5fa;
-            border-color: #2563eb;
+            color: #a5b4fc;
+            border-color: #4f46e5;
             background: #1a1a1a;
         }
 
@@ -1231,7 +1230,7 @@
 
         .search-item .result-detail {
             color: #5d6676;
-            font-size: 10px;
+            font-size: 12.5px;
             margin-top: 2px;
         }
 
@@ -1243,7 +1242,7 @@
             padding: 14px;
             text-align: center;
             color: #5d6676;
-            font-size: 11px;
+            font-size: 13px;
         }
 
         .dark .search-loading {
@@ -1254,7 +1253,7 @@
             padding: 14px;
             text-align: center;
             color: #626b7b;
-            font-size: 11px;
+            font-size: 13px;
         }
 
         .dark .search-no-results {
@@ -1382,8 +1381,8 @@
         }
 
         .mobile-fab-left {
-            background: #2563eb;
-            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.35);
+            background: #4f46e5;
+            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.35);
         }
 
         .mobile-fab-right {
@@ -1449,7 +1448,7 @@
         .tutorial-backdrop {
             position: fixed;
             inset: 0;
-            z-index: 60;
+            z-index: 200;
             display: none;
             align-items: center;
             justify-content: center;
@@ -1959,7 +1958,7 @@
 
         /* ═══ PRESERVE ACCENT COLORS ═══ */
         .text-blue-400 {
-            color: #3b82f6 !important;
+            color: #6366f1 !important;
         }
 
         .text-emerald-400 {
@@ -2130,13 +2129,13 @@
 
         /* Log in button — blue in light, white in dark */
         .header-btn.bg-white {
-            background: #2563eb !important;
-            border-color: #2563eb !important;
+            background: #4f46e5 !important;
+            border-color: #4f46e5 !important;
             color: #ffffff !important;
         }
 
         .header-btn.bg-white:hover {
-            background: #1d4ed8 !important;
+            background: #4338ca !important;
         }
 
         .dark .header-btn.bg-white {
@@ -2303,7 +2302,8 @@
     @php
         $mapRole = Auth::check() ? (Auth::user()->roles->first()->name ?? 'default') : 'guest';
         $hasMobileLeftSidebar = in_array($mapRole, ['guest', 'commuter', 'driver'], true);
-        $hasMobileRightSidebar = $mapRole !== 'admin';
+        // Only roles whose right panel actually has content get the button.
+        $hasMobileRightSidebar = in_array($mapRole, ['guest', 'commuter', 'driver'], true);
     @endphp
 
     @if ($hasMobileLeftSidebar)
@@ -4453,7 +4453,7 @@ sim._lastEtaUpdate = null;
                     etaSection =
                         '<div class="pp-divider"></div>' +
                         '<div class="pp-eta">' +
-                        '<div class="pp-eta-icon"><i class="fa-solid fa-route" style="font-size:10px;color:' + etaColor + ';opacity:0.85;"></i></div>' +
+                        '<div class="pp-eta-icon"><i class="fa-solid fa-route" style="font-size:12.5px;color:' + etaColor + ';opacity:0.85;"></i></div>' +
                         '<div class="pp-eta-text">' +
                         '<div class="pp-eta-main" style="color:' + etaColor + ';">' + esc(etaText) + '</div>' +
                         '<div class="pp-eta-sub">' + esc(etaDist) + '</div>' +
@@ -4465,14 +4465,14 @@ sim._lastEtaUpdate = null;
 
                 return '<div class="pp">' +
                     '<div class="pp-head">' +
-                    '<div class="pp-head-icon"><i class="fa-solid fa-bus" style="color:#60a5fa;font-size:12px;"></i></div>' +
+                    '<div class="pp-head-icon"><i class="fa-solid fa-bus" style="color:#a5b4fc;font-size:12px;"></i></div>' +
                     '<div class="pp-head-text">' +
                     '<p class="pp-title">' + esc(d.plate_number || d.name || 'Vehicle') + '</p>' +
                     '<p class="pp-sub">' + esc(d.route || 'Route') + '</p>' +
                     '</div>' +
                     '</div>' +
                     '<div class="pp-note">' +
-                    '<i class="fa-solid fa-shield-halved" style="color:rgba(59,130,246,0.55);font-size:9px;flex:0 0 auto;"></i>' +
+                    '<i class="fa-solid fa-shield-halved" style="color:rgba(99, 102, 241,0.55);font-size:12px;flex:0 0 auto;"></i>' +
                     '<span style="overflow:hidden;text-overflow:ellipsis;">Approximate location \u00b7 ~' + pr + 'm radius</span>' +
                     '</div>' +
                     '<div class="pp-status">' +
@@ -4511,7 +4511,7 @@ sim._lastEtaUpdate = null;
 
                 return '<div class="pp">' +
                     '<div class="pp-head">' +
-                    '<div class="pp-head-icon"><i class="fa-solid fa-bus" style="color:#60a5fa;font-size:12px;"></i></div>' +
+                    '<div class="pp-head-icon"><i class="fa-solid fa-bus" style="color:#a5b4fc;font-size:12px;"></i></div>' +
                     '<div class="pp-head-text">' +
                     '<p class="pp-title">' + esc(d.name || 'Driver') + '</p>' +
                     '<p class="pp-sub">Driver</p>' +
@@ -4519,7 +4519,7 @@ sim._lastEtaUpdate = null;
                     '</div>' +
                     '<div class="pp-divider"></div>' +
                     '<div class="pp-driver-status" style="background:' + statusBg + ';border:1px solid ' + statusBorder + ';">' +
-                    '<i class="fa-solid ' + statusIcon + '" style="font-size:9px;color:' + statusColor + ';"></i>' +
+                    '<i class="fa-solid ' + statusIcon + '" style="font-size:12px;color:' + statusColor + ';"></i>' +
                     '<span style="color:' + statusColor + ';">' + statusLabel + '</span>' +
                     '<span class="lbl">Driver status</span>' +
                     '</div>' +
@@ -4838,7 +4838,11 @@ sim._lastEtaUpdate = null;
             // Tutorial: uses the new centered .tutorial-backdrop
             window.openTutorialModal = function() {
                 const backdrop = document.getElementById('tutorialModalBackdrop');
-                if (backdrop) backdrop.classList.add('open');
+                if (!backdrop) return;
+                // On phones the button lives inside the transformed bottom sheet, which would trap this
+                // `position: fixed` modal inside the sheet (clipped and invisible). Mount it on <body>.
+                if (backdrop.parentElement !== document.body) document.body.appendChild(backdrop);
+                backdrop.classList.add('open');
             };
 
             window.closeTutorialModal = function() {
@@ -4927,7 +4931,7 @@ sim._lastEtaUpdate = null;
                         'circle-radius': ['interpolate', ['linear'],
                             ['zoom'], 12, 40, 15, 120, 18, 350
                         ],
-                        'circle-color': 'rgba(59,130,246,0.04)',
+                        'circle-color': 'rgba(99, 102, 241,0.04)',
                         'circle-blur': 0.8
                     }
                 });
@@ -4939,9 +4943,9 @@ sim._lastEtaUpdate = null;
                         'circle-radius': ['interpolate', ['linear'],
                             ['zoom'], 12, 30, 15, 90, 18, 260
                         ],
-                        'circle-color': 'rgba(59,130,246,0.07)',
+                        'circle-color': 'rgba(99, 102, 241,0.07)',
                         'circle-stroke-width': 1.5,
-                        'circle-stroke-color': 'rgba(59,130,246,0.15)',
+                        'circle-stroke-color': 'rgba(99, 102, 241,0.15)',
                         'circle-blur': 0.3
                     }
                 });
@@ -4955,7 +4959,7 @@ sim._lastEtaUpdate = null;
                         ],
                         'circle-color': 'transparent',
                         'circle-stroke-width': 1,
-                        'circle-stroke-color': 'rgba(59,130,246,0.10)'
+                        'circle-stroke-color': 'rgba(99, 102, 241,0.10)'
                     }
                 });
 
@@ -4975,7 +4979,7 @@ sim._lastEtaUpdate = null;
                         'line-cap': 'round'
                     },
                     paint: {
-                        'line-color': '#3b82f6',
+                        'line-color': '#6366f1',
                         'line-width': 4,
                         'line-opacity': 0.85
                     }
@@ -4989,7 +4993,7 @@ sim._lastEtaUpdate = null;
                         'line-cap': 'round'
                     },
                     paint: {
-                        'line-color': '#3b82f6',
+                        'line-color': '#6366f1',
                         'line-width': 12,
                         'line-opacity': 0.15,
                         'line-blur': 6
@@ -5009,7 +5013,7 @@ sim._lastEtaUpdate = null;
                     source: 'pickup-point',
                     paint: {
                         'circle-radius': 7,
-                        'circle-color': '#3b82f6',
+                        'circle-color': '#6366f1',
                         'circle-stroke-width': 3,
                         'circle-stroke-color': '#ffffff'
                     }
@@ -5047,7 +5051,7 @@ sim._lastEtaUpdate = null;
                     source: 'vehicles',
                     paint: {
                         'circle-radius': 6,
-                        'circle-color': '#3b82f6',
+                        'circle-color': '#6366f1',
                         'circle-stroke-width': 2,
                         'circle-stroke-color': '#ffffff'
                     }

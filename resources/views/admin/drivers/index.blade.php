@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>SmartCommute | PUJ Drivers</title>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -266,7 +266,7 @@
             color: #586172;
             padding: 6px 14px;
             border-radius: 8px;
-            font-size: 9px;
+            font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.1em;
@@ -924,12 +924,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
 
                         <!-- Left: License Image -->
-                        <div class="md:col-span-2">
+                        <div class="md:col-span-2 md:sticky md:top-0 md:self-start">
                             <p
                                 class="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] mb-3">
                                 License ID</p>
                             <template x-if="viewHasLicense && viewLicenseUrl">
-                                <div class="md:sticky md:top-0">
+                                <div>
                                     <a :href="viewLicenseUrl" target="_blank" rel="noopener"
                                         class="block rounded-xl border border-gray-200 dark:border-[#1e1e1e] overflow-hidden bg-gray-50 dark:bg-black/40 hover:border-gray-300 dark:hover:border-[#333] transition">
                                         <img :src="viewLicenseUrl" alt="License ID" loading="lazy"
@@ -1462,7 +1462,7 @@
 
                 <!-- Main Form Wrapper -->
                 <!-- We use one form to ensure inputs are submitted with whichever button is clicked -->
-                <form method="POST" class="flex flex-col h-full" data-ajax novalidate>
+                <form method="POST" class="flex flex-col flex-1 min-h-0" data-ajax novalidate>
                     @csrf
 
                     {{-- The reject confirmation clicks this: same fields, different endpoint. --}}
@@ -1603,7 +1603,7 @@
 
                     <!-- Footer Actions -->
                     <div
-                        class="px-6 sm:px-8 py-4 border-t border-gray-200/50 dark:border-[#1e1e1e]/50 bg-gray-50/50 dark:bg-[#0a0a0a]/50">
+                        class="shrink-0 px-6 sm:px-8 py-4 border-t border-gray-200/50 dark:border-[#1e1e1e]/50 bg-gray-50/50 dark:bg-[#0a0a0a]/50">
                         <div class="flex gap-3">
                             <!-- Cancel (Does not submit) -->
                             <button type="button" @click="reviewModal = false"

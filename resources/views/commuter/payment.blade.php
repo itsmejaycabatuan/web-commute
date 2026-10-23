@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartCommute | Payment</title>
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
@@ -14,7 +14,7 @@
 
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             min-height: 100vh;
         }
 
@@ -96,25 +96,25 @@
         }
 
         input[type="radio"]:checked+.method-box {
-            border-color: #2563eb;
-            background: rgba(37, 99, 235, 0.08);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            border-color: #4f46e5;
+            background: rgba(79, 70, 229, 0.08);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
 
         input[type="radio"]:checked+.method-box .method-dot {
-            background: #2563eb;
-            box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+            background: #4f46e5;
+            box-shadow: 0 0 8px rgba(79, 70, 229, 0.5);
         }
 
         .btn-primary {
-            background: #2563eb;
+            background: #4f46e5;
             transition: all 0.3s ease;
         }
 
         .btn-primary:hover {
-            background: #1d4ed8;
+            background: #4338ca;
             transform: translateY(-1px);
-            box-shadow: 0 12px 40px rgba(37, 99, 235, 0.25);
+            box-shadow: 0 12px 40px rgba(79, 70, 229, 0.25);
         }
 
         .btn-primary:active {

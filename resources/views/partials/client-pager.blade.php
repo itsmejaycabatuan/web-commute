@@ -48,7 +48,7 @@
         <template x-for="(n, i) in pageNumbers({{ $list }})" :key="i">
             <span>
                 <template x-if="n === '…'"><span
-                        class="w-8 h-8 flex items-center justify-center text-xs text-slate-400 dark:text-white/30">…</span></template>
+                        class="w-8 h-8 flex items-center justify-center text-xs text-slate-400 dark:text-white/60">…</span></template>
                 <template x-if="n !== '…'">
                     <button type="button" @click="goToPage(n, {{ $list }})"
                         class="w-8 h-8 rounded-lg flex items-center justify-center text-xs transition"

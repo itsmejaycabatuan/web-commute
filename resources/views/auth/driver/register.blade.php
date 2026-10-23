@@ -1,421 +1,171 @@
-<!DOCTYPE html>
-<html lang="en">
+<x-auth.shell title="Driver Registration - SmartCommute" :wide="true" heading="Drive with SmartCommute."
+    blurb="Apply online with your licence details. Once approved and assigned a vehicle, clock in from the map and keep your shifts on record.">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Driver Registration - SmartCommute</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        ::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 999px;
-            transition: background 0.3s ease;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.18);
-        }
-
-        ::-webkit-scrollbar-thumb:active {
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        * {
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
-        }
-
-        .register-bg {
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.75) 0%, rgba(0, 15, 50, 0.7) 50%, rgba(0, 0, 0, 0.85) 100%),
-                url("{{ asset('images/newbg.jpg') }}");
-            background-size: cover;
-            background-position: center;
-        }
-
-        .glass-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        @media (max-width: 639px) {
-            .glass-card {
-                background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                border: 1px solid rgba(255, 255, 255, 0.08);
-            }
-        }
-
-        .glass-card {
-            scrollbar-gutter: stable;
-        }
-
-        .glass-card::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.12);
-        }
-
-        .glass-card::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.22);
-        }
-
-        .input-field {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: all 0.3s ease;
-        }
-
-        .input-field:focus {
-            border-color: rgba(59, 130, 246, 0.5);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-            background: rgba(255, 255, 255, 0.07);
-        }
-
-        .input-field::placeholder {
-            color: rgba(255, 255, 255, 0.55);
-        }
-
-        @keyframes card-enter {
-            from {
-                opacity: 0;
-                transform: translateY(30px) scale(0.96);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        .card-animate {
-            animation: card-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
-        }
-
-        .btn-primary {
-            background: white;
-            color: black;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: #e5e7eb;
-            transform: translateY(-1px);
-            box-shadow: 0 8px 30px rgba(255, 255, 255, 0.15);
-        }
-
-        .btn-primary:active {
-            transform: scale(0.98) translateY(0);
-        }
-
-        @keyframes flash-in {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translate(-50%, 0);
-            }
-        }
-
-        .flash-animate {
-            animation: flash-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-
-        .file-drop-zone {
-            background: rgba(255, 255, 255, 0.03);
-            border: 2px dashed rgba(255, 255, 255, 0.1);
-            border-radius: 0.75rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .file-drop-zone:hover {
-            border-color: rgba(59, 130, 246, 0.4);
-            background: rgba(59, 130, 246, 0.05);
-        }
-
-        .file-drop-zone.has-file {
-            border-color: rgba(34, 197, 94, 0.4);
-            background: rgba(34, 197, 94, 0.05);
-        }
-
-        @media (max-width: 639px) {
+    <x-slot:head>
+        <style>
             .file-drop-zone {
-                border-radius: 0.5rem;
+                background: var(--sc-surface-2);
+                border: 2px dashed var(--sc-line-strong);
+                border-radius: 18px;
+                transition: border-color .25s, background-color .25s;
+                cursor: pointer;
             }
-        }
 
-        input[type="tel"]::-webkit-inner-spin-button,
-        input[type="tel"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
+            .file-drop-zone:hover {
+                border-color: var(--sc-brand-hi);
+                background: var(--sc-brand-soft);
+            }
 
-        input[type="tel"] {
-            -moz-appearance: textfield;
-        }
-    </style>
-    @include('partials.global-loading')
-</head>
+            .file-drop-zone.has-file {
+                border-color: rgba(16, 185, 129, .6);
+                background: rgba(16, 185, 129, .08);
+            }
 
-<body
-    class="flex flex-col relative items-center p-3 sm:p-4 md:p-6 min-h-[100svh] register-bg font-sans text-white overflow-x-hidden">
+            input[type="tel"]::-webkit-inner-spin-button,
+            input[type="tel"]::-webkit-outer-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
 
-    <!-- Decorative orbs -->
-    <div
-        class="absolute top-1/4 right-1/4 w-36 h-36 sm:w-72 sm:h-72 bg-amber-500/8 rounded-full blur-[60px] sm:blur-[100px] pointer-events-none">
-    </div>
-    <div
-        class="absolute bottom-1/3 left-1/3 w-28 h-28 sm:w-56 sm:h-56 bg-purple-500/10 rounded-full blur-[50px] sm:blur-[80px] pointer-events-none">
-    </div>
+            input[type="tel"] {
+                -moz-appearance: textfield;
+            }
+        </style>
+    </x-slot:head>
 
-    <!-- Back button -->
-    <a href="{{ route('register') }}"
-        class="flex self-start shrink-0 items-center gap-2 sm:gap-2.5 mb-3 sm:mb-4 transition group z-10">
-        <div
-            class="flex justify-center items-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl border border-white/10 bg-white/5 backdrop-blur-md group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-300">
-            <i class="text-xs sm:text-sm fa-solid fa-arrow-left text-white/60 group-hover:text-white transition"></i>
-        </div>
-        <span
-            class="hidden md:inline text-[10px] font-bold tracking-widest uppercase text-white/50 group-hover:text-white/80 transition">Back
-            to Registration</span>
-    </a>
+    <span class="sc-chip" style="background: rgba(245,158,11,.16); color: #b45309"><i
+            class="fa-solid fa-id-card"></i> Driver</span>
+    <h1 class="au-title mt-4">Driver registration</h1>
+    <p class="au-sub">Become a PUJ operator. An administrator reviews every application before you can sign in.</p>
 
-    <!-- Card -->
-    <div
-        class="card-animate my-auto glass-card p-5 sm:p-7 md:p-8 w-full max-w-[340px] sm:max-w-[420px] rounded-2xl sm:rounded-[2rem] shadow-2xl shadow-black/30">
+    <form action="{{ route('driver.register') }}" method="POST" enctype="multipart/form-data"
+        class="mt-8 grid gap-5 sm:grid-cols-2">
+        @csrf
 
-        <div class="mb-5 sm:mb-7 text-center">
-            <div class="flex flex-col items-center justify-center mb-3 sm:mb-4">
-                <div
-                    class="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-amber-600 rounded-lg sm:rounded-xl shadow-lg shadow-amber-600/30 mb-2 sm:mb-3">
-                    <i class="fa-solid fa-id-card text-white text-base sm:text-lg"></i>
-                </div>
-                <span class="text-lg sm:text-xl font-bold tracking-tight text-white">
-                    Smart<span class="text-blue-400">Commute</span>
-                </span>
+        <!-- Name -->
+        <div>
+            <label for="name" class="sc-label">Name</label>
+            <div class="au-icon-field">
+                <i class="fa-solid fa-user lead"></i>
+                <input type="text" id="name" name="name" placeholder="Full name" value="{{ old('name') }}"
+                    autocomplete="name" class="sc-field">
             </div>
-            <div
-                class="inline-flex items-center gap-1 sm:gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full mb-2 sm:mb-3">
-                <i class="fa-solid fa-steering-wheel text-amber-400 text-[8px] sm:text-[9px]"></i>
-                <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-amber-400">Driver</span>
-            </div>
-            <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight">Driver Registration</h2>
-            <p class="mt-1 text-[11px] sm:text-xs text-gray-400">Become a PUJ Operator</p>
+            @error('name')
+                <div class="au-err"><i class="fa-solid fa-circle-exclamation"></i><span>{{ $message }}</span></div>
+            @enderror
         </div>
 
-        <form action="{{ route('driver.register') }}" method="POST" enctype="multipart/form-data"
-            class="space-y-3 sm:space-y-4">
-            @csrf
-
-            <!-- Name -->
-            <div>
-                <label
-                    class="block mb-1 sm:mb-1.5 ml-0.5 sm:ml-1 font-semibold tracking-widest uppercase text-[9px] sm:text-[10px] text-gray-400">Name</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-user text-[10px] sm:text-xs text-white/50"></i>
-                    </div>
-                    <input type="text" name="name" placeholder="Full Name" value="{{ old('name') }}"
-                        class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
-                </div>
-                @error('name')
-                    <div class="mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
-                        <i class="fa-solid fa-circle-exclamation text-amber-400 text-[9px] sm:text-[10px]"></i>
-                        <span class="text-amber-300 text-[10px] sm:text-[11px]">{{ $message }}</span>
-                    </div>
-                @enderror
+        <!-- Email -->
+        <div>
+            <label for="email" class="sc-label">Email</label>
+            <div class="au-icon-field">
+                <i class="fa-solid fa-envelope lead"></i>
+                <input type="email" id="email" name="email" placeholder="you@example.com"
+                    value="{{ old('email') }}" autocomplete="email" class="sc-field">
             </div>
+            @error('email')
+                <div class="au-err"><i class="fa-solid fa-circle-exclamation"></i><span>{{ $message }}</span></div>
+            @enderror
+        </div>
 
-            <!-- Email -->
-            <div>
-                <label
-                    class="block mb-1 sm:mb-1.5 ml-0.5 sm:ml-1 font-semibold tracking-widest uppercase text-[9px] sm:text-[10px] text-gray-400">Email</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-envelope text-[10px] sm:text-xs text-white/50"></i>
-                    </div>
-                    <input type="email" name="email" placeholder="you@example.com" value="{{ old('email') }}"
-                        class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
+        <!-- Contact -->
+        <div class="sm:col-span-2">
+            <label for="contact-info" class="sc-label">Contact number</label>
+            <div class="flex">
+                <span class="grid place-items-center px-4 text-[15px] font-bold"
+                    style="border: 1px solid var(--sc-line-strong); border-right: 0; border-radius: 14px 0 0 14px; background: var(--sc-surface-2); color: var(--sc-ink-2)">+63</span>
+                <div class="au-icon-field flex-1">
+                    <i class="fa-solid fa-phone lead"></i>
+                    <input type="tel" name="contact_info" id="contact-info" placeholder="9XX XXX XXXX" maxlength="12"
+                        value="{{ old('contact_info') }}" oninput="formatPhoneNumber(this)" class="sc-field"
+                        style="border-radius: 0 14px 14px 0">
                 </div>
-                @error('email')
-                    <div class="mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
-                        <i class="fa-solid fa-circle-exclamation text-amber-400 text-[9px] sm:text-[10px]"></i>
-                        <span class="text-amber-300 text-[10px] sm:text-[11px]">{{ $message }}</span>
-                    </div>
-                @enderror
             </div>
+            <p class="mt-2 text-[13px]" style="color: var(--sc-mute)">Philippine mobile number (e.g., 917 123 4567)
+            </p>
+            @error('contact_info')
+                <div class="au-err"><i class="fa-solid fa-circle-exclamation"></i><span>{{ $message }}</span></div>
+            @enderror
+        </div>
 
-            <!-- Contact -->
-            <div>
-                <label
-                    class="block mb-1 sm:mb-1.5 ml-0.5 sm:ml-1 font-semibold tracking-widest uppercase text-[9px] sm:text-[10px] text-gray-400">Contact
-                    Number</label>
-                <div class="flex">
-                    <div class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 rounded-l-lg sm:rounded-l-xl border border-r-0 input-field"
-                        style="border-right: none;">
-                        <span class="text-[11px] sm:text-xs font-bold text-gray-400">+63</span>
-                    </div>
-                    <div class="relative flex-1">
-                        <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-phone text-[10px] sm:text-xs text-white/50"></i>
-                        </div>
-                        <input type="tel" name="contact_info" id="contact-info" placeholder="9XX XXX XXXX"
-                            maxlength="12" value="{{ old('contact_info') }}" oninput="formatPhoneNumber(this)"
-                            class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-3 sm:pr-4 w-full text-xs sm:text-sm rounded-r-lg sm:rounded-r-xl focus:outline-none placeholder:text-white/50">
-                    </div>
+        <!-- Password -->
+        <div>
+            <label for="password" class="sc-label">Password</label>
+            <div class="au-icon-field">
+                <i class="fa-solid fa-lock lead"></i>
+                <input type="password" name="password" id="password" placeholder="••••••••"
+                    autocomplete="new-password" class="sc-field" style="padding-right: 52px">
+                <button type="button" onclick="togglePassword('password', 'eye-icon-1')" class="au-eye"
+                    aria-label="Show or hide password"><i id="eye-icon-1" class="fa-solid fa-eye"></i></button>
+            </div>
+            @error('password')
+                <div class="au-err"><i class="fa-solid fa-circle-exclamation"></i><span>{{ $message }}</span></div>
+            @enderror
+        </div>
+
+        <!-- Confirm Password -->
+        <div>
+            <label for="confirm-password" class="sc-label">Confirm password</label>
+            <div class="au-icon-field">
+                <i class="fa-solid fa-lock lead"></i>
+                <input type="password" name="confirm-password" id="confirm-password" placeholder="••••••••"
+                    autocomplete="new-password" class="sc-field" style="padding-right: 52px">
+                <button type="button" onclick="togglePassword('confirm-password', 'eye-icon-2')" class="au-eye"
+                    aria-label="Show or hide password"><i id="eye-icon-2" class="fa-solid fa-eye"></i></button>
+            </div>
+            @error('confirm-password')
+                <div class="au-err"><i class="fa-solid fa-circle-exclamation"></i><span>{{ $message }}</span></div>
+            @enderror
+        </div>
+
+        <!-- License Upload -->
+        <div class="sm:col-span-2">
+            <label class="sc-label">License ID</label>
+            <div class="file-drop-zone p-6 text-center" id="fileDropZone"
+                onclick="document.getElementById('license_file').click()">
+                <input type="file" name="license_image" id="license_file" accept="image/jpeg,image/png,image/jpg"
+                    class="hidden" onchange="handleFileSelect(this)">
+                <div id="filePlaceholder">
+                    <div class="grid place-items-center w-12 h-12 mx-auto mb-3 rounded-2xl"
+                        style="background: var(--sc-brand-soft); color: var(--sc-brand-text)"><i
+                            class="fa-solid fa-cloud-arrow-up text-lg"></i></div>
+                    <p class="text-[15px] font-bold" style="color: var(--sc-ink)">Click to upload</p>
+                    <p class="text-[13px] mt-0.5" style="color: var(--sc-mute)">JPG or PNG — max 2MB</p>
                 </div>
-                <p class="mt-1 sm:mt-1.5 ml-0.5 sm:ml-1 text-[9px] sm:text-[10px] text-gray-400">Philippine mobile
-                    number (e.g., 917 123 4567)</p>
-                @error('contact_info')
-                    <div class="mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
-                        <i class="fa-solid fa-circle-exclamation text-amber-400 text-[9px] sm:text-[10px]"></i>
-                        <span class="text-amber-300 text-[10px] sm:text-[11px]">{{ $message }}</span>
-                    </div>
-                @enderror
-            </div>
-
-            <!-- Password -->
-            <div>
-                <label
-                    class="block mb-1 sm:mb-1.5 ml-0.5 sm:ml-1 font-semibold tracking-widest uppercase text-[9px] sm:text-[10px] text-gray-400">Password</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/50"></i>
-                    </div>
-                    <input type="password" name="password" id="password" placeholder="••••••••"
-                        class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-9 sm:pr-10 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
-                    <button type="button" onclick="togglePassword('password', 'eye-icon-1')"
-                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/60 hover:text-white/70 transition">
-                        <i id="eye-icon-1" class="fa-solid fa-eye text-[10px] sm:text-xs"></i>
-                    </button>
+                <div id="fileSelected" class="hidden">
+                    <div class="grid place-items-center w-12 h-12 mx-auto mb-3 rounded-2xl"
+                        style="background: rgba(16,185,129,.16); color: #10b981"><i
+                            class="fa-solid fa-file-image text-lg"></i></div>
+                    <p class="text-[15px] font-bold" style="color: var(--sc-ink)" id="fileName"></p>
+                    <p class="text-[13px] mt-0.5" style="color: var(--sc-mute)">Click to change</p>
                 </div>
-                @error('password')
-                    <div class="mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
-                        <i class="fa-solid fa-circle-exclamation text-amber-400 text-[9px] sm:text-[10px]"></i>
-                        <span class="text-amber-300 text-[10px] sm:text-[11px]">{{ $message }}</span>
-                    </div>
-                @enderror
             </div>
+            @error('license_image')
+                <div class="au-err"><i class="fa-solid fa-circle-exclamation"></i><span>{{ $message }}</span></div>
+            @enderror
+        </div>
 
-            <!-- Confirm Password -->
-            <div>
-                <label
-                    class="block mb-1 sm:mb-1.5 ml-0.5 sm:ml-1 font-semibold tracking-widest uppercase text-[9px] sm:text-[10px] text-gray-400">Confirm
-                    Password</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-3 sm:left-3.5 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-lock text-[10px] sm:text-xs text-white/50"></i>
-                    </div>
-                    <input type="password" name="confirm-password" id="confirm-password" placeholder="••••••••"
-                        class="input-field py-2.5 sm:py-3 pl-9 sm:pl-10 pr-9 sm:pr-10 w-full text-xs sm:text-sm rounded-lg sm:rounded-xl focus:outline-none">
-                    <button type="button" onclick="togglePassword('confirm-password', 'eye-icon-2')"
-                        class="absolute inset-y-0 right-3 sm:right-3.5 flex items-center text-white/60 hover:text-white/70 transition">
-                        <i id="eye-icon-2" class="fa-solid fa-eye text-[10px] sm:text-xs"></i>
-                    </button>
-                </div>
-                @error('confirm-password')
-                    <div class="mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
-                        <i class="fa-solid fa-circle-exclamation text-amber-400 text-[9px] sm:text-[10px]"></i>
-                        <span class="text-amber-300 text-[10px] sm:text-[11px]">{{ $message }}</span>
-                    </div>
-                @enderror
-            </div>
-
-            <!-- License Upload -->
-            <div>
-                <label
-                    class="block mb-1 sm:mb-1.5 ml-0.5 sm:ml-1 font-semibold tracking-widest uppercase text-[9px] sm:text-[10px] text-gray-400">License
-                    ID</label>
-                <div class="file-drop-zone p-3 sm:p-5 text-center" id="fileDropZone"
-                    onclick="document.getElementById('license_file').click()">
-                    <input type="file" name="license_image" id="license_file"
-                        accept="image/jpeg,image/png,image/jpg" class="hidden" onchange="handleFileSelect(this)">
-                    <div id="filePlaceholder">
-                        <div class="flex justify-center mb-1.5 sm:mb-2">
-                            <div
-                                class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 flex items-center justify-center">
-                                <i class="fa-solid fa-cloud-arrow-up text-white/60 text-xs sm:text-base"></i>
-                            </div>
-                        </div>
-                        <p class="text-[11px] sm:text-xs text-gray-400 font-medium">Click to upload</p>
-                        <p class="text-[9px] sm:text-[10px] text-gray-400 mt-0.5">JPG, PNG — Max 2MB</p>
-                    </div>
-                    <div id="fileSelected" class="hidden">
-                        <div class="flex justify-center mb-1.5 sm:mb-2">
-                            <div
-                                class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-green-500/10 flex items-center justify-center">
-                                <i class="fa-solid fa-file-image text-green-400 text-xs sm:text-base"></i>
-                            </div>
-                        </div>
-                        <p class="text-[11px] sm:text-xs text-green-300 font-medium" id="fileName"></p>
-                        <p class="text-[9px] sm:text-[10px] text-gray-400 mt-0.5">Click to change</p>
-                    </div>
-                </div>
-                @error('license_image')
-                    <div class="mt-1.5 sm:mt-2 flex items-center gap-1.5 sm:gap-2">
-                        <i class="fa-solid fa-circle-exclamation text-amber-400 text-[9px] sm:text-[10px]"></i>
-                        <span class="text-amber-300 text-[10px] sm:text-[11px]">{{ $message }}</span>
-                    </div>
-                @enderror
-            </div>
-
-            <!-- Terms -->
-            <label class="flex items-start gap-2 sm:gap-2.5 cursor-pointer group pt-0.5 sm:pt-1">
+        <!-- Terms -->
+        <div class="sm:col-span-2">
+            <label class="flex items-start gap-3 cursor-pointer text-[14.5px] leading-snug"
+                style="color: var(--sc-ink-2)">
                 <input type="checkbox" id="terms" name="terms" value="1"
-                    class="mt-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 rounded cursor-pointer bg-white/5 border-white/20 text-blue-600 focus:ring-blue-500/30 focus:ring-offset-0"
-                    {{ old('terms') ? 'checked' : '' }}>
-                <span
-                    class="leading-tight text-[10px] sm:text-[11px] text-gray-400 group-hover:text-gray-300 transition">I
-                    agree to the <a href="#" class="text-blue-400 hover:underline">Terms of Service</a> and <a
-                        href="#" class="text-blue-400 hover:underline">Privacy Policy</a>.</span>
+                    class="mt-0.5 w-4 h-4 rounded cursor-pointer" {{ old('terms') ? 'checked' : '' }}>
+                <span>I agree to the <a href="#" class="au-link">Terms of Service</a> and <a href="#"
+                        class="au-link">Privacy Policy</a>.</span>
             </label>
             @error('terms')
-                <div class="flex items-center gap-1.5 sm:gap-2">
-                    <i class="fa-solid fa-circle-exclamation text-amber-400 text-[9px] sm:text-[10px]"></i>
-                    <span class="text-amber-300 text-[10px] sm:text-[11px]">{{ $message }}</span>
-                </div>
+                <div class="au-err"><i class="fa-solid fa-circle-exclamation"></i><span>{{ $message }}</span></div>
             @enderror
-
-            <button type="submit"
-                class="btn-primary py-2.5 sm:py-3.5 mt-1 sm:mt-2 w-full text-[10px] sm:text-xs font-bold tracking-widest uppercase rounded-lg sm:rounded-xl">
-                Submit Application
-            </button>
-        </form>
-
-        <div class="pt-4 sm:pt-6 mt-4 sm:mt-6 text-center border-t border-white/5">
-            <p class="text-[11px] sm:text-xs text-gray-400">
-                Already have an account?
-                <a href="{{ url('/login') }}" class="font-semibold text-white hover:text-blue-400 transition">Log
-                    in</a>
-            </p>
         </div>
+
+        <button type="submit" class="sc-btn sm:col-span-2" style="height: 54px; font-size: 15.5px">Submit
+            application</button>
+    </form>
+
+    <div class="au-divider flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+        <span>Already have an account? <a href="{{ url('/login') }}" class="au-link">Log in</a></span>
+        <a href="{{ route('register') }}" class="au-link">Register as a commuter</a>
     </div>
 
     <script>
@@ -463,17 +213,5 @@
                 zone.classList.remove('has-file');
             }
         }
-
-        const flash = document.getElementById('login-flash-success');
-        if (flash) {
-            setTimeout(() => {
-                flash.style.transition = 'all 0.4s ease';
-                flash.style.opacity = '0';
-                flash.style.transform = 'translate(-50%, -20px)';
-                setTimeout(() => flash.remove(), 400);
-            }, 3500);
-        }
     </script>
-</body>
-
-</html>
+</x-auth.shell>

@@ -8,7 +8,7 @@
     <title>SmartCommute | Admin Console</title>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -535,7 +535,7 @@
                                 $methodCounts[$m] = ($methodCounts[$m] ?? 0) + 1;
                             }
                             $methodColors = [
-                                'gcash' => '#3b82f6',
+                                'gcash' => '#6366f1',
                                 'maya' => '#10b981',
                                 'bank' => '#a855f7',
                                 'cash' => '#f59e0b',
@@ -709,8 +709,8 @@
                         datasets: [{
                                 label: 'Fare Revenue',
                                 data: @json($chartRevenue),
-                                backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                                hoverBackgroundColor: 'rgba(59, 130, 246, 0.9)',
+                                backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                                hoverBackgroundColor: 'rgba(99, 102, 241, 0.9)',
                                 borderRadius: 5,
                                 borderSkipped: false,
                                 barPercentage: 0.6,
@@ -845,7 +845,7 @@
                 $methodBgColors = [];
                 $methodBorderColors = [];
                 $colorMap = [
-                    'gcash' => ['rgba(59,130,246,0.75)', 'rgba(59,130,246,1)'],
+                    'gcash' => ['rgba(99, 102, 241,0.75)', 'rgba(99, 102, 241,1)'],
                     'maya' => ['rgba(16,185,129,0.75)', 'rgba(16,185,129,1)'],
                     'bank' => ['rgba(168,85,247,0.75)', 'rgba(168,85,247,1)'],
                     'cash' => ['rgba(245,158,11,0.75)', 'rgba(245,158,11,1)'],

@@ -40,6 +40,11 @@ use Illuminate\Support\Facades\Route;
 
 // Changed from /home to / so that the landing page will automatically show up upon starting the server
 Route::get('/', function (Request $request) {
+    // Signed-in users have no use for the marketing page: send them to the map.
+    if ($request->user()) {
+        return redirect()->route('map');
+    }
+
     return view('home');
 })->name('home');
 

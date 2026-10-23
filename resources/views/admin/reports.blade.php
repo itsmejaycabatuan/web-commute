@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     @include('partials.head-scripts')
@@ -440,7 +440,7 @@
                             datasets: [{
                                 label: 'Revenue',
                                 data: chartRevenue,
-                                backgroundColor: '#3b82f6',
+                                backgroundColor: '#6366f1',
                                 borderRadius: 4
                             }]
                         },

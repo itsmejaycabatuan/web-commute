@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartCommute | My Profile</title>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     @include('partials.head-scripts')
@@ -110,8 +110,8 @@
         }
 
         .pw-input:focus {
-            border-color: rgba(59, 130, 246, 0.3);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
         }
 
         .pw-input:-webkit-autofill {

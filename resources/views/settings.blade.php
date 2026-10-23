@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>SmartCommute | Settings</title>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -25,13 +25,13 @@
 
         .font-size-btn.active {
             background: #ffffff;
-            color: #1d4ed8;
+            color: #4338ca;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .dark .font-size-btn.active {
             background: #1a1a1a;
-            color: #60a5fa;
+            color: #a5b4fc;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
         }
 
@@ -46,7 +46,7 @@
         }
 
         .toggle-track.active {
-            background: #3b82f6;
+            background: #6366f1;
         }
 
         .dark .toggle-track {
@@ -54,7 +54,7 @@
         }
 
         .dark .toggle-track.active {
-            background: #2563eb;
+            background: #4f46e5;
         }
 
         .toggle-thumb {

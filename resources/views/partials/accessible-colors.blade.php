@@ -54,10 +54,10 @@
         --cc-sky: 3 105 161;
         --cc-sky-fill: 3 105 161;
         --cc-sky-fill-hover: 7 89 133;
-        --cc-blue: 29 78 216;
-        --cc-blue-fill: 29 78 216;
-        --cc-blue-fill-hover: 30 64 175;
-        --cc-indigo: 67 56 202;
+        --cc-blue: 67 56 202;
+        --cc-blue-fill: 79 70 229;
+        --cc-blue-fill-hover: 67 56 202;
+        --cc-indigo: 79 70 229;
         --cc-indigo-fill: 67 56 202;
         --cc-indigo-fill-hover: 55 48 163;
         --cc-violet: 109 40 217;
@@ -84,7 +84,7 @@
         --cc-teal: 45 212 191;
         --cc-cyan: 34 211 238;
         --cc-sky: 56 189 248;
-        --cc-blue: 96 165 250;
+        --cc-blue: 165 180 252;
         --cc-indigo: 129 140 248;
         --cc-violet: 167 139 250;
         --cc-purple: 192 132 252;
@@ -577,39 +577,39 @@
     :root:root:root.dark .text-\[\#1a1a1a\],
     :root:root:root.dark .text-\[\#222\],
     :root:root:root.dark .text-\[\#282828\] {
-        color: #858585 !important;
+        color: #8d96ba !important;
     }
 
     :root:root:root.dark .dark\:text-\[\#333\],
     :root:root:root.dark .dark\:text-gray-600,
     :root:root:root.dark .text-\[\#333\] {
-        color: #8f8f8f !important;
+        color: #959ec2 !important;
     }
 
     :root:root:root.dark .dark\:text-\[\#444\],
     :root:root:root.dark .dark\:text-gray-500,
     :root:root:root.dark .text-\[\#444\] {
-        color: #9a9a9a !important;
+        color: #9ea7ca !important;
     }
 
     :root:root:root.dark .dark\:text-\[\#555\],
     :root:root:root.dark .text-\[\#555\] {
-        color: #a3a3a3 !important;
+        color: #a8b0d1 !important;
     }
 
     :root:root:root.dark .dark\:text-\[\#666\],
     :root:root:root.dark .text-\[\#666\] {
-        color: #a8a8a8 !important;
+        color: #adb5d4 !important;
     }
 
     :root:root:root.dark .dark\:text-\[\#777\],
     :root:root:root.dark .text-\[\#777\] {
-        color: #b0b0b0 !important;
+        color: #b5bcd8 !important;
     }
 
     :root:root:root.dark .dark\:text-\[\#888\],
     :root:root:root.dark .text-\[\#888\] {
-        color: #b8b8b8 !important;
+        color: #bdc4dd !important;
     }
 
     /* Hover feedback for grey text (the rules above would otherwise pin the colour) */

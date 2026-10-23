@@ -1,3 +1,5 @@
+@include('partials.theme')
+
 {{-- Theme & Font Size detection MUST run immediately to prevent flash --}}
 <script>
     (function() {
@@ -29,38 +31,10 @@
 
     function applyFontSize(size, skipSave) {
         const sizes = {
-            small: {
-                base: 14,
-                label: 12,
-                small: 10,
-                tiny: 8,
-                mini: 7,
-                db: 10
-            },
-            medium: {
-                base: 16,
-                label: 13,
-                small: 11,
-                tiny: 9,
-                mini: 8,
-                db: 11
-            },
-            large: {
-                base: 18,
-                label: 15,
-                small: 12,
-                tiny: 10,
-                mini: 9,
-                db: 12
-            },
-            xlarge: {
-                base: 20,
-                label: 17,
-                small: 14,
-                tiny: 11,
-                mini: 10,
-                db: 13
-            }
+            small: { base: 14, label: 13, small: 12, tiny: 11, mini: 10, db: 10 },
+            medium: { base: 16, label: 14, small: 13, tiny: 12, mini: 11, db: 11 },
+            large: { base: 18, label: 16, small: 14, tiny: 13, mini: 12, db: 12 },
+            xlarge: { base: 20, label: 18, small: 16, tiny: 14, mini: 13, db: 13 }
         };
 
         const s = sizes[size] || sizes.medium;
@@ -103,14 +77,15 @@
         theme: {
             extend: {
                 fontFamily: {
-                    sans: ['Inter', 'sans-serif']
+                    sans: window.SC_FONT
                 },
+                colors: window.SC_COLORS,
                 fontSize: {
                     'base': 'var(--fs-base, 16px)',
-                    'label': 'var(--fs-label, 13px)',
-                    'small': 'var(--fs-small, 11px)',
-                    'tiny': 'var(--fs-tiny, 9px)',
-                    'mini': 'var(--fs-mini, 8px)',
+                    'label': 'var(--fs-label, 14px)',
+                    'small': 'var(--fs-small, 13px)',
+                    'tiny': 'var(--fs-tiny, 12px)',
+                    'mini': 'var(--fs-mini, 11px)',
                 }
             }
         }
@@ -120,7 +95,9 @@
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.store('sidebar', {
-            open: true, // the navigation sidebar starts expanded
+            // Expanded on wide screens; on tablets (768–1099px) it starts as the slim icon rail so the
+            // page keeps enough width for its cards and tables.
+            open: window.innerWidth >= 1100,
             isDark: false,
             fontSize: (function() {
                 const intToLabel = {
@@ -219,7 +196,7 @@
         margin: 0;
         padding: 0;
         height: 100%;
-        font-family: 'Inter', sans-serif;
+        font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
         font-size: var(--fs-base, 16px);
         overflow-x: hidden;
         background-color: #f8fafc;
@@ -474,13 +451,13 @@
 
     .font-size-btn.active {
         background: #ffffff;
-        color: #1d4ed8;
+        color: #4338ca;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
     .dark .font-size-btn.active {
         background: #1a1a1a;
-        color: #60a5fa;
+        color: #a5b4fc;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
     }
 

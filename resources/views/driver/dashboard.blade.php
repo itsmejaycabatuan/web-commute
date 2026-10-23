@@ -8,7 +8,7 @@
     <title>SmartCommute | Driver Console</title>
 
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -174,7 +174,7 @@
 
             </div>
 
-            <!-- `landscape-split`: 8/4 on xl, but 50/50 when the device is held sideways --}}
+            <!-- `landscape-split`: 8/4 on xl, but 50/50 when the device is held sideways -->
             <div class="landscape-split grid grid-cols-1 xl:grid-cols-12 gap-5 sm:gap-6">
 
                 <!-- ══════════ LEFT COLUMN ══════════ -->
@@ -270,18 +270,18 @@
                                 <thead>
                                     <tr
                                         class="text-[8px] sm:text-[9px] uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] border-b border-gray-200 dark:border-[#1e1e1e]">
-                                        <th class="px-4 sm:px-6 py-2.5 font-bold">Date</th>
-                                        <th class="px-4 sm:px-6 py-2.5 font-bold">Time In</th>
-                                        <th class="px-4 sm:px-6 py-2.5 font-bold">Time Out</th>
-                                        <th class="px-4 sm:px-6 py-2.5 font-bold">Hours</th>
-                                        <th class="px-4 sm:px-6 py-2.5 font-bold">OT</th>
-                                        <th class="px-4 sm:px-6 py-2.5 font-bold">Status</th>
+                                        <th class="px-4 sm:px-6 py-2.5 font-bold whitespace-nowrap">Date</th>
+                                        <th class="px-4 sm:px-6 py-2.5 font-bold whitespace-nowrap">Time In</th>
+                                        <th class="px-4 sm:px-6 py-2.5 font-bold whitespace-nowrap">Time Out</th>
+                                        <th class="px-4 sm:px-6 py-2.5 font-bold whitespace-nowrap">Hours</th>
+                                        <th class="px-4 sm:px-6 py-2.5 font-bold whitespace-nowrap">OT</th>
+                                        <th class="px-4 sm:px-6 py-2.5 font-bold whitespace-nowrap">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
                                     @forelse($recentTimeKeeping as $record)
                                         <tr class="table-row">
-                                            <td class="px-4 sm:px-6 py-3">
+                                            <td class="px-4 sm:px-6 py-3 whitespace-nowrap">
                                                 <p
                                                     class="text-[10px] sm:text-[11px] font-bold text-gray-700 dark:text-[#ccc]">
                                                     {{ \Carbon\Carbon::parse($record->date)->format('M d, Y') }}</p>
@@ -289,19 +289,19 @@
                                                     class="text-[7px] sm:text-[8px] text-gray-400 dark:text-[#444] font-bold uppercase">
                                                     {{ \Carbon\Carbon::parse($record->date)->format('l') }}</p>
                                             </td>
-                                            <td class="px-4 sm:px-6 py-3">
+                                            <td class="px-4 sm:px-6 py-3 whitespace-nowrap">
                                                 <span
                                                     class="text-[10px] sm:text-[11px] font-bold text-gray-500 dark:text-[#888]">{{ $record->time_in ? \Carbon\Carbon::parse($record->time_in)->format('h:i A') : '—' }}</span>
                                             </td>
-                                            <td class="px-4 sm:px-6 py-3">
+                                            <td class="px-4 sm:px-6 py-3 whitespace-nowrap">
                                                 <span
                                                     class="text-[10px] sm:text-[11px] font-bold text-gray-500 dark:text-[#888]">{{ $record->time_out ? \Carbon\Carbon::parse($record->time_out)->format('h:i A') : '—' }}</span>
                                             </td>
-                                            <td class="px-4 sm:px-6 py-3">
+                                            <td class="px-4 sm:px-6 py-3 whitespace-nowrap">
                                                 <span
                                                     class="text-[10px] sm:text-[11px] font-bold text-gray-900 dark:text-white">{{ $record->hours_worked ?? '0.0' }}</span>
                                             </td>
-                                            <td class="px-4 sm:px-6 py-3">
+                                            <td class="px-4 sm:px-6 py-3 whitespace-nowrap">
                                                 @if ($record->overtime_hours && $record->overtime_hours > 0)
                                                     <span
                                                         class="text-[9px] sm:text-[10px] font-bold text-amber-500 dark:text-amber-400">+{{ number_format($record->overtime_hours, 1) }}</span>
@@ -310,7 +310,7 @@
                                                         class="text-[9px] sm:text-[10px] text-gray-300 dark:text-[#333]">—</span>
                                                 @endif
                                             </td>
-                                            <td class="px-4 sm:px-6 py-3">
+                                            <td class="px-4 sm:px-6 py-3 whitespace-nowrap">
                                                 @if ($record->sick)
                                                     <span
                                                         class="text-[7px] sm:text-[8px] bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/15 px-1.5 py-0.5 rounded-md font-bold uppercase">Sick</span>
@@ -348,6 +348,72 @@
                                     @endforelse
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <!-- ══════════ RECENT VIOLATIONS ══════════ -->
+                    <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] overflow-hidden"
+                        x-data="driverViolations()">
+                        <div class="p-4 sm:p-6 pb-0">
+                            <div class="flex items-center justify-between mb-4 sm:mb-5">
+                                <div class="flex items-center gap-2.5">
+                                    <div
+                                        class="w-7 h-7 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center">
+                                        <i
+                                            class="fa-solid fa-list-check text-[9px] text-amber-500 dark:text-amber-400"></i>
+                                    </div>
+                                    <span
+                                        class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">Violations</span>
+                                </div>
+                                <a href="{{ route('driver.violations') }}"
+                                    class="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-white transition flex items-center gap-1.5">
+                                    <span>View All</span>
+                                    <i class="fa-solid fa-arrow-right text-[7px]"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6 space-y-2.5" style="max-height: 380px;">
+                            <template x-for="v in violations" :key="v.id">
+                                <div
+                                    class="p-3.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] transition-all cursor-pointer flex gap-3.5 items-start group">
+                                    <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all"
+                                        :class="iconClasses(v)">
+                                        <i class="fa-solid text-[10px]" :class="icon(v)"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="text-[10px] sm:text-[11px] font-bold text-gray-700 dark:text-[#ccc] truncate"
+                                            x-text="v.violationType"></h4>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span
+                                                class="text-[7px] sm:text-[8px] font-bold uppercase font-mono px-1.5 py-0.5 rounded-md"
+                                                :class="badgeClasses(v.codeColor)" x-text="v.violationCode"></span>
+                                            <span class="text-[8px] text-gray-400 dark:text-[#444] font-medium"
+                                                x-text="offenseLabel(v.offenseCount)"></span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right shrink-0">
+                                        <p class="text-[10px] sm:text-[11px] font-bold"
+                                            :class="v.paymentStatus === 'paid' ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'"
+                                            x-text="v.paymentStatus === 'paid' ? 'Paid' : formatFine(v.fine)"></p>
+                                        <p class="text-[7px] sm:text-[8px] text-gray-400 dark:text-[#444] font-medium mt-0.5"
+                                            x-text="v.date"></p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div x-show="violations.length === 0" x-cloak
+                                class="flex flex-col items-center justify-center py-10 sm:py-14">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center mb-2.5">
+                                    <i class="fa-solid fa-shield text-sm text-gray-300 dark:text-[#333]"></i>
+                                </div>
+                                <span
+                                    class="text-[10px] sm:text-[11px] text-gray-400 dark:text-[#333] font-medium">Clean
+                                    record</span>
+                                <span class="text-[8px] text-gray-300 dark:text-[#222] mt-0.5">No violations on
+                                    file</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -547,72 +613,6 @@
                                     </div>
                                 </div>
                             @endif
-                        </div>
-                    </div>
-
-                    <!-- ══════════ RECENT VIOLATIONS ══════════ -->
-                    <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] overflow-hidden"
-                        x-data="driverViolations()">
-                        <div class="p-4 sm:p-6 pb-0">
-                            <div class="flex items-center justify-between mb-4 sm:mb-5">
-                                <div class="flex items-center gap-2.5">
-                                    <div
-                                        class="w-7 h-7 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center">
-                                        <i
-                                            class="fa-solid fa-list-check text-[9px] text-amber-500 dark:text-amber-400"></i>
-                                    </div>
-                                    <span
-                                        class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">Violations</span>
-                                </div>
-                                <a href="{{ route('driver.violations') }}"
-                                    class="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-white transition flex items-center gap-1.5">
-                                    <span>View All</span>
-                                    <i class="fa-solid fa-arrow-right text-[7px]"></i>
-                                </a>
-                            </div>
-                        </div>
-
-                        <div class="overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6 space-y-2.5" style="max-height: 380px;">
-                            <template x-for="v in violations" :key="v.id">
-                                <div
-                                    class="p-3.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] hover:bg-gray-100 dark:hover:bg-[#1a1a1a] hover:border-gray-300 dark:hover:border-[#333] transition-all cursor-pointer flex gap-3.5 items-start group">
-                                    <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all"
-                                        :class="iconClasses(v)">
-                                        <i class="fa-solid text-[10px]" :class="icon(v)"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <h4 class="text-[10px] sm:text-[11px] font-bold text-gray-700 dark:text-[#ccc] truncate"
-                                            x-text="v.violationType"></h4>
-                                        <div class="flex items-center gap-2 mt-1">
-                                            <span
-                                                class="text-[7px] sm:text-[8px] font-bold uppercase font-mono px-1.5 py-0.5 rounded-md"
-                                                :class="badgeClasses(v.codeColor)" x-text="v.violationCode"></span>
-                                            <span class="text-[8px] text-gray-400 dark:text-[#444] font-medium"
-                                                x-text="offenseLabel(v.offenseCount)"></span>
-                                        </div>
-                                    </div>
-                                    <div class="text-right shrink-0">
-                                        <p class="text-[10px] sm:text-[11px] font-bold"
-                                            :class="v.paymentStatus === 'paid' ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'"
-                                            x-text="v.paymentStatus === 'paid' ? 'Paid' : formatFine(v.fine)"></p>
-                                        <p class="text-[7px] sm:text-[8px] text-gray-400 dark:text-[#444] font-medium mt-0.5"
-                                            x-text="v.date"></p>
-                                    </div>
-                                </div>
-                            </template>
-
-                            <div x-show="violations.length === 0" x-cloak
-                                class="flex flex-col items-center justify-center py-10 sm:py-14">
-                                <div
-                                    class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center mb-2.5">
-                                    <i class="fa-solid fa-shield text-sm text-gray-300 dark:text-[#333]"></i>
-                                </div>
-                                <span
-                                    class="text-[10px] sm:text-[11px] text-gray-400 dark:text-[#333] font-medium">Clean
-                                    record</span>
-                                <span class="text-[8px] text-gray-300 dark:text-[#222] mt-0.5">No violations on
-                                    file</span>
-                            </div>
                         </div>
                     </div>
 

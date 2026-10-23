@@ -4,1107 +4,1484 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Live PUJ tracking, fare planning and cash-free payments for commuters, with timekeeping and maintenance tools for the people who run the fleet.">
     <title>Smart Commute System</title>
+
+    {{-- Pick the theme before first paint: signed-in users follow their profile, guests follow
+         their last choice on this device, then the OS preference. --}}
+    <script>
+        (function() {
+            var isGuest = {{ Auth::guest() ? 'true' : 'false' }};
+            var stored = null;
+            try { stored = localStorage.getItem('color-theme'); } catch (e) {}
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var theme = isGuest ? (stored || (prefersDark ? 'dark' : 'light')) : '{{ $userTheme ?? 'light' }}';
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+        })();
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    @include('partials.theme')
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans: window.SC_FONT
                     },
+                    colors: window.SC_COLORS
                 }
             }
         }
     </script>
+
     <style>
         html {
             scroll-behavior: smooth;
+            scroll-padding-top: 88px;
         }
 
-        * {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+        body {
+            overflow-x: hidden;
         }
 
-        .hero-bg {
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 20, 60, 0.6) 50%, rgba(0, 0, 0, 0.8) 100%),
-                url("{{ asset('images/newbg.jpg') }}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+        /* ── Navbar: floating glass pill ── */
+        .lp-nav {
+            position: fixed;
+            z-index: 80;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(1180px, calc(100% - 24px));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 10px 12px 10px 18px;
+            border-radius: 999px;
+            background: color-mix(in srgb, var(--sc-surface) 78%, transparent);
+            -webkit-backdrop-filter: blur(18px) saturate(1.5);
+            backdrop-filter: blur(18px) saturate(1.5);
+            border: 1px solid var(--sc-line);
+            box-shadow: 0 14px 40px -20px rgba(30, 34, 110, .35);
         }
 
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+        .lp-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: -.02em;
+            color: var(--sc-ink);
         }
 
-        .glass-inset {
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+        .lp-logo-mark {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 13px;
+            color: #fff;
+            font-size: 15px;
+            background: var(--sc-grad-warm);
+            box-shadow: 0 10px 22px -8px rgba(124, 58, 237, .75), inset 0 1px 0 rgba(255, 255, 255, .3);
         }
 
-        .glass-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        .lp-logo b {
+            color: var(--sc-brand-text);
+            font-weight: 800;
         }
 
-        .glass-card:hover {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
-            border-color: rgba(255, 255, 255, 0.15);
+        .lp-links {
+            display: none;
+            align-items: center;
+            gap: 4px;
         }
 
-        .text-gradient {
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        @media (min-width: 900px) {
+            .lp-links {
+                display: flex;
+            }
         }
 
-        .text-gradient-warm {
-            background: linear-gradient(135deg, #f59e0b, #ef4444, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .lp-link {
+            padding: 9px 16px;
+            border-radius: 999px;
+            font-size: 14.5px;
+            font-weight: 600;
+            color: var(--sc-ink-2);
+            transition: background-color .2s, color .2s;
         }
 
-        .glow-blue {
-            box-shadow: 0 0 40px rgba(59, 130, 246, 0.15), 0 0 80px rgba(59, 130, 246, 0.05);
+        .lp-link:hover {
+            background: var(--sc-surface-3);
+            color: var(--sc-ink);
         }
 
-        .glow-blue-strong {
-            box-shadow: 0 0 60px rgba(59, 130, 246, 0.25), 0 0 120px rgba(59, 130, 246, 0.1);
+        .lp-icon-btn {
+            display: grid;
+            place-items: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            color: var(--sc-ink-2);
+            background: var(--sc-surface-2);
+            border: 1px solid var(--sc-line);
+            cursor: pointer;
         }
 
-        .line-glow {
-            background: linear-gradient(90deg, transparent, #3b82f6, transparent);
-            height: 1px;
+        .lp-icon-btn:hover {
+            color: var(--sc-ink);
+            border-color: var(--sc-line-strong);
         }
 
-        @keyframes float {
+        .lp-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            height: 44px;
+            padding: 0 22px;
+            border-radius: 999px;
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #fff;
+            background: var(--sc-grad);
+            box-shadow: 0 14px 28px -12px rgba(79, 70, 229, .8), inset 0 1px 0 rgba(255, 255, 255, .25);
+            transition: transform .2s, filter .2s;
+            white-space: nowrap;
+        }
+
+        .lp-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.07);
+        }
+
+        .lp-btn.lg {
+            height: 56px;
+            padding: 0 30px;
+            font-size: 16px;
+        }
+
+        .lp-btn.ghost {
+            color: var(--sc-ink);
+            background: var(--sc-surface);
+            border: 1px solid var(--sc-line-strong);
+            box-shadow: var(--sc-shadow-1);
+        }
+
+        .lp-btn.light {
+            color: #3730a3;
+            background: #fff;
+            box-shadow: 0 16px 34px -14px rgba(0, 0, 0, .5);
+        }
+
+        .lp-btn.glass {
+            color: #fff;
+            background: rgba(255, 255, 255, .14);
+            border: 1px solid rgba(255, 255, 255, .28);
+            box-shadow: none;
+        }
+
+        /* ── Hero ── */
+        .lp-hero {
+            position: relative;
+            padding: 160px 20px 70px;
+            overflow: hidden;
+        }
+
+        .lp-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(var(--sc-line-strong) 1px, transparent 1.2px);
+            background-size: 26px 26px;
+            -webkit-mask-image: radial-gradient(70% 60% at 50% 30%, #000 20%, transparent 78%);
+            mask-image: radial-gradient(70% 60% at 50% 30%, #000 20%, transparent 78%);
+            opacity: .8;
+            pointer-events: none;
+        }
+
+        .lp-wrap {
+            position: relative;
+            max-width: 1180px;
+            margin: 0 auto;
+        }
+
+        .lp-hero-grid {
+            display: grid;
+            gap: 56px;
+            align-items: center;
+        }
+
+        @media (min-width: 1020px) {
+            .lp-hero-grid {
+                grid-template-columns: 1.05fr .95fr;
+            }
+        }
+
+        .lp-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 16px 6px 6px;
+            border-radius: 999px;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--sc-ink-2);
+            background: var(--sc-surface);
+            border: 1px solid var(--sc-line);
+            box-shadow: var(--sc-shadow-1);
+        }
+
+        .lp-pill i {
+            display: grid;
+            place-items: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            font-size: 11px;
+            color: #fff;
+            background: var(--sc-grad);
+        }
+
+        .lp-h1 {
+            margin: 24px 0 22px;
+            font-size: clamp(2.5rem, 5.1vw, 4.4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -.045em;
+            color: var(--sc-ink);
+        }
+
+        .lp-lead {
+            max-width: 560px;
+            font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+            line-height: 1.65;
+            color: var(--sc-mute);
+        }
+
+        .lp-facts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 40px;
+        }
+
+        .lp-fact {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 18px 10px 10px;
+            border-radius: 18px;
+            background: var(--sc-surface);
+            border: 1px solid var(--sc-line);
+            box-shadow: var(--sc-shadow-1);
+        }
+
+        .lp-fact i {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            font-size: 15px;
+        }
+
+        .lp-fact strong {
+            display: block;
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--sc-ink);
+            line-height: 1.1;
+        }
+
+        .lp-fact span {
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--sc-mute);
+        }
+
+        /* ── Hero product mock ── */
+        .mock {
+            position: relative;
+            max-width: 520px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .mock-glow {
+            position: absolute;
+            inset: -8% -6%;
+            background: radial-gradient(closest-side, rgba(124, 58, 237, .32), transparent 70%);
+            filter: blur(30px);
+            pointer-events: none;
+        }
+
+        .mock-frame {
+            position: relative;
+            aspect-ratio: 4 / 4.6;
+            border-radius: 40px;
+            overflow: hidden;
+            background: var(--sc-surface);
+            border: 1px solid var(--sc-line);
+            box-shadow: var(--sc-shadow-3);
+        }
+
+        .mock-map {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(60% 50% at 20% 15%, rgba(99, 102, 241, .16), transparent 70%),
+                linear-gradient(var(--sc-line) 1px, transparent 1px) 0 0 / 44px 44px,
+                linear-gradient(90deg, var(--sc-line) 1px, transparent 1px) 0 0 / 44px 44px,
+                var(--sc-surface-2);
+        }
+
+        .mock-block {
+            position: absolute;
+            border-radius: 18px;
+            background: var(--sc-surface-3);
+            opacity: .75;
+        }
+
+        .mock-route {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .mock-bus {
+            position: absolute;
+            left: 52%;
+            top: 39%;
+            transform: translate(-50%, -50%);
+            display: grid;
+            place-items: center;
+            width: 54px;
+            height: 54px;
+            border-radius: 18px;
+            color: #fff;
+            font-size: 20px;
+            background: var(--sc-grad);
+            box-shadow: 0 16px 30px -10px rgba(79, 70, 229, .85);
+            animation: lp-bob 3.2s ease-in-out infinite;
+        }
+
+        .mock-bus::after {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            border-radius: 26px;
+            border: 2px solid rgba(99, 102, 241, .45);
+            animation: lp-ping 2.4s cubic-bezier(0, 0, .2, 1) infinite;
+        }
+
+        .mock-top {
+            position: absolute;
+            top: 18px;
+            left: 18px;
+            right: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 20px;
+            background: color-mix(in srgb, var(--sc-surface) 86%, transparent);
+            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--sc-line);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--sc-mute);
+        }
+
+        .mock-top i {
+            color: var(--sc-brand);
+        }
+
+        .mock-sheet {
+            position: absolute;
+            left: 14px;
+            right: 14px;
+            bottom: 14px;
+            padding: 20px;
+            border-radius: 28px;
+            background: var(--sc-surface);
+            border: 1px solid var(--sc-line);
+            box-shadow: 0 -12px 40px -18px rgba(30, 34, 110, .3);
+        }
+
+        .mock-eta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .mock-eta h4 {
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: -.02em;
+            color: var(--sc-ink);
+        }
+
+        .mock-eta p {
+            font-size: 13px;
+            color: var(--sc-mute);
+            margin-top: 2px;
+        }
+
+        .mock-badge {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #047857;
+            background: rgba(16, 185, 129, .14);
+            white-space: nowrap;
+        }
+
+        .dark .mock-badge {
+            color: #6ee7b7;
+        }
+
+        .mock-fare {
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .mock-fare>div {
+            flex: 1;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: var(--sc-surface-2);
+            border: 1px solid var(--sc-line);
+        }
+
+        .mock-fare small {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--sc-mute);
+        }
+
+        .mock-fare b {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -.02em;
+            color: var(--sc-ink);
+        }
+
+        .mock-fare>div.on {
+            background: var(--sc-brand-soft);
+            border-color: rgba(99, 102, 241, .4);
+        }
+
+        .mock-fare>div.on b {
+            color: var(--sc-brand-text);
+        }
+
+        .mock-float {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px 12px 12px;
+            border-radius: 20px;
+            background: var(--sc-surface);
+            border: 1px solid var(--sc-line);
+            box-shadow: var(--sc-shadow-3);
+            font-size: 13.5px;
+            font-weight: 700;
+            color: var(--sc-ink);
+        }
+
+        .mock-float small {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--sc-mute);
+        }
+
+        .mock-float i {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            font-size: 15px;
+        }
+
+        .mock-float.a {
+            top: 17%;
+            right: -14px;
+            animation: lp-bob 4s ease-in-out infinite;
+        }
+
+        .mock-float.b {
+            top: 54%;
+            left: -22px;
+            animation: lp-bob 4.6s ease-in-out -2s infinite;
+        }
+
+        @media (max-width: 600px) {
+            .mock-float.a {
+                right: -4px;
+            }
+
+            .mock-float.b {
+                left: -6px;
+            }
+        }
+
+        @keyframes lp-bob {
 
             0%,
             100% {
-                transform: translateY(0px);
-            }
-
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        @keyframes pulse-slow {
-
-            0%,
-            100% {
-                opacity: 0.4;
-            }
-
-            50% {
-                opacity: 0.8;
-            }
-        }
-
-        @keyframes slide-up {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-
-            to {
-                opacity: 1;
                 transform: translateY(0);
             }
+
+            50% {
+                transform: translateY(-8px);
+            }
         }
 
-        @keyframes fade-in {
-            from {
+        .mock-bus {
+            animation-name: lp-bob-c;
+        }
+
+        @keyframes lp-bob-c {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%);
+            }
+
+            50% {
+                transform: translate(-50%, calc(-50% - 7px));
+            }
+        }
+
+        @keyframes lp-ping {
+            75%,
+            100% {
+                transform: scale(1.5);
                 opacity: 0;
             }
-
-            to {
-                opacity: 1;
-            }
         }
 
-        @keyframes marquee {
-            0% {
-                transform: translateX(0);
-            }
-
-            100% {
+        @keyframes lp-marquee {
+            to {
                 transform: translateX(-50%);
             }
         }
 
-        .animate-float {
-            animation: float 6s ease-in-out infinite;
+        /* ── Marquee ── */
+        .lp-strip {
+            border-block: 1px solid var(--sc-line);
+            background: color-mix(in srgb, var(--sc-surface) 70%, transparent);
+            overflow: hidden;
+            padding: 18px 0;
         }
 
-        .animate-pulse-slow {
-            animation: pulse-slow 4s ease-in-out infinite;
+        .lp-strip-track {
+            display: flex;
+            width: max-content;
+            animation: lp-marquee 36s linear infinite;
         }
 
-        .animate-marquee {
-            animation: marquee 30s linear infinite;
+        .lp-strip span {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 28px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--sc-ink-2);
+            white-space: nowrap;
         }
 
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        .lp-strip i {
+            font-size: 14px;
+            color: var(--sc-brand);
         }
 
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
+        /* ── Sections ── */
+        .lp-section {
+            padding: 96px 20px;
+            position: relative;
         }
 
-        .reveal-delay-1 {
-            transition-delay: 0.1s;
+        .lp-h2 {
+            margin: 14px 0 16px;
+            font-size: clamp(2rem, 4.2vw, 3.3rem);
+            font-weight: 800;
+            line-height: 1.08;
+            letter-spacing: -.035em;
+            color: var(--sc-ink);
         }
 
-        .reveal-delay-2 {
-            transition-delay: 0.2s;
+        .lp-sub {
+            max-width: 620px;
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: var(--sc-mute);
         }
 
-        .reveal-delay-3 {
-            transition-delay: 0.3s;
+        .lp-grid-4 {
+            display: grid;
+            gap: 20px;
+            margin-top: 56px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         }
 
-        .reveal-delay-4 {
-            transition-delay: 0.4s;
+        .lp-card {
+            position: relative;
+            padding: 30px;
+            border-radius: 30px;
+            background: var(--sc-surface);
+            border: 1px solid var(--sc-line);
+            box-shadow: var(--sc-shadow-2);
+            transition: transform .3s cubic-bezier(.16, 1, .3, 1), box-shadow .3s, border-color .3s;
+            overflow: hidden;
         }
 
-        .hero-load-1 {
-            animation: slide-up 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+        .lp-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--sc-shadow-3);
+            border-color: var(--sc-line-strong);
         }
 
-        .hero-load-2 {
-            animation: slide-up 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+        .lp-card h4 {
+            margin: 22px 0 10px;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -.02em;
+            color: var(--sc-ink);
         }
 
-        .hero-load-3 {
-            animation: slide-up 1s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
+        .lp-card p {
+            font-size: 15.5px;
+            line-height: 1.65;
+            color: var(--sc-mute);
         }
 
-        .hero-load-4 {
-            animation: fade-in 1s ease 0.8s both;
+        .lp-ico {
+            display: grid;
+            place-items: center;
+            width: 54px;
+            height: 54px;
+            border-radius: 18px;
+            font-size: 21px;
+            color: rgb(var(--t));
+            background: rgb(var(--t) / .13);
         }
 
-        .stat-counter {
-            font-variant-numeric: tabular-nums;
+        .lp-link-arrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 22px;
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--sc-brand-text);
         }
 
-        .mobile-menu {
-            transform: translateX(100%);
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        .lp-link-arrow i {
+            transition: transform .25s;
         }
 
-        .mobile-menu.open {
-            transform: translateX(0);
+        .lp-card:hover .lp-link-arrow i {
+            transform: translateX(5px);
         }
 
-        .mobile-overlay {
+        /* feature bento */
+        .bento {
+            display: grid;
+            gap: 20px;
+            margin-top: 56px;
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 760px) {
+            .bento {
+                grid-template-columns: repeat(6, 1fr);
+            }
+
+            .bento .span-3 {
+                grid-column: span 3;
+            }
+
+            .bento .span-2 {
+                grid-column: span 2;
+            }
+
+            .bento .span-4 {
+                grid-column: span 4;
+            }
+        }
+
+        .bento .lp-card h4 {
+            margin-top: 18px;
+        }
+
+        .lp-hero-card {
+            color: #fff;
+            border: 0;
+            background:
+                radial-gradient(90% 120% at 100% 0%, rgba(236, 72, 153, .5), transparent 55%),
+                linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+        }
+
+        .lp-hero-card h4,
+        .lp-hero-card p {
+            color: #fff;
+        }
+
+        .lp-hero-card p {
+            opacity: .86;
+        }
+
+        .lp-hero-card .lp-ico {
+            color: #fff;
+            background: rgba(255, 255, 255, .18);
+        }
+
+        /* audience */
+        .lp-role {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .lp-role .tag {
+            margin-top: 22px;
+            font-size: 12.5px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: rgb(var(--t));
+        }
+
+        .lp-role h4 {
+            margin-top: 6px;
+        }
+
+        .lp-role .foot {
+            margin-top: auto;
+            padding-top: 22px;
+        }
+
+        .lp-role .roles {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--sc-mute);
+        }
+
+        /* CTA */
+        .lp-cta {
+            position: relative;
+            overflow: hidden;
+            border-radius: 44px;
+            padding: clamp(32px, 6vw, 72px);
+            color: #fff;
+            background:
+                radial-gradient(70% 90% at 100% 0%, rgba(236, 72, 153, .55), transparent 60%),
+                radial-gradient(60% 80% at 0% 100%, rgba(34, 211, 238, .28), transparent 60%),
+                linear-gradient(135deg, #3730a3 0%, #5b21b6 100%);
+            box-shadow: 0 50px 100px -40px rgba(67, 56, 202, .75);
+        }
+
+        .lp-cta::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(255, 255, 255, .16) 1px, transparent 1.2px);
+            background-size: 24px 24px;
+            -webkit-mask-image: linear-gradient(120deg, transparent 30%, #000);
+            mask-image: linear-gradient(120deg, transparent 30%, #000);
+        }
+
+        .lp-cta>* {
+            position: relative;
+        }
+
+        .lp-step {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px 16px 16px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, .1);
+            border: 1px solid rgba(255, 255, 255, .16);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+
+        .lp-step b {
+            display: grid;
+            place-items: center;
+            flex: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 800;
+            color: #3730a3;
+            background: #fff;
+        }
+
+        .lp-step small {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 600;
+            opacity: .75;
+        }
+
+        .lp-step span {
+            font-size: 15.5px;
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .lp-footer {
+            padding: 64px 20px 36px;
+            border-top: 1px solid var(--sc-line);
+            background: color-mix(in srgb, var(--sc-surface) 60%, transparent);
+        }
+
+        .lp-footer h6 {
+            margin-bottom: 14px;
+            font-size: 13.5px;
+            font-weight: 800;
+            color: var(--sc-ink);
+        }
+
+        .lp-footer li {
+            margin-bottom: 10px;
+        }
+
+        .lp-footer a {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--sc-mute);
+            transition: color .2s;
+        }
+
+        .lp-footer a:hover {
+            color: var(--sc-brand-text);
+        }
+
+        /* Mobile menu */
+        .lp-sheet {
+            position: fixed;
+            z-index: 100;
+            top: 12px;
+            right: 12px;
+            bottom: 12px;
+            width: min(380px, calc(100% - 24px));
+            display: flex;
+            flex-direction: column;
+            padding: 22px;
+            border-radius: 32px;
+            background: var(--sc-surface);
+            border: 1px solid var(--sc-line);
+            box-shadow: var(--sc-shadow-3);
+            transform: translateX(115%);
+            transition: transform .45s cubic-bezier(.16, 1, .3, 1);
+        }
+
+        .lp-sheet.open {
+            transform: none;
+        }
+
+        .lp-scrim {
+            position: fixed;
+            z-index: 90;
+            inset: 0;
+            background: rgba(8, 10, 30, .5);
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity .3s;
         }
 
-        .mobile-overlay.open {
+        .lp-scrim.open {
             opacity: 1;
             pointer-events: auto;
         }
 
-        .hamburger-line {
-            transition: all 0.3s ease;
+        .lp-sheet a.row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            color: var(--sc-ink);
         }
 
-        .hamburger.active .hamburger-line:nth-child(1) {
-            transform: rotate(45deg) translate(5px, 5px);
+        .lp-sheet a.row:hover {
+            background: var(--sc-surface-2);
         }
 
-        .hamburger.active .hamburger-line:nth-child(2) {
+        .lp-sheet a.row small {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--sc-mute);
+        }
+
+        /* Scroll reveal */
+        .reveal {
             opacity: 0;
+            transform: translateY(26px);
+            transition: opacity .8s cubic-bezier(.16, 1, .3, 1), transform .8s cubic-bezier(.16, 1, .3, 1);
         }
 
-        .hamburger.active .hamburger-line:nth-child(3) {
-            transform: rotate(-45deg) translate(5px, -5px);
-        }
-
-        .service-card {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .service-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        .service-card:hover::before {
+        .reveal.active {
             opacity: 1;
+            transform: none;
         }
 
-        ::-webkit-scrollbar {
-            width: 6px;
+        .reveal[data-d="1"] {
+            transition-delay: .08s;
         }
 
-        ::-webkit-scrollbar-track {
-            background: #0a0a0a;
+        .reveal[data-d="2"] {
+            transition-delay: .16s;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
+        .reveal[data-d="3"] {
+            transition-delay: .24s;
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
+        .hero-in {
+            animation: sc-rise .9s cubic-bezier(.16, 1, .3, 1) both;
+        }
+
+        @media (max-width: 899px) {
+            .lp-hide-sm {
+                display: none !important;
+            }
+        }
+
+        @media (min-width: 900px) {
+            .lp-show-sm {
+                display: none !important;
+            }
         }
     </style>
+    <noscript>
+        <style>
+            .reveal {
+                opacity: 1 !important;
+                transform: none !important;
+            }
+        </style>
+    </noscript>
+
     @include('partials.global-loading')
 </head>
 
-<body class="font-sans text-white bg-[#050505] overflow-x-hidden">
+<body class="antialiased">
 
-    <!-- Mobile Menu Overlay -->
-    <div id="mobileOverlay" class="mobile-overlay fixed inset-0 bg-black/60 backdrop-blur-sm z-[90]"
-        onclick="closeMobileMenu()"></div>
+    <!-- ==================== NAVBAR ==================== -->
+    <header class="lp-nav" role="banner">
+        <a href="{{ route('home') }}" class="lp-logo" aria-label="SmartCommute home">
+            <span class="lp-logo-mark"><i class="fa-solid fa-bus"></i></span>
+            <span>Smart<b>Commute</b></span>
+        </a>
 
-    <!-- Mobile Menu Drawer -->
-    <div id="mobileMenu"
-        class="mobile-menu fixed top-0 right-0 w-[85%] max-w-[380px] h-full bg-[#0a0a0a] border-l border-white/5 z-[100] flex flex-col">
-        <div class="flex justify-between items-center p-5 sm:p-6 border-b border-white/5">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <i class="fa-solid fa-bus text-white text-xs"></i>
-                </div>
-                <span class="text-lg font-bold tracking-tight">SmartCommute</span>
-            </div>
-            <button onclick="closeMobileMenu()"
-                class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-
-        <nav class="flex-1 p-5 sm:p-6 space-y-2 overflow-y-auto">
-            @if (!Auth::user())
-                <a href="{{ url('/register') }}" onclick="closeMobileMenu()"
-                    class="flex items-center gap-4 px-4 py-4 rounded-2xl hover:bg-white/5 transition group">
-                    <div
-                        class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition">
-                        <i class="fa-solid fa-user-plus text-blue-400 text-sm"></i>
-                    </div>
-                    <div>
-                        <p class="font-semibold text-sm">Register</p>
-                        <p class="text-[10px] text-gray-400">Create a new account</p>
-                    </div>
-                </a>
-                <a href="{{ url('/login') }}" onclick="closeMobileMenu()"
-                    class="flex items-center gap-4 px-4 py-4 rounded-2xl hover:bg-white/5 transition group">
-                    <div
-                        class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition">
-                        <i class="fa-solid fa-right-to-bracket text-purple-400 text-sm"></i>
-                    </div>
-                    <div>
-                        <p class="font-semibold text-sm">Log In</p>
-                        <p class="text-[10px] text-gray-400">Access your account</p>
-                    </div>
-                </a>
-                <a href="{{ route('map.guest') }}" onclick="closeMobileMenu()"
-                    class="flex items-center gap-4 px-4 py-4 rounded-2xl hover:bg-white/5 transition group">
-                    <div
-                        class="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center group-hover:bg-green-500/20 transition">
-                        <i class="fa-solid fa-map text-green-400 text-sm"></i>
-                    </div>
-                    <div>
-                        <p class="font-semibold text-sm">View Map</p>
-                        <p class="text-[10px] text-gray-400">See PUJs on the road now</p>
-                    </div>
-                </a>
-            @endif
-
-            @if (Auth::user())
-                <a href="{{ route('map') }}" onclick="closeMobileMenu()"
-                    class="flex items-center gap-4 px-4 py-4 rounded-2xl hover:bg-white/5 transition group">
-                    <div
-                        class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition">
-                        <i class="fa-solid fa-gauge-high text-blue-400 text-sm"></i>
-                    </div>
-                    <div>
-                        <p class="font-semibold text-sm">Map</p>
-                        <p class="text-[10px] text-gray-400">Your commute hub</p>
-                    </div>
-                </a>
-            @endif
-            <div class="pt-3 sm:pt-4">
-                <div class="line-glow w-full mb-3 sm:mb-4"></div>
-                <a href="#features" onclick="closeMobileMenu()"
-                    class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Features</a>
-                <a href="#services" onclick="closeMobileMenu()"
-                    class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Services</a>
-                <a href="#audience" onclick="closeMobileMenu()"
-                    class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Who It's
-                    For</a>
-                <a href="#get-started" onclick="closeMobileMenu()"
-                    class="block px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-gray-400 hover:text-white transition">Get
-                    Started</a>
-            </div>
+        <nav class="lp-links" aria-label="Sections">
+            <a href="#features" class="lp-link">Features</a>
+            <a href="#services" class="lp-link">Services</a>
+            <a href="#audience" class="lp-link">Who it's for</a>
+            <a href="#get-started" class="lp-link">Get started</a>
         </nav>
 
-        <div class="p-4 sm:p-6 border-t border-white/5">
-            <a href="{{ url('/register') }}" onclick="closeMobileMenu()"
-                class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 sm:py-3.5 rounded-2xl transition text-sm">
-                Get Started Free
-            </a>
-        </div>
-    </div>
-
-    <!-- ==================== HERO SECTION ==================== -->
-    <section
-        class="relative min-h-[100svh] w-full hero-bg flex flex-col justify-between p-3 sm:p-5 md:p-8 lg:p-12 xl:p-16">
-
-        <!-- Floating decorative orbs — scaled for mobile -->
-        <div
-            class="absolute top-16 right-4 sm:top-20 sm:right-10 w-40 h-40 sm:w-72 sm:h-72 bg-blue-500/10 rounded-full blur-[60px] sm:blur-[100px] animate-pulse-slow pointer-events-none">
-        </div>
-        <div class="absolute bottom-32 left-4 sm:bottom-40 sm:left-10 w-32 h-32 sm:w-56 sm:h-56 bg-purple-500/10 rounded-full blur-[50px] sm:blur-[80px] animate-pulse-slow pointer-events-none"
-            style="animation-delay: 2s;"></div>
-
-        <nav class="flex justify-between items-center w-full relative z-10">
-            <div class="flex items-center gap-2 sm:gap-2.5 md:gap-3">
-                <div
-                    class="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/30">
-                    <i class="fa-solid fa-bus text-white text-xs sm:text-sm"></i>
-                </div>
-                <span class="text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-tight">Smart<span
-                        class="text-blue-400">Commute</span></span>
-            </div>
-
-            <!-- Desktop Nav -->
-            @if (!Auth::user())
-                <div
-                    class="hidden md:flex items-center space-x-1 text-sm font-medium glass-card px-2 py-2 rounded-full">
-                    <a href="{{ url('/register') }}"
-                        class="px-5 py-2 rounded-full hover:bg-white/10 transition text-gray-300 hover:text-white">Register</a>
-                    <a href="{{ url('/login') }}"
-                        class="px-5 py-2 rounded-full hover:bg-white/10 transition text-gray-300 hover:text-white">Log
-                        in</a>
-                    <div class="w-px h-5 bg-white/10 mx-1"></div>
-                    <a href="{{ route('map.guest') }}"
-                        class="px-5 py-2 rounded-full hover:bg-white/10 transition text-gray-300 hover:text-white flex items-center gap-2">
-                        <i class="fa-solid fa-map-location-dot text-xs text-blue-400"></i> View Map
-                    </a>
-                </div>
-            @endif
-
-            @if (Auth::user())
-                @if (Auth::user()->roles->first()->name == 'admin' ||
-                        Auth::user()->roles->first()->name == 'commuter' ||
-                        Auth::user()->roles->first()->name == 'driver')
-                    <div
-                        class="hidden md:flex items-center space-x-1 text-sm font-medium glass-card px-2 py-2 rounded-full">
-                        <a href="{{ route('map') }}"
-                            class="px-5 py-2 rounded-full hover:bg-white/10 transition text-gray-300 hover:text-white flex items-center gap-2">
-                            <i class="fa-solid fa-gauge-high text-xs text-blue-400"></i> Map
-                        </a>
-                    </div>
-                @endif
-
-                @if (Auth::user()->roles->first()->name == 'maintenance_manager' ||
-                        Auth::user()->roles->first()->name == 'driver_manager')
-                    <div
-                        class="hidden md:flex items-center space-x-1 text-sm font-medium glass-card px-2 py-2 rounded-full">
-                        <a href="{{ route('dashboard') }}"
-                            class="px-5 py-2 rounded-full hover:bg-white/10 transition text-gray-300 hover:text-white flex items-center gap-2">
-                            <i class="fa-solid fa-gauge-high text-xs text-blue-400"></i> Dashboard
-                        </a>
-                    </div>
-                @endif
-            @endif
-
-            <!-- Hamburger -->
-            <button id="hamburgerBtn" onclick="openMobileMenu()"
-                class="hamburger md:hidden w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex flex-col items-center justify-center gap-1.5">
-                <span class="hamburger-line w-3.5 h-[1.5px] bg-white rounded-full"></span>
-                <span class="hamburger-line w-3.5 h-[1.5px] bg-white rounded-full"></span>
-                <span class="hamburger-line w-3.5 h-[1.5px] bg-white rounded-full"></span>
+        <div class="flex items-center gap-2">
+            <button type="button" id="themeBtn" class="lp-icon-btn" aria-label="Toggle dark mode"
+                onclick="toggleLandingTheme()">
+                <i class="fa-solid fa-moon dark:hidden"></i>
+                <i class="fa-solid fa-sun hidden dark:inline"></i>
             </button>
+
+            @guest
+                <a href="{{ url('/login') }}" class="lp-link lp-hide-sm">Log in</a>
+                <a href="{{ route('map.guest') }}" class="lp-link lp-hide-sm"><i
+                        class="fa-solid fa-map-location-dot mr-1.5 text-[13px]"></i>View map</a>
+                <a href="{{ url('/register') }}" class="lp-btn lp-hide-sm">Get started <i
+                        class="fa-solid fa-arrow-right text-xs"></i></a>
+            @endguest
+
+            @auth
+                @php $homeRole = Auth::user()->roles->first()?->name; @endphp
+                @if (in_array($homeRole, ['maintenance_manager', 'driver_manager']))
+                    <a href="{{ route('dashboard') }}" class="lp-btn lp-hide-sm"><i
+                            class="fa-solid fa-gauge-high text-xs"></i> Dashboard</a>
+                @else
+                    <a href="{{ route('map') }}" class="lp-btn lp-hide-sm"><i
+                            class="fa-solid fa-map-location-dot text-xs"></i> Open map</a>
+                @endif
+            @endauth
+
+            <button type="button" id="hamburgerBtn" onclick="openMobileMenu()" class="lp-icon-btn lp-show-sm"
+                aria-label="Open menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile menu -->
+    <div id="mobileOverlay" class="lp-scrim" onclick="closeMobileMenu()"></div>
+    <aside id="mobileMenu" class="lp-sheet" aria-label="Menu">
+        <div class="flex items-center justify-between mb-4">
+            <span class="lp-logo"><span class="lp-logo-mark"><i class="fa-solid fa-bus"></i></span><span>Smart<b>Commute</b></span></span>
+            <button type="button" onclick="closeMobileMenu()" class="lp-icon-btn" aria-label="Close menu"><i
+                    class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto space-y-1">
+            @guest
+                <a href="{{ url('/login') }}" onclick="closeMobileMenu()" class="row">
+                    <span class="lp-ico" style="--t: 168 85 247; width:46px;height:46px;font-size:18px;"><i
+                            class="fa-solid fa-right-to-bracket"></i></span>
+                    <span>Log in<small>Access your account</small></span>
+                </a>
+                <a href="{{ route('map.guest') }}" onclick="closeMobileMenu()" class="row">
+                    <span class="lp-ico" style="--t: 16 185 129; width:46px;height:46px;font-size:18px;"><i
+                            class="fa-solid fa-map"></i></span>
+                    <span>View map<small>See PUJs on the road now</small></span>
+                </a>
+            @endguest
+            @auth
+                <a href="{{ route('map') }}" onclick="closeMobileMenu()" class="row">
+                    <span class="lp-ico" style="--t: 99 102 241; width:46px;height:46px;font-size:18px;"><i
+                            class="fa-solid fa-map-location-dot"></i></span>
+                    <span>Map<small>Your commute hub</small></span>
+                </a>
+                <a href="{{ route('dashboard') }}" onclick="closeMobileMenu()" class="row">
+                    <span class="lp-ico" style="--t: 168 85 247; width:46px;height:46px;font-size:18px;"><i
+                            class="fa-solid fa-gauge-high"></i></span>
+                    <span>Dashboard<small>Your account home</small></span>
+                </a>
+            @endauth
+
+            <div class="my-3 h-px" style="background: var(--sc-line)"></div>
+            <a href="#features" onclick="closeMobileMenu()" class="row">Features</a>
+            <a href="#services" onclick="closeMobileMenu()" class="row">Services</a>
+            <a href="#audience" onclick="closeMobileMenu()" class="row">Who it's for</a>
         </nav>
 
-        <!-- Hero Content -->
-        <div class="max-w-5xl relative z-10 pt-4 sm:pt-8 md:pt-0">
-            <h1
-                class="hero-load-2 text-[1.75rem] sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-extrabold leading-[0.95] sm:leading-[1] mb-4 sm:mb-6 md:mb-8 tracking-tight">
-                Track Your PUJ. <br class="hidden sm:block">
-                Know Your <span class="text-gradient">Fare.</span> <br class="hidden sm:block">
-                Pay Cash-Free.
-            </h1>
+        @guest
+            <a href="{{ url('/register') }}" onclick="closeMobileMenu()" class="lp-btn lg mt-4 w-full">Get started free</a>
+        @endguest
+    </aside>
 
-            <div
-                class="hero-load-3 flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1.5 sm:gap-y-2 text-sm sm:text-base md:text-lg lg:text-xl">
-                <span class="font-semibold text-white">Live,</span>
-                <span class="font-semibold text-blue-400">Transparent,</span>
-                <span class="text-gray-400">and</span>
-                <span class="font-semibold text-green-400">Cash-Free</span>
-            </div>
+    <main>
+        <!-- ==================== HERO ==================== -->
+        <section class="lp-hero">
+            <div class="lp-wrap">
+                <div class="lp-hero-grid">
 
-            <!-- Stats row — visible on all screens, compact on mobile -->
-            <div
-                class="hero-load-4 flex items-center gap-4 sm:gap-6 md:gap-8 mt-6 sm:mt-8 md:mt-10 pt-4 sm:pt-6 md:pt-8 border-t border-white/10">
-                <div>
-                    <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">Live</p>
-                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-400 mt-0.5 sm:mt-1">PUJ
-                        Tracking</p>
-                </div>
-                <div class="w-px h-6 sm:h-8 md:h-10 bg-white/10"></div>
-                <div>
-                    <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">Many</p>
-                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-400 mt-0.5 sm:mt-1">Ways
-                        to Pay</p>
-                </div>
-                <div class="w-px h-6 sm:h-8 md:h-10 bg-white/10"></div>
-                <div>
-                    <p class="text-lg sm:text-2xl md:text-3xl font-bold stat-counter text-white">Free</p>
-                    <p class="text-[8px] sm:text-[10px] uppercase tracking-widest text-gray-400 mt-0.5 sm:mt-1">Guest
-                        Map Access</p>
-                </div>
-            </div>
-        </div>
+                    <div class="hero-in">
+                        <span class="lp-pill"><i class="fa-solid fa-location-arrow"></i> Live PUJ tracking, now in your
+                            pocket</span>
 
-        <!-- Bottom CTA -->
-        <div
-            class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 sm:gap-6 relative z-10 mt-6 sm:mt-0">
-            <a href="{{ url('/register') }}"
-                class="group flex items-center gap-3 sm:gap-4 glass-card rounded-full pl-1.5 sm:pl-2 pr-4 sm:pr-6 md:pr-8 py-1.5 sm:py-2 hover:bg-white hover:text-black transition-all duration-500 hover:shadow-2xl hover:shadow-white/10">
-                <div
-                    class="bg-white text-black w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
-                    <i class="fa-solid fa-arrow-right text-xs sm:text-sm"></i>
-                </div>
-                <span class="font-semibold uppercase tracking-widest text-[10px] sm:text-xs md:text-sm">Get
-                    Started</span>
-            </a>
-        </div>
+                        <h1 class="lp-h1">
+                            <span class="block">Track your PUJ.</span>
+                            <span class="block">Know your <span class="sc-gradient-text">fare.</span></span>
+                            <span class="block">Pay cash-free.</span>
+                        </h1>
 
-        <!-- Scroll indicator -->
-        <div
-            class="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 hero-load-4">
-            <span class="text-[9px] uppercase tracking-[0.3em] text-gray-400">Scroll</span>
-            <div class="w-5 h-8 rounded-full border border-white/20 flex justify-center pt-1.5">
-                <div class="w-1 h-2 bg-white/40 rounded-full animate-bounce"></div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== MARQUEE STRIP ==================== -->
-    <div class="bg-[#0a0a0a] border-y border-white/5 py-3 sm:py-4 overflow-hidden">
-        <div class="flex animate-marquee whitespace-nowrap">
-            <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-blue-500"></i> Real-Time GPS
-                Tracking</span>
-            <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-purple-500"></i> Cash-Free
-                Payments</span>
-            <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver
-                Reports</span>
-            <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-pink-500"></i> Fare Calculator</span>
-            <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-blue-500"></i> Real-Time GPS
-                Tracking</span>
-            <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-purple-500"></i> Cash-Free
-                Payments</span>
-            <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver
-                Reports</span>
-            <!-- Duplicate for seamless loop -->
-            <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-blue-500"></i> Real-Time GPS
-                Tracking</span>
-            <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-purple-500"></i> Cash-Free
-                Payments</span>
-            <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-cyan-500"></i> Fleet &amp; Driver
-                Reports</span>
-            <span
-                class="mx-4 sm:mx-8 text-[9px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-gray-400 font-medium flex items-center gap-2 sm:gap-3"><i
-                    class="fa-solid fa-circle text-[2px] sm:text-[3px] text-pink-500"></i> Fare Calculator</span>
-        </div>
-    </div>
-
-    <!-- ==================== FEATURES SECTION ==================== -->
-    <section id="features" class="py-10 sm:py-16 md:py-24 lg:py-32 px-3 sm:px-5 md:px-8 bg-[#050505]">
-        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-8 sm:gap-10 md:gap-12 lg:gap-20">
-
-            <!-- Image Side -->
-            <div class="lg:w-1/2 relative w-full reveal">
-                <div
-                    class="absolute -inset-3 sm:-inset-6 bg-gradient-to-br from-blue-600/20 to-purple-600/10 rounded-2xl sm:rounded-[3rem] blur-[40px] sm:blur-[60px]">
-                </div>
-
-                <div class="relative">
-                    <div
-                        class="glass-card p-2 sm:p-3 md:p-4 rounded-xl sm:rounded-[2rem] md:rounded-[3rem] overflow-hidden">
-                        <img src="https://img.freepik.com/free-vector/data-informational-infographic-statistic_24877-51525.jpg"
-                            alt="GPS navigation illustration"
-                            class="rounded-lg sm:rounded-[1.5rem] md:rounded-[2.5rem] w-full grayscale hover:grayscale-0 transition-all duration-700 hover:scale-[1.02]">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Text Side -->
-            <div class="lg:w-1/2 space-y-5 sm:space-y-6 md:space-y-8">
-                <div class="space-y-3 sm:space-y-4 reveal">
-                    <div
-                        class="inline-flex items-center gap-1.5 sm:gap-2 bg-blue-500/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full">
-                        <span class="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-400 rounded-full"></span>
-                        <span
-                            class="text-blue-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em]">SmartCommute</span>
-                    </div>
-                    <h2
-                        class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold leading-[1.05] sm:leading-[1.05] tracking-tight">
-                        Your Commute <br>
-                        <span class="text-white/50 italic font-light">Made Smarter</span>
-                    </h2>
-                    <p class="text-gray-400 text-xs sm:text-sm md:text-base leading-relaxed max-w-xl">
-                        SmartCommute puts the things you usually have to guess on one map: where the nearest PUJ is,
-                        how far you are going, and what the ride will cost. Nothing to install, and no account
-                        needed to take a look.
-                    </p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5">
-                    <div
-                        class="glass-card p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl sm:rounded-2xl reveal reveal-delay-1 group cursor-default">
-                        <div
-                            class="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-blue-500/10 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 md:mb-4 group-hover:bg-blue-600/20 group-hover:scale-110 transition-all duration-500">
-                            <i class="fa-solid fa-calculator text-blue-400 text-xs sm:text-sm"></i>
-                        </div>
-                        <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Official Fares</h4>
-                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed">Regular and
-                            discounted fares, worked out by distance from the published fare table.</p>
-                    </div>
-
-                    <div
-                        class="glass-card p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl sm:rounded-2xl reveal reveal-delay-2 group cursor-default">
-                        <div
-                            class="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-green-500/10 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 md:mb-4 group-hover:bg-green-600/20 group-hover:scale-110 transition-all duration-500">
-                            <i class="fa-solid fa-bolt text-green-400 text-xs sm:text-sm"></i>
-                        </div>
-                        <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Real-Time</h4>
-                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed">Live PUJ
-                            positions and arrival estimates, updated as drivers move.</p>
-                    </div>
-
-                    <div
-                        class="glass-card p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl sm:rounded-2xl reveal reveal-delay-3 group cursor-default">
-                        <div
-                            class="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-purple-500/10 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 md:mb-4 group-hover:bg-purple-600/20 group-hover:scale-110 transition-all duration-500">
-                            <i class="fa-solid fa-shield text-purple-400 text-xs sm:text-sm"></i>
-                        </div>
-                        <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Secure</h4>
-                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed">Email-verified
-                            accounts, fares priced on the server, and a receipt for every payment.</p>
-                    </div>
-
-                    <div
-                        class="glass-card p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl sm:rounded-2xl reveal reveal-delay-4 group cursor-default">
-                        <div
-                            class="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-orange-500/10 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 md:mb-4 group-hover:bg-orange-600/20 group-hover:scale-110 transition-all duration-500">
-                            <i class="fa-solid fa-door-open text-orange-400 text-xs sm:text-sm"></i>
-                        </div>
-                        <h4 class="font-bold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Open to Guests</h4>
-                        <p class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed">Browse the live
-                            map and try the fare calculator before you ever create an account.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== SERVICES SECTION ==================== -->
-    <section id="services"
-        class="py-10 sm:py-16 md:py-24 lg:py-32 px-3 sm:px-5 md:px-8 bg-[#050505] relative overflow-hidden">
-        <div
-            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[200px] sm:w-[600px] sm:h-[400px] bg-blue-600/5 blur-[80px] sm:blur-[120px] rounded-full pointer-events-none">
-        </div>
-
-        <div class="max-w-7xl mx-auto relative z-10">
-            <div class="text-center mb-8 sm:mb-12 md:mb-16 space-y-3 sm:space-y-4 reveal">
-                <div
-                    class="inline-flex items-center gap-1.5 sm:gap-2 bg-blue-500/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full">
-                    <span class="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-400 rounded-full"></span>
-                    <span
-                        class="text-blue-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em]">SmartCommute
-                        System</span>
-                </div>
-                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                    From the Curb <span class="text-white/50 italic font-light">to the Garage</span>
-                </h2>
-                <p class="text-gray-400 max-w-2xl mx-auto text-[11px] sm:text-xs md:text-sm px-2 sm:px-4">Tools for
-                    the people who ride PUJs, the people who drive them, and the people who keep them running.</p>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
-
-                <!-- Card 1: Live GPS Tracking -->
-                <div
-                    class="service-card glass-card p-4 sm:p-5 md:p-6 lg:p-8 rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] transition-all duration-500 group reveal reveal-delay-1">
-                    <div
-                        class="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-blue-500/10 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 md:mb-5 lg:mb-6 group-hover:scale-110 group-hover:bg-blue-500/20 transition-all duration-500">
-                        <i class="fa-solid fa-location-crosshairs text-blue-400 text-sm sm:text-lg md:text-xl"></i>
-                    </div>
-                    <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Live GPS Tracking</h4>
-                    <p
-                        class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
-                        See active PUJs on a live map, each with an arrival estimate, and spot the nearest one at a
-                        glance. Head out when your ride is actually close.</p>
-                    <a
-                        class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-white transition flex items-center gap-1.5 sm:gap-2 group/link">
-                        Live Update <i
-                            class="fa-solid fa-arrow-right text-[7px] sm:text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
-                    </a>
-                </div>
-
-                <!-- Card 2: Time Keeping -->
-                <div
-                    class="service-card glass-card p-4 sm:p-5 md:p-6 lg:p-8 rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] transition-all duration-500 group reveal reveal-delay-2">
-                    <div
-                        class="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-purple-500/10 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 md:mb-5 lg:mb-6 group-hover:scale-110 group-hover:bg-purple-500/20 transition-all duration-500">
-                        <i class="fa-solid fa-clock text-purple-400 text-sm sm:text-lg md:text-xl"></i>
-                    </div>
-                    <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Time Keeping</h4>
-                    <p
-                        class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
-                        Drivers clock in and out right from the map. Hours and overtime are logged per shift, ready
-                        for managers to review.</p>
-                    <a
-                        class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-purple-400 hover:text-white transition flex items-center gap-1.5 sm:gap-2 group/link">
-                        Shift Logs <i
-                            class="fa-solid fa-arrow-right text-[7px] sm:text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
-                    </a>
-                </div>
-
-                <!-- Card 3: Cash-Free Fares -->
-                <div
-                    class="service-card glass-card p-4 sm:p-5 md:p-6 lg:p-8 rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] transition-all duration-500 group reveal reveal-delay-3">
-                    <div
-                        class="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-green-500/10 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 md:mb-5 lg:mb-6 group-hover:scale-110 group-hover:bg-green-500/20 transition-all duration-500">
-                        <i class="fa-solid fa-credit-card text-green-400 text-sm sm:text-lg md:text-xl"></i>
-                    </div>
-                    <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Cash-Free Fares</h4>
-                    <p
-                        class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
-                        Top up your wallet and pay your fare with wallet balance, GCash or Maya. Every payment gets a
-                        receipt and a place in your history.</p>
-                    <a
-                        class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-green-400 hover:text-white transition flex items-center gap-1.5 sm:gap-2 group/link">
-                        Wallet <i
-                            class="fa-solid fa-arrow-right text-[7px] sm:text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
-                    </a>
-                </div>
-
-                <!-- Card 4: PUJ Maintenance Records -->
-                <div
-                    class="service-card glass-card p-4 sm:p-5 md:p-6 lg:p-8 rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] transition-all duration-500 group reveal reveal-delay-4">
-                    <div
-                        class="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-orange-500/10 rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 md:mb-5 lg:mb-6 group-hover:scale-110 group-hover:bg-orange-500/20 transition-all duration-500">
-                        <i class="fa-solid fa-wrench text-orange-400 text-sm sm:text-lg md:text-xl"></i>
-                    </div>
-                    <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">PUJ Maintenance Records</h4>
-                    <p
-                        class="text-[10px] sm:text-[11px] md:text-xs text-gray-400 leading-relaxed mb-3 sm:mb-4 md:mb-5 lg:mb-6">
-                        Preventive maintenance records for every vehicle, with service dates, odometer
-                        readings and costs on record.
-                    </p>
-                    <a
-                        class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-orange-400 hover:text-white transition flex items-center gap-1.5 sm:gap-2 group/link">
-                        Fleet Health <i
-                            class="fa-solid fa-arrow-right text-[7px] sm:text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
-                    </a>
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== AUDIENCE SECTION ==================== -->
-    <section id="audience" class="py-10 sm:py-16 md:py-24 lg:py-32 px-3 sm:px-5 md:px-8 bg-[#050505] relative">
-        <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent">
-        </div>
-
-        <div class="max-w-7xl mx-auto relative z-10">
-            <div class="text-center mb-8 sm:mb-12 md:mb-16 space-y-3 sm:space-y-4 reveal">
-                <div
-                    class="inline-flex items-center gap-1.5 sm:gap-2 bg-blue-500/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full">
-                    <span class="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-400 rounded-full"></span>
-                    <span
-                        class="text-blue-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em]">Who
-                        It's For</span>
-                </div>
-                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                    One System, <span class="text-white/50 italic font-light">Three Seats</span>
-                </h2>
-                <p class="text-gray-400 max-w-2xl mx-auto text-[11px] sm:text-xs md:text-sm px-2 sm:px-4">Whether you
-                    ride, drive or run the fleet, there is a side of SmartCommute built for you.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
-
-                <!-- Commuters -->
-                <div
-                    class="glass-card p-5 sm:p-6 md:p-7 lg:p-10 rounded-xl sm:rounded-2xl md:rounded-[2rem] flex flex-col items-center text-center relative group reveal reveal-delay-1">
-                    <div
-                        class="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-600/5 border border-blue-500/20 flex items-center justify-center mb-3 sm:mb-4 md:mb-5 group-hover:border-blue-500/50 group-hover:scale-105 transition-all duration-500">
-                        <i
-                            class="fa-solid fa-person-walking text-base sm:text-lg md:text-xl lg:text-2xl text-blue-400"></i>
-                    </div>
-
-                    <p
-                        class="text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-widest text-blue-400 font-bold mb-1.5 sm:mb-2">
-                        For Commuters</p>
-                    <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Ride Informed</h4>
-
-                    <p
-                        class="text-gray-400 text-[11px] sm:text-xs md:text-sm leading-relaxed mb-4 sm:mb-5 md:mb-7 lg:mb-8">
-                        Watch PUJs approach on the live map, plan a trip to see the distance and fare, then pay with
-                        your wallet, GCash or Maya. Every payment is saved to your history.
-                    </p>
-
-                    @if (!Auth::user())
-                        <a href="{{ url('/register') }}"
-                            class="mt-auto text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:text-white transition flex items-center gap-1.5 sm:gap-2 group/link">
-                            Create an Account <i
-                                class="fa-solid fa-arrow-right text-[7px] sm:text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
-                        </a>
-                    @endif
-                </div>
-
-                <!-- Drivers -->
-                <div
-                    class="glass-card p-5 sm:p-6 md:p-7 lg:p-10 rounded-xl sm:rounded-2xl md:rounded-[2rem] flex flex-col items-center text-center relative group border-blue-500/15 glow-blue reveal reveal-delay-2">
-                    <div
-                        class="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/5 border border-purple-500/20 flex items-center justify-center mb-3 sm:mb-4 md:mb-5 group-hover:border-purple-500/50 group-hover:scale-105 transition-all duration-500">
-                        <i class="fa-solid fa-id-card text-base sm:text-lg md:text-xl lg:text-2xl text-purple-400"></i>
-                    </div>
-
-                    <p
-                        class="text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-widest text-purple-400 font-bold mb-1.5 sm:mb-2">
-                        For Drivers</p>
-                    <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Your Shift, On Record</h4>
-
-                    <p
-                        class="text-gray-400 text-[11px] sm:text-xs md:text-sm leading-relaxed mb-4 sm:mb-5 md:mb-7 lg:mb-8">
-                        Register online with your licence details. Once you are approved and assigned a vehicle, clock
-                        in from the map, share your location with waiting riders, and review your own weekly hours.
-                    </p>
-
-                    @if (!Auth::user())
-                        <a href="{{ route('driver.register.page') }}"
-                            class="mt-auto text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-purple-400 hover:text-white transition flex items-center gap-1.5 sm:gap-2 group/link">
-                            Register as a Driver <i
-                                class="fa-solid fa-arrow-right text-[7px] sm:text-[8px] group-hover/link:translate-x-1 transition-transform"></i>
-                        </a>
-                    @endif
-                </div>
-
-                <!-- Operators -->
-                <div
-                    class="glass-card p-5 sm:p-6 md:p-7 lg:p-10 rounded-xl sm:rounded-2xl md:rounded-[2rem] flex flex-col items-center text-center relative group reveal reveal-delay-3">
-                    <div
-                        class="w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full bg-gradient-to-br from-green-500/20 to-green-600/5 border border-green-500/20 flex items-center justify-center mb-3 sm:mb-4 md:mb-5 group-hover:border-green-500/50 group-hover:scale-105 transition-all duration-500">
-                        <i
-                            class="fa-solid fa-clipboard-list text-base sm:text-lg md:text-xl lg:text-2xl text-green-400"></i>
-                    </div>
-
-                    <p
-                        class="text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-widest text-green-400 font-bold mb-1.5 sm:mb-2">
-                        For Operators</p>
-                    <h4 class="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3">Run the Fleet</h4>
-
-                    <p
-                        class="text-gray-400 text-[11px] sm:text-xs md:text-sm leading-relaxed mb-4 sm:mb-5 md:mb-7 lg:mb-8">
-                        Approve drivers, review timekeeping, record violations, schedule vehicle maintenance, set fare
-                        rates, and export financial, driver and fleet reports as CSV.
-                    </p>
-
-                    <p
-                        class="mt-auto text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-widest text-gray-400 font-bold">
-                        Admin &middot; Driver Manager &middot; Maintenance Manager</p>
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== GET STARTED SECTION ==================== -->
-    <section id="get-started" class="py-10 sm:py-16 md:py-24 lg:py-32 px-3 sm:px-5 md:px-8 bg-[#050505] relative">
-        <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent">
-        </div>
-        <div
-            class="absolute bottom-1/3 right-0 w-48 h-48 sm:w-96 sm:h-96 bg-blue-600/5 blur-[80px] sm:blur-[120px] rounded-full pointer-events-none">
-        </div>
-
-        <div class="max-w-6xl mx-auto relative z-10">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10 md:gap-16 items-center">
-
-                <div class="space-y-5 sm:space-y-6 md:space-y-8 reveal">
-                    <div>
-                        <div
-                            class="inline-flex items-center gap-1.5 sm:gap-2 bg-blue-500/10 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full mb-4 sm:mb-6">
-                            <span class="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-blue-400 rounded-full"></span>
-                            <span
-                                class="text-blue-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em]">Get
-                                Started</span>
-                        </div>
-                        <h2
-                            class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold leading-[1.05] tracking-tight mb-3 sm:mb-4">
-                            See It <span class="text-gradient">Live</span>
-                        </h2>
-                        <p class="text-gray-400 text-xs sm:text-sm md:text-base max-w-md leading-relaxed">
-                            The map is open to everyone. Look at the PUJs on the road right now, then create an account
-                            when you are ready to pay your fare from your phone.
+                        <p class="lp-lead">
+                            One map for the things you usually have to guess: where the nearest PUJ is, how far you're
+                            going, and what the ride will cost. Live, transparent and cash-free.
                         </p>
-                    </div>
 
-                    <div class="space-y-3 sm:space-y-4 md:space-y-5">
-                        <div class="flex items-center gap-3 sm:gap-4 group">
-                            <div
-                                class="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-sm sm:text-base md:text-lg group-hover:bg-blue-500/10 group-hover:border-blue-500/30 transition-all duration-300 shrink-0">
-                                <i class="fa-solid fa-map-location-dot text-blue-400"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">
-                                    Step 1</p>
-                                <p class="text-xs sm:text-sm md:text-base font-medium">Open the live map, no account
-                                    needed</p>
-                            </div>
+                        <div class="flex flex-wrap items-center gap-3 mt-9">
+                            @guest
+                                <a href="{{ url('/register') }}" class="lp-btn lg">Get started <i
+                                        class="fa-solid fa-arrow-right text-sm"></i></a>
+                                <a href="{{ route('map.guest') }}" class="lp-btn lg ghost"><i
+                                        class="fa-solid fa-map-location-dot text-sm"
+                                        style="color: var(--sc-brand)"></i> View the live map</a>
+                            @else
+                                <a href="{{ in_array(Auth::user()->roles->first()?->name, ['maintenance_manager', 'driver_manager']) ? route('dashboard') : route('map') }}"
+                                    class="lp-btn lg">Continue to your account <i
+                                        class="fa-solid fa-arrow-right text-sm"></i></a>
+                            @endguest
                         </div>
 
-                        <div class="flex items-center gap-3 sm:gap-4 group">
-                            <div
-                                class="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-sm sm:text-base md:text-lg group-hover:bg-green-500/10 group-hover:border-green-500/30 transition-all duration-300 shrink-0">
-                                <i class="fa-solid fa-route text-green-400"></i>
+                        <div class="lp-facts">
+                            <div class="lp-fact">
+                                <i style="color:#6366f1;background:rgba(99,102,241,.14)" class="fa-solid fa-satellite-dish"></i>
+                                <div><strong>Live</strong><span>PUJ tracking</span></div>
                             </div>
-                            <div class="min-w-0">
-                                <p class="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">
-                                    Step 2</p>
-                                <p class="text-xs sm:text-sm md:text-base font-medium">Set your pick-up and destination
-                                    to see the fare</p>
+                            <div class="lp-fact">
+                                <i style="color:#10b981;background:rgba(16,185,129,.14)" class="fa-solid fa-wallet"></i>
+                                <div><strong>Many</strong><span>ways to pay</span></div>
                             </div>
-                        </div>
-
-                        <div class="flex items-center gap-3 sm:gap-4 group">
-                            <div
-                                class="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl flex items-center justify-center text-sm sm:text-base md:text-lg group-hover:bg-purple-500/10 group-hover:border-purple-500/30 transition-all duration-300 shrink-0">
-                                <i class="fa-solid fa-wallet text-purple-400"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">
-                                    Step 3</p>
-                                <p class="text-xs sm:text-sm md:text-base font-medium">Sign up, top up, and pay
-                                    cash-free</p>
+                            <div class="lp-fact">
+                                <i style="color:#ec4899;background:rgba(236,72,153,.14)" class="fa-solid fa-gift"></i>
+                                <div><strong>Free</strong><span>guest map access</span></div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div
-                    class="glass-card p-4 sm:p-5 md:p-6 lg:p-8 md:p-10 rounded-xl sm:rounded-[1.5rem] md:rounded-[2rem] space-y-3 sm:space-y-4 reveal reveal-delay-2">
-                    @if (!Auth::user())
-                        <a href="{{ route('map.guest') }}"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 sm:py-3.5 md:py-4 rounded-lg sm:rounded-xl transition-all duration-300 transform active:scale-[0.98] uppercase tracking-widest text-[9px] sm:text-[10px] md:text-xs flex items-center justify-center gap-2">
-                            <span>View the Live Map</span>
-                            <i class="fa-solid fa-map-location-dot text-[8px] sm:text-[10px]"></i>
-                        </a>
-                        <a href="{{ url('/register') }}"
-                            class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-3 sm:py-3.5 md:py-4 rounded-lg sm:rounded-xl transition-all duration-300 transform active:scale-[0.98] uppercase tracking-widest text-[9px] sm:text-[10px] md:text-xs flex items-center justify-center gap-2">
-                            <span>Create a Commuter Account</span>
-                            <i class="fa-solid fa-user-plus text-[8px] sm:text-[10px]"></i>
-                        </a>
-                        <a href="{{ route('driver.register.page') }}"
-                            class="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-3 sm:py-3.5 md:py-4 rounded-lg sm:rounded-xl transition-all duration-300 transform active:scale-[0.98] uppercase tracking-widest text-[9px] sm:text-[10px] md:text-xs flex items-center justify-center gap-2">
-                            <span>Register as a Driver</span>
-                            <i class="fa-solid fa-id-card text-[8px] sm:text-[10px]"></i>
-                        </a>
-                        <p class="text-center text-[10px] sm:text-[11px] text-gray-400 pt-1 sm:pt-2">
-                            Already have an account? <a href="{{ url('/login') }}"
-                                class="text-blue-400 hover:text-white transition">Log in</a>
-                        </p>
-                    @else
-                        <a href="{{ route('dashboard') }}"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 sm:py-3.5 md:py-4 rounded-lg sm:rounded-xl transition-all duration-300 transform active:scale-[0.98] uppercase tracking-widest text-[9px] sm:text-[10px] md:text-xs flex items-center justify-center gap-2">
-                            <span>Go to Your Dashboard</span>
-                            <i class="fa-solid fa-gauge-high text-[8px] sm:text-[10px]"></i>
-                        </a>
-                    @endif
+                    <!-- Illustrative product mock -->
+                    <div class="mock hero-in" style="animation-delay:.15s" aria-hidden="true">
+                        <div class="mock-glow"></div>
+                        <div class="mock-frame">
+                            <div class="mock-map">
+                                <span class="mock-block" style="left:6%;top:26%;width:26%;height:15%"></span>
+                                <span class="mock-block" style="left:68%;top:12%;width:24%;height:19%"></span>
+                                <span class="mock-block" style="left:10%;top:52%;width:20%;height:12%"></span>
+                                <span class="mock-block" style="left:72%;top:46%;width:22%;height:14%"></span>
+                                <svg class="mock-route" viewBox="0 0 400 460" fill="none" preserveAspectRatio="none">
+                                    <defs>
+                                        <linearGradient id="rg" x1="0" y1="0" x2="1" y2="1">
+                                            <stop offset="0" stop-color="#6366f1" />
+                                            <stop offset="1" stop-color="#ec4899" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M60 330 C 110 250, 150 290, 190 215 S 290 150, 340 90" stroke="url(#rg)"
+                                        stroke-width="7" stroke-linecap="round" stroke-dasharray="1 0" opacity=".95" />
+                                    <circle cx="60" cy="330" r="11" fill="#fff" stroke="#6366f1" stroke-width="5" />
+                                    <circle cx="340" cy="90" r="11" fill="#fff" stroke="#ec4899" stroke-width="5" />
+                                </svg>
+                                <div class="mock-bus"><i class="fa-solid fa-bus"></i></div>
+                            </div>
+
+                            <div class="mock-top"><i class="fa-solid fa-magnifying-glass"></i> Where are you headed?
+                            </div>
+
+                            <div class="mock-sheet">
+                                <div class="mock-eta">
+                                    <div>
+                                        <h4>PUJ approaching</h4>
+                                        <p>Sample route · estimate updates live</p>
+                                    </div>
+                                    <span class="mock-badge">● On time</span>
+                                </div>
+                                <div class="mock-fare">
+                                    <div class="on"><small>Regular</small><b>₱ 13.00</b></div>
+                                    <div><small>Discounted</small><b>₱ 10.40</b></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mock-float a">
+                            <i style="color:#10b981;background:rgba(16,185,129,.15)" class="fa-solid fa-check"></i>
+                            <div>Fare paid<small>Wallet · receipt saved</small></div>
+                        </div>
+                        <div class="mock-float b">
+                            <i style="color:#f59e0b;background:rgba(245,158,11,.16)" class="fa-solid fa-bolt"></i>
+                            <div>GCash &amp; Maya<small>Top up in seconds</small></div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
+        </section>
+
+        <!-- ==================== MARQUEE ==================== -->
+        <div class="lp-strip" aria-hidden="true">
+            <div class="lp-strip-track">
+                @for ($i = 0; $i < 4; $i++)
+                    <span><i class="fa-solid fa-location-crosshairs"></i> Real-time GPS tracking</span>
+                    <span><i class="fa-solid fa-wallet"></i> Cash-free payments</span>
+                    <span><i class="fa-solid fa-chart-column"></i> Fleet &amp; driver reports</span>
+                    <span><i class="fa-solid fa-calculator"></i> Fare calculator</span>
+                @endfor
+            </div>
         </div>
-    </section>
+
+        <!-- ==================== FEATURES ==================== -->
+        <section id="features" class="lp-section">
+            <div class="lp-wrap">
+                <div class="reveal">
+                    <span class="sc-eyebrow">Features</span>
+                    <h2 class="lp-h2">Your commute, <span class="sc-gradient-text">made smarter.</span></h2>
+                    <p class="lp-sub">SmartCommute puts the things you usually have to guess on one map. Nothing to
+                        install, and no account needed to take a look.</p>
+                </div>
+
+                <div class="bento">
+                    <div class="lp-card lp-hero-card span-4 reveal">
+                        <span class="lp-ico"><i class="fa-solid fa-satellite-dish"></i></span>
+                        <h4 style="font-size:26px">Real-time, all the time</h4>
+                        <p style="max-width:460px">Live PUJ positions and arrival estimates, updated as drivers move.
+                            Head out when your ride is actually close, not when you hope it is.</p>
+                    </div>
+                    <div class="lp-card span-2 reveal" data-d="1" style="--t: 16 185 129">
+                        <span class="lp-ico"><i class="fa-solid fa-gift"></i></span>
+                        <h4>Open to guests</h4>
+                        <p>Browse the live map and try the fare calculator before you ever create an account.</p>
+                    </div>
+                    <div class="lp-card span-3 reveal" style="--t: 99 102 241">
+                        <span class="lp-ico"><i class="fa-solid fa-receipt"></i></span>
+                        <h4>Official fares</h4>
+                        <p>Regular and discounted fares, worked out by distance from the published fare table.</p>
+                    </div>
+                    <div class="lp-card span-3 reveal" data-d="1" style="--t: 236 72 153">
+                        <span class="lp-ico"><i class="fa-solid fa-shield-halved"></i></span>
+                        <h4>Secure by design</h4>
+                        <p>Email-verified accounts, fares priced on the server, and a receipt for every payment.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SERVICES ==================== -->
+        <section id="services" class="lp-section" style="padding-top:20px">
+            <div class="lp-wrap">
+                <div class="reveal">
+                    <span class="sc-eyebrow">The SmartCommute system</span>
+                    <h2 class="lp-h2">From the curb <span class="sc-gradient-text">to the garage.</span></h2>
+                    <p class="lp-sub">Tools for the people who ride PUJs, the people who drive them, and the people
+                        who keep them running.</p>
+                </div>
+
+                <div class="lp-grid-4">
+                    <div class="lp-card reveal" style="--t: 99 102 241">
+                        <span class="lp-ico"><i class="fa-solid fa-location-dot"></i></span>
+                        <h4>Live GPS tracking</h4>
+                        <p>See active PUJs on a live map, each with an arrival estimate, and spot the nearest one at a
+                            glance.</p>
+                        <span class="lp-link-arrow">Live update <i class="fa-solid fa-arrow-right"></i></span>
+                    </div>
+                    <div class="lp-card reveal" data-d="1" style="--t: 245 158 11">
+                        <span class="lp-ico"><i class="fa-solid fa-clock"></i></span>
+                        <h4>Time keeping</h4>
+                        <p>Drivers clock in and out right from the map. Hours and overtime are logged per shift, ready
+                            for managers to review.</p>
+                        <span class="lp-link-arrow">Shift logs <i class="fa-solid fa-arrow-right"></i></span>
+                    </div>
+                    <div class="lp-card reveal" data-d="2" style="--t: 16 185 129">
+                        <span class="lp-ico"><i class="fa-solid fa-wallet"></i></span>
+                        <h4>Cash-free fares</h4>
+                        <p>Top up your wallet and pay with wallet balance, GCash or Maya. Every payment gets a receipt
+                            and a place in your history.</p>
+                        <span class="lp-link-arrow">Wallet <i class="fa-solid fa-arrow-right"></i></span>
+                    </div>
+                    <div class="lp-card reveal" data-d="3" style="--t: 249 115 22">
+                        <span class="lp-ico"><i class="fa-solid fa-screwdriver-wrench"></i></span>
+                        <h4>Maintenance records</h4>
+                        <p>Preventive maintenance records for every vehicle, with service dates, odometer readings and
+                            costs on record.</p>
+                        <span class="lp-link-arrow">Fleet health <i class="fa-solid fa-arrow-right"></i></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== AUDIENCE ==================== -->
+        <section id="audience" class="lp-section">
+            <div class="lp-wrap">
+                <div class="reveal" style="text-align:center">
+                    <span class="sc-eyebrow">Who it's for</span>
+                    <h2 class="lp-h2">One system, <span class="sc-gradient-text">three seats.</span></h2>
+                    <p class="lp-sub" style="margin-inline:auto">Whether you ride, drive or run the fleet, there is a
+                        side of SmartCommute built for you.</p>
+                </div>
+
+                <div class="lp-grid-4" style="grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));">
+                    <div class="lp-card lp-role reveal" style="--t: 99 102 241">
+                        <span class="lp-ico"><i class="fa-solid fa-users"></i></span>
+                        <span class="tag">For commuters</span>
+                        <h4>Ride informed</h4>
+                        <p>Watch PUJs approach on the live map, plan a trip to see the distance and fare, then pay with
+                            your wallet, GCash or Maya. Every payment is saved to your history.</p>
+                        @guest
+                            <div class="foot"><a href="{{ url('/register') }}" class="lp-link-arrow" style="margin:0">Create
+                                    an account <i class="fa-solid fa-arrow-right"></i></a></div>
+                        @endguest
+                    </div>
+                    <div class="lp-card lp-role reveal" data-d="1" style="--t: 16 185 129">
+                        <span class="lp-ico"><i class="fa-solid fa-id-card"></i></span>
+                        <span class="tag">For drivers</span>
+                        <h4>Your shift, on record</h4>
+                        <p>Register online with your licence details. Once you are approved and assigned a vehicle,
+                            clock in from the map, share your location with waiting riders, and review your own weekly
+                            hours.</p>
+                        @guest
+                            <div class="foot"><a href="{{ route('driver.register.page') }}" class="lp-link-arrow"
+                                    style="margin:0">Register as a driver <i class="fa-solid fa-arrow-right"></i></a>
+                            </div>
+                        @endguest
+                    </div>
+                    <div class="lp-card lp-role reveal" data-d="2" style="--t: 236 72 153">
+                        <span class="lp-ico"><i class="fa-solid fa-sitemap"></i></span>
+                        <span class="tag">For operators</span>
+                        <h4>Run the fleet</h4>
+                        <p>Approve drivers, review timekeeping, record violations, schedule vehicle maintenance, set
+                            fare rates, and export financial, driver and fleet reports as CSV.</p>
+                        <div class="foot"><span class="roles">Admin &middot; Driver Manager &middot; Maintenance
+                                Manager</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== GET STARTED ==================== -->
+        <section id="get-started" class="lp-section" style="padding-top:20px">
+            <div class="lp-wrap">
+                <div class="lp-cta reveal">
+                    <div class="grid gap-10 lg:grid-cols-2 lg:items-center">
+                        <div>
+                            <span class="sc-eyebrow" style="color:#c7d2fe"><span
+                                    style="display:none"></span>Get started</span>
+                            <h2 class="lp-h2" style="color:#fff">See it live.</h2>
+                            <p class="lp-sub" style="color:rgba(255,255,255,.82)">The map is open to everyone. Look at
+                                the PUJs on the road right now, then create an account when you are ready to pay your
+                                fare from your phone.</p>
+
+                            <div class="flex flex-wrap gap-3 mt-8">
+                                @guest
+                                    <a href="{{ route('map.guest') }}" class="lp-btn lg light"><i
+                                            class="fa-solid fa-map-location-dot text-sm"></i> View the live map</a>
+                                    <a href="{{ url('/register') }}" class="lp-btn lg glass">Create a commuter account</a>
+                                    <a href="{{ route('driver.register.page') }}" class="lp-btn lg glass">Register as a
+                                        driver</a>
+                                @else
+                                    <a href="{{ route('dashboard') }}" class="lp-btn lg light">Go to your dashboard <i
+                                            class="fa-solid fa-arrow-right text-sm"></i></a>
+                                @endguest
+                            </div>
+                            @guest
+                                <p class="mt-6 text-[15px]" style="color:rgba(255,255,255,.78)">Already have an account?
+                                    <a href="{{ url('/login') }}" class="font-bold text-white underline underline-offset-4">Log
+                                        in</a>
+                                </p>
+                            @endguest
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="lp-step"><b>1</b>
+                                <div><small>Step 1</small><span>Open the live map, no account needed</span></div>
+                            </div>
+                            <div class="lp-step"><b>2</b>
+                                <div><small>Step 2</small><span>Set your pick-up and destination to see the fare</span>
+                                </div>
+                            </div>
+                            <div class="lp-step"><b>3</b>
+                                <div><small>Step 3</small><span>Sign up, top up, and pay cash-free</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <!-- ==================== FOOTER ==================== -->
-    <footer class="bg-[#050505] border-t border-white/5 py-8 sm:py-12 md:py-16 px-3 sm:px-5 md:px-8">
-        <div class="max-w-7xl mx-auto">
-            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 md:gap-12 mb-8 sm:mb-12">
-                <!-- Brand -->
-                <div class="col-span-2 sm:col-span-2 md:col-span-1">
-                    <div class="flex items-center gap-2 mb-3 sm:mb-4">
-                        <div class="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                            <i class="fa-solid fa-bus text-white text-[10px] sm:text-xs"></i>
-                        </div>
-                        <span class="text-sm sm:text-base md:text-lg font-bold tracking-tight">Smart<span
-                                class="text-blue-400">Commute</span></span>
-                    </div>
-                    <p class="text-[10px] sm:text-xs text-gray-400 leading-relaxed max-w-xs">Live PUJ tracking, fare
-                        planning and cash-free payments for commuters, with timekeeping and maintenance tools for the
-                        people who run the fleet.</p>
+    <footer class="lp-footer">
+        <div class="lp-wrap">
+            <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="lg:col-span-1">
+                    <a href="{{ route('home') }}" class="lp-logo"><span class="lp-logo-mark"><i
+                                class="fa-solid fa-bus"></i></span><span>Smart<b>Commute</b></span></a>
+                    <p class="mt-4 text-[15px] leading-relaxed" style="color: var(--sc-mute); max-width: 320px">Live
+                        PUJ tracking, fare planning and cash-free payments for commuters, with timekeeping and
+                        maintenance tools for the people who run the fleet.</p>
                 </div>
 
-                <!-- Links -->
                 <div>
-                    <h6
-                        class="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3 sm:mb-4">
-                        Product</h6>
-                    <ul class="space-y-1.5 sm:space-y-2">
-                        <li><a href="#features"
-                                class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Features</a>
-                        </li>
-                        <li><a href="#services"
-                                class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Services</a>
-                        </li>
-                        <li><a href="#audience"
-                                class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Who It's
-                                For</a>
-                        </li>
+                    <h6>Product</h6>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#services">Services</a></li>
+                        <li><a href="#audience">Who it's for</a></li>
                     </ul>
                 </div>
 
-                @if (!Auth::user())
+                @guest
                     <div>
-                        <h6
-                            class="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3 sm:mb-4">
-                            Commuters</h6>
-                        <ul class="space-y-1.5 sm:space-y-2">
-                            <li><a href="{{ route('map.guest') }}"
-                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Live
-                                    Map</a></li>
-                            <li><a href="{{ url('/register') }}"
-                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Create
-                                    Account</a>
-                            </li>
-                            <li><a href="{{ url('/login') }}"
-                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Log In</a>
-                            </li>
+                        <h6>Commuters</h6>
+                        <ul>
+                            <li><a href="{{ route('map.guest') }}">Live map</a></li>
+                            <li><a href="{{ url('/register') }}">Create account</a></li>
+                            <li><a href="{{ url('/login') }}">Log in</a></li>
                         </ul>
                     </div>
-
-                    <div class="col-span-2 sm:col-span-1">
-                        <h6
-                            class="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3 sm:mb-4">
-                            Drivers</h6>
-                        <ul class="space-y-1.5 sm:space-y-2">
-                            <li><a href="{{ route('driver.register.page') }}"
-                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Driver
-                                    Registration</a>
-                            </li>
-                            <li><a href="{{ url('/login') }}"
-                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Driver Log
-                                    In</a></li>
+                    <div>
+                        <h6>Drivers</h6>
+                        <ul>
+                            <li><a href="{{ route('driver.register.page') }}">Driver registration</a></li>
+                            <li><a href="{{ url('/login') }}">Driver log in</a></li>
                         </ul>
                     </div>
                 @else
                     <div>
-                        <h6
-                            class="text-[9px] sm:text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-3 sm:mb-4">
-                            Account</h6>
-                        <ul class="space-y-1.5 sm:space-y-2">
-                            <li><a href="{{ route('dashboard') }}"
-                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Dashboard</a>
-                            </li>
-                            <li><a href="{{ route('profile') }}"
-                                    class="text-[11px] sm:text-xs text-gray-400 hover:text-white transition">Profile</a>
-                            </li>
+                        <h6>Account</h6>
+                        <ul>
+                            <li><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                            <li><a href="{{ route('profile') }}">Profile</a></li>
                         </ul>
                     </div>
-                @endif
+                @endguest
             </div>
 
-            <div class="border-t border-white/5 pt-6 sm:pt-8">
-                <p class="text-[9px] sm:text-[10px] text-gray-400 text-center sm:text-left">&copy; {{ date('Y') }}
-                    SmartCommute. All rights reserved.</p>
+            <div class="mt-12 pt-6 text-[14px]" style="border-top:1px solid var(--sc-line); color: var(--sc-mute)">
+                &copy; {{ date('Y') }} SmartCommute. All rights reserved.
             </div>
         </div>
     </footer>
 
     <!-- ==================== SCRIPTS ==================== -->
     <script>
-        // Mobile Menu
         function openMobileMenu() {
             document.getElementById('mobileMenu').classList.add('open');
             document.getElementById('mobileOverlay').classList.add('open');
-            document.getElementById('hamburgerBtn').classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
         function closeMobileMenu() {
             document.getElementById('mobileMenu').classList.remove('open');
             document.getElementById('mobileOverlay').classList.remove('open');
-            document.getElementById('hamburgerBtn').classList.remove('active');
             document.body.style.overflow = '';
         }
 
-        // Scroll Reveal
-        const revealElements = document.querySelectorAll('.reveal');
+        // Guests keep their choice on this device; signed-in users change theme in Settings.
+        function toggleLandingTheme() {
+            var dark = !document.documentElement.classList.contains('dark');
+            document.documentElement.classList.toggle('dark', dark);
+            try { localStorage.setItem('color-theme', dark ? 'dark' : 'light'); } catch (e) {}
+        }
 
-        const revealObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('active');
-                }
-            });
-        }, {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        });
-
-        revealElements.forEach(el => revealObserver.observe(el));
-
-        // Close mobile menu on resize to desktop
-        window.addEventListener('resize', () => {
-            if (window.innerWidth >= 768) {
-                closeMobileMenu();
+        // Scroll reveal
+        (function() {
+            var els = document.querySelectorAll('.reveal');
+            if (!('IntersectionObserver' in window)) {
+                els.forEach(function(el) { el.classList.add('active'); });
+                return;
             }
+            var io = new IntersectionObserver(function(entries) {
+                entries.forEach(function(e) {
+                    if (e.isIntersecting) {
+                        e.target.classList.add('active');
+                        io.unobserve(e.target);
+                    }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+            els.forEach(function(el) { io.observe(el); });
+        })();
+
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 900) closeMobileMenu();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeMobileMenu();
         });
     </script>
 </body>

@@ -14,21 +14,9 @@
             document.documentElement.classList.remove('dark');
         }
     </script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     @include('partials.head-scripts')
@@ -39,7 +27,7 @@
             margin: 0;
             padding: 0;
             height: 100%;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             overflow-x: hidden;
             background: #f8fafc;
         }
@@ -302,7 +290,7 @@
 
         /* ═══ ACCENT PRESERVATION ═══ */
         .text-blue-400 {
-            color: #3b82f6 !important;
+            color: #6366f1 !important;
         }
 
         .text-emerald-400 {
@@ -999,7 +987,11 @@
 
                 formatTime(str) {
                     if (!str) return '--';
-                    const [h, m] = str.split(':').map(Number);
+                    // Accepts "15:56", "15:56:00" and full datetimes ("2026-10-22 15:56:00").
+                    const match = String(str).match(/(\d{1,2}):(\d{2})/);
+                    if (!match) return '--';
+                    const h = Number(match[1]);
+                    const m = Number(match[2]);
                     const period = h >= 12 ? 'PM' : 'AM';
                     const hour = h % 12 || 12;
                     return hour + ':' + String(m).padStart(2, '0') + ' ' + period;

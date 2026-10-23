@@ -11,7 +11,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     @include('partials.head-scripts')
@@ -22,7 +22,7 @@
             margin: 0;
             padding: 0;
             height: 100%;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             overflow-x: hidden;
             background: #f8fafc;
         }
@@ -334,11 +334,11 @@
 
         /* ═══ ACCENT PRESERVATION ═══ */
         .text-blue-400 {
-            color: #3b82f6 !important;
+            color: #6366f1 !important;
         }
 
         .text-blue-300 {
-            color: #93c5fd !important;
+            color: #c7d2fe !important;
         }
 
         .text-emerald-400 {
@@ -434,7 +434,7 @@
                                         fill="none" stroke="#1a1a1a" stroke-width="2.5" />
                                     <path
                                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                        fill="none" stroke="#3b82f6" stroke-width="2.5"
+                                        fill="none" stroke="#6366f1" stroke-width="2.5"
                                         stroke-dasharray="{{ $weekProgress }}, 100" stroke-linecap="round" />
                                 </svg>
                                 <span

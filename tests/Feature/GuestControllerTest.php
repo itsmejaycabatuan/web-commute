@@ -12,6 +12,13 @@ class GuestControllerTest extends TestCase
         $this->assertTrue($response->getStatusCode() > 0);
     }
 
+    public function test_signed_in_users_are_redirected_from_the_landing_page_to_the_map()
+    {
+        $user = \App\Models\User::factory()->create();
+
+        $this->actingAs($user)->get(route('home'))->assertRedirect(route('map'));
+    }
+
     public function test_guest_map_route_responds()
     {
         $response = $this->get(route('map'));

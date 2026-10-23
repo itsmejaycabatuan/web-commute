@@ -8,7 +8,7 @@
 
     @include('partials.commuter-head-scripts')
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
@@ -19,7 +19,7 @@
             padding: 0;
             height: 100%;
             width: 100%;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
             overflow-x: hidden;
             background-color: #f8fafc;
         }
@@ -84,8 +84,8 @@
         }
 
         input:focus {
-            border-color: rgba(59, 130, 246, 0.4) !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+            border-color: rgba(99, 102, 241, 0.4) !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
         }
 
         .method-card {
@@ -109,14 +109,14 @@
         }
 
         .method-card.selected {
-            background: rgba(59, 130, 246, 0.06);
-            border-color: rgba(59, 130, 246, 0.4);
+            background: rgba(99, 102, 241, 0.06);
+            border-color: rgba(99, 102, 241, 0.4);
         }
 
         .method-card.selected .method-dot {
-            border-color: #3b82f6;
-            background: #3b82f6;
-            box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+            border-color: #6366f1;
+            background: #6366f1;
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
         }
 
         .method-card.selected .method-dot-inner {
@@ -169,9 +169,9 @@
         }
 
         .preset-btn.active {
-            background: rgba(59, 130, 246, 0.1) !important;
-            border-color: rgba(59, 130, 246, 0.4) !important;
-            color: #3b82f6 !important;
+            background: rgba(99, 102, 241, 0.1) !important;
+            border-color: rgba(99, 102, 241, 0.4) !important;
+            color: #6366f1 !important;
         }
 
         ::-webkit-scrollbar {
@@ -229,7 +229,7 @@
         </div>
     </header>
     <!-- ══════════ MAIN CONTENT ══════════ -->
-    <div class="pt-[4.25rem] sm:pt-24 pb-8 sm:pb-10 max-w-6xl mx-auto px-3.5 sm:px-5 lg:px-6">
+    <div class="pt-[5.75rem] sm:pt-28 pb-8 sm:pb-10 max-w-6xl mx-auto px-3.5 sm:px-5 lg:px-6">
 
         <!-- ── Below xl: Balance Card (sidebar only shows on xl+) ── -->
         <div class="xl:hidden mb-5 sm:mb-6">
