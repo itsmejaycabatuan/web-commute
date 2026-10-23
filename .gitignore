@@ -14,3 +14,4 @@ yarn-error.log
 /.vscode
 /venv
 .env
+.env.local
