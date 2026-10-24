@@ -23,6 +23,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('shifts:auto-close')->everyFifteenMinutes();
         // A morning digest of overdue and soon-due services for the Maintenance Managers.
         $schedule->command('maintenance:due-alerts')->dailyAt('07:00');
+        // Warns drivers who have not clocked in for days (to contact HR) and suspends those gone over a week.
+        $schedule->command('drivers:inactivity-check')->dailyAt('08:00');
         // Audit trail retention (ACTIVITY_LOG_RETENTION_DAYS, default 365) — keeps activity_log from growing forever.
         $schedule->command('activitylog:clean')->daily();
     }

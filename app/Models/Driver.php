@@ -82,6 +82,8 @@ class Driver extends Model
         'is_suspended',
         'suspended_at',
         'suspension_reason',
+        'inactivity_warned_at',
+        'reactivated_at',
         'license_image_data',
         'license_image_mime',
     ];
@@ -91,6 +93,8 @@ class Driver extends Model
         'is_rejected' => 'boolean',
         'is_suspended' => 'boolean',
         'suspended_at' => 'datetime',
+        'inactivity_warned_at' => 'datetime',
+        'reactivated_at' => 'datetime',
     ];
 
     /**
@@ -295,8 +299,32 @@ class Driver extends Model
             'is_suspended' => false,
             'suspended_at' => null,
             'suspension_reason' => null,
+            'inactivity_warned_at' => null,
+            // A fresh inactivity clock, so the automatic check does not suspend them again at once.
+            'reactivated_at' => now(),
             'status' => 'inactive',
         ])->save();
+    }
+
+    /**
+     * The day the inactivity clock counts from: the latest time-keeping entry (a shift, or leave a
+     * Driver Manager recorded), else when the account was created or last reinstated.
+     */
+    public function inactiveSince(): Carbon
+    {
+        $lastEntry = $this->timeKeeping()->max('date');
+
+        return collect([$lastEntry ? Carbon::parse($lastEntry) : null, $this->created_at, $this->reactivated_at])
+            ->filter()
+            ->max()
+            ->copy()
+            ->startOfDay();
+    }
+
+    /** Whole days since the driver last clocked in (see inactiveSince()). */
+    public function daysInactive(): int
+    {
+        return (int) $this->inactiveSince()->diffInDays(today());
     }
 
     // Creation and suspension are logged explicitly; availability (`status`) and the licence image columns are deliberately not audited.

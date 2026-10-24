@@ -12,11 +12,13 @@ use App\Models\Vehicle;
 use App\Models\VehicleLocation;
 use App\Models\ViolationCode;
 use App\Models\ViolationLog;
+use App\Notifications\DriverInactivityWarning;
 use App\Notifications\MaintenanceDueDigest;
 use Database\Seeders\ViolationCodeSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -477,5 +479,188 @@ class AutomationTest extends TestCase
         config(['maintenance.block_active_when_overdue' => false]);
         $this->actingAs($manager)->patch(route('vehicles.update', $vehicle), $payload)->assertSessionHasNoErrors();
         $this->assertSame('active', $vehicle->fresh()->status);
+    }
+
+    // ── Driver inactivity: warn, then suspend ────────────────────────────
+
+    /** A driver whose last clock-in was $days days before 2026-10-26 (the frozen "today"). */
+    private function inactiveDriver(int $days, array $overrides = [], ?int $warnedDaysAgo = null): array
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-26 08:00:00'));
+        [$user, $driver] = $this->driver('inactive');
+        $warned = $warnedDaysAgo === null ? [] : ['inactivity_warned_at' => now()->subDays($warnedDaysAgo)];
+        $driver->forceFill(['created_at' => today()->subDays(60)] + $warned + $overrides)->save();
+        TimeKeeping::create([
+            'driver_id' => $driver->id, 'date' => today()->subDays($days)->toDateString(),
+            'time_in' => '08:00 AM', 'time_out' => '05:00 PM', 'hours_worked' => 8, 'overtime_hours' => 0, 'sick' => 0, 'vacation' => 0,
+        ]);
+
+        return [$user, $driver->fresh()];
+    }
+
+    public function test_driver_inactive_for_three_days_is_emailed_to_contact_hr(): void
+    {
+        Notification::fake();
+        config(['timekeeping.hr_email' => 'hr@example.com']);
+        [$user, $driver] = $this->inactiveDriver(3);
+
+        $this->artisan('drivers:inactivity-check')->assertSuccessful();
+
+        Notification::assertSentTo($user, DriverInactivityWarning::class, function ($n) use ($user) {
+            $mail = $n->toMail($user);
+
+            return str_contains(implode(' ', $mail->introLines), 'hr@example.com');
+        });
+        $this->assertNotNull($driver->fresh()->inactivity_warned_at);
+        $this->assertFalse($driver->fresh()->isSuspended());
+    }
+
+    public function test_driver_inactive_for_two_days_is_left_alone(): void
+    {
+        Notification::fake();
+        [$user, $driver] = $this->inactiveDriver(2);
+
+        $this->artisan('drivers:inactivity-check')->assertSuccessful();
+
+        Notification::assertNothingSentTo($user);
+        $this->assertNull($driver->fresh()->inactivity_warned_at);
+    }
+
+    public function test_driver_is_warned_only_once(): void
+    {
+        Notification::fake();
+        [$user] = $this->inactiveDriver(4);
+
+        $this->artisan('drivers:inactivity-check');
+        $this->artisan('drivers:inactivity-check');
+
+        Notification::assertSentToTimes($user, DriverInactivityWarning::class, 1);
+    }
+
+    public function test_driver_inactive_over_a_week_and_already_warned_is_suspended(): void
+    {
+        Notification::fake();
+        [, $driver] = $this->inactiveDriver(8, [], 5);
+
+        $this->artisan('drivers:inactivity-check')->assertSuccessful();
+
+        $driver->refresh();
+        $this->assertTrue($driver->isSuspended());
+        $this->assertSame('suspended', $driver->status);
+        $this->assertStringContainsString('inactive for 8 days', $driver->suspension_reason);
+        $this->assertTrue(Activity::where('log_name', 'driver')->where('event', 'suspended')->where('subject_id', $driver->id)->exists());
+    }
+
+    public function test_exactly_a_week_of_inactivity_is_not_yet_suspended(): void
+    {
+        Notification::fake();
+        [, $driver] = $this->inactiveDriver(7, [], 4);
+
+        $this->artisan('drivers:inactivity-check');
+
+        $this->assertFalse($driver->fresh()->isSuspended());
+    }
+
+    public function test_driver_never_warned_is_warned_first_not_suspended(): void
+    {
+        Notification::fake();
+        [$user, $driver] = $this->inactiveDriver(20);
+
+        $this->artisan('drivers:inactivity-check');
+
+        Notification::assertSentTo($user, DriverInactivityWarning::class);
+        $this->assertFalse($driver->fresh()->isSuspended());
+    }
+
+    public function test_a_warning_sent_today_is_given_a_day_before_suspension(): void
+    {
+        Notification::fake();
+        [, $driver] = $this->inactiveDriver(20, [], 0);
+
+        $this->artisan('drivers:inactivity-check');
+
+        $this->assertFalse($driver->fresh()->isSuspended());
+    }
+
+    public function test_clocking_in_again_clears_the_warning(): void
+    {
+        Notification::fake();
+        [, $driver] = $this->inactiveDriver(1, [], 3);
+
+        $this->artisan('drivers:inactivity-check');
+
+        $this->assertNull($driver->fresh()->inactivity_warned_at);
+    }
+
+    public function test_recorded_leave_counts_as_activity(): void
+    {
+        Notification::fake();
+        [$user, $driver] = $this->inactiveDriver(10);
+        TimeKeeping::create(['driver_id' => $driver->id, 'date' => today()->subDay()->toDateString(), 'hours_worked' => 0, 'overtime_hours' => 0, 'sick' => 1, 'vacation' => 0]);
+
+        $this->artisan('drivers:inactivity-check');
+
+        Notification::assertNothingSentTo($user);
+    }
+
+    public function test_a_never_clocked_in_driver_counts_from_when_the_account_was_created(): void
+    {
+        Notification::fake();
+        Carbon::setTestNow(Carbon::parse('2026-10-26 08:00:00'));
+        [$user, $driver] = $this->driver('inactive');
+        $driver->forceFill(['created_at' => today()->subDays(3)])->save();
+
+        $this->artisan('drivers:inactivity-check');
+
+        Notification::assertSentTo($user, DriverInactivityWarning::class);
+    }
+
+    public function test_suspended_pending_and_rejected_drivers_are_skipped(): void
+    {
+        Notification::fake();
+        [$a] = $this->inactiveDriver(10, ['is_suspended' => true]);
+        [$b] = $this->inactiveDriver(10, ['is_approved' => 0]);
+        [$c] = $this->inactiveDriver(10, ['is_rejected' => 1, 'is_approved' => 0]);
+
+        $this->artisan('drivers:inactivity-check');
+
+        Notification::assertNothingSentTo($a);
+        Notification::assertNothingSentTo($b);
+        Notification::assertNothingSentTo($c);
+    }
+
+    public function test_dry_run_changes_nothing(): void
+    {
+        Notification::fake();
+        [$user, $driver] = $this->inactiveDriver(10, [], 5);
+
+        $this->artisan('drivers:inactivity-check --dry-run')->assertSuccessful();
+
+        Notification::assertNothingSentTo($user);
+        $this->assertFalse($driver->fresh()->isSuspended());
+    }
+
+    public function test_a_reinstated_driver_gets_a_fresh_inactivity_clock(): void
+    {
+        Notification::fake();
+        [$user, $driver] = $this->inactiveDriver(20, [], 10);
+        $driver->suspend('Inactive');
+        $driver->unsuspend();
+
+        $this->artisan('drivers:inactivity-check');
+
+        $driver->refresh();
+        $this->assertFalse($driver->isSuspended());
+        $this->assertNull($driver->inactivity_warned_at);
+        Notification::assertNothingSentTo($user);
+    }
+
+    public function test_the_check_is_scheduled_daily(): void
+    {
+        $events = collect(app(\Illuminate\Console\Scheduling\Schedule::class)->events())
+            ->filter(fn ($e) => str_contains($e->command, 'drivers:inactivity-check'));
+
+        $this->assertCount(1, $events);
+        $this->assertSame('0 8 * * *', $events->first()->expression);
     }
 }

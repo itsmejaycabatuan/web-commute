@@ -47,6 +47,7 @@ class AuditCatalog
         'anonymised' => ['Anonymised', 'danger'],
         'suspended' => ['Suspended', 'warn'],
         'reactivated' => ['Reactivated', 'ok'],
+        'inactivity_warned' => ['Inactivity warning sent', 'warn'],
         'role_changed' => ['Role changed', 'warn'],
         'fare_guide_imported' => ['Fare guide imported', 'ok'],
         'fare_rates_updated' => ['Fare rates updated', 'info'],
