@@ -90,7 +90,11 @@ class AutoCloseShifts extends Command
             return;
         }
 
-        VehicleLocation::where('vehicle_id', $vehicleId)->delete();
+        // Age the vehicle's recent position rows past the 5-minute live window so it leaves the map. They are
+        // not deleted: the GPS history (distance driven, analytics) hangs off them.
+        VehicleLocation::where('vehicle_id', $vehicleId)
+            ->where('last_update', '>=', now()->subMinutes(5))
+            ->update(['last_update' => now()->subHour()]);
         Vehicle::where('id', $vehicleId)->update(['is_active' => false]);
 
         Log::info("Vehicle {$vehicleId} taken off the map: driver {$driver->id}'s shift was auto-closed.");

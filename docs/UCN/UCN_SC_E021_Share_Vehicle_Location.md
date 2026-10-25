@@ -87,6 +87,8 @@ The queued retry payload is missing a required key. `RetryBroadcastLocation` ret
 
 ## Known Gaps / Notes
 
+- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
+
 - **No server-side rate limiting.** The 2-second throttle is client-side only (`resources/views/map.blade.php`); a modified client could flood the endpoint.
 - **The route carries no `auth` middleware** — authorization is performed inside the controller, which is why E2/E3/E4 are explicit checks rather than a middleware result.
 - **The breadcrumb always stores `distance_from_last_pos = 0`.** The controller has a `haversineDistance()` helper but never computes the real delta, so historical distance travelled cannot be derived from the table.

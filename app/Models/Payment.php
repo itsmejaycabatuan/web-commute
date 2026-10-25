@@ -59,6 +59,8 @@ class Payment extends Model
         'paymongo_payment_intent_id',
         'paymongo_checkout_session_id',
         'paymongo_reference_id',
+        'vehicle_id',
+        'driver_id',
         'paid_at',
         'failed_at',
         'failure_message',
@@ -123,6 +125,17 @@ class Payment extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'paid_by');
+    }
+
+    /** The vehicle and driver the fare was paid on (found from the commuter's QR scan), if known. */
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(Driver::class);
     }
     protected function auditCategory(): string
     {

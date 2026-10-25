@@ -574,7 +574,7 @@
             if (response.status === 401 || response.status === 403) {
                 var msg = data.message || 'You are not allowed to do that.';
                 if (data.redirect) {
-                    queue(msg, 'error');
+                    queue(msg, data.session_expired ? 'warning' : 'error');
                     window.location.href = data.redirect;
                 } else {
                     show(msg, 'error');

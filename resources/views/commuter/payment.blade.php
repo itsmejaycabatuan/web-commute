@@ -200,6 +200,11 @@
                 <i class="fa-solid fa-qrcode text-[10px]"></i>
                 Verified on board
             </div>
+            <p id="vehicle-check" class="fade-1 -mt-2 mb-4 text-center text-[10px] font-bold text-gray-400 dark:text-[#555]"
+                data-url="{{ route('payment.scan.locate') }}" data-required="{{ config('qr.require_nearby_vehicle') ? '1' : '0' }}"
+                data-located="{{ $scan?->located_at ? '1' : '0' }}" aria-live="polite">
+                <i class="fa-solid fa-location-crosshairs text-[9px]"></i> Checking that you are on a PUJ…
+            </p>
         @endif
 
         <!-- Main Card -->
@@ -417,6 +422,53 @@
     </div>
 
     <script>
+        /* Tell the server where the commuter is, so the fare is attributed to the vehicle and driver they
+           are riding (and, when enabled, refused if no PUJ is near). Coordinates are matched, not stored. */
+        (function () {
+            var el = document.getElementById('vehicle-check');
+            if (!el) return;
+            var tokenInput = document.querySelector('#payment-form input[name=_token]');
+
+            function say(text, tone) {
+                el.className = el.className.replace(/text-(emerald|amber|red)-\d+|dark:text-(emerald|amber|red)-\d+/g, '');
+                el.classList.add(tone === 'ok' ? 'text-emerald-600' : (tone === 'bad' ? 'text-amber-600' : 'text-gray-400'));
+                el.textContent = text;
+            }
+
+            if (!navigator.geolocation) {
+                say(el.dataset.required === '1' ? 'This browser cannot share your location, so the PUJ check cannot run.' : '', 'bad');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                fetch(el.dataset.url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': tokenInput ? tokenInput.value : ''
+                    },
+                    body: JSON.stringify({
+                        latitude: pos.coords.latitude,
+                        longitude: pos.coords.longitude,
+                        accuracy: pos.coords.accuracy
+                    })
+                }).then(function (r) { return r.json(); }).then(function (data) {
+                    if (data.matched) {
+                        say('On board ' + data.plate_number + '.', 'ok');
+                    } else {
+                        say(el.dataset.required === '1'
+                            ? "We couldn't find a SmartCommute PUJ near you, so you can't pay yet. Make sure you are inside the vehicle."
+                            : '', 'bad');
+                    }
+                }).catch(function () { say('', 'bad'); });
+            }, function () {
+                say(el.dataset.required === '1'
+                    ? 'Allow location access so we can confirm you are on a PUJ, then reload this page.'
+                    : '', 'bad');
+            }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 });
+        })();
+
         /* One submission per page view. A double click used to send the payment
            twice, and Back from the gateway restored this page with a button stuck
            on "Processing" and no explanation. */

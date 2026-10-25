@@ -61,7 +61,7 @@
    - `license_image_path` (relative to the public disk),
    - `license_image_data` and `license_image_mime` set to `NULL`.
 3. The user has been assigned the **driver** role (via `$user->assignRole('driver')`).
-4. A `Registered` event has been fired (listeners may include email notifications, though none are configured for drivers in the current codebase).
+4. A `Registered` event has been fired (no listener sends mail for it). Separately, the controller emails every Admin and Driver Manager that a new application is waiting (`DriverApplicationReceived`), and the driver is emailed the decision when an administrator approves or rejects them.
 5. The guest’s session remains unauthenticated; they are redirected to the login page and must sign in after admin approval.
 6. The driver **cannot** sign in until an admin changes `is_approved` to `1` (see UCN_SC_E012 Manage Drivers). Attempting to sign in before approval results in a redirect with a “pending” flag and a message indicating awaiting approval.
 

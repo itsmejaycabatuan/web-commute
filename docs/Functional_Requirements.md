@@ -405,7 +405,7 @@ one (it then becomes part of the matching `FR-Exxx`), defer it or drop it.
 | GAP-04 | A Commuter shall be able to request a refund or dispute a fare; an Admin shall be able to settle it (and a wallet balance could be refunded on account deletion). | Paid payments are immutable and there is no recourse; deletion is refused while the wallet holds money. | FR-E006, FR-E026 |
 | GAP-05 | A top-up shall go through the payment gateway (with a pending → settled state) rather than crediting the wallet on form submit. | No gateway, transaction id or signature check on top-ups. | FR-E005 |
 | GAP-06 | An Admin shall be able to record a cash / admin-settlement top-up. | The commuter option was removed and no admin UI replaced it. | FR-E005 |
-| GAP-07 | Receipts and top-up confirmations shall be sent by email. | Receipts are in-app only. | FR-E005, FR-E006 |
+| GAP-07 | Receipts and top-up confirmations shall be sent by email. | **Done**: fare receipts and top-up receipts are emailed (see UCN_SC_E005 and E006). | FR-E005, FR-E006 |
 | GAP-08 | The owner of an account shall be notified by email when their password is changed or reset. | Only the audit trail records it. | FR-E008, FR-E011 |
 | GAP-09 | The system shall enforce a password policy beyond length (complexity, reuse prevention). | Length-only today. | FR-E008 |
 | GAP-10 | A user shall be able to see and end individual signed-in sessions. | Sessions can only be ended all at once. | FR-E008 |

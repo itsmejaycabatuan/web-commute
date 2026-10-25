@@ -108,6 +108,8 @@ The vehicle already has maintenance or preventive-maintenance records. System re
 
 ## Known Gaps / Notes
 
+- **Vehicles that lose a driver get a replacement.** When a driver on a vehicle is suspended, or their licence expires (the hourly `vehicles:cover-vacancies` job then takes them off it), the seat is filled with the best free driver automatically; vehicles still waiting for one are listed on the Maintenance dashboard. Manually assigning or unassigning drivers on this page is never treated as a vacancy.
+
 - **"Active vehicle" in E3 means "clocked in right now", not "on the road"** — a vehicle assigned to a driver who is not clocked in can be disposed with no further check.
 - **Hard deletion is still available** for a vehicle with no maintenance history; its location history rows are removed with it (foreign keys cascade).
 - **There is no restore/undelete**: a deleted vehicle's plate number is free to reuse immediately.

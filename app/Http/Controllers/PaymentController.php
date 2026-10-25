@@ -6,8 +6,12 @@ use App\Models\Payment;
 use App\Models\QrScan;
 use App\Models\TopupHistory;
 use App\Models\Wallet;
+use App\Notifications\TopupReceipt;
 use App\Services\FareCalculator;
+use App\Services\GatewayMonitor;
+use App\Services\PaymentSettlement;
 use App\Services\PayMongoService;
+use App\Support\Notifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -27,7 +31,9 @@ class PaymentController extends Controller
 
     public function __construct(
         protected PayMongoService $paymongo,
-        protected FareCalculator $fares
+        protected FareCalculator $fares,
+        protected PaymentSettlement $settlement,
+        protected GatewayMonitor $gateway
     ) {}
 
     public function index(Request $request)
@@ -87,6 +93,7 @@ class PaymentController extends Controller
             'balance' => $balance,
             'inFlightPayment' => $inFlight,
             'scannedCode' => $scan?->qrCode,
+            'scan' => $scan,
         ]);
     }
 
@@ -123,6 +130,12 @@ class PaymentController extends Controller
         if (config('qr.required') && ! $scan) {
             return redirect()->route('payment.scan')
                 ->with('error', 'Scan the QR code inside the PUJ to pay your fare.');
+        }
+
+        // Fare-evasion check: when switched on, the scan must have been matched to a vehicle that is
+        // broadcasting right where the commuter is (see RideVerificationController::locate).
+        if ($scan && config('qr.required') && config('qr.require_nearby_vehicle') && ! $scan->isOnVehicle()) {
+            return back()->with('error', "We couldn't confirm you are on a SmartCommute PUJ. Allow location access on this page, make sure you are inside the vehicle, then try again.");
         }
 
         // The fare is RE-PRICED server-side from the published rate table; the
@@ -163,6 +176,8 @@ class PaymentController extends Controller
                 'price' => $amount,
                 'status' => 'paid',
                 'paid_at' => now(),
+                'vehicle_id' => $scan?->vehicle_id,
+                'driver_id' => $scan?->driver_id,
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Database error during fare payment.', ['area' => 'Process', 'exception' => $e->getMessage()]);
@@ -177,6 +192,8 @@ class PaymentController extends Controller
             $wallet->update([
                 'balance' => $newBalance,
             ]);
+
+            $this->settlement->sendReceipt($payment);
 
             // POST/redirect/GET: the receipt is re-read from the stored payment,
             // so refreshing the page can never re-charge the commuter.
@@ -232,11 +249,14 @@ class PaymentController extends Controller
             );
         } catch (RuntimeException $e) {
             \Illuminate\Support\Facades\Log::error('PayMongo error.', ['area' => 'Process', 'exception' => $e->getMessage()]);
+            $this->gateway->recordFailure('A checkout could not be opened: '.$e->getMessage());
 
             return back()->with('error', 'The payment service is unavailable right now. Please try again.');
         }
 
         if (empty($session['checkout_url']) || empty($session['payment_intent_id'])) {
+            $this->gateway->recordFailure('The gateway returned a checkout without a link or payment intent.');
+
             return back()->with('error', 'The payment service is unavailable right now. Please try again.');
         }
 
@@ -252,6 +272,8 @@ class PaymentController extends Controller
                 'status' => 'pending',
                 'paymongo_payment_intent_id' => $session['payment_intent_id'],
                 'paymongo_checkout_session_id' => $session['id'],
+                'vehicle_id' => $scan?->vehicle_id,
+                'driver_id' => $scan?->driver_id,
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Database error while opening gateway payment.', ['area' => 'Process', 'exception' => $e->getMessage()]);
@@ -301,6 +323,7 @@ class PaymentController extends Controller
                 $intent = $this->paymongo->retrievePaymentIntent($payment->paymongo_payment_intent_id);
             } catch (RuntimeException $e) {
                 \Illuminate\Support\Facades\Log::warning('PayMongo lookup failed.', ['area' => 'Returned', 'exception' => $e->getMessage()]);
+                $this->gateway->recordFailure('A payment could not be looked up: '.$e->getMessage());
             }
 
             if (isset($intent)) {
@@ -313,11 +336,7 @@ class PaymentController extends Controller
 
                 // The gateway gave up on this payment — stop showing a spinner.
                 if ($this->paymongo->isFailed($intent['status'] ?? null)) {
-                    $payment->update([
-                        'status' => 'failed',
-                        'failed_at' => now(),
-                        'failure_message' => 'The payment was not completed at the gateway.',
-                    ]);
+                    $this->settlement->fail($payment, 'The payment was not completed at the gateway.');
 
                     return redirect()->route('payment.history')
                         ->with('error', 'That payment could not be completed. Nothing was charged.');
@@ -401,13 +420,7 @@ class PaymentController extends Controller
         if (str_contains($type, 'paid') || str_contains($type, 'succeeded') || str_contains($type, 'success')) {
             $this->settle($payment);
         } elseif (str_contains($type, 'failed') || str_contains($type, 'declined')) {
-            if ($payment->status === 'pending') {
-                $payment->update([
-                    'status' => 'failed',
-                    'failed_at' => now(),
-                    'failure_message' => 'The payment was declined by the gateway.',
-                ]);
-            }
+            $this->settlement->fail($payment, 'The payment was declined by the gateway.');
         } elseif (str_contains($type, 'expired') || str_contains($type, 'cancel')) {
             if ($payment->status === 'pending') {
                 $payment->update([
@@ -427,16 +440,9 @@ class PaymentController extends Controller
      */
     protected function settle(Payment $payment): Payment
     {
-        if ($payment->status === 'paid') {
-            return $payment;
-        }
+        $this->settlement->settle($payment);
 
-        $payment->update([
-            'status' => 'paid',
-            'paid_at' => $payment->paid_at ?? now(),
-        ]);
-
-        return $payment;
+        return $payment->refresh();
     }
 
     public function history(Request $request)
@@ -587,13 +593,15 @@ class PaymentController extends Controller
 
         if ($updated) {
 
-            TopupHistory::create([
+            $topup = TopupHistory::create([
                 'user_id' => $userId,
                 'wallet_id' => $wallet->id,
                 'amount_added' => $amount,
                 'payment_method' => $request->{'payment-method'},
                 'status' => TopupHistory::STATUS_COMPLETED,
             ]);
+
+            Notifier::send(Auth::user(), new TopupReceipt($topup, $newBalance));
 
             return back()->with('success', 'Successfully topped up!');
         }

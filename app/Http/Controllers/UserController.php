@@ -331,10 +331,11 @@ class UserController extends Controller
 
             // Fleet-wide overdue / due-soon services, so the dashboard flags them without anyone opening the schedule.
             $maintenanceAlerts = app(\App\Services\MaintenanceDueService::class)->fleet();
+            $openVacancies = \App\Models\DriverVacancy::open()->with(['vehicle', 'formerDriver'])->orderBy('opened_at')->get();
 
             if ($vehicles->isEmpty()) {
                 return view('maintenance-manager.dashboard', array_merge(
-                    ['vehicles' => collect(), 'drivers' => $drivers, 'vehicle' => null, 'maintenanceAlerts' => $maintenanceAlerts],
+                    ['vehicles' => collect(), 'drivers' => $drivers, 'vehicle' => null, 'maintenanceAlerts' => $maintenanceAlerts, 'openVacancies' => $openVacancies],
                     $fleet->emptySummary(),
                 ));
             }
@@ -348,6 +349,7 @@ class UserController extends Controller
                     'drivers' => $drivers,
                     'vehicle' => $vehicle,
                     'maintenanceAlerts' => $maintenanceAlerts,
+                    'openVacancies' => $openVacancies,
                 ],
                 $fleet->summaryFor($vehicle),
             ));

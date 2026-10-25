@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\RecordEmailVerified;
+use App\Listeners\TrackSignedInFlag;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -23,6 +24,11 @@ class EventServiceProvider extends ServiceProvider
         Verified::class => [
             RecordEmailVerified::class,
         ],
+    ];
+
+    /** @var array<int, class-string> */
+    protected $subscribe = [
+        TrackSignedInFlag::class,
     ];
 
     /**

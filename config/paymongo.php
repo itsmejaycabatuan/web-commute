@@ -60,6 +60,12 @@ return [
 
     'statement_descriptor' => env('PAYMONGO_STATEMENT_DESCRIPTOR', 'SMARTCOMMUTE'),
 
+    // `payments:reconcile` asks PayMongo about a pending payment once it is this many minutes old
+    // (the webhook normally settles it well before), at most `reconcile_batch` payments per run.
+    'reconcile_after_minutes' => (int) env('PAYMONGO_RECONCILE_AFTER_MINUTES', 5),
+
+    'reconcile_batch' => (int) env('PAYMONGO_RECONCILE_BATCH', 100),
+
     // How long (seconds) a checkout session stays valid at PayMongo.
     'session_lifetime' => env('PAYMONGO_SESSION_LIFETIME', 3600),
 

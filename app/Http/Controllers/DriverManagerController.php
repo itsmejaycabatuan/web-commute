@@ -7,6 +7,9 @@ use App\Models\TimeKeeping;
 use App\Models\User;
 use App\Models\ViolationCode;
 use App\Models\ViolationLog;
+use App\Notifications\ViolationPaid;
+use App\Notifications\ViolationRecorded;
+use App\Support\Notifier;
 use Auth;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -302,10 +305,12 @@ class DriverManagerController extends Controller
         ]);
 
         try {
-            ViolationLog::create($validated);
+            $violation = ViolationLog::create($validated);
         } catch (QueryException $e) {
             return $this->writeFailed($e, 'The violation was not logged.');
         }
+
+        Notifier::send(User::find($violation->user_id), new ViolationRecorded($violation));
 
         return back()->with('success', 'Violation logged!');
     }
@@ -339,6 +344,10 @@ class DriverManagerController extends Controller
             return $this->writeFailed($e, 'The payment status was not updated.');
         }
 
+        if ($paid) {
+            Notifier::send(User::find($violation->user_id), new ViolationPaid($violation));
+        }
+
         return back()->with('success', $paid
             ? 'Fine marked as paid. The outstanding balance was reduced.'
             : 'Fine marked as unpaid again.');
@@ -369,10 +378,12 @@ class DriverManagerController extends Controller
         ]);
 
         // All-or-nothing: a failure part-way through stores none of the entries.
+        $created = [];
+
         try {
-            DB::transaction(function () use ($request) {
+            DB::transaction(function () use ($request, &$created) {
                 foreach ($request->violations as $v) {
-                    ViolationLog::create([
+                    $created[] = ViolationLog::create([
                         'user_id' => $request->user_id,
                         'vc_id' => $v['vc_id'],
                         'violation_instance' => $v['violation_instance'],
@@ -386,6 +397,12 @@ class DriverManagerController extends Controller
             });
         } catch (QueryException $e) {
             return $this->writeFailed($e, 'No violations were logged.');
+        }
+
+        // One email per violation: each carries its own offense, fine and place.
+        $driverUser = User::find($request->user_id);
+        foreach ($created as $violation) {
+            Notifier::send($driverUser, new ViolationRecorded($violation));
         }
 
         return back()

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Audited;
+use App\Services\ReplacementDriverService;
 use App\Support\Audit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -288,9 +289,33 @@ class Driver extends Model
             'status' => 'suspended',
         ])->save();
 
-        // Off the vehicle, and off its roster from today on (past duty days stay as history).
+        // Off the vehicle (and its roster), and the seat they held goes out for a replacement.
+        $vehicles = $this->releaseFromVehicles();
+
+        foreach ($vehicles as $vehicle) {
+            try {
+                app(ReplacementDriverService::class)->vacate($vehicle, $this, DriverVacancy::SUSPENDED);
+            } catch (\Throwable $e) {
+                // Finding a replacement must never undo or fail a suspension; the vacancy job retries.
+                report($e);
+            }
+        }
+    }
+
+    /**
+     * Take the driver off every vehicle they hold, and off its roster from today on (past duty days
+     * stay as history). Returns the vehicles they left.
+     *
+     * @return \Illuminate\Support\Collection<int, Vehicle>
+     */
+    public function releaseFromVehicles(): \Illuminate\Support\Collection
+    {
+        $vehicles = $this->vehicle()->get();
+
         $this->vehicle()->detach();
         $this->dutyDays()->whereDate('duty_date', '>=', today())->delete();
+
+        return $vehicles;
     }
 
     public function unsuspend(): void

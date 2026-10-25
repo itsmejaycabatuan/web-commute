@@ -53,6 +53,12 @@ class AuditCatalog
         'fare_rates_updated' => ['Fare rates updated', 'info'],
         'activity_log_exported' => ['Activity log exported', 'warn'],
         'report_exported' => ['Report exported', 'warn'],
+        'vacancy_opened' => ['Vehicle lost a driver', 'warn'],
+        'replacement_assigned' => ['Replacement driver assigned', 'ok'],
+        'released_from_vehicle' => ['Taken off vehicle', 'warn'],
+        'report_sent' => ['Scheduled report emailed', 'info'],
+        'repeat_violator_flagged' => ['Flagged as repeat violator', 'warn'],
+        'fare_evasion_flagged' => ['Flagged for fare evasion', 'warn'],
     ];
 
     public const TONE_CLASSES = [

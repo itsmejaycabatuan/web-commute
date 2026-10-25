@@ -281,6 +281,28 @@
                 </select>
             </div>
 
+            <!-- ══════════ VEHICLES WITHOUT A DRIVER ══════════ -->
+            @if ($openVacancies->isNotEmpty())
+                <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] p-4 sm:p-5 mb-5 sm:mb-6 border-l-2 border-l-rose-500">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555]">
+                            <i class="fa-solid fa-user-slash mr-1"></i> Vehicles waiting for a driver
+                        </span>
+                        <a href="{{ route('vehicles.index') }}"
+                            class="text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Assign a driver</a>
+                    </div>
+                    <ul class="space-y-2">
+                        @foreach ($openVacancies as $vacancy)
+                            <li class="flex flex-wrap items-center gap-2 text-[10px]">
+                                <span class="font-mono font-bold text-gray-700 dark:text-[#ccc]">{{ $vacancy->vehicle?->plate_number ?? 'Unknown' }}</span>
+                                <span class="px-1.5 py-0.5 rounded-md border bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/15 font-bold">{{ $vacancy->formerDriver?->name ?? 'A driver' }} · {{ $vacancy->reasonLabel() }}</span>
+                                <span class="text-gray-400 dark:text-[#444]">{{ $vacancy->opened_at->diffForHumans() }}; no free driver yet</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <!-- ══════════ MAINTENANCE ALERTS ══════════ -->
             @if ($maintenanceAlerts->isNotEmpty())
                 <div class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] p-4 sm:p-5 mb-5 sm:mb-6 border-l-2 {{ $maintenanceAlerts->contains(fn ($r) => $r['overdue']->isNotEmpty()) ? 'border-l-rose-500' : 'border-l-amber-500' }}">

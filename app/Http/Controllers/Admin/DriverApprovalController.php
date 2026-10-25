@@ -7,7 +7,9 @@ use App\Models\Driver;
 use App\Models\TimeKeeping;
 use App\Models\User;
 use App\Models\ViolationLog;
+use App\Notifications\DriverApplicationDecided;
 use App\Support\Audit;
+use App\Support\Notifier;
 use Illuminate\Database\QueryException;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -401,6 +403,8 @@ class DriverApprovalController extends Controller
                 ->with('error', 'A database error occurred. The driver was not approved.');
         }
 
+        Notifier::send($driver->user, new DriverApplicationDecided(true));
+
         return redirect()
             ->route('drivers.index')
             ->with('success', 'Driver approved. They can sign in now.');
@@ -449,6 +453,8 @@ class DriverApprovalController extends Controller
         if (! $isRejected) {
             return back()->with('error', 'Error rejecting driver');
         }
+
+        Notifier::send($driver->user, new DriverApplicationDecided(false));
 
         return redirect()
             ->route('drivers.index')

@@ -72,6 +72,9 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 
 ## Known Gaps / Notes
 
+- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
+- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
+
 - **The export is CSV only.** There is no `.xlsx` writer; opening the file in Excel works but loses column formatting, and a multi-sheet workbook is not produced.
 - **Only the financial report is date-filtered end to end** — the driver report uses all-time totals for the driver cards and the maintenance report ignores the range for the pending/overdue buckets (they are computed against *now*, not against *end date*).
 - **E2 is a catch-all**: any exception during aggregation (including a genuine bug) is reported to the log and shown to the Admin as an aggregation timeout, so a real error can be mistaken for slowness.

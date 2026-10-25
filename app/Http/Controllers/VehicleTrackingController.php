@@ -8,25 +8,29 @@ use App\Jobs\RetryBroadcastLocation;
 use App\Models\Vehicle;
 use App\Models\VehicleLocation;
 use App\Models\VehicleLocationHistory;
+use App\Support\Geo;
 use Illuminate\Http\Request;
 
 class VehicleTrackingController extends Controller
 {
-    private function haversineDistance($lat1, $lon1, $lat2, $lon2, $unit = 'km')
-    {
-        $theta = $lon1 - $lon2;
-        $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
-        $dist = acos($dist);
-        $dist = rad2deg($dist);
-        $miles = $dist * 60 * 1.1515;
+    /** A gap longer than this between two pings is a break in the trip, not distance driven. */
+    private const MAX_PING_GAP_MINUTES = 10;
 
-        if ($unit == 'km') {
-            return $miles * 1.609344;
-        } elseif ($unit == 'm') {
-            return $miles * 1.609344 * 1000;
-        } else {
-            return $miles;
+    /**
+     * Kilometres driven since the vehicle's previous recorded position (0 for the first ping of a trip,
+     * after a long silence, or for an implausible jump). Feeds the driver's distance-today figure and the
+     * fleet analytics.
+     */
+    private function distanceFromLastPosition(array $validated, VehicleLocation $current, ?VehicleLocationHistory $previous): float
+    {
+        if (! $previous || ! $previous->created_at || $previous->created_at->lt(now()->subMinutes(self::MAX_PING_GAP_MINUTES))) {
+            return 0.0;
         }
+
+        $km = Geo::distanceKm((float) $previous->latitude, (float) $previous->longitude, (float) $validated['latitude'], (float) $validated['longitude']);
+
+        // 10 minutes at 120 km/h is the most a jeepney could cover; more than that is a GPS glitch.
+        return $km > 20 ? 0.0 : round($km, 4);
     }
 
     public function broadcastLocation(Request $request)
@@ -130,6 +134,11 @@ class VehicleTrackingController extends Controller
             }
         }
 
+        // The vehicle's previous recorded position, taken before this broadcast replaces or joins it.
+        $previous = VehicleLocationHistory::whereHas('vehicleLocation', fn ($q) => $q->where('vehicle_id', $validated['vehicle_id']))
+            ->latest('id')
+            ->first();
+
         try {
             $now = now();
             if (! empty($validated['timestamp'])) {
@@ -181,7 +190,7 @@ class VehicleTrackingController extends Controller
                 'longitude' => $validated['longitude'],
                 'latitude' => $validated['latitude'],
                 'user_id' => $validated['user_id'],
-                'distance_from_last_pos' => 0,
+                'distance_from_last_pos' => $this->distanceFromLastPosition($validated, $vehicleLocation, $previous ?? null),
             ]);
 
             return response()->json([

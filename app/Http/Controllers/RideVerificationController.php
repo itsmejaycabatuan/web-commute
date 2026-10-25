@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\QrCode;
 use App\Models\QrScan;
+use App\Services\NearbyVehicleFinder;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -54,6 +55,48 @@ class RideVerificationController extends Controller
         }
 
         return $this->verified($request, $code);
+    }
+
+    /**
+     * The checkout page reports where the commuter is. If a vehicle is broadcasting right there the scan
+     * is tied to it and to its driver on duty; the coordinates themselves are not kept.
+     */
+    public function locate(Request $request, NearbyVehicleFinder $finder)
+    {
+        $data = $request->validate([
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'accuracy' => 'nullable|numeric|min:0',
+        ]);
+
+        $scan = QrScan::currentFor($request->user()->id);
+
+        if (! $scan) {
+            return response()->json(['matched' => false, 'message' => 'Scan a QR code first.'], 422);
+        }
+
+        $match = $finder->find((float) $data['latitude'], (float) $data['longitude'], isset($data['accuracy']) ? (float) $data['accuracy'] : null);
+
+        $scan->update([
+            'vehicle_id' => $match['vehicle']->id ?? null,
+            'driver_id' => $match['driver']->id ?? null,
+            'matched_distance_m' => $match['distance_m'] ?? null,
+            'located_at' => now(),
+        ]);
+
+        if (! $match) {
+            return response()->json([
+                'matched' => false,
+                'required' => (bool) config('qr.require_nearby_vehicle'),
+                'message' => "We couldn't find a SmartCommute PUJ near you.",
+            ]);
+        }
+
+        return response()->json([
+            'matched' => true,
+            'plate_number' => $match['vehicle']->plate_number,
+            'distance_m' => $match['distance_m'],
+        ]);
     }
 
     private function verified(Request $request, QrCode $code)

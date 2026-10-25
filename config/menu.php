@@ -30,6 +30,7 @@ return [
             ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'fa-gauge-high', 'color' => 'blue', 'section' => null, 'mobile_label' => 'Home'],
             ['label' => 'Management', 'section' => 'Management'],
             ['label' => 'Reports & Analytics', 'route' => 'reports.generate', 'icon' => 'fa-newspaper', 'color' => 'purple', 'section' => null],
+            ['label' => 'Fleet Analytics', 'route' => 'analytics.index', 'icon' => 'fa-chart-line', 'color' => 'purple', 'section' => null],
             ['label' => 'PUJ Commuters', 'route' => 'commuters.index', 'icon' => 'fa-users', 'color' => 'cyan', 'section' => null],
             ['label' => 'PUJ Drivers', 'route' => 'drivers.index', 'icon' => 'fa-id-card', 'color' => 'cyan', 'section' => null],
             ['label' => 'Vehicles', 'route' => 'vehicles.index', 'icon' => 'fa-bus', 'color' => 'cyan', 'section' => null],

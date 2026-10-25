@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\CommuterController;
 use App\Http\Controllers\EmailVerificationCodeController;
 use App\Http\Controllers\Admin\DriverApprovalController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\QrCodeController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\RideVerificationController;
@@ -125,6 +126,11 @@ Route::get('/email/verify/{id}/{hash}', [EmailVerificationCodeController::class,
 
 Route::post('/logout', [UserController::class, 'logout'])->name('users.logout')->middleware('auth');
 
+// Asked by the idle-session notice (partials/session-guard) once the session should have timed
+// out: 200 while the user is still signed in, 401 (handled by the exception handler) once not.
+Route::get('/session/status', fn () => response()->json(['active' => true]))
+    ->middleware('auth')->name('session.status');
+
 /*
 |--------------------------------------------------------------------------
 | PayMongo Webhook
@@ -158,6 +164,7 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
     // Pay on board: scan one of the system's QR codes (inside the PUJ) before paying a fare.
     Route::get('/payment/scan', [RideVerificationController::class, 'show'])->name('payment.scan');
     Route::post('/payment/scan', [RideVerificationController::class, 'verify'])->middleware('throttle:20,1')->name('payment.scan.verify');
+    Route::post('/payment/scan/locate', [RideVerificationController::class, 'locate'])->middleware('throttle:30,1')->name('payment.scan.locate');
     Route::get('/ride/scan/{token}', [RideVerificationController::class, 'link'])->middleware('throttle:20,1')->name('ride.scan.link');
 
     Route::get('/payment', [PaymentController::class, 'index'])->name('payment.index');
@@ -205,6 +212,9 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
         Route::get('/commuters', [CommuterController::class, 'index'])->name('commuters.index');
 
         // Staff accounts (Driver Managers and Maintenance Managers).
+        // Fleet and driver analytics (computed from the records; read-only).
+        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+
         // Ride QR codes (the Admin generates them; commuters scan one before paying a fare).
         Route::get('/qr-codes', [QrCodeController::class, 'index'])->name('qr-codes.index');
         Route::post('/qr-codes', [QrCodeController::class, 'store'])->name('qr-codes.store');

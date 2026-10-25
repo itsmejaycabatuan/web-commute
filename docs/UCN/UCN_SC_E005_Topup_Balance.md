@@ -85,7 +85,7 @@ Covered by E5 (request-level) and E3 (duplicate-level). Automated credential-stu
 - **No external payment gateway.** There is no transaction ID, no redirect, no callback and **no signature verification**; the wallet is credited directly on form submission. Integrating GCash/Maya (e.g. PayMongo) would require re-adding the original steps 3–5, a webhook/callback endpoint, signature validation, and a pending→settled top-up state.
 - **Duplicate detection is heuristic** (amount + method within 2 minutes), not a true idempotency key. Legitimate repeat top-ups of the same amount within 2 minutes are blocked by design.
 - **Admin settlement recording has no UI.** Admins can *view* top-ups, but there is no admin action to record a cash/admin settlement, since the commuter-facing option was removed.
-- Transactional email / receipt for a top-up is not sent; the receipt is only visible in-app (top-up history).
+- **A top-up receipt is emailed** (amount, method, new balance) once the top-up is completed, in addition to the in-app history. There is still no gateway for top-ups, so nothing can be left pending and there is nothing to reconcile.
 
 ---
 

@@ -1,6 +1,9 @@
 {{-- global-loading.blade.php --}}
 {{-- Every page loads this partial, so it is also where the shared toast / ajax-form component is mounted. --}}
 <x-toast />
+@auth
+    @include('partials.session-guard')
+@endauth
 {{-- Reusable app-wide loading indicator.
      - Shows a full-screen overlay for form submissions (submit buttons).
      - Shows a slim top progress bar for any background fetch/XHR request.

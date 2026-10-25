@@ -43,6 +43,11 @@ class VehicleLocationHistory extends Model
         'distance_from_last_pos'
     ];
 
+    public function vehicleLocation()
+    {
+        return $this->belongsTo(VehicleLocation::class, 'vehicle_location_id');
+    }
+
     public function location() {
         return $this->belongsTo(VehicleLocation::class);
     }

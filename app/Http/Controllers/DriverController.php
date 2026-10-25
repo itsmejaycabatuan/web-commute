@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Notifications\DriverApplicationReceived;
+use App\Support\Notifier;
 use App\Models\Driver;
 use App\Models\TimeKeeping;
 use App\Models\User;
@@ -91,6 +93,9 @@ class DriverController extends Controller
         }
 
         event(new Registered($user));
+
+        // The Admins (and Driver Managers) hear about the application now, not when they next open the page.
+        Notifier::toRole(['admin', 'driver_manager'], new DriverApplicationReceived($user->driver()->first(), $user->email));
 
         Audit::log(Audit::DRIVER, 'registered', 'Driver application submitted by '.$user->email, $user->driver()->first(), [
             'email' => $user->email,

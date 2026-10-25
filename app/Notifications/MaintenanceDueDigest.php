@@ -3,22 +3,16 @@
 namespace App\Notifications;
 
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 use Illuminate\Support\Collection;
 
 /**
  * The Maintenance Manager's daily list of services that are overdue or about to fall due.
  */
-class MaintenanceDueDigest extends Notification
+class MaintenanceDueDigest extends AppNotification
 {
     /** @param  Collection  $fleet  the result of MaintenanceDueService::fleet() */
     public function __construct(public Collection $fleet)
     {
-    }
-
-    public function via($notifiable): array
-    {
-        return ['mail'];
     }
 
     public function toMail($notifiable): MailMessage

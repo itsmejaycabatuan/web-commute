@@ -21,9 +21,30 @@ use Illuminate\Database\Eloquent\Model;
  */
 class QrScan extends Model
 {
-    protected $fillable = ['user_id', 'qr_code_id', 'scanned_at', 'used_at', 'payment_id'];
+    protected $fillable = ['user_id', 'qr_code_id', 'scanned_at', 'used_at', 'payment_id', 'vehicle_id', 'driver_id', 'matched_distance_m', 'located_at'];
 
-    protected $casts = ['scanned_at' => 'datetime', 'used_at' => 'datetime'];
+    protected $casts = ['scanned_at' => 'datetime', 'used_at' => 'datetime', 'located_at' => 'datetime'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(Driver::class);
+    }
+
+    /** True once the commuter's position was matched to a broadcasting vehicle. */
+    public function isOnVehicle(): bool
+    {
+        return $this->vehicle_id !== null;
+    }
 
     public function qrCode()
     {

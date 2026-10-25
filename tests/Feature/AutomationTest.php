@@ -154,7 +154,8 @@ class AutomationTest extends TestCase
         $this->assertEquals(8, $entry->hours_worked);
         $this->assertEquals(0, $entry->overtime_hours);
         $this->assertSame('inactive', $driver->fresh()->status);
-        $this->assertFalse(VehicleLocation::where('vehicle_id', $vehicle->id)->exists());
+        $this->assertFalse(VehicleLocation::where('vehicle_id', $vehicle->id)->where('last_update', '>=', now()->subMinutes(5))->exists(), 'off the live map');
+        $this->assertTrue(VehicleLocation::where('vehicle_id', $vehicle->id)->exists(), 'GPS history is kept');
         $this->assertEquals(0, $vehicle->fresh()->is_active);
     }
 
@@ -242,6 +243,7 @@ class AutomationTest extends TestCase
     {
         $manager = $this->staff('driver_manager');
         [, $driver] = $this->driver();
+        $waiting = TimeKeeping::needsReview()->count(); // the dev database may already hold some
         $entry = TimeKeeping::create([
             'driver_id' => $driver->id, 'date' => '2026-10-20', 'time_in' => '06:00 AM', 'time_out' => '02:00 PM',
             'hours_worked' => 8, 'overtime_hours' => 0, 'sick' => 0, 'vacation' => 0, 'auto_closed_at' => now(),
@@ -249,7 +251,7 @@ class AutomationTest extends TestCase
 
         $page = $this->actingAs($manager)->get(route('driver-manager.time-keeping'));
         $page->assertOk();
-        $this->assertSame(1, $page->viewData('needsReview'));
+        $this->assertSame($waiting + 1, $page->viewData('needsReview'));
 
         $this->actingAs($manager)->patch(route('driver-manager.time-keeping.review', $entry))
             ->assertSessionHas('success');
