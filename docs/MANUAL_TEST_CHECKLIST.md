@@ -180,7 +180,7 @@ Log in as `drivermanager@gmail.com`.
 - [x] **Time keeping:** save a normal shift (in 06:00, out 14:00) and check hours and overtime.
 - [x] Rejects: out earlier than in; only one of in/out; a shift that overlaps an existing one that day.
 - [x] Marking sick or vacation saves a zero-hours row without times.
-- [x] **Violation codes:** 6 codes are listed. Add a code. A duplicate code is rejected. A negative fine and a blank tier are rejected. Edit a code, then delete one.
+- [x] **Violation codes:** 14 codes are listed on a freshly seeded database (`UV01`–`UV14`, the PUJ schedule; the dev seeder loads them only when the count differs). Add a code. A duplicate code is rejected. A negative fine and a blank tier are rejected. Edit a code, then delete one.
 - [x] **Violations log:** log a single violation and a bulk set (2+ rows, remarks left empty on some). The modal closes as soon as it is saved; a future date or a missing field shows its message under that field.
 - [x] A driver manager can't open admin pages (`/commuters`, `/reports`) or maintenance pages (403).
 
@@ -202,7 +202,7 @@ Log in as `maintenancemanager@gmail.com`.
 - [x] Assigning a driver to an inactive, maintenance or disposed vehicle is refused (the driver select is disabled unless the status is *Active*).
 - [x] Set ABC-1234 to *disposed* while Ramon is clocked in: refused until he clocks out.
 - [x] Deleting a vehicle that is assigned to a driver is refused (the delete icon is locked). Deleting one with maintenance records is refused ("mark it Disposed instead"). Deleting an empty, unassigned one (STU-1122, or one you just added) works.
-- [x] **Preventive maintenance:** the schedule shows a mix of OK and Overdue items. Log a service with an odometer **lower** than the last reading and get an error naming that reading.
+- [x] **Preventive maintenance:** the schedule shows a mix of *On Track*, *Due Soon* and *Past Due* items (a task with only a distance interval is not overdue just for lacking a time interval). Log a service with an odometer **lower** than the last reading and get an error naming that reading.
 - [x] A valid entry updates the schedule, the dashboard's cost summary and its *Service History* tab.
 - [x] **Maintenance tasks:** add, edit and delete a task. A blank name is rejected, and miles/months may be blank.
 - [x] There is no *Maintenance Logs* menu item and `/vehicle-maintenance-log` answers 404. **Maintenance Logs** is a Maintenance Manager menu item (`/maintenance-logs`; any other role gets 403). Log the same task twice on Preventive Maintenance: the schedule row shows the latest service, the Maintenance Logs page lists both.
@@ -229,6 +229,13 @@ Found by running the seeded data through each page.
 2. **`/maintenance-logs` crashed when the logs spanned more than one page.** Fixed, and the page has since been removed together with the vehicle maintenance log.
 3. **Admin revenue counted unpaid payments.** Fixed: revenue figures count paid payments only.
 4. **The unused Routes feature was removed.** Its `routes` table (and the equally unused `fleets` table) was dropped by migration `2026_10_21_090000_drop_unused_routes_and_fleets_tables`, applied on the dev database on 2026-10-21.
+
+**Found while building the automation (2026-10-25):**
+
+5. **A timestamp column reset itself on every update** (MariaDB's automatic `ON UPDATE`): `qr_scans.scanned_at`, `driver_vacancies.opened_at`, `vehicle_scan_sessions.expires_at`. Fixed by migration `2026_10_28_100000`; re-check after `php artisan migrate`.
+6. **The status poll used up the allowance for starting a phone scan** (unnamed `throttle` limits share one counter per user). Fixed for the vehicle-scan routes. The older QR and top-up routes still share one counter: open.
+7. **`DevSeeder` stops with *Duplicate entry 'DRV-000002' for key drivers_driver_code_unique*** on a database whose drivers already hold codes the seeder wants to give its own. Workaround: use a fresh database. (`ViolationCodeSeeder` can be run alone, but it **replaces** the whole code table and deletes the violation logs that belong to the old codes.) Open.
+8. **`UCN_Combined.md` had every note in every section.** Regenerated: it is now built by `docs/UCN/build_combined.py`.
 
 Still worth a look: users have no `name` column, so commuters are identified by email. Check that the violations and driver-manager screens don't show "Unknown" for a name.
 
@@ -296,9 +303,64 @@ Destructive: use throwaway accounts you registered, not the seeded ones. Automat
 - [ ] **Admin removes a commuter.** *PUJ Commuters* → delete a commuter with a payment and zero balance → toast "Commuter removed. Their payments and top-ups were kept for the records." and an *Anonymised* entry in the Activity Log naming you. A commuter with a balance is still refused ("Cannot delete commuter with a balance of PHP…").
 - [ ] **Staff.** Add then delete a staff account: still *Deleted* (no payments), unchanged.
 
-## 8. Pay on board (QR codes)
+## 12. Pay on board (QR codes)
 
 - [ ] Admin → **QR Codes**: press **Generate QR Code** (no form: a new *Code #n* appears), see its QR, **Print** opens a printable sheet, **Switch off** / **Switch on**, **Delete**. Other roles get 403.
 - [ ] Commuter: map → **Buy a Ride** with no valid scan lands on **Scan the QR code**; after scanning (camera, typed token, or opening the link with the phone camera) the checkout opens for the same trip and shows *Verified on board*.
 - [ ] A random QR code, a switched-off code and a deleted code are all refused.
 - [ ] After paying, the next fare needs a new scan; a scan older than 15 minutes is refused. A replayed payment still shows its receipt.
+- [ ] **On board check.** With a driver broadcasting (a second browser signed in as a driver, or a Dev marker's position) and the commuter within ~150 m, the checkout shows *"Checking that you are on a PUJ…"* and then *"On board ABC-1234."*. The Admin's **Fleet Analytics** later counts that fare under that driver and vehicle.
+- [ ] With nobody near (default settings) the checkout stays quiet and the fare still pays, unattributed. With `QR_REQUIRE_NEARBY_VEHICLE=true` the same checkout warns *"We couldn't find a SmartCommute PUJ near you…"* and **Confirm Payment** is refused with nothing charged and the scan kept. Refusing the browser's location prompt gives the *"Allow location access…"* message.
+
+## 13. Automatic jobs (run by hand; no scheduler needed)
+
+`php artisan schedule:list` shows every job and when it next runs. Most commands below have `--dry-run` (not `shifts:auto-close` or `vehicle-scans:purge`); the *scheduler* itself (`php artisan schedule:run` from cron) is a deployment check (NFR-OPS-01).
+
+- [ ] **Forgotten clock-out.** Make Ramon's open shift old (set its `time_keepings.date` to yesterday), then `php artisan shifts:auto-close`. The shift gets 8 hours and no overtime; **Time Keeping** (Driver Manager) shows an amber *Auto-closed* badge and a *Needs review* count; **Mark reviewed** clears it. Ramon is inactive, his vehicle leaves the map, and his phone's broadcast is refused (*"Your shift was closed automatically…"*). His own **Timekeeping** page tags the day *auto*. Clocking in again the same day is refused.
+- [ ] **Missed webhook** (gateway on): leave a GCash payment pending for 6+ minutes, then `php artisan payments:reconcile --dry-run` names it and what it would do; without `--dry-run` it settles or fails it, and the commuter is emailed the receipt (or the *did not go through* notice) once.
+- [ ] **Maintenance alerts.** `php artisan maintenance:due-alerts --dry-run` lists vehicles with overdue and due-soon services; without it every Maintenance Manager is emailed. The same vehicles carry a badge on **Vehicles** and a *Maintenance needs attention* panel on the dashboard. With `MAINTENANCE_BLOCK_ACTIVE_WHEN_OVERDUE=true`, setting an overdue maintenance vehicle back to *Active* is refused.
+- [ ] **Inactive driver.** `php artisan drivers:inactivity-check --dry-run`: a driver who has not clocked in for 3 days is listed for a warning (and is emailed without `--dry-run`, once); after 7 days **and** a day after the warning they are suspended automatically and replaced (§15). A driver is never suspended without the warning first.
+- [ ] **Flags.** `php artisan drivers:flag-repeat-violators --dry-run` lists drivers with 3+ violations in 30 days (log three for `driver@gmail.com` to see it); `php artisan fares:flag-evasion --dry-run` lists commuters with 3+ unpaid scans in 7 days. A real run emails once and writes an Activity Log entry; a second run does not repeat it.
+- [ ] **Clean-up.** `php artisan vehicle-scans:purge` deletes expired scan photos and old session rows.
+
+## 14. Scan a vehicle's papers with a phone
+
+Needs the `tesseract-ocr` package (`tesseract --version`). Specimen papers with invented data: `python3 tests/Fixtures/ocr/generate_samples.py`, then use `tests/Fixtures/ocr/samples/*.jpg` (for example `cr_01_photo.jpg` and `or_01_scan.jpg`). Without Tesseract the button is simply not shown.
+
+- [x] **Vehicles → Add Vehicle** shows *"Have the registration papers?"* with a **Scan with phone** button. *(Checked in the browser, 2026-10-25.)*
+- [x] Pressing it shows a QR code, three short steps and a 15:00 countdown. *(Checked.)*
+- [x] The QR link opens a phone-sized page (*Photograph the papers*) with a CR slot and an optional OR slot. Sending a photo makes the desktop form fill itself with plate, VIN, brand, model, year and fuel, show thumbnails and the *Check these against the papers* panel, and the **Add Vehicle** button stays **disabled** until *"I have checked these details against the document"* is ticked. *(Checked by sending specimen photos to the link; not yet done with a real phone camera.)*
+- [x] A CR and an OR of two different vehicles produce *"…differs between the papers"* warnings and *"or …"* alternatives. *(Checked.)*
+- [x] Closing the form, or **Cancel scan**, ends the session and deletes the photos (`storage/app/vehicle-scans/` is empty). *(Checked.)*
+- [x] A photo of something else (a shopping list) is refused on the phone with *"…does not look like an LTO Official Receipt or Certificate of Registration"*, and the page offers the form again. *(Checked.)*
+- [ ] **On a real phone** (iOS and Android): the camera and the photo library both work; a portrait and a landscape photo both read; the page is readable at 375 px (NFR-USE-08).
+- [ ] Waiting 15 minutes with no photo: the desktop says *"The scan code expired"* and **Try again** starts a fresh one; the old link answers *expired*.
+- [ ] Tick the box and save: the vehicle appears in the list, and the Activity Log shows *Vehicle added from scanned papers* listing the fields read, the fields you corrected and those that needed a second look, with **no values**. A value you changed before saving appears under *corrected*.
+- [ ] Add a vehicle by hand with no scan: unchanged, no scan entry in the log.
+- [ ] Try the same phone link after saving: it answers *expired*.
+
+## 15. Replacement drivers
+
+Use throwaway data: suspending a seeded driver takes them off their vehicle (re-assign afterwards on **Vehicles**). `php artisan vehicles:cover-vacancies --dry-run` shows what is open and who is free.
+
+- [ ] Approve a spare driver (for example `elena.torres@` with a future licence expiry). **Suspend `liza.mercado@`** (DEF-5678): the vehicle gets Elena automatically; Elena and the Maintenance Manager are emailed; the Activity Log shows *Vehicle lost a driver* and *Replacement driver assigned*.
+- [ ] **Shared vehicle:** put two drivers on a vehicle, suspend one: the replacement joins, and **Duty Roster** shows a fresh alternating roster from today with the remaining driver first.
+- [ ] **Nobody free:** suspend a driver while no spare exists. The Maintenance Manager's dashboard shows *Vehicles waiting for a driver*; approve a spare, run `php artisan vehicles:cover-vacancies`, and the panel empties.
+- [ ] **Expired licence:** give a driver with a vehicle a past licence expiry date and run `php artisan vehicles:cover-vacancies`: they are taken off the vehicle (not suspended), emailed, and replaced.
+- [ ] With `AUTO_REPLACE_DRIVERS=false` nothing is assigned; the managers' email names the best free drivers instead.
+- [ ] Manually removing a driver on the **Vehicles** page opens no vacancy.
+
+## 16. Emails
+
+Set `MAIL_MAILER=log` and read `storage/logs/laravel.log`, or use a real mailbox. A failing mail server must never break the action.
+
+- [ ] Register a driver: every Admin and Driver Manager gets *New driver application*. Approve or reject: the driver gets the decision.
+- [ ] Log a violation (and a bulk of two): the driver gets one email per entry; **Mark Paid** gives *Your fine was marked as paid*; **Mark Unpaid** sends nothing.
+- [ ] Top up: *Your wallet was topped up*. Pay a fare by wallet: *Receipt for your fare #SC-…*. A GCash payment that fails: *did not go through*. A payment cancelled at checkout sends nothing.
+- [ ] Stop the mail server (or give a wrong `MAIL_HOST`): the actions above still complete, and the failure is in `storage/logs/laravel.log`.
+
+## 17. Reports and analytics
+
+- [x] **Fleet Analytics** (Admin sidebar) loads with the 7 / 30 / 90-day buttons, six totals, the 8-week chart, the repeat-violator and unpaid-scan lists and the driver and vehicle tables. *(Checked in the browser.)*
+- [ ] Other roles get 403 on `/analytics`. Kilometres read 0 for dates before the distance was recorded.
+- [ ] `php artisan reports:send weekly --dry-run` prints last week's figures; `php artisan reports:send weekly --to=you@example.com` emails them with a CSV (and the activity log) attached. The revenue and top-up totals equal the **Reports** page for the same dates.

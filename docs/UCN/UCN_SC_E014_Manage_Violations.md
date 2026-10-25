@@ -61,7 +61,7 @@
 
 **A5 – Log a Violation**
 1. In the log, the Driver Manager clicks **"New Entry"**.
-2. System displays the violation form: *Driver*, *Violation Code*, *Offense Instance*, *Fine*, *Place of Violation*, *Date*, *Time*, *Remarks*.
+2. System displays the violation form: *Driver*, *Violation Code*, *Offense Instance*, *Fine*, *Place of Violation*, *Date*, *Time*, *Remarks*. Once a driver **and** a violation code are chosen, the *Offense Instance* and the *Fine* fill themselves in (A9).
 3. Driver Manager fills the form and clicks **"Save Entry"**.
 4. System validates `user_id`, `vc_id`, `violation_instance` **required, integer, min 1**, `violation_fine` **numeric, min 0**, `place_of_violation`, `date_of_violation` **date, not in the future** (E6), `time_of_violation`, stores the row and confirms *"Violation logged!"* `remarks` is **optional** (the column is nullable), in the single and in the bulk form. On a validation error the modal stays open and each message appears under its own input (for the bulk form, under the field of the failing entry); on success the modal closes, the page refreshes and a toast confirms.
 
@@ -82,6 +82,16 @@
 3. System sets `payment_status = paid` and stamps `paid_at`, confirms *"Fine marked as paid. The outstanding balance was reduced."* and writes an audit entry. The original fine stays on record (struck through) but the row now counts **₱0** and the driver's **outstanding** totals — their dashboard, the violations page and the Driver Manager dashboard — drop by that amount.
 4. **Mark Unpaid** reverses it (an entry marked the wrong way is refused: *"This fine is already marked as paid."* / *"…unpaid."*). Only the Driver Manager can do this; drivers and the Admin see the status read-only.
 
+**A9 – The offense number is selected automatically**
+1. The log page carries, for every driver, how many times each violation code has already been logged against them (`offenseCounts`).
+2. When the Driver Manager picks a driver and a violation code (single or bulk form), the form sets the *Offense Instance* to **earlier records + 1** (1st, 2nd, 3rd, and *4th+* from the fourth on) and fills in the matching fine from the code's tiers. A note under the field says how many earlier records were counted.
+3. In the **bulk** form the count includes the entries above in the same batch for the same code, so two entries for one code come out as, say, 2nd and 3rd.
+4. The Driver Manager can still change the offense, which re-prices the fine; the server stores whatever is submitted (1–4), so a manual override is respected.
+
+**A10 – The driver is told, and repeat violators are flagged**
+1. Saving a violation emails the driver (code, offense, place and time, fine, remarks) — one email per entry in a bulk log — and marking a fine **paid** emails them that it no longer counts (`ViolationRecorded`, `ViolationPaid`). A mail failure never fails the save.
+2. Every day at 09:00 `php artisan drivers:flag-repeat-violators` finds drivers with **`REPEAT_VIOLATOR_COUNT`** (3) or more violations in the last **`REPEAT_VIOLATOR_DAYS`** (30) days and emails the Driver Managers the list (counts, fines, codes). Each driver is flagged **once per window**: the audit trail (*Flagged as repeat violator*) is what remembers it. `--dry-run` lists without emailing.
+
 ---
 
 ## Postconditions
@@ -91,6 +101,8 @@
 3. The system notifies the Driver Manager with a success message.
 4. A logged violation is permanently attached to the driver's profile (UCN_SC_E012 A4 shows the licence and expiry alongside it).
 
+5. The driver has been emailed about each new violation and each fine marked paid (A10).
+6. A driver who piled up violations is flagged to the Driver Managers once per window (A10).
 ---
 
 ## Exceptions
@@ -120,8 +132,8 @@ At least one violation log references the code. System refuses the deletion with
 - **No unique index on `violation_codes.code`** — uniqueness is a validation rule only, so a concurrent double submit could still slip a duplicate through.
 - **The log is paginated on the server, 10 entries per page**; the driver / date filters travel with the page links (`withQueryString`). There is no ordering option, only *latest first*.
 - **Rejected applications cannot be re-approved** — the reject action is one-way in the UI (`is_rejected` has no counterpart action on the drivers page).
-- **The offense instance is pre-selected, not enforced.** When the Driver Manager picks a driver and a violation type, the form selects the next offense (1st, 2nd, 3rd, 4th+) from how many times that code was already logged against the driver — and, in the bulk form, from the entries above it in the same batch — and fills in the matching fine. The manager can still change it, and the server accepts 1–4 (`min:1` in the single form), so a manual override is stored as chosen.
-- **The driver is emailed** when a violation is logged (one email per entry in a bulk log) and when a fine is marked paid. A driver with 3 or more violations in 30 days is flagged to the Driver Managers once per window (`php artisan drivers:flag-repeat-violators`, daily 09:00; `REPEAT_VIOLATOR_COUNT`, `REPEAT_VIOLATOR_DAYS`) and in the audit trail.
+- **The offense instance is pre-selected, not enforced** (A9): the manager can override it and the server accepts 1–4.
+- **Emails and the repeat-violator flag** (A10) depend on the mail settings; a failed send is logged and skipped.
 - Additional penalties are stored as free text; nothing derives them from the offense level.
 - **Payment is a flag, not a ledger**: there is no partial payment, no payment date entry, no receipt — a fine is paid or it is not.
 
@@ -138,4 +150,8 @@ At least one violation log references the code. System refuses the deletion with
 | Menu | `config/menu.php` — *Violation Codes*, *Violation Log* (driver_manager) |
 | Middleware | `auth`, `verified`, `role:driver_manager` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_a_duplicate_violation_code_is_rejected_on_create`, `test_an_in_use_violation_code_cannot_be_deleted`, `test_a_future_violation_date_is_rejected`, `test_the_violation_log_can_be_searched_by_driver_name`) |
+| Offense selection | `DriverManagerController::violationsLog()` (builds `offenseCounts`) and the `autoSelectOffense()` / `autoSelectBulkOffense()` methods in `resources/views/driver-manager/violations-log.blade.php` |
+| Emails and flag | `app/Notifications/ViolationRecorded.php`, `ViolationPaid.php`, `RepeatViolatorFlag.php`; `app/Console/Commands/FlagRepeatViolators.php` (daily 09:00); `FleetAnalyticsService::repeatViolators()`; `config/alerts.php` |
+| Seed data | `database/seeders/ViolationCodeSeeder.php` — the PUJ schedule `UV01`–`UV14` (see UCN_SC_E024) |
+| Tests (automation) | `tests/Feature/AutomationTest.php` (offense counts), `tests/Feature/AutomationPhase2Test.php` (emails, repeat-violator flag) |
 | Related | UCN_SC_E012 (Manage Drivers), UCN_SC_E013 (Manage Timekeeping) |

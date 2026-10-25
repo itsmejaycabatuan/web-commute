@@ -40,6 +40,17 @@
 2. System streams the report data for the current type and range as a **CSV file** (`Content-Type: text/csv`) named `smartcommute_<type>_report_<YYYY-MM-DD>.csv`.
 3. The Admin's browser downloads the file. The CSV columns differ per type — e.g. financial: *Date, Type, Reference ID, Amount, User* (fares and wallet top-ups); driver: *Driver Name, Status, Total Hours Worked*; maintenance: *Vehicle Plate, Task, Due Date, Status*.
 
+**A3 – Receive the weekly and monthly report by email (automatic)**
+1. Every Monday at 06:00 `php artisan reports:send weekly` and on the 1st at 06:30 `reports:send monthly` build the report for the **last full week (Mon–Sun)** or the **last full calendar month**.
+2. Every active Admin is emailed a summary: fare revenue (by method), wallet top-ups, failed payments, violations logged / issued / collected / outstanding, hours worked, overtime and auto-closed shifts, distance driven, maintenance spend, overdue and due-soon services now, repeat violators and commuters with unpaid scans.
+3. The figures come as an attached CSV (formula-safe, UTF-8) and, with `REPORT_ATTACH_ACTIVITY_LOG` on (default), the period's audit trail as a second CSV (at most `REPORT_ACTIVITY_LOG_LIMIT` rows). Each send is written to the audit trail (*Scheduled report emailed*).
+4. `--to=` sends to one address to try it out; `--dry-run` prints the figures without emailing.
+
+**A4 – Open Fleet Analytics**
+1. The Admin clicks **Fleet Analytics** on the sidebar (`GET /analytics`, Admin only) and picks the last **7, 30 or 90 days**.
+2. System computes, from time-keeping, the GPS trail, payments, violations and maintenance logs: headline totals (hours, overtime, distance, fare revenue, violations, maintenance cost); an 8-week hours-and-overtime chart; the repeat violators and commuters with unpaid scans; a **driver** table (shifts, hours, overtime, auto-closed shifts, fares and revenue attributed by UCN_SC_E006 A6, violations, fines) and a **vehicle** table (kilometres, hours in service, fares, revenue, share of scans that ended in a fare, maintenance cost).
+3. The page is read-only and computed on each visit; kilometres are recorded from the broadcast trail from now on (UCN_SC_E021 A5), so earlier history shows 0 km.
+
 ---
 
 ## Postconditions
@@ -49,6 +60,7 @@
 3. The system notifies the Admin with a success message.
 4. An export downloads a CSV file that mirrors exactly what was rendered for the current type and range.
 
+5. The Admin receives the previous week's and month's report by email, and can open the same figures per driver and vehicle on Fleet Analytics (A3, A4).
 ---
 
 ## Exceptions
@@ -72,14 +84,11 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 
 ## Known Gaps / Notes
 
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
 - **The export is CSV only.** There is no `.xlsx` writer; opening the file in Excel works but loses column formatting, and a multi-sheet workbook is not produced.
 - **Only the financial report is date-filtered end to end** — the driver report uses all-time totals for the driver cards and the maintenance report ignores the range for the pending/overdue buckets (they are computed against *now*, not against *end date*).
 - **E2 is a catch-all**: any exception during aggregation (including a genuine bug) is reported to the log and shown to the Admin as an aggregation timeout, so a real error can be mistaken for slowness.
 - **E4 is derived from the payments ledger only**; a system with no payments never raises the warning even if other data is stale.
-- Reports are generated on every page load from live queries — there is no caching, snapshotting or scheduled export.
+- On-screen reports are generated on every page load from live queries — there is no caching or snapshotting; the weekly and monthly emails (A3) and Fleet Analytics (A4) are computed the same way, at the moment they run or are opened.
 - **Exports are audited**: each CSV export writes a `report_exported` entry (who, which report, the date range) that the Admin can find on the Activity Log page (UCN_SC_E028). Generating a report on screen is a read and writes nothing.
 
 ---
@@ -95,4 +104,7 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 | Menu | `config/menu.php` — *Reports & Analytics* (admin) |
 | Middleware | `auth`, `verified`, `role:admin` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_a_report_over_an_empty_window_reports_no_data`, `test_an_inverted_date_range_is_rejected`) |
+| Scheduled reports | `app/Services/PeriodReportService.php`, `app/Console/Commands/SendScheduledReport.php` (`reports:send`, Mondays 06:00 and the 1st 06:30), `app/Notifications/ScheduledReport.php`, `config/reports.php` |
+| Fleet Analytics | `app/Http/Controllers/Admin/AnalyticsController.php`, `app/Services/FleetAnalyticsService.php`, `resources/views/admin/analytics.blade.php`, route `analytics.index` (inside `role:admin`), `config/menu.php` — *Fleet Analytics* (admin) |
+| Tests (automation) | `tests/Feature/AutomationPhase2Test.php` — `test_period_report_totals`, `test_weekly_report_is_emailed_to_the_admins_with_attachments_and_audited`, `test_driver_and_vehicle_stats_add_up`, `test_analytics_page_is_for_the_admin_only` |
 | Related | UCN_SC_E019 (Manage Fare Rates — financial figures), UCN_SC_E016 (Maintenance Schedule — maintenance figures), UCN_SC_E013 (Timekeeping — driver hours) |

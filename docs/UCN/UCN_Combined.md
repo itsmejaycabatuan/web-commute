@@ -1,6 +1,7 @@
 # Use Case Narratives (UCN) — Web Commute (Combined)
 
 Documentation of the implemented behaviour of the system's core guest, commuter, staff and driver journeys.
+*Generated from the individual narratives by `build_combined.py`: edit those, not this file.*
 
 | Use Case ID | Name | Actor | Section |
 |---|---|---|---|
@@ -38,6 +39,13 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 > and *Manage Maintenance Schedule* shared `UCN_SC_E015` with *Manage Vehicles*. Violations are now
 > **E014** and the maintenance schedule **E016**.
 
+> **Renumbering (October 2026).** The set used to run E001 – E029 with a hole at **E025**, the separate *vehicle
+> maintenance log* use case, which was retired when its data moved into the preventive-maintenance record (see
+> UCN_SC_E016; the log itself has since returned as a panel on that page, but not as a use case). The four sheets after the hole were moved down by one so the numbers are contiguous and equal the
+> number of sheets: **Profile and Dashboard Views E026→E025, Account Deletion E027→E026, Manage Staff Accounts
+> E028→E027, View Activity Log E029→E028.** Anything written before this change (older documents, `UCN.zip`,
+> commit messages) uses the old numbers for those four.
+
 ## Terminology
 
 | Term | Meaning |
@@ -46,19 +54,27 @@ Documentation of the implemented behaviour of the system's core guest, commuter,
 | **Commuter** | An authenticated user holding the `commuter` role. A commuter starts as a guest and becomes a commuter by registering (UCN_SC_E002) and verifying their email. |
 | **Driver** | An authenticated user holding the `driver` role with an approved `Driver` record and a staff-assigned vehicle. Drivers clock in/out from the map sidebar (UCN_SC_E009 / E010). |
 | **Wallet** | The commuter's stored balance, created at registration. Funded via top-up (UCN_SC_E005) and debited when a fare is paid by wallet (UCN_SC_E006). |
-| **Payment record** | An immutable ledger row for one paid fare (transaction id `#SC-XXXXXXXX`), readable by the commuter who paid it and, through the same receipt route, by an Admin auditing the ledger. A `pending` payment is closed as `cancelled` after 12 hours. Carries a lifecycle status: `pending` → `paid` / `failed` / `cancelled`. |
+| **Payment record** | An immutable ledger row for one paid fare (transaction id `#SC-XXXXXXXX`), readable by the commuter who paid it and, through the same receipt route, by an Admin auditing the ledger. A `pending` payment is reconciled with the gateway every 10 minutes and closed as `cancelled` after 12 hours. Carries a lifecycle status: `pending` → `paid` / `failed` / `cancelled`, and, when the commuter's QR scan was located, the `vehicle_id` and `driver_id` the fare belongs to. |
 | **Gateway** | Optional PayMongo integration for GCash/Maya fares. Disabled by default; enabled with sandbox test keys — see `docs/PAYMONGO_SETUP.md`. |
 | **Timekeeping record** | One row per driver per day, holding `time_in`, `time_out`, `hours_worked` and `overtime_hours`. |
+| **Auto-closed shift** | A shift the driver never ended: the scheduler closes it (UCN_SC_E010 A4) with a credited regular shift and no overtime, stamps `auto_closed_at`, and leaves it for a Driver Manager to review (`reviewed_at`, UCN_SC_E013 A3). |
 | **Suspension** | A flag that locks an account out of signing in — and signs out a session that is already open on its next request — without deleting it. Commuters carry `users.is_suspended` (UCN_SC_E018 A4); drivers carry `drivers.is_suspended` (UCN_SC_E012 A5), which additionally blocks clock-in and location broadcast and releases any assigned vehicle. |
 | **Vehicle status** | `active` (in service, the only status that may carry a driver and broadcast a location), `inactive`, `maintenance` (out of service, off the live map) or `disposed` (retired, kept for auditing) — UCN_SC_E015. |
+| **Vacancy** | A seat on a vehicle that lost its driver (suspension, or an expired licence): the system fills it with the best free driver, or keeps it open and reports it (`driver_vacancies`, UCN_SC_E012 A8). |
+| **Scan session** | The short-lived link between the Add Vehicle form and a phone while a vehicle's papers are photographed (`vehicle_scan_sessions`, UCN_SC_E015 A7). Its 40-character token is the phone's only credential; the photos are deleted when the vehicle is saved or after 15 minutes. |
+| **Scheduler** | Laravel's `php artisan schedule:run`, which must be called every minute from a cron entry for the automatic jobs to run (`docs/AUTOMATED_FEATURES.md`). |
+| **Notification** | An email the system sends by itself through `Notifier` — receipts, application and violation notices, alerts, reports. A failed send is logged and never stops the action that caused it. |
 | **Preventive maintenance** | The maintenance record for a (vehicle, task) pair: the last service's date, odometer and cost, and the interval used to project the next due date/odometer. UCN_SC_E016. |
 | **PUJ** | Public Utility Vehicle. On the map, a PUJ marker is a **roadworthy** vehicle (status `active`/`inactive`) with a location reported in the last 5 minutes, coloured by its driver's availability (green available, red unavailable). |
 | **Privacy radius** | 200 m. Guest/commuter coordinates are randomly obfuscated within this radius. |
+| **Audit trail** | The `activity_log` table: who did what to which record, when and from where, with before → after values. Written after the action succeeds; page views, map polling and location broadcasts are never recorded. Read by the Admin on the Activity Log page (UCN_SC_E028). Design and event list: `docs/AUDIT_TRAIL.md`. |
 
 ## Document conventions
 
-- Each use case follows the classic UCN layout: header, preconditions, **Main Flow**, **Alternate Flow**, **Postconditions**, **Exceptions**, then implementation references.
+- Each document follows the classic UCN layout: header, preconditions, **Main Flow**, **Alternate Flow**, **Postconditions**, **Exceptions**, then implementation references.
 - Every behaviour described is traceable to the code path listed in the *Implementation References* table.
+- **`UCN_Combined.md` is generated.** Edit the individual narratives (and this file's index and terminology), then run `python3 docs/UCN/build_combined.py`; never edit the combined file by hand.
+- Jobs that run on their own (the scheduler, emails, reports) are written as **alternate flows with the system as the actor** (for example UCN_SC_E010 A4, UCN_SC_E012 A7 / A8, UCN_SC_E016 A3); the one-page list of them all is `docs/AUTOMATED_FEATURES.md`.
 - Documents reconciled against the implementation (E011–E020) open with a **"Corrections vs. the original narrative"** note listing what the narrative said, what the system actually does, and why the narrative was changed rather than the code.
 - Items marked **Known Gaps / Notes** describe deliberate limitations or behaviours that do **not** yet match the original narrative — they are candidates for the next iteration, not bugs.
 - **Messages (all pages except the map banners):** success, error and warning messages are shown as toasts (`<x-toast />`). In add / edit / delete modals a validation error keeps the modal open and shows the message under its own input; on success the modal closes, the page refreshes and a toast confirms. Lists longer than 10 rows are paged 10 per page. Where the documents below say a "flash" or "banner", read "toast".
@@ -252,15 +268,6 @@ Entering a code that is not 6 digits shows *"The code must be 6 digits."* (or *"
 
 ### Known Gaps / Notes
 
-- **Vehicles that lose a driver get a replacement.** When a driver on a vehicle is suspended, or their licence expires (the hourly `vehicles:cover-vacancies` job then takes them off it), the seat is filled with the best free driver automatically; vehicles still waiting for one are listed on the Maintenance dashboard. Manually assigning or unassigning drivers on this page is never treated as a vacancy.
-
-- **A suspended driver's seat is refilled automatically.** Suspending a driver (by an Admin, or by the inactivity job) takes them off their vehicle and opens a vacancy; the system assigns the best free driver, rebuilds the duty roster if the vehicle is shared, and emails the replacement and the Maintenance Managers. Nobody free: the vacancy stays open and is reported daily. See `docs/AUTOMATED_FEATURES.md`.
-
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
 - The **Terms of Service** and **Privacy Policy** links in the registration form are currently placeholders (`href="#"`); no policy pages exist yet.
 - Error handling currently wraps the user insert only; a failure in role assignment or wallet creation surfaces a generic 500 page.
 - `UserController::emailVerification()` (custom mail + `activate` view) is **dead code** — no route points to it. The live flow uses Laravel's standard signed verification link at `/email/verify/{id}/{hash}`.
@@ -355,10 +362,7 @@ Guest's device is offline. System cannot fetch the map or PUJ coordinates. Syste
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
+- **A vehicle leaves the map when its driver's shift is closed automatically** (UCN_SC_E010 A4): its recent position rows are aged past the 5-minute window, so it drops off at once, while the GPS history is kept.
 
 - `/api/markers` (developer/mock markers) returns an empty array outside the `local` environment; in production the map relies solely on live driver broadcasts from `/track/vehicles/active`.
 - "Active PUJ" is determined by **location freshness (5 minutes)**, not by the driver's clock-in (timekeeping) status. Align either the wording of E1 or the backend rule.
@@ -472,11 +476,6 @@ Guest has used all 3 daily fare calculations. The System displays the limit moda
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
 - The route drawn is **origin → destination** only; it is *not* a route to the nearest PUJ.
 - The daily guest limit is stored in `localStorage` and can be bypassed by clearing browser storage.
 
@@ -555,6 +554,7 @@ Guest has used all 3 daily fare calculations. The System displays the limit moda
 2. A digital top-up / transaction record has been generated and saved (`TopupHistory`).
 3. The commuter sees a success confirmation and the updated balance.
 
+4. The commuter is emailed a **top-up receipt** (amount, method, new balance). A mail failure is logged and never fails the top-up (`Notifier`).
 ---
 
 ### Exceptions
@@ -583,11 +583,6 @@ Covered by E5 (request-level) and E3 (duplicate-level). Automated credential-stu
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
 - **No external payment gateway.** There is no transaction ID, no redirect, no callback and **no signature verification**; the wallet is credited directly on form submission. Integrating GCash/Maya (e.g. PayMongo) would require re-adding the original steps 3–5, a webhook/callback endpoint, signature validation, and a pending→settled top-up state.
 - **Duplicate detection is heuristic** (amount + method within 2 minutes), not a true idempotency key. Legitimate repeat top-ups of the same amount within 2 minutes are blocked by design.
 - **Admin settlement recording has no UI.** Admins can *view* top-ups, but there is no admin action to record a cash/admin settlement, since the commuter-facing option was removed.
@@ -604,6 +599,8 @@ Covered by E5 (request-level) and E3 (duplicate-level). Automated credential-stu
 | Allowed methods | `PaymentController::SELF_SERVICE_TOPUP_METHODS = ['gcash', 'maya']` |
 | View | `resources/views/commuter/topup.blade.php`, `topuphistory.blade.php` |
 | Models | `app/Models/Wallet.php`, `app/Models/TopupHistory.php` |
+| Receipt email | `app/Notifications/TopupReceipt.php`, sent through `app/Support/Notifier.php`; the channels are `config/alerts.php` (`NOTIFICATION_CHANNELS`, default `mail`) |
+| Tests (automation) | `tests/Feature/AutomationPhase2Test.php` (`test_topup_emails_a_receipt_with_the_new_balance`, `test_notifier_never_lets_a_failing_send_break_the_caller`) |
 
 ---
 
@@ -682,6 +679,27 @@ Covered by E5 (request-level) and E3 (duplicate-level). Automated credential-stu
 1. The commuter selects **Wallet**; the card displays the live balance.
 2. System subtracts the fare and stores the method as `Wallet`. The gateway is never contacted.
 
+**A6 – The fare is attributed to the vehicle and the driver the commuter rides**
+1. After scanning the ride QR code, the checkout page asks the browser for the commuter's position and sends it to `POST /payment/scan/locate` (`payment.scan.locate`).
+2. System looks for an **active** vehicle whose driver's phone broadcast within the last `QR_BROADCAST_FRESH_MINUTES` (5) and which is within `QR_NEARBY_METERS` (150 m, widened by up to 100 m for a vague GPS fix) of the commuter, and takes the nearest (`NearbyVehicleFinder`).
+3. System records that vehicle, the driver on duty and the distance on the scan (`qr_scans.vehicle_id`, `driver_id`, `matched_distance_m`, `located_at`) and tells the page *"On board ABC 1234."*. **The commuter's coordinates are matched and discarded: they are never stored.**
+4. The payment that spends the scan inherits `vehicle_id` and `driver_id` (`payments`), so every fare belongs to a vehicle and a driver without anyone typing it; Fleet Analytics (UCN_SC_E020 A4) reports revenue per driver and vehicle from it.
+5. With `QR_REQUIRE_NEARBY_VEHICLE=true` (**off by default**) a scan that was not matched to a vehicle cannot pay: the checkout answers *"We couldn't confirm you are on a SmartCommute PUJ…"*, charges nothing and keeps the scan (E11). Without it, an unmatched scan still pays, only unattributed.
+
+**A7 – A missed webhook is reconciled automatically**
+1. Every 10 minutes the scheduler runs `php artisan payments:reconcile` (only while the gateway is enabled). It takes gateway payments still `pending` after `PAYMONGO_RECONCILE_AFTER_MINUTES` (5), at most `PAYMONGO_RECONCILE_BATCH` (100), and asks PayMongo about each one.
+2. An intent the gateway reports as paid is settled; one it reports as failed is closed as `failed`; anything else is left alone. A run stops after 3 gateway errors in a row. `--dry-run` reports without changing anything.
+3. The webhook, the return page and this job all go through one `PaymentSettlement`, so whichever arrives first wins and the others find the payment already settled.
+
+**A8 – Receipts and failure emails**
+1. When a payment becomes **paid** (wallet, webhook, return page or reconciliation) the commuter is emailed **one** receipt: reference, trip, method, amount, time and a link to the receipt page.
+2. When a gateway payment ends **failed** the commuter is emailed that it did not go through and that nothing was charged. A payment the commuter cancelled, or that expired, is not emailed.
+3. A mail failure is logged and never changes the payment (`Notifier`).
+
+**A9 – Repeated gateway failures alert the Admins**
+1. Each gateway error is counted: a checkout that could not be opened, a payment that could not be looked up, a reconciliation call that failed.
+2. When `GATEWAY_FAILURE_THRESHOLD` (3) errors fall inside `GATEWAY_FAILURE_WINDOW_MINUTES` (15), every Admin is emailed once for that window, with the most recent error (`GatewayMonitor`).
+
 ---
 
 ### Postconditions
@@ -691,6 +709,8 @@ Covered by E5 (request-level) and E3 (duplicate-level). Automated credential-stu
 3. For a gateway payment: `status = paid` with `paid_at` set, and the PayMongo checkout-session / payment-intent ids stored for reconciliation.
 4. The commuter sees the **digital receipt**, and the payment appears in their history (UCN_SC_E007) with a status badge for anything still `pending` / `failed` / `cancelled`.
 
+5. When the scan was located, the payment carries the `vehicle_id` and `driver_id` of the vehicle the commuter rode (A6).
+6. A **paid** payment has been emailed to the commuter as a receipt; a gateway payment that failed has been emailed as such (A8).
 ---
 
 ### Exceptions
@@ -725,25 +745,25 @@ The commuter has no wallet row (data inconsistency). System aborts with HTTP 404
 **E10 – Fare Table Empty**
 No fare rates are published for the current fare table, so the fare cannot be priced. System responds with *"Fares are unavailable right now. Please try again later."*
 
+**E11 – Not On a PUJ (only with `QR_REQUIRE_NEARBY_VEHICLE=true`)**
+The scan was not matched to a vehicle (no PUJ near the commuter, or location refused). `process` redirects back with *"We couldn't confirm you are on a SmartCommute PUJ. Allow location access on this page, make sure you are inside the vehicle, then try again."*, creates no payment and does not spend the scan.
+
 ---
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
+- **Top-ups are not reconciled** because they are not gateway payments (UCN_SC_E005): reconciliation (A7), failure emails and the gateway alert apply to **fare** payments through GCash / Maya.
 
 - **The gateway is flag-controlled, and a safety rail refuses to arm it unsafely.** With it off, GCash/Maya are recorded as *declared* and **never charged*. `PayMongoService::configProblems()` refuses to run when the key type and base URL disagree (live key + sandbox host, sandbox key + live host), when a **live key is armed outside `production`**, when the host is not a PayMongo host, or when the secret key is empty. Each refusal logs `PAYMONGO CONFIGURATION REFUSED` and degrades to the declared-payment flow — it never 500s.
 - **`statement_descriptor` is not honoured** on a checkout session (only on a standalone payment intent); PayMongo falls back to the merchant's registered descriptor.
-- **No boarding permission / ticket.** Paying does **not** create a trip, a one-time ride token, or any state a driver or vehicle can verify. This remains the largest functional gap in this use case.
+- **No boarding permission a driver can check.** Paying attributes the fare to a vehicle and driver (A6) and a scan that is never followed by a fare is counted (`php artisan fares:flag-evasion`, daily 09:30: 3 unpaid scans in 7 days flags the commuter to the Admins, once per window), but a driver still has no screen that shows who has paid. The attribution depends on the driver's phone broadcasting and on the commuter allowing location.
 - **The fare is re-priced server-side, but the *distance* is still client-supplied** (it comes from the browser's OSRM call). The amount can no longer be tampered with, but the distance can. Closing it means routing the trip server-side.
 - **Discount fares are not verified.** The calculator displays a discounted figure for Student/Elderly/PWD, but only the **regular** fare is priced and charged server-side; no ID is checked.
 - **No refunds, cancellations, or fare disputes** from the commuter side. Once `paid`, a payment is immutable.
 - **No webhook event-deduplication store.** Settlement is idempotent (`pending → paid` only happens once), but replayed events are not recorded.
 - **No dead-letter/queue handling** — webhook processing is synchronous, so a slow PayMongo call blocks the request.
 - The receipt is rendered by a single view (`commuter/viewreceipt.blade.php`); the former duplicate `commuter/receipt.blade.php` was removed in favour of POST/redirect/GET.
-- Receipts are in-app only — no email or PDF.
+- Receipts are emailed (A8) and shown in-app; there is no PDF.
 
 ---
 
@@ -762,6 +782,14 @@ No fare rates are published for the current fare table, so the fare cannot be pr
 | Views | `resources/views/commuter/payment.blade.php`, `viewreceipt.blade.php`, `paymentpending.blade.php` |
 | Models | `app/Models/Payment.php` (`status`, gateway ids, `STATUS_*` constants), `app/Models/Wallet.php` |
 | Tests | `tests/Feature/PayMongoPaymentTest.php` (29), `tests/Feature/UcnRegressionTest.php` |
+| Settlement | `app/Services/PaymentSettlement.php` — the one place a fare becomes paid or failed, and where receipts / failure emails are sent |
+| Reconciliation | `app/Console/Commands/ReconcilePayments.php` (`payments:reconcile`, every 10 minutes), `config/paymongo.php` (`reconcile_after_minutes`, `reconcile_batch`) |
+| Gateway alert | `app/Services/GatewayMonitor.php`, `app/Notifications/GatewayAlert.php`, `config/alerts.php` (`gateway_failure_threshold`, `gateway_failure_window_minutes`) |
+| Emails | `app/Notifications/PaymentReceipt.php`, `PaymentFailed.php`, sent through `app/Support/Notifier.php` |
+| Vehicle attribution | `app/Services/NearbyVehicleFinder.php`, `RideVerificationController::locate()` (`payment.scan.locate`), `PaymentController::process()`, the location script in `resources/views/commuter/payment.blade.php`, `config/qr.php` |
+| Fare-evasion flag | `app/Console/Commands/FlagFareEvasion.php`, `app/Notifications/FareEvasionFlag.php`, `config/alerts.php` (`fare_evasion_scans`, `fare_evasion_days`) |
+| Schema | `database/migrations/2026_10_26_090000_add_vehicle_attribution_to_qr_scans_and_payments.php`, `2026_10_28_100000_stop_timestamps_updating_themselves.php` |
+| Tests (automation) | `tests/Feature/AutomationPhase2Test.php` — settlement, reconciliation, gateway alert, locate, attribution, the on-board check, fare-evasion flag |
 | Related | UCN_SC_E005 (Top-up), UCN_SC_E007 (Payment History) |
 
 ---
@@ -842,11 +870,6 @@ The requested receipt id does not exist, or belongs to another commuter. System 
 ---
 
 ### Known Gaps / Notes
-
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
 
 - **No explicit network/server error state.** A failed query renders an empty list rather than an error banner, so "no results" and "something broke" look identical to the commuter.
 - **Quick ranges are relative windows (7 / 30 / 90 days)**, not the calendar presets *"Last Month"* / *"This Month"* from the original narrative; only the relative windows and free-form dates exist.
@@ -950,11 +973,6 @@ A guest reaching `/settings` is redirected to the login page by the `auth` + `ve
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
 - **Length-only password policy.** There is no complexity requirement (no upper/lower/digit/symbol rule), no check against the user's name/email, and **no password-history or reuse prevention**.
 - **No rate limiting on password changes.** The endpoint is behind `auth` but has no throttle; combined with a hijacked session this allows repeated attempts at E1.
 - **No active-session list.** The user cannot see *which* devices are signed in; sessions can only be terminated blindly.
@@ -1015,6 +1033,10 @@ A guest reaching `/settings` is redirected to the login page by the `auth` + `ve
 1. The authenticated user has the `driver` role but no `Driver` row.
 2. System aborts with *"Driver profile not found."* instead of crashing.
 
+**A3 – The shift was already closed by the system today**
+1. A forgotten clock-out is closed automatically (UCN_SC_E010 A4). If that closed *today's* record, the driver presses **"Clock In"** again.
+2. System finds today's record and refuses: *"You have already clocked in today."* — one shift per day applies to an auto-closed shift too. The driver is back on duty at the next shift.
+
 ---
 
 ### Postconditions
@@ -1045,10 +1067,7 @@ The driver has no vehicle. System performs **no** write, leaves the status uncha
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
+- **Clocking in clears an inactivity warning** (UCN_SC_E012 A7): a driver who was emailed for staying away starts a fresh count. A shift that the system later closes for them counts as a clock-in for that purpose.
 
 - **One shift per day, enforced.** `clockIn` rejects a second record for the same date, so a driver **cannot** clock in twice (e.g. an AM and a PM shift). Multi-split shifts would need a different uniqueness rule.
 - **No GPS / location verification.** The original precondition *"the driver's device GPS is enabled and permissions are granted"* is **not checked** — clock-in works from any device, anywhere.
@@ -1116,6 +1135,13 @@ The driver has no vehicle. System performs **no** write, leaves the status uncha
 1. The authenticated user has the `driver` role but no `Driver` row.
 2. System aborts with *"Driver profile not found."* instead of crashing.
 
+**A4 – The driver forgets to clock out (automatic close)**
+1. Every 15 minutes the scheduler runs `php artisan shifts:auto-close`. It looks at every shift that has a `time_in` and no `time_out` (leave entries and finished shifts are ignored).
+2. A shift is **due** once it has been open longer than `TIMEKEEPING_AUTO_CLOSE_AFTER_HOURS` (default **14**) or, with `TIMEKEEPING_AUTO_CLOSE_AT_MIDNIGHT` on (default), once its date has passed.
+3. Nobody knows when the driver really stopped, so the system credits `TIMEKEEPING_AUTO_CLOSE_CREDIT_HOURS` (default **8**, never more than has elapsed) with **no overtime**: it writes `time_out`, `hours_worked`, `overtime_hours = 0` and stamps `auto_closed_at`. `reviewed_at` stays empty.
+4. Unless the driver has a newer open shift, the driver is set **inactive**; the vehicle is marked offline and its recent position rows are aged past the 5-minute window so it leaves the map (the GPS history is kept); and the driver's phone can no longer broadcast the vehicle's position until the next shift (UCN_SC_E021 E7).
+5. The close is written to the audit trail (*Auto-closed time entry … after the driver did not clock out*) and the entry is flagged for the Driver Manager to review (UCN_SC_E013 A3). The driver's own timekeeping page shows a small *auto* tag on that day's hours.
+
 ---
 
 ### Postconditions
@@ -1126,6 +1152,7 @@ The driver has no vehicle. System performs **no** write, leaves the status uncha
 4. The system notifies the driver, and the UI shows **"Shift Complete"** plus the total hours (and overtime, if any).
 5. The closed shift appears in the **Weekly Log** for that week.
 
+6. A shift left open is closed by the system within 15 minutes of becoming due, with a credited regular shift, `auto_closed_at` set, the driver inactive and the vehicle off the map (A4).
 ---
 
 ### Exceptions
@@ -1143,12 +1170,7 @@ See A3 — *"Driver profile not found."*
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
-- **A forgotten clock-out is closed automatically.** `php artisan shifts:auto-close` (every 15 minutes) closes any shift with no `time_out` that has been open longer than `TIMEKEEPING_AUTO_CLOSE_AFTER_HOURS` (default 14) or that is still open after midnight (`TIMEKEEPING_AUTO_CLOSE_AT_MIDNIGHT`). Nobody knows when the driver really stopped, so the entry is credited `TIMEKEEPING_AUTO_CLOSE_CREDIT_HOURS` (default 8, never more than has elapsed) with **no overtime**, stamped `auto_closed_at`, and left for the Driver Manager to review (UCN_SC_E013). The driver is set inactive (unless a newer shift is open), the vehicle drops off the live map and is marked offline (its GPS history is kept), and the driver's phone can no longer broadcast the vehicle's position until their next shift.
+- **A forgotten clock-out is closed automatically** (A4). The credited hours are an estimate, so a Driver Manager reviews them (UCN_SC_E013 A3).
 - **No GPS / location verification** — a driver can clock out from anywhere, and nothing confirms the vehicle actually stopped.
 - **Duration is measured from `time_in` parsed out of a formatted string** (`Carbon::parse($record->date . ' ' . $record->time_in, 'Asia/Manila')`). A `time_in` written by the driver-manager screen in a different format/timezone will skew the hours; storing real datetimes would remove this fragility.
 - **`hours_worked` is rounded to 2 decimals**, and breaks are not considered — the value is a raw difference between clock-in and clock-out.
@@ -1170,6 +1192,9 @@ See A3 — *"Driver profile not found."*
 | Weekly log | `resources/views/driver/time-keeping.blade.php` — `DriverController::timekeeping()` |
 | Manager corrections | `app/Http/Controllers/DriverManagerController.php::timeKeepingStore()` |
 | Models | `app/Models/TimeKeeping.php`, `app/Models/Driver.php` |
+| Automatic close | `app/Console/Commands/AutoCloseShifts.php` (`shifts:auto-close`, every 15 minutes), `config/timekeeping.php`, `Driver::shiftWasAutoClosed()`, `TimeKeeping::open()` |
+| Schema | `database/migrations/2026_10_25_090000_add_auto_close_to_time_keepings_table.php` — `auto_closed_at`, `reviewed_at` |
+| Tests (automation) | `tests/Feature/AutomationTest.php` — `test_shift_open_too_long_is_auto_closed_and_flagged`, `test_shift_left_open_past_midnight_is_closed`, `test_driver_with_a_newer_shift_stays_active`, `test_auto_closing_is_audited` |
 | Related | UCN_SC_E009 (Clock In) |
 
 ---
@@ -1254,11 +1279,6 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 ---
 
 ### Known Gaps / Notes
-
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
 
 - **No rate limiting on the reset *request***. `POST /forgot-password` has no throttle, so an attacker can enumerate registered emails by timing the response (the response message differs between `INVALID_USER` and `RESET_LINK_SENT`).
 - **No notification to the account owner** that the password was changed — only the audit trail (`password_reset` entry) records it.
@@ -1347,13 +1367,27 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 1. In the list, the actor clicks the suspend icon (or *reactivate* when the driver is already suspended). Only an **approved** driver can be suspended — the icon is not shown for a pending or rejected registration and the server refuses it. A suspension also takes effect on a session that is already open: the driver's next request signs them out.
 2. System displays a confirmation dialog: suspending states that the driver *"will not be able to sign in, clock in or broadcast a location, and is detached from any assigned vehicle"*; an optional **Reason** field is provided.
 3. Driver Manager confirms.
-4. System sets `is_suspended`, records `suspended_at` and the reason, moves the driver `status` to **suspended**, **detaches any assigned vehicle**, writes a `suspended` audit-trail entry (with the reason) and confirms *"Driver suspended. They can no longer sign in."*
-5. Reactiving reverses all of it (`status` back to **inactive**) and confirms *"Driver reactivated."*
+4. System sets `is_suspended`, records `suspended_at` and the reason, moves the driver `status` to **suspended**, **detaches any assigned vehicle** (and removes them from its duty roster from today on), writes a `suspended` audit-trail entry (with the reason) and confirms *"Driver suspended. They can no longer sign in."* The seat they held is then offered to a replacement (A8).
+5. Reactivating reverses all of it (`status` back to **inactive**), starts a fresh inactivity clock (`reactivated_at`, A7) and confirms *"Driver reactivated."* The driver is not put back on the vehicle they left.
 
 **A6 – Approve or Reject a Driver Application**
 1. A **pending** driver row shows a **"Review"** button instead of the ID-card icon.
 2. Driver Manager opens the review modal (identity fields next to the licence image) and chooses **"Approve"** or **"Reject"**.
-3. System validates the approve payload (`license_number` unique, `license_code`, `expiration_date`), assigns the generated driver code when the driver has none yet, sets `is_approved = 1` and confirms *"Driver approved. They can sign in now."*, or sets `is_rejected = 1` and confirms *"Driver registration rejected. They cannot sign in until you approve them again."*
+3. System validates the approve payload (`license_number` unique, `license_code`, `expiration_date`), assigns the generated driver code when the driver has none yet, sets `is_approved = 1` and confirms *"Driver approved. They can sign in now."*, or sets `is_rejected = 1` and confirms *"Driver registration rejected. They cannot sign in until you approve them again."* Either way the **driver is emailed the decision** (`DriverApplicationDecided`).
+
+**A7 – A driver who stays away is warned, then suspended (automatic)**
+1. Every day at 08:00 the scheduler runs `php artisan drivers:inactivity-check` over every approved, not-rejected, not-suspended driver and counts the **days since the driver last clocked in**. Leave a Driver Manager recorded counts as activity; a driver who never clocked in counts from the day the account was created or last reinstated (`reactivated_at`).
+2. At `DRIVER_INACTIVITY_WARN_AFTER_DAYS` (default **3**) the driver is emailed once (`DriverInactivityWarning`) to contact HR about the inactivity (`HR_EMAIL` is named in the mail), and `inactivity_warned_at` is stamped. An *Inactivity warning sent* entry is written to the audit trail.
+3. Once the driver has been away **more than** `DRIVER_INACTIVITY_SUSPEND_AFTER_DAYS` (default **7**) **and** the warning has been out for at least a day, the system suspends them exactly as in A5 (reason *"Automatically suspended: inactive for N days"*), logged as `suspended` with `automatic: true`. A driver is **never suspended without a warning first**.
+4. Clocking in again clears the warning, so the next lapse starts afresh. `--dry-run` lists who would be warned or suspended without emailing or suspending anyone.
+
+**A8 – A driver who leaves a vehicle is replaced automatically**
+1. A driver leaves a vehicle when they are **suspended** (A5 or A7) or when their **licence expires** (the hourly `vehicles:cover-vacancies` job takes an approved, not-suspended driver with an expired licence off their vehicle exactly as a suspension would, emails them, and lets them keep their account).
+2. The seat they held becomes a **vacancy** (`driver_vacancies`: vehicle, former driver, reason, the number of drivers the vehicle should have again). A manual unassign on the Vehicles page is never a vacancy.
+3. With `AUTO_REPLACE_DRIVERS` on (default) the system picks the best **free** driver — approved, not suspended, licence not expired, no vehicle, no inactivity warning outstanding — ranked by a valid (rather than soon-to-expire) licence, then fewest violations and least overtime in the last 90 days, and assigns them.
+4. If the vehicle is **shared** again (two drivers) a 30-day alternating duty roster is written from today, the driver already on the vehicle first (UCN_SC_E015 A6); a single-driver vehicle needs none.
+5. The replacement is emailed (vehicle, who they share it with, next duty day), the Maintenance Managers are told, and the audit trail records *vacancy opened* and *replacement assigned*.
+6. If nobody is free the vacancy stays open: it is shown on the Maintenance Manager's dashboard, retried every hour, and reported to the Maintenance Managers once a day with the best candidates. A vacancy whose vehicle left service, or that a manager already staffed, is closed as *not needed* instead. With `AUTO_REPLACE_DRIVERS=false` the system only reports the vacancy and suggests the drivers.
 
 ---
 
@@ -1365,6 +1399,8 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 4. On suspension: the account is locked out of sign-in, clock-in and location broadcast, and any assigned vehicle is released.
 5. On deletion: the driver no longer appears in the list, in driver pickers, or in the driver's own sign-in.
 
+6. A new application and each approval or rejection have been emailed (Admins and Driver Managers are told of an application — UCN_SC_E022; the driver is told the decision — A6).
+7. A driver who left a vehicle by suspension or an expired licence has left a vacancy, and a replacement has been assigned or the vacancy is waiting for one (A8).
 ---
 
 ### Exceptions
@@ -1400,13 +1436,12 @@ The driver is already in that state. System refuses with *"This driver is alread
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
+- **Suspension and an expired licence both free the vehicle.** A suspended driver is detached and replaced (A8); an expired-licence driver is released the same way, not suspended. Turn the licence release off with `RELEASE_EXPIRED_LICENCE_DRIVERS=false`.
 
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
+- **A suspended driver's seat is refilled automatically.** Suspending a driver (by an Admin, or by the inactivity job) takes them off their vehicle and opens a vacancy; the system assigns the best free driver, rebuilds the duty roster if the vehicle is shared, and emails the replacement and the Maintenance Managers. Nobody free: the vacancy stays open and is reported daily. See `docs/AUTOMATED_FEATURES.md`.
 
 - **Drivers added by an admin are approved immediately** (`is_approved = true`), so the approve/reject flow effectively applies only to self-registered drivers (UCN_SC_E002).
-- **Suspension has no expiry and no auto-reactivation** — it must be lifted manually.
+- **Suspension has no expiry and no auto-reactivation** — it must be lifted manually (and an automatic inactivity suspension (A7) needs the same manual lift).
 - **A suspended driver is signed out on their next request**: the `account.active` middleware re-checks the account on every authenticated request, ends the session and sends the driver to the login page (JSON calls get a 403 with the redirect). Sign-in, clock-in, status changes and location broadcast are all refused.
 - **There is no "un-approve"** — the reverse of approve is commented out in the controller.
 - Deleting a driver does not remove the uploaded licence image from storage when it was stored on disk.
@@ -1425,6 +1460,10 @@ The driver is already in that state. System refuses with *"This driver is alread
 | Menu | `config/menu.php` — *PUJ Drivers* (admin), *Drivers* (driver_manager) |
 | Middleware | `auth`, `verified`, `role:admin|driver_manager` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php`, `tests/Feature/UcnSuspensionTest.php` |
+| Inactivity | `app/Console/Commands/DriverInactivityCheck.php` (`drivers:inactivity-check`, daily 08:00), `app/Notifications/DriverInactivityWarning.php`, `Driver::daysInactive()`, `Driver::inactiveSince()`, `config/timekeeping.php` (`inactivity_*`, `hr_email`); schema `2026_10_26_090000_add_inactivity_tracking_to_drivers_table.php` |
+| Replacement | `app/Services/ReplacementDriverService.php`, `app/Console/Commands/CoverVacancies.php` (`vehicles:cover-vacancies`, hourly), `app/Models/DriverVacancy.php`, `Driver::suspend()` / `releaseFromVehicles()`, `config/fleet.php`; schema `2026_10_27_090000_create_driver_vacancies_table.php` |
+| Emails | `app/Notifications/DriverApplicationDecided.php`, `ReplacementAssigned.php`, `VehicleVacancyFilled.php`, `VehicleVacancyOpen.php`, `LicenceExpiredRelease.php`, via `app/Support/Notifier.php` |
+| Tests (automation) | `tests/Feature/ReplacementDriverTest.php` (22), `tests/Feature/AutomationPhase2Test.php` (`test_driver_hears_about_approval_and_rejection`), `tests/Feature/AutomationTest.php` (inactivity) |
 | Related | UCN_SC_E002 (driver self-registration), UCN_SC_E009/E010 (clock in / out), UCN_SC_E013 (timekeeping), UCN_SC_E014 (violations), UCN_SC_E015 (vehicles) |
 
 ---
@@ -1476,6 +1515,12 @@ The driver is already in that state. System refuses with *"This driver is alread
 1. Driver Manager clicks one of the chips *All*, *Regular*, *Sick*, *Vacation*, *Overtime*.
 2. System filters the table client-side to the selected type; the entry counter updates. **Overtime** means `overtime_hours > 0`.
 
+**A3 – Review a shift the system closed automatically**
+1. A driver forgot to clock out and the system closed the shift (UCN_SC_E010 A4). On the **Time Keeping** page the entry carries an amber **Auto-closed** badge next to its type, and the **Needs review** filter (with a count) lists every such entry not yet reviewed.
+2. The Driver Manager compares the credited hours (a regular 8-hour shift, no overtime) with what the driver really worked and clicks **Mark reviewed** (`PATCH /time-keeping/{entry}/review`).
+3. System stamps `reviewed_at`, writes *Reviewed auto-closed time entry …* to the audit trail and confirms *"Shift marked as reviewed."* The badge reads *Auto-closed · reviewed*. Reviewing an entry that was not auto-closed, or one already reviewed, is refused.
+4. Review only **acknowledges** the entry; its hours cannot be edited here (see Known Gaps).
+
 ---
 
 ### Postconditions
@@ -1485,6 +1530,7 @@ The driver is already in that state. System refuses with *"This driver is alread
 3. The system notifies the Driver Manager with a success message.
 4. `hours_worked` and `overtime_hours` are derived server-side; they are never trusted from the client.
 
+5. An auto-closed shift is flagged until a Driver Manager marks it reviewed (A3).
 ---
 
 ### Exceptions
@@ -1508,12 +1554,7 @@ The shift being written shares part of the day with an entry that already exists
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
-- **Auto-closed shifts need a review.** Shifts closed by the system (UCN_SC_E010) show an *Auto-closed* badge, count toward the *Needs review* filter, and have a **Mark reviewed** button (`PATCH /time-keeping/{entry}/review`, recorded in the audit trail). Review only acknowledges the entry — the hours it carries are the credited regular shift, and there is still no way to edit them (see the note below).
+- **Reviewing only acknowledges an auto-closed shift** (A3): its credited hours cannot be corrected here, because time entries are immutable (below).
 - **Shifts cannot span midnight.** An overnight shift (e.g. 22:00 → 06:00) is rejected by E4; the manager must split it into two dated entries.
 - **No overlap check against the driver's own clock-in** (UCN_SC_E009) — a manager entry and a self-clocked entry on the same day are only blocked when they genuinely overlap in time.
 - **Entries are immutable**: there is no edit or delete for a manager-entered row; only the driver's own clock-out (E010) fills in `time_out`.
@@ -1533,6 +1574,8 @@ The shift being written shares part of the day with an entry that already exists
 | Menu | `config/menu.php` — *Time Keeping* (driver_manager) |
 | Middleware | `auth`, `verified`, `role:driver_manager` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_a_time_entry_where_clock_out_precedes_clock_in_is_rejected`, `test_an_overlapping_shift_is_rejected`, `test_a_second_non_overlapping_shift_is_accepted`) |
+| Review | `DriverManagerController::timeKeepingReview()`, route `driver-manager.time-keeping.review`, the *Needs review* filter and badge in `resources/views/driver-manager/time-keeping.blade.php` |
+| Tests (automation) | `tests/Feature/AutomationTest.php` — `test_driver_manager_can_review_an_auto_closed_shift`, `test_review_is_refused_for_a_normal_entry_and_for_other_roles` |
 | Related | UCN_SC_E009 (Clock In), UCN_SC_E010 (Clock Out), UCN_SC_E012 (Manage Drivers) |
 
 ---
@@ -1600,7 +1643,7 @@ The shift being written shares part of the day with an entry that already exists
 
 **A5 – Log a Violation**
 1. In the log, the Driver Manager clicks **"New Entry"**.
-2. System displays the violation form: *Driver*, *Violation Code*, *Offense Instance*, *Fine*, *Place of Violation*, *Date*, *Time*, *Remarks*.
+2. System displays the violation form: *Driver*, *Violation Code*, *Offense Instance*, *Fine*, *Place of Violation*, *Date*, *Time*, *Remarks*. Once a driver **and** a violation code are chosen, the *Offense Instance* and the *Fine* fill themselves in (A9).
 3. Driver Manager fills the form and clicks **"Save Entry"**.
 4. System validates `user_id`, `vc_id`, `violation_instance` **required, integer, min 1**, `violation_fine` **numeric, min 0**, `place_of_violation`, `date_of_violation` **date, not in the future** (E6), `time_of_violation`, stores the row and confirms *"Violation logged!"* `remarks` is **optional** (the column is nullable), in the single and in the bulk form. On a validation error the modal stays open and each message appears under its own input (for the bulk form, under the field of the failing entry); on success the modal closes, the page refreshes and a toast confirms.
 
@@ -1621,6 +1664,16 @@ The shift being written shares part of the day with an entry that already exists
 3. System sets `payment_status = paid` and stamps `paid_at`, confirms *"Fine marked as paid. The outstanding balance was reduced."* and writes an audit entry. The original fine stays on record (struck through) but the row now counts **₱0** and the driver's **outstanding** totals — their dashboard, the violations page and the Driver Manager dashboard — drop by that amount.
 4. **Mark Unpaid** reverses it (an entry marked the wrong way is refused: *"This fine is already marked as paid."* / *"…unpaid."*). Only the Driver Manager can do this; drivers and the Admin see the status read-only.
 
+**A9 – The offense number is selected automatically**
+1. The log page carries, for every driver, how many times each violation code has already been logged against them (`offenseCounts`).
+2. When the Driver Manager picks a driver and a violation code (single or bulk form), the form sets the *Offense Instance* to **earlier records + 1** (1st, 2nd, 3rd, and *4th+* from the fourth on) and fills in the matching fine from the code's tiers. A note under the field says how many earlier records were counted.
+3. In the **bulk** form the count includes the entries above in the same batch for the same code, so two entries for one code come out as, say, 2nd and 3rd.
+4. The Driver Manager can still change the offense, which re-prices the fine; the server stores whatever is submitted (1–4), so a manual override is respected.
+
+**A10 – The driver is told, and repeat violators are flagged**
+1. Saving a violation emails the driver (code, offense, place and time, fine, remarks) — one email per entry in a bulk log — and marking a fine **paid** emails them that it no longer counts (`ViolationRecorded`, `ViolationPaid`). A mail failure never fails the save.
+2. Every day at 09:00 `php artisan drivers:flag-repeat-violators` finds drivers with **`REPEAT_VIOLATOR_COUNT`** (3) or more violations in the last **`REPEAT_VIOLATOR_DAYS`** (30) days and emails the Driver Managers the list (counts, fines, codes). Each driver is flagged **once per window**: the audit trail (*Flagged as repeat violator*) is what remembers it. `--dry-run` lists without emailing.
+
 ---
 
 ### Postconditions
@@ -1630,6 +1683,8 @@ The shift being written shares part of the day with an entry that already exists
 3. The system notifies the Driver Manager with a success message.
 4. A logged violation is permanently attached to the driver's profile (UCN_SC_E012 A4 shows the licence and expiry alongside it).
 
+5. The driver has been emailed about each new violation and each fine marked paid (A10).
+6. A driver who piled up violations is flagged to the Driver Managers once per window (A10).
 ---
 
 ### Exceptions
@@ -1656,16 +1711,11 @@ At least one violation log references the code. System refuses the deletion with
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
 - **No unique index on `violation_codes.code`** — uniqueness is a validation rule only, so a concurrent double submit could still slip a duplicate through.
 - **The log is paginated on the server, 10 entries per page**; the driver / date filters travel with the page links (`withQueryString`). There is no ordering option, only *latest first*.
 - **Rejected applications cannot be re-approved** — the reject action is one-way in the UI (`is_rejected` has no counterpart action on the drivers page).
-- **The offense instance is pre-selected, not enforced.** When the Driver Manager picks a driver and a violation type, the form selects the next offense (1st, 2nd, 3rd, 4th+) from how many times that code was already logged against the driver — and, in the bulk form, from the entries above it in the same batch — and fills in the matching fine. The manager can still change it, and the server accepts 1–4 (`min:1` in the single form), so a manual override is stored as chosen.
-- **The driver is emailed** when a violation is logged (one email per entry in a bulk log) and when a fine is marked paid. A driver with 3 or more violations in 30 days is flagged to the Driver Managers once per window (`php artisan drivers:flag-repeat-violators`, daily 09:00; `REPEAT_VIOLATOR_COUNT`, `REPEAT_VIOLATOR_DAYS`) and in the audit trail.
+- **The offense instance is pre-selected, not enforced** (A9): the manager can override it and the server accepts 1–4.
+- **Emails and the repeat-violator flag** (A10) depend on the mail settings; a failed send is logged and skipped.
 - Additional penalties are stored as free text; nothing derives them from the offense level.
 - **Payment is a flag, not a ledger**: there is no partial payment, no payment date entry, no receipt — a fine is paid or it is not.
 
@@ -1682,6 +1732,10 @@ At least one violation log references the code. System refuses the deletion with
 | Menu | `config/menu.php` — *Violation Codes*, *Violation Log* (driver_manager) |
 | Middleware | `auth`, `verified`, `role:driver_manager` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_a_duplicate_violation_code_is_rejected_on_create`, `test_an_in_use_violation_code_cannot_be_deleted`, `test_a_future_violation_date_is_rejected`, `test_the_violation_log_can_be_searched_by_driver_name`) |
+| Offense selection | `DriverManagerController::violationsLog()` (builds `offenseCounts`) and the `autoSelectOffense()` / `autoSelectBulkOffense()` methods in `resources/views/driver-manager/violations-log.blade.php` |
+| Emails and flag | `app/Notifications/ViolationRecorded.php`, `ViolationPaid.php`, `RepeatViolatorFlag.php`; `app/Console/Commands/FlagRepeatViolators.php` (daily 09:00); `FleetAnalyticsService::repeatViolators()`; `config/alerts.php` |
+| Seed data | `database/seeders/ViolationCodeSeeder.php` — the PUJ schedule `UV01`–`UV14` (see UCN_SC_E024) |
+| Tests (automation) | `tests/Feature/AutomationTest.php` (offense counts), `tests/Feature/AutomationPhase2Test.php` (emails, repeat-violator flag) |
 | Related | UCN_SC_E012 (Manage Drivers), UCN_SC_E013 (Manage Timekeeping) |
 
 ---
@@ -1731,6 +1785,16 @@ At least one violation log references the code. System refuses the deletion with
 4. System validates: `year` **required, integer, 1990–2030**; `brand`, `model`, `plate_number`, `status`, `acquisition_date` **required**; `plate_number` **unique** (E2); `status` **in `active, maintenance, inactive, disposed`**; `exp_disposal_date` **after `acquisition_date`**; `driver_id` **exists** and assignable (E4).
 5. System stores the vehicle — detaching `driver_id` when the status is not roadworthy — and confirms *"Vehicle successfully added."*
 
+**A7 – Add a Vehicle by Scanning Its Papers with a Phone**
+1. In the **Add Vehicle** modal the Maintenance Manager clicks **"Scan with phone"** (shown only when the server has Tesseract installed and `VEHICLE_SCAN_ENABLED` is on). The system opens a scan session (`POST /vehicle-scans`) and shows its link as a **QR code** with a 15-minute countdown.
+2. The manager points a phone camera at the code. The phone opens `/scan/{token}` (no sign-in: the 40-character random token is the only credential, and it only lets the phone send photos to that one session). The page asks for a photo of the **Certificate of Registration** and, optionally, the **Official Receipt**. The phone shrinks and straightens the photos before sending them.
+3. The server reads the photos with **Tesseract on the same machine** (nothing is sent to a third party): it turns the page upright, reads it in three independent passes, finds each printed label (PLATE NO., CHASSIS NO., MAKE, SERIES, YEAR MODEL, FUEL…) by its position and reads the value in that cell. A page with a label missing is read from the CR's fixed grid. The phone is told only "sent"; it is never shown what was read.
+4. The manager's modal, which polls the session, fills in *Plate number, VIN, Brand, Model, Year* and *Fuel type* and shows **"Check these against the papers"**: thumbnails of the photos (private, `no-store`), each value marked **Read clearly** or **Check carefully**, alternative readings to pick from (*"or RYJ 2039"*), and warnings when the CR and OR disagree (plate, year, fuel). A value read by only one pass, corrected from a look-alike character (O/0, I/1), or in doubt is marked *check*; a chassis number is **always** marked *check*; a value that could not be read is left empty.
+5. **Save is disabled until the manager ticks "I have checked these details against the document."** The server enforces the same rule (`scan_confirmed`): a scan session belonging to someone else, not finished, already used or expired is refused (422), and so is a missing confirmation.
+6. On saving, the vehicle is created through the normal validation, the photos and the read results are **deleted**, the session is marked used, and the audit trail records *Vehicle added from scanned papers* with which fields were read, which the manager corrected and which needed a second look (names only, never the values).
+
+Closing the form, pressing *Cancel scan* or starting another scan deletes the photos at once; `php artisan vehicle-scans:purge` (every 10 minutes) removes anything left after the 15 minutes. A finished scan gets a fresh 15 minutes to check.
+
 **A2 – Edit a Vehicle**
 1. In the list (or from the detail modal), the Maintenance Manager clicks the edit icon.
 2. System displays the **Edit Vehicle** modal pre-filled with the record.
@@ -1758,6 +1822,15 @@ At least one violation log references the code. System refuses the deletion with
 1. Maintenance Manager uses the search box, the status chips (*Active / Maintenance / Inactive*), the *All Fuel Types* and *All Vehicles* (assigned / unassigned) selects, or the sort select (*Newest First / Oldest First / Brand A–Z*).
 2. System filters and re-orders the table client-side and updates the row counter.
 
+**A8 – Overdue maintenance is flagged, and can block a vehicle going active**
+1. The **Vehicles** list shows a rose *"N services overdue"* badge (or an amber *"N due soon"* one) under a vehicle's name, linking to its preventive-maintenance page; the Maintenance Manager's dashboard lists every flagged vehicle under *Maintenance needs attention*. What counts as overdue or due soon, and the daily email, are in UCN_SC_E016 A3.
+2. With `MAINTENANCE_BLOCK_ACTIVE_WHEN_OVERDUE=true` (**off by default**) a vehicle that is not `active` cannot be set back to `active` while any service is overdue (E7). Vehicles already active are not affected.
+
+**A9 – A vehicle that loses its driver gets a replacement**
+1. When a driver on a vehicle is **suspended**, or their **licence expires**, the seat they held becomes a vacancy and the system assigns the best free driver (UCN_SC_E012 A8). A vehicle that had two drivers gets two again and a 30-day alternating roster is written from today (A6); a single-driver vehicle gets one.
+2. Vehicles still waiting for a driver are listed on the Maintenance Manager's dashboard under *Vehicles waiting for a driver* and reported to the managers once a day.
+3. Assigning or unassigning drivers on this page is never treated as a vacancy, and a unit that is not `active` has no seat to fill.
+
 ---
 
 ### Postconditions
@@ -1770,6 +1843,8 @@ At least one violation log references the code. System refuses the deletion with
 6. A vehicle that still has a driver cannot be deleted: the driver must be unassigned first.
 7. The *Assigned Driver* list offers only **approved, non-suspended** drivers who do **not already hold another vehicle** (the vehicle being edited keeps its own driver). The server enforces the same: one vehicle per driver.
 
+8. A vehicle added from scanned papers has its photos deleted and the scan recorded as used (A7).
+9. A vehicle with an overdue or due-soon service is flagged on the list and the dashboard (A8).
 ---
 
 ### Exceptions
@@ -1792,14 +1867,14 @@ Any required field is empty or out of range (year, status, acquisition date). Sy
 **E6 – Cannot Delete a Vehicle With Service History**
 The vehicle already has maintenance or preventive-maintenance records. System refuses the deletion with *"This vehicle has maintenance records and cannot be deleted. Mark its status as Disposed instead."*
 
+**E7 – Cannot Go Active While a Service Is Overdue (only with `MAINTENANCE_BLOCK_ACTIVE_WHEN_OVERDUE=true`)**
+Setting a vehicle that is `maintenance`, `inactive` or `disposed` to `active` while a preventive-maintenance service is overdue is refused on the `status` field: *"This vehicle cannot go active while a service is overdue (Oil change). Log the service first."*
+
 ---
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
+- **The phone scan helps, it does not decide** (A7). Measured on synthetic specimens (`tests/Fixtures/ocr`, `php artisan vehicle-scan:evaluate`): values were correct in the form on 100% of clean pages and flatbed scans, 94% of phone photos and 91% of photocopies, and none was ever marked *read clearly* while wrong; the rest are flagged *check* or left empty. Real papers (stamps, creases, worn print) will read worse, and a forged paper reads exactly like a genuine one. A chassis number is always marked *check*.
 
 - **"Active vehicle" in E3 means "clocked in right now", not "on the road"** — a vehicle assigned to a driver who is not clocked in can be disposed with no further check.
 - **Hard deletion is still available** for a vehicle with no maintenance history; its location history rows are removed with it (foreign keys cascade).
@@ -1822,6 +1897,10 @@ The vehicle already has maintenance or preventive-maintenance records. System re
 | Menu | `config/menu.php` — *Vehicles* (maintenance_manager) |
 | Middleware | `auth`, `verified`, `role:maintenance_manager` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_a_driver_cannot_be_assigned_to_a_vehicle_under_maintenance`, `test_a_vehicle_with_a_clocked_in_driver_cannot_be_disposed`, `test_setting_a_vehicle_to_maintenance_detaches_its_driver`, `test_a_vehicle_under_maintenance_is_not_shown_as_active`, `test_a_commuter_cannot_reach_the_vehicle_management_page`, `test_a_vehicle_with_maintenance_records_cannot_be_deleted`) |
+| Phone scan | `app/Services/VehicleScan/` (`RegistrationDocumentReader`, `DocumentExtractor`, `FieldNormalizer`, `TesseractClient`, `ImagePreparer`), `VehicleScanController`, `PhoneScanController`, `app/Models/VehicleScanSession.php`, `resources/views/vehicle-scan/phone.blade.php`, the scan panel in `resources/views/maintenance-manager/vehicles.blade.php`, `VehicleController::store()` (`resolveScan()`, `consumeScan()`), `config/vehicle_scan.php`, `vehicle-scans:purge` (every 10 minutes); schema `2026_10_28_090000_create_vehicle_scan_sessions_table.php` |
+| Maintenance flags | `app/Services/MaintenanceDueService.php`, `VehicleController::index()` / `assertServiceNotOverdue()`, `config/maintenance.php` |
+| Replacement | `app/Services/ReplacementDriverService.php`, `app/Models/DriverVacancy.php`, `config/fleet.php` |
+| Tests (automation) | `tests/Feature/VehicleScanReaderTest.php`, `VehicleScanFlowTest.php`, `AutoUpdatingTimestampTest.php`, `AutomationTest.php` (maintenance flags and block), `ReplacementDriverTest.php` |
 | Related | UCN_SC_E016 (Maintenance Schedule), UCN_SC_E017 (Maintenance Tasks), UCN_SC_E009/E010 (clock in / out), UCN_SC_E003 (Track PUJ) |
 --- Update Note ---
 Vehicle issues (E3/E4 map removal, driver detachment, disposal guards) are now enforced and working; document reflects current working state.
@@ -1877,6 +1956,13 @@ Vehicle issues (E3/E4 map removal, driver detachment, disposal guards) are now e
 2. System reloads the schedule for the newly selected vehicle, keeping the same table rows and picking that vehicle's own logged values.
 3. Steps 4–6 of A1 then apply to the newly selected vehicle.
 
+**A3 – Overdue and due-soon services are pushed to the manager**
+1. A service is **due soon** when its next due date is within `MAINTENANCE_DUE_SOON_DAYS` (default **7**) days, or its next due odometer is within `MAINTENANCE_DUE_SOON_KM` (**500**) km of the vehicle's current reading; it is **overdue** once the date has passed or the reading has reached the due odometer. A task with no interval is never due.
+2. The system has no live odometer, so a vehicle's "current" reading is the **highest odometer logged for any of its services**: a later service on the same vehicle is what shows an earlier one is coming up.
+3. The preventive-maintenance page labels each task *On Track*, *Due Soon* or *Past Due*; a task that has only a distance interval is no longer shown overdue merely because it has no time interval.
+4. Every day at 07:00 `php artisan maintenance:due-alerts` emails every active Maintenance Manager a digest of the overdue and due-soon services per vehicle (it sends nothing when none are due; `--dry-run` lists them without emailing).
+5. The same flags show on the Vehicles list and on the dashboard (*Maintenance needs attention*), and, if enabled, can stop an overdue vehicle going back to `active` (UCN_SC_E015 A8 / E7). Disposed vehicles are never flagged.
+
 ---
 
 ### Postconditions
@@ -1887,6 +1973,7 @@ Vehicle issues (E3/E4 map removal, driver detachment, disposal guards) are now e
 4. The task card now shows the new last-service values and recalculates the next due date and odometer from the task's `miles_between_service` / `months_between_service`.
 5. The service is immediately visible in the dashboard's *Service History* tab and in the fleet cost-per-kilometre analytics.
 
+6. Overdue and due-soon services are emailed daily and flagged on the Vehicles page and the dashboard (A3).
 ---
 
 ### Exceptions
@@ -1907,16 +1994,11 @@ The insert or update fails at the database level. System cancels the operation a
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
 - **The summary is per vehicle, per calendar year** — there is no cross-vehicle roll-up page and no year picker (the current year is always used).
 - **The schedule is per task, not per service**: logging a task again **overwrites** that task's last-service row. The history is kept in the **Maintenance Logs** page (`vehicle_maintenance_logs`), which is append-only: there is no edit or delete for a log entry, and a log entry outlives the schedule row it came from (`maintenance_id` is cleared, not cascaded). Services that were on the schedule when the log was re-introduced were copied in as its first entries; earlier overwritten services cannot be recovered.
 - **Next-due values are computed on the fly** in the view; nothing is persisted, so changing a task's interval retroactively changes every vehicle's projected due date.
 - The vehicle picker falls back to the first vehicle when the requested one no longer exists, and renders an empty board when the fleet is empty.
-- **Overdue and due-soon services are pushed, not just displayed.** A service is *due soon* within `MAINTENANCE_DUE_SOON_DAYS` (7) days or `MAINTENANCE_DUE_SOON_KM` (500) km, and *overdue* once its date has passed or the vehicle's latest logged odometer reading has reached its next-due reading (the system has no live odometer, so a later service on the same vehicle supplies the reading). Tasks with no interval are never due. `php artisan maintenance:due-alerts` (daily, 07:00) emails every Maintenance Manager a digest, and overdue vehicles are flagged on the Vehicles page and the dashboard. With `MAINTENANCE_BLOCK_ACTIVE_WHEN_OVERDUE=true` (off by default) a vehicle with an overdue service cannot be set back to Active until the service is logged. Emails need the scheduler running (`schedule:run` from cron).
+- **Alerts need the scheduler** (A3): without `php artisan schedule:run` on a cron the daily email is not sent, though the flags on the pages are computed live. Kilometre alerts rely on logged service odometers; there is no live odometer.
 
 ---
 
@@ -1931,6 +2013,8 @@ The insert or update fails at the database level. System cancels the operation a
 | Menu | `config/menu.php` — *Preventive Maintenance* (maintenance_manager) |
 | Middleware | `auth`, `verified`, `role:maintenance_manager` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_an_odometer_reading_below_the_last_recorded_one_is_rejected`, `test_an_odometer_reading_above_the_last_recorded_one_is_accepted`), `tests/Feature/BugFixRegressionTest.php` (`test_logging_a_preventive_service_feeds_the_fleet_summary`) |
+| Due alerts | `app/Services/MaintenanceDueService.php`, `PreventiveMaintenance::dueStatus()` / `nextDueDate()` / `nextDueOdo()`, `app/Console/Commands/MaintenanceDueAlerts.php` (`maintenance:due-alerts`, daily 07:00), `app/Notifications/MaintenanceDueDigest.php`, `config/maintenance.php` |
+| Tests (automation) | `tests/Feature/AutomationTest.php` — `test_due_status_by_date`, `test_due_status_by_distance`, `test_a_later_service_shows_an_earlier_one_is_coming_up`, `test_due_alert_command_emails_the_maintenance_managers` |
 | Related | UCN_SC_E015 (Manage Vehicles), UCN_SC_E017 (Manage Maintenance Tasks), UCN_SC_E020 (System Reports — maintenance report) |
 
 ---
@@ -2014,11 +2098,6 @@ The insert/update/delete fails at the database level. System cancels the operati
 ---
 
 ### Known Gaps / Notes
-
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
 
 - **Task names are not unique** — the same task can be added twice and will then appear twice on every vehicle's schedule.
 - **Deleting a task cascades** to its preventive-maintenance rows, so the cost/km figures for that task disappear from the fleet analytics.
@@ -2157,11 +2236,6 @@ The Admin deletes or suspends their own account. System refuses with *"You canno
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
 - **Suspension has no expiry and no automatic reactivation**, and there is no reason field or note recorded (unlike the driver suspension, which takes an optional reason).
 - **A suspended commuter is signed out on their next request** (`account.active` middleware), not only refused at sign-in.
 - **There is no password reset from this screen** — the admin sets a password directly, and the commuter is not notified.
@@ -2265,11 +2339,6 @@ No file was selected, or the selected file is not a PDF. System rejects the uplo
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
 - **The extracted tiers are hard-coded to two bands** (rows 1–25 and 27–51 of the parser output). A fare guide with a different layout is rejected at parse time rather than supported.
 - **Validation is all-or-nothing**: one invalid row blocks the entire save, and the admin must re-enter every value.
 - **The extraction script runs synchronously** and shells out to the project virtualenv; a slow or missing interpreter fails the whole upload.
@@ -2335,6 +2404,17 @@ No file was selected, or the selected file is not a PDF. System rejects the uplo
 2. System streams the report data for the current type and range as a **CSV file** (`Content-Type: text/csv`) named `smartcommute_<type>_report_<YYYY-MM-DD>.csv`.
 3. The Admin's browser downloads the file. The CSV columns differ per type — e.g. financial: *Date, Type, Reference ID, Amount, User* (fares and wallet top-ups); driver: *Driver Name, Status, Total Hours Worked*; maintenance: *Vehicle Plate, Task, Due Date, Status*.
 
+**A3 – Receive the weekly and monthly report by email (automatic)**
+1. Every Monday at 06:00 `php artisan reports:send weekly` and on the 1st at 06:30 `reports:send monthly` build the report for the **last full week (Mon–Sun)** or the **last full calendar month**.
+2. Every active Admin is emailed a summary: fare revenue (by method), wallet top-ups, failed payments, violations logged / issued / collected / outstanding, hours worked, overtime and auto-closed shifts, distance driven, maintenance spend, overdue and due-soon services now, repeat violators and commuters with unpaid scans.
+3. The figures come as an attached CSV (formula-safe, UTF-8) and, with `REPORT_ATTACH_ACTIVITY_LOG` on (default), the period's audit trail as a second CSV (at most `REPORT_ACTIVITY_LOG_LIMIT` rows). Each send is written to the audit trail (*Scheduled report emailed*).
+4. `--to=` sends to one address to try it out; `--dry-run` prints the figures without emailing.
+
+**A4 – Open Fleet Analytics**
+1. The Admin clicks **Fleet Analytics** on the sidebar (`GET /analytics`, Admin only) and picks the last **7, 30 or 90 days**.
+2. System computes, from time-keeping, the GPS trail, payments, violations and maintenance logs: headline totals (hours, overtime, distance, fare revenue, violations, maintenance cost); an 8-week hours-and-overtime chart; the repeat violators and commuters with unpaid scans; a **driver** table (shifts, hours, overtime, auto-closed shifts, fares and revenue attributed by UCN_SC_E006 A6, violations, fines) and a **vehicle** table (kilometres, hours in service, fares, revenue, share of scans that ended in a fare, maintenance cost).
+3. The page is read-only and computed on each visit; kilometres are recorded from the broadcast trail from now on (UCN_SC_E021 A5), so earlier history shows 0 km.
+
 ---
 
 ### Postconditions
@@ -2344,6 +2424,7 @@ No file was selected, or the selected file is not a PDF. System rejects the uplo
 3. The system notifies the Admin with a success message.
 4. An export downloads a CSV file that mirrors exactly what was rendered for the current type and range.
 
+5. The Admin receives the previous week's and month's report by email, and can open the same figures per driver and vehicle on Fleet Analytics (A3, A4).
 ---
 
 ### Exceptions
@@ -2367,16 +2448,11 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
 - **The export is CSV only.** There is no `.xlsx` writer; opening the file in Excel works but loses column formatting, and a multi-sheet workbook is not produced.
 - **Only the financial report is date-filtered end to end** — the driver report uses all-time totals for the driver cards and the maintenance report ignores the range for the pending/overdue buckets (they are computed against *now*, not against *end date*).
 - **E2 is a catch-all**: any exception during aggregation (including a genuine bug) is reported to the log and shown to the Admin as an aggregation timeout, so a real error can be mistaken for slowness.
 - **E4 is derived from the payments ledger only**; a system with no payments never raises the warning even if other data is stale.
-- Reports are generated on every page load from live queries — there is no caching, snapshotting or scheduled export.
+- On-screen reports are generated on every page load from live queries — there is no caching or snapshotting; the weekly and monthly emails (A3) and Fleet Analytics (A4) are computed the same way, at the moment they run or are opened.
 - **Exports are audited**: each CSV export writes a `report_exported` entry (who, which report, the date range) that the Admin can find on the Activity Log page (UCN_SC_E028). Generating a report on screen is a read and writes nothing.
 
 ---
@@ -2392,6 +2468,9 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 | Menu | `config/menu.php` — *Reports & Analytics* (admin) |
 | Middleware | `auth`, `verified`, `role:admin` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_a_report_over_an_empty_window_reports_no_data`, `test_an_inverted_date_range_is_rejected`) |
+| Scheduled reports | `app/Services/PeriodReportService.php`, `app/Console/Commands/SendScheduledReport.php` (`reports:send`, Mondays 06:00 and the 1st 06:30), `app/Notifications/ScheduledReport.php`, `config/reports.php` |
+| Fleet Analytics | `app/Http/Controllers/Admin/AnalyticsController.php`, `app/Services/FleetAnalyticsService.php`, `resources/views/admin/analytics.blade.php`, route `analytics.index` (inside `role:admin`), `config/menu.php` — *Fleet Analytics* (admin) |
+| Tests (automation) | `tests/Feature/AutomationPhase2Test.php` — `test_period_report_totals`, `test_weekly_report_is_emailed_to_the_admins_with_attachments_and_audited`, `test_driver_and_vehicle_stats_add_up`, `test_analytics_page_is_for_the_admin_only` |
 | Related | UCN_SC_E019 (Manage Fare Rates — financial figures), UCN_SC_E016 (Maintenance Schedule — maintenance figures), UCN_SC_E013 (Timekeeping — driver hours) |
 
 ---
@@ -2449,6 +2528,11 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 1. In the `local` environment only, an admin can add / toggle / remove synthetic map markers from the map view.
 2. System stores them as `dev_markers` scoped to that admin and renders them alongside the live PUJs. Outside `local` the feature is compiled out entirely (the marker list is empty), so it cannot leak into production.
 
+**A5 – Distance driven is recorded**
+1. When a broadcast is stored, the system measures the great-circle distance from the vehicle's **previous recorded position** (the last history row of any of its position rows) to the new one and stores it as `distance_from_last_pos` (kilometres) on the breadcrumb.
+2. The first ping of a trip, a ping more than **10 minutes** after the previous one, and an implausible jump (over **20 km**) store **0**, so a gap or a GPS glitch is never counted as driving.
+3. The sum feeds the driver's *distance today* figure and Fleet Analytics (UCN_SC_E020 A4). Before this change the column was always 0, so earlier history reads 0 km.
+
 ---
 
 ### Postconditions
@@ -2459,6 +2543,7 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 4. Guests and commuters see the vehicle move on the map, at an **obfuscated** position (200 m radius) with `privacy_radius` included in the payload.
 5. The driver account and the vehicle's trip history are untouched by this flow.
 
+6. The breadcrumb row records the kilometres driven since the vehicle's previous ping (A5).
 ---
 
 ### Exceptions
@@ -2481,14 +2566,12 @@ The browser cannot reach the endpoint (or the response is dropped). The `fetch` 
 **E6 – Malformed Payload on Retry**
 The queued retry payload is missing a required key. `RetryBroadcastLocation` returns without publishing.
 
+**E7 – The Shift Was Closed Automatically**
+The driver forgot to clock out and the system closed the shift (UCN_SC_E010 A4) within the last 12 hours, and they have not started a new one. The broadcast is refused with a **403** and *"Your shift was closed automatically. Clock in on your next shift to resume."* so a phone left running cannot keep the vehicle on the map.
+
 ---
 
 ### Known Gaps / Notes
-
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
 
 - **No server-side rate limiting.** The 2-second throttle is client-side only (`resources/views/map.blade.php`); a modified client could flood the endpoint.
 - **The route carries no `auth` middleware** — authorization is performed inside the controller, which is why E2/E3/E4 are explicit checks rather than a middleware result.
@@ -2516,6 +2599,9 @@ The queued retry payload is missing a required key. `RetryBroadcastLocation` ret
 | Dev markers | `app/Http/Controllers/DevMarkerController.php`, routes `driver.dev.*` (signed-in admin on a `local` install only: `auth`, `role:admin`, `env.local`; the `/pusher` test page and `/fire-event` are guarded the same way) |
 | Client | `resources/views/map.blade.php` — `broadcastDriverLocation()`, 2-second throttle, broadcast only when the actor is a driver with an assigned vehicle |
 | Tests | `tests/Feature/VehicleTrackingControllerTest.php`, `tests/Feature/UcnSuspensionTest.php::test_a_suspended_driver_cannot_broadcast_a_location` |
+| Distance | `app/Support/Geo.php` (great-circle distance), `VehicleTrackingController::distanceFromLastPosition()`, `VehicleLocationHistory::vehicleLocation()` |
+| Auto-closed shift | `Driver::shiftWasAutoClosed()`, checked in `VehicleTrackingController::broadcastLocation()` |
+| Tests (automation) | `tests/Feature/AutomationPhase2Test.php` — `test_broadcasts_record_the_distance_driven_between_pings`, `test_a_gps_jump_or_a_long_silence_is_not_counted_as_distance`; `tests/Feature/AutomationTest.php` — `test_location_broadcast_stops_after_the_shift_is_auto_closed` |
 | Related | UCN_SC_E003 (Track PUJ — the read side), UCN_SC_E009/E010 (clock in / out), UCN_SC_E012 (Manage Drivers — suspension), UCN_SC_E015 (Manage Vehicles — status drives map visibility) |
 
 ---
@@ -2567,6 +2653,10 @@ The queued retry payload is missing a required key. `RetryBroadcastLocation` ret
 1. At step 3, the guest uploads a license image that is identical to one already uploaded (or re‑uploads the same or a different image).
 2. At step 5, the System treats the submission as a new file and stores it under a unique name; no deduplication is performed.
 3. System continues with step 6.
+
+**A4 – The Admins and Driver Managers are told of the application**
+1. After the records are created (main flow step 8) the system emails every active **Admin** and **Driver Manager**: the applicant's name and email, with a link to the drivers page (`DriverApplicationReceived`).
+2. A mail failure is logged and skipped; the registration is never affected. The applicant is emailed the decision later (UCN_SC_E012 A6).
 
 ---
 
@@ -2622,11 +2712,6 @@ The guest submits more than **6 registration attempts per minute** (same throttl
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
 - **Wallet creation:** Unlike commuter registration (UCN_SC_E002), the driver registration flow does **not** automatically create a `Wallet` record. In the current codebase a wallet appears to be created lazily when the driver first accesses payment‑related pages (via `Wallet::firstOrCreate`). This behaviour should be documented or, if desired, a wallet could be created at registration time for symmetry.
 - **Email verification:** The driver’s email is marked as verified immediately (`email_verified_at = now`). Consequently, no verification email is sent, and the driver does not need to click a verification link to access the system (aside from awaiting admin approval).
 - **Admin approval gate:** Although the driver can log in with their credentials after registration, the `map` method (and other driver‑guarded routes) checks the driver’s `is_approved` flag. Unapproved drivers are logged out and redirected to the login page with a warning, effectively preventing them from using driver‑only features until an admin approves the registration (see UCN_SC_E012).
@@ -2648,6 +2733,8 @@ The guest submits more than **6 registration attempts per minute** (same throttl
 | Events | `Illuminate\Auth\Events\Registered` fired after successful creation |
 | Redirect target | `route('login')` → `/login` |
 | Related UCNs | UCN_SC_E002 (Commuter Create Account), UCN_SC_E012 (Manage Drivers – approval/reject flow), UCN_SC_E009/E010 (Clock In/Out), UCN_SC_E015 (Manage Vehicles – vehicle assignment) |
+| Notification | `app/Notifications/DriverApplicationReceived.php`, sent from `DriverController::store()` through `app/Support/Notifier.php` |
+| Tests (automation) | `tests/Feature/AutomationPhase2Test.php` — `test_driver_registration_notifies_admins_and_driver_managers` |
 
 ---
 
@@ -2727,10 +2814,9 @@ Any other unhandled exception results in a 500 error page (or the Laravel defaul
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
+- **Distance today is real.** The driver dashboard's *distance today* sums the kilometres recorded between broadcasts (UCN_SC_E021 A5); it read 0 before because the trail never stored a distance.
 
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
+- **Auto-closed shifts show an *auto* tag.** A day whose shift the system closed for a forgotten clock-out (UCN_SC_E010 A4) shows a small amber *auto* beside its hours.
 
 - The time‑keeping view distinguishes between **Complete**, **Active**, **Absent**, **Sick**, **Vacation**, **Upcoming**, and **Waiting** states based on the presence of `time_in`, `time_out`, `sick`, `vacation` flags and whether the date is past/today/future.
 - The violation view is **read‑only**; drivers cannot add, edit, or delete violations through this interface (those actions are reserved for admins/managers via UCN_SC_E014).
@@ -2836,15 +2922,10 @@ A PDO exception occurs during any database interaction. System logs the exceptio
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
 - Fine amounts are stored as plain numbers (no currency formatting) in the database; the view prefixes them with “₱” for display.
 - Violation codes carry **no license-revocation flag** (the feature was removed together with the `is_revoked` column); the 4th+ offense is always a fine.
 - The UI includes a **Bulk Add** modal that allows entering multiple codes at once; each row is validated individually before insertion.
-- The `code` field is limited to 255 characters and is expected to be a short identifier (e.g., “UV01”, “Speeding”).
+- The `code` field is limited to 255 characters and is expected to be a short identifier (the seeded codes are `UV01`–`UV14`; see *Seeded violation codes* below).
 - Deletion is prohibited only when the code is referenced by `violation_logs`; there is no cascade‑delete or soft‑delete mechanism.
 - The view uses Alpine.js for client‑side interactivity (modals, form handling) but all persistence is performed via standard POST/PUT/DELETE requests to the Laravel backend.
 - The code table is filtered in the browser and shown **10 codes per page** with a pager. Add / edit / delete post in the background: a validation error keeps the modal open with the message under its field, and success closes it with a toast.
@@ -2860,6 +2941,31 @@ A PDO exception occurs during any database interaction. System logs the exceptio
 | View | `resources/views/driver-manager/violation-codes.blade.php` |
 | Model | `App\Models\ViolationCode` |
 | Related UCNs | UCN_SC_E014 (Manage Violations – view logs), UCN_SC_E012 (Manage Drivers – approval/reject) |
+| Seeder | `database/seeders/ViolationCodeSeeder.php` (called by `DatabaseSeeder`; `DevSeeder` calls it only when the table does not hold the seeded set) |
+| Tests (automation) | `tests/Feature/AutomationTest.php` — `test_seeder_replaces_the_violation_codes_with_the_puj_schedule`, `test_seeder_is_repeatable` |
+
+---
+
+### Seeded violation codes
+
+`php artisan db:seed` (`ViolationCodeSeeder`) loads the violations most often written up against Philippine public utility jeepney (PUJ) drivers and operators. **Running it replaces the whole table**: codes made earlier are removed and, because a violation log belongs to its code, so are their logged violations. The amounts follow the LTO traffic schedule, LTFRB/DOTr-LTO Joint Administrative Order 2014-01 (franchise and conduct violations) and RA 10913 (anti-distracted driving); sources disagree on some figures and they are revised from time to time, so treat them as a **starting schedule** to check against current LTFRB / LTO issuances. Any amount can be edited above.
+
+| Code | Violation | 1st | 2nd | 3rd | 4th+ |
+|---|---|---:|---:|---:|---:|
+| `UV01` | Disregarding Traffic Signs / Signals | ₱1,000 | ₱1,000 | ₱1,000 | ₱1,000 |
+| `UV02` | Reckless Driving | ₱2,000 | ₱10,000 | ₱10,000 | ₱10,000 |
+| `UV03` | Using a Mobile Phone While Driving | ₱5,000 | ₱10,000 | ₱15,000 | ₱20,000 |
+| `UV04` | Driving Without a Valid Driver's License | ₱3,000 | ₱3,000 | ₱3,000 | ₱3,000 |
+| `UV05` | Unregistered or Expired Vehicle Registration | ₱10,000 | ₱10,000 | ₱10,000 | ₱10,000 |
+| `UV06` | Operating Without Franchise (Colorum) | ₱50,000 | ₱100,000 | ₱200,000 | ₱200,000 |
+| `UV07` | Operating Outside the Authorized Route | ₱5,000 | ₱10,000 | ₱50,000 | ₱50,000 |
+| `UV08` | Overcharging of Fare | ₱5,000 | ₱10,000 | ₱15,000 | ₱15,000 |
+| `UV09` | Refusal to Convey Passengers | ₱5,000 | ₱10,000 | ₱15,000 | ₱15,000 |
+| `UV10` | Trip Cutting | ₱5,000 | ₱10,000 | ₱15,000 | ₱15,000 |
+| `UV11` | Overloading of Passengers | ₱1,500 | ₱3,000 | ₱5,000 | ₱5,000 |
+| `UV12` | Defective Parts or Accessories (Unroadworthy Vehicle) | ₱500 | ₱1,000 | ₱1,500 | ₱1,500 |
+| `UV13` | Failure to Display Fare Matrix or Franchise Details | ₱500 | ₱1,000 | ₱1,500 | ₱2,000 |
+| `UV14` | Illegal Loading and Unloading of Passengers | ₱500 | ₱1,000 | ₱1,500 | ₱1,500 |
 
 ---
 
@@ -2923,6 +3029,7 @@ The dashboard aggregates role‑specific widgets. The flow differs by role; each
 | 1   | Authenticated maintenance‑manager navigates to `/dashboard`.                      | System verifies the `maintenance_manager` role, loads all `Vehicle` records (with driver), all `Driver` records, and the fleet maintenance summary for a selected vehicle (via query param `vehicle_id` or first vehicle). |
 | 2   |                                                                                   | System returns the `maintenance-manager.dashboard` view with the data (vehicles, drivers, selected vehicle, and summary from `FleetMaintenanceService`). |
 | 3   |                                                                                   | The view shows: **Fleet Information** (plate, year, brand/model, driver), **Cost Summary** (total cost, total services, avg cost/service, cost/km) and a **Service History** tab, all derived from the preventive-maintenance records (UCN_SC_E016). |
+| 4   |                                                                                   | Above the vehicle card the dashboard also shows **Vehicles waiting for a driver** (open vacancies: plate, the driver who left and why, how long ago — UCN_SC_E012 A8) and **Maintenance needs attention** (every vehicle with an overdue or due-soon service, linking to its schedule — UCN_SC_E016 A3). Each panel appears only when there is something to show. |
 
 ---
 
@@ -2979,10 +3086,7 @@ Any other unhandled exception results in a 500 error page.
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
+- **The Admin's sidebar gained *Fleet Analytics*** (UCN_SC_E020 A4). The Admin dashboard itself is unchanged.
 
 - The `/profile` endpoint currently only serves commuter users; staff profile information is viewable via the `/settings` route (see UCN_SC_E008 for password change, but other profile fields like email are edited there). A dedicated staff profile page does not exist in the current codebase.
 - The `/dashboard` endpoint is strictly for staff roles; commuters are expected to use the map (`/map`) as their main interface (documented in UCN_SC_E003). This separation is intentional in the product design.
@@ -3076,11 +3180,6 @@ Any other exception in the `destroy` method results in a 500 error page.
 
 ### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
-
 - The deletion is **hard delete**; there is no soft‑delete or “deactivated” state.
 - **The wallet must be empty.** There is no refund flow, so deletion is refused while the wallet holds money — the same rule the Admin is held to (UCN_SC_E018 E8). Spend it first.
 - **Cascades:** every other foreign key to `users` still cascades; only `payments.paid_by`, `topup_histories.user_id` and `topup_histories.wallet_id` are `RESTRICT`. The application decides delete-or-anonymise itself and does not rely on that restriction, which exists so a future stray `delete()` fails loudly instead of erasing the ledger.
@@ -3121,7 +3220,7 @@ Any other exception in the `destroy` method results in a 500 error page.
 
 ---
 
-## MAIN FLOW
+### MAIN FLOW
 
 | #   | Actor's Action                                              | System Response                                                                                                  |
 | --- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
@@ -3130,7 +3229,7 @@ Any other exception in the `destroy` method results in a 500 error page.
 
 ---
 
-## Alternate Flow
+### Alternate Flow
 
 **A1 – Add a Staff Account**
 1. Admin clicks **"Add Staff"**. System displays the modal: *Email, Role, Password, Confirm Password*.
@@ -3152,7 +3251,7 @@ Any other exception in the `destroy` method results in a 500 error page.
 
 ---
 
-## Exceptions
+### Exceptions
 
 **E1 – Validation Error**
 Any rule above fails. The **modal stays open**, each message is shown **under its own input** and an error toast reads *"Please correct the highlighted fields and try again."* Nothing is stored.
@@ -3171,19 +3270,14 @@ Any other role (or a guest) is refused (403 / redirect to login).
 
 ---
 
-## Postconditions
+### Postconditions
 
 1. The staff account has been created, changed, suspended or removed, and the list shows the new state after the page refreshes.
 2. A success toast confirms the action.
 
 ---
 
-## Known Gaps / Notes
-
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
+### Known Gaps / Notes
 
 - Admin accounts cannot be created or removed from this screen.
 - Deleting a staff account is a hard delete; there is no undo.
@@ -3191,7 +3285,7 @@ Any other role (or a guest) is refused (403 / redirect to login).
 
 ---
 
-## Implementation References
+### Implementation References
 
 | Element | Location |
 |---|---|
@@ -3221,7 +3315,7 @@ Any other role (or a guest) is refused (403 / redirect to login).
 
 ---
 
-## MAIN FLOW
+### MAIN FLOW
 
 | #   | Actor's Action                                   | System Response                                                                                                                                                                                                                             |
 | --- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -3231,7 +3325,7 @@ Any other role (or a guest) is refused (403 / redirect to login).
 
 ---
 
-## Alternate Flow
+### Alternate Flow
 
 **A1 – Search**
 1. Admin types into the search box and presses **Filter**.
@@ -3259,7 +3353,7 @@ Any other role (or a guest) is refused (403 / redirect to login).
 
 ---
 
-## Postconditions
+### Postconditions
 
 1. The Admin has reviewed the entries that match the chosen filters; nothing was changed.
 2. **Viewing** the page and the list wrote nothing to the trail.
@@ -3268,7 +3362,7 @@ Any other role (or a guest) is refused (403 / redirect to login).
 
 ---
 
-## Exceptions
+### Exceptions
 
 **E1 – Not an Admin**
 A Driver Manager, Maintenance Manager, Driver or Commuter requests the page or the export. System answers 403; a guest is redirected to the login page. Nothing is shown or exported.
@@ -3287,12 +3381,9 @@ More than 10,000 entries match. System exports the newest 10,000; the Admin narr
 
 ---
 
-## Known Gaps / Notes
+### Known Gaps / Notes
 
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
-
-- **Reports are also sent on a schedule.** `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) email every Admin the previous full week or month — fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services — with the figures as a CSV and the period's audit trail as a second CSV (`REPORT_ATTACH_ACTIVITY_LOG`). Each send is audited (*report_sent*).
-- **Fleet Analytics** (`GET /analytics`, Admin only) shows the same numbers per driver and per vehicle for the last 7, 30 or 90 days, an 8-week hours/overtime trend, repeat violators and commuters with unpaid scans, all computed from the stored records (`FleetAnalyticsService`).
+- **Entries written by automated jobs have no signed-in actor.** The auto-close of a shift, the inactivity warning and automatic suspension, the repeat-violator and fare-evasion flags, the replacement of a driver, the scheduled reports and the use of a scanned vehicle all appear with the event names listed in `docs/AUDIT_TRAIL.md`; the *Who* column shows no email for the jobs that run without a user, and the description says what happened.
 
 - **Entries are kept 365 days** (`ACTIVITY_LOG_RETENTION_DAYS`); the daily `activitylog:clean` job deletes older ones, so the page cannot show history beyond that. The scheduler must be running.
 - **Entries written before the audit trail was rebuilt** have a *Legacy* category, no record, no field values and no IP address. They are listed (except the "Action performed" noise) but carry little detail.
@@ -3304,7 +3395,7 @@ More than 10,000 entries match. System exports the newest 10,000; the Admin narr
 
 ---
 
-## Implementation References
+### Implementation References
 
 | Element | Location |
 |---|---|
@@ -3316,4 +3407,5 @@ More than 10,000 entries match. System exports the newest 10,000; the Admin narr
 | Writing the trail | `app/Support/Audit.php`, `app/Models/Concerns/Audited.php`; design in `docs/AUDIT_TRAIL.md` |
 | Schema | `activity_log`; `database/migrations/2026_10_21_100000_add_created_at_index_to_activity_log.php` |
 | Tests | `tests/Feature/ActivityLogPageTest.php`, `tests/Feature/AuditTrailTest.php` |
+| Events added by automation | `app/Support/AuditCatalog.php` — `inactivity_warned`, `repeat_violator_flagged`, `fare_evasion_flagged`, `vacancy_opened`, `replacement_assigned`, `released_from_vehicle`, `vehicle_scan_used`, `report_sent` |
 | Related | UCN_SC_E001 (Login — sign-in events), UCN_SC_E018 / E027 (suspensions, staff), UCN_SC_E020 (report export, also audited) |

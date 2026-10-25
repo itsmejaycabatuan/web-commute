@@ -41,6 +41,13 @@
 1. The authenticated user has the `driver` role but no `Driver` row.
 2. System aborts with *"Driver profile not found."* instead of crashing.
 
+**A4 – The driver forgets to clock out (automatic close)**
+1. Every 15 minutes the scheduler runs `php artisan shifts:auto-close`. It looks at every shift that has a `time_in` and no `time_out` (leave entries and finished shifts are ignored).
+2. A shift is **due** once it has been open longer than `TIMEKEEPING_AUTO_CLOSE_AFTER_HOURS` (default **14**) or, with `TIMEKEEPING_AUTO_CLOSE_AT_MIDNIGHT` on (default), once its date has passed.
+3. Nobody knows when the driver really stopped, so the system credits `TIMEKEEPING_AUTO_CLOSE_CREDIT_HOURS` (default **8**, never more than has elapsed) with **no overtime**: it writes `time_out`, `hours_worked`, `overtime_hours = 0` and stamps `auto_closed_at`. `reviewed_at` stays empty.
+4. Unless the driver has a newer open shift, the driver is set **inactive**; the vehicle is marked offline and its recent position rows are aged past the 5-minute window so it leaves the map (the GPS history is kept); and the driver's phone can no longer broadcast the vehicle's position until the next shift (UCN_SC_E021 E7).
+5. The close is written to the audit trail (*Auto-closed time entry … after the driver did not clock out*) and the entry is flagged for the Driver Manager to review (UCN_SC_E013 A3). The driver's own timekeeping page shows a small *auto* tag on that day's hours.
+
 ---
 
 ## Postconditions
@@ -51,6 +58,7 @@
 4. The system notifies the driver, and the UI shows **"Shift Complete"** plus the total hours (and overtime, if any).
 5. The closed shift appears in the **Weekly Log** for that week.
 
+6. A shift left open is closed by the system within 15 minutes of becoming due, with a credited regular shift, `auto_closed_at` set, the driver inactive and the vehicle off the map (A4).
 ---
 
 ## Exceptions
@@ -68,7 +76,7 @@ See A3 — *"Driver profile not found."*
 
 ## Known Gaps / Notes
 
-- **A forgotten clock-out is closed automatically.** `php artisan shifts:auto-close` (every 15 minutes) closes any shift with no `time_out` that has been open longer than `TIMEKEEPING_AUTO_CLOSE_AFTER_HOURS` (default 14) or that is still open after midnight (`TIMEKEEPING_AUTO_CLOSE_AT_MIDNIGHT`). Nobody knows when the driver really stopped, so the entry is credited `TIMEKEEPING_AUTO_CLOSE_CREDIT_HOURS` (default 8, never more than has elapsed) with **no overtime**, stamped `auto_closed_at`, and left for the Driver Manager to review (UCN_SC_E013). The driver is set inactive (unless a newer shift is open), the vehicle drops off the live map and is marked offline (its GPS history is kept), and the driver's phone can no longer broadcast the vehicle's position until their next shift.
+- **A forgotten clock-out is closed automatically** (A4). The credited hours are an estimate, so a Driver Manager reviews them (UCN_SC_E013 A3).
 - **No GPS / location verification** — a driver can clock out from anywhere, and nothing confirms the vehicle actually stopped.
 - **Duration is measured from `time_in` parsed out of a formatted string** (`Carbon::parse($record->date . ' ' . $record->time_in, 'Asia/Manila')`). A `time_in` written by the driver-manager screen in a different format/timezone will skew the hours; storing real datetimes would remove this fragility.
 - **`hours_worked` is rounded to 2 decimals**, and breaks are not considered — the value is a raw difference between clock-in and clock-out.
@@ -90,4 +98,7 @@ See A3 — *"Driver profile not found."*
 | Weekly log | `resources/views/driver/time-keeping.blade.php` — `DriverController::timekeeping()` |
 | Manager corrections | `app/Http/Controllers/DriverManagerController.php::timeKeepingStore()` |
 | Models | `app/Models/TimeKeeping.php`, `app/Models/Driver.php` |
+| Automatic close | `app/Console/Commands/AutoCloseShifts.php` (`shifts:auto-close`, every 15 minutes), `config/timekeeping.php`, `Driver::shiftWasAutoClosed()`, `TimeKeeping::open()` |
+| Schema | `database/migrations/2026_10_25_090000_add_auto_close_to_time_keepings_table.php` — `auto_closed_at`, `reviewed_at` |
+| Tests (automation) | `tests/Feature/AutomationTest.php` — `test_shift_open_too_long_is_auto_closed_and_flagged`, `test_shift_left_open_past_midnight_is_closed`, `test_driver_with_a_newer_shift_stays_active`, `test_auto_closing_is_audited` |
 | Related | UCN_SC_E009 (Clock In) |

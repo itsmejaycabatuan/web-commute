@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1420 1503" width="1420" height="1503" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1420 1567" width="1420" height="1567" font-family="'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
 <title>SmartCommute — UML use-case diagram</title>
 <desc>Actors, use cases (UCN_SC_E001–E027) and their relationships for the SmartCommute web system.</desc>
 <style>
@@ -15,247 +15,292 @@
 .leg{font-size:11px;fill:#1b1f23}
 </style>
 <defs><marker id="open" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#444" stroke-width="1.3"/></marker></defs>
-<rect width="1420" height="1503" fill="#ffffff"/>
-<rect x="175" y="172" width="1070" height="1116" rx="10" fill="#FCFCFD" stroke="#30363d" stroke-width="2"/>
-<text x="195" y="198" class="title">SmartCommute — Web Commute System</text>
-<text x="195" y="213" class="sub">use cases UCN_SC_E001 – E028</text>
-<rect x="210" y="238" width="310" height="266" rx="8" fill="#E3F0FF" fill-opacity="0.45" stroke="#2F6FB5" stroke-width="1.2" stroke-dasharray="5 3"/>
-<text x="222" y="257" class="grp" fill="#2F6FB5">Account &amp; Access</text>
-<rect x="210" y="530" width="310" height="324" rx="8" fill="#DDF3EC" fill-opacity="0.45" stroke="#1F8F6B" stroke-width="1.2" stroke-dasharray="5 3"/>
-<text x="222" y="549" class="grp" fill="#1F8F6B">Map &amp; Commuter Services</text>
-<rect x="210" y="880" width="310" height="266" rx="8" fill="#FFEBD6" fill-opacity="0.45" stroke="#C46A12" stroke-width="1.2" stroke-dasharray="5 3"/>
-<text x="222" y="899" class="grp" fill="#C46A12">Driver Operations</text>
-<rect x="900" y="238" width="310" height="266" rx="8" fill="#EBE3FA" fill-opacity="0.45" stroke="#6B49B8" stroke-width="1.2" stroke-dasharray="5 3"/>
-<text x="912" y="257" class="grp" fill="#6B49B8">Driver Management</text>
-<rect x="900" y="530" width="310" height="324" rx="8" fill="#FBE0E3" fill-opacity="0.45" stroke="#B83A4B" stroke-width="1.2" stroke-dasharray="5 3"/>
-<text x="912" y="549" class="grp" fill="#B83A4B">Administration</text>
-<rect x="900" y="880" width="310" height="208" rx="8" fill="#F4EDC6" fill-opacity="0.45" stroke="#8A7410" stroke-width="1.2" stroke-dasharray="5 3"/>
-<text x="912" y="899" class="grp" fill="#8A7410">Fleet Maintenance</text>
-<rect x="210" y="1172" width="1000" height="92" rx="8" fill="#ECEFF1" fill-opacity="0.45" stroke="#5F6B73" stroke-width="1.2" stroke-dasharray="5 3"/>
-<text x="222" y="1191" class="grp" fill="#5F6B73">Common Services (every authenticated user)</text>
-<rect x="500" y="14" width="160" height="58" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/>
-<text x="580" y="28" text-anchor="middle" class="ext-st">«external system»</text>
-<text x="580" y="44" text-anchor="middle" class="ext-name">Email Service</text>
-<text x="580" y="59" text-anchor="middle" class="ext-sub">(SMTP)</text>
-<line x1="580.0" y1="72.0" x2="580.0" y2="413.0" stroke="#57606a" stroke-width="1.2" />
-<path d="M580.0,413.0 L500.0,413.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
-<path d="M580.0,355.0 L500.0,355.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
-<rect x="590" y="88" width="160" height="58" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/>
-<text x="670" y="102" text-anchor="middle" class="ext-st">«external system»</text>
-<text x="670" y="118" text-anchor="middle" class="ext-name">Map &amp; Routing</text>
-<text x="670" y="133" text-anchor="middle" class="ext-sub">OpenFreeMap · Photon · OSRM</text>
-<line x1="670.0" y1="146.0" x2="670.0" y2="647.0" stroke="#57606a" stroke-width="1.2" />
-<path d="M670.0,589.0 L585.0,589.0 A5,5 0 0 0 575.0,589.0 L500.0,589.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
-<path d="M670.0,647.0 L585.0,647.0 A5,5 0 0 0 575.0,647.0 L500.0,647.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
-<rect x="680" y="14" width="160" height="58" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/>
-<text x="760" y="28" text-anchor="middle" class="ext-st">«external system»</text>
-<text x="760" y="44" text-anchor="middle" class="ext-name">PayMongo Gateway</text>
-<text x="760" y="59" text-anchor="middle" class="ext-sub">(GCash / Maya)</text>
-<line x1="760.0" y1="72.0" x2="760.0" y2="705.0" stroke="#57606a" stroke-width="1.2" />
-<path d="M760.0,705.0 L675.0,705.0 A5,5 0 0 0 665.0,705.0 L585.0,705.0 A5,5 0 0 0 575.0,705.0 L500.0,705.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
-<rect x="770" y="88" width="160" height="58" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/>
-<text x="850" y="102" text-anchor="middle" class="ext-st">«external system»</text>
-<text x="850" y="118" text-anchor="middle" class="ext-name">Push Channel</text>
-<text x="850" y="133" text-anchor="middle" class="ext-sub">(Pusher / Echo)</text>
-<line x1="850.0" y1="146.0" x2="850.0" y2="1055.0" stroke="#57606a" stroke-width="1.2" />
-<path d="M850.0,589.0 L765.0,589.0 A5,5 0 0 0 755.0,589.0 L675.0,589.0 A5,5 0 0 0 665.0,589.0 L585.0,589.0 A5,5 0 0 0 575.0,589.0 L500.0,589.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
-<path d="M850.0,1055.0 L765.0,1055.0 A5,5 0 0 0 755.0,1055.0 L675.0,1055.0 A5,5 0 0 0 665.0,1055.0 L585.0,1055.0 A5,5 0 0 0 575.0,1055.0 L500.0,1055.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
-<line x1="295.0" y1="338.8" x2="295.0" y2="313.2" stroke="#444" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#open)"/>
-<text x="303.0" y="329.5" class="rel">«extend»</text>
-<line x1="295.0" y1="454.8" x2="295.0" y2="429.2" stroke="#444" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#open)"/>
-<text x="303.0" y="445.5" class="rel">«extend»</text>
-<line x1="295.0" y1="688.8" x2="295.0" y2="663.2" stroke="#444" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#open)"/>
-<text x="303.0" y="679.5" class="rel">«extend»</text>
-<line x1="985.0" y1="371.2" x2="985.0" y2="396.8" stroke="#444" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#open)"/>
-<text x="993.0" y="387.5" class="rel">«include»</text>
+<rect width="1420" height="1567" fill="#ffffff"/>
+<rect x="175" y="236" width="1070" height="1116" rx="10" fill="#FCFCFD" stroke="#30363d" stroke-width="2"/>
+<text x="195" y="262" class="title">SmartCommute — Web Commute System</text>
+<text x="195" y="277" class="sub">use cases UCN_SC_E001 – E028</text>
+<rect x="210" y="302" width="310" height="266" rx="8" fill="#E3F0FF" fill-opacity="0.45" stroke="#2F6FB5" stroke-width="1.2" stroke-dasharray="5 3"/>
+<text x="222" y="321" class="grp" fill="#2F6FB5">Account &amp; Access</text>
+<rect x="210" y="594" width="310" height="324" rx="8" fill="#DDF3EC" fill-opacity="0.45" stroke="#1F8F6B" stroke-width="1.2" stroke-dasharray="5 3"/>
+<text x="222" y="613" class="grp" fill="#1F8F6B">Map &amp; Commuter Services</text>
+<rect x="210" y="944" width="310" height="266" rx="8" fill="#FFEBD6" fill-opacity="0.45" stroke="#C46A12" stroke-width="1.2" stroke-dasharray="5 3"/>
+<text x="222" y="963" class="grp" fill="#C46A12">Driver Operations</text>
+<rect x="900" y="302" width="310" height="266" rx="8" fill="#EBE3FA" fill-opacity="0.45" stroke="#6B49B8" stroke-width="1.2" stroke-dasharray="5 3"/>
+<text x="912" y="321" class="grp" fill="#6B49B8">Driver Management</text>
+<rect x="900" y="594" width="310" height="324" rx="8" fill="#FBE0E3" fill-opacity="0.45" stroke="#B83A4B" stroke-width="1.2" stroke-dasharray="5 3"/>
+<text x="912" y="613" class="grp" fill="#B83A4B">Administration</text>
+<rect x="900" y="944" width="310" height="208" rx="8" fill="#F4EDC6" fill-opacity="0.45" stroke="#8A7410" stroke-width="1.2" stroke-dasharray="5 3"/>
+<text x="912" y="963" class="grp" fill="#8A7410">Fleet Maintenance</text>
+<rect x="210" y="1236" width="1000" height="92" rx="8" fill="#ECEFF1" fill-opacity="0.45" stroke="#5F6B73" stroke-width="1.2" stroke-dasharray="5 3"/>
+<text x="222" y="1255" class="grp" fill="#5F6B73">Common Services (every authenticated user)</text>
+<rect x="459" y="14" width="132" height="58" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/>
+<text x="525" y="28" text-anchor="middle" class="ext-st">«external system»</text>
+<text x="525" y="44" text-anchor="middle" class="ext-name">Email Service</text>
+<text x="525" y="59" text-anchor="middle" class="ext-sub">(SMTP)</text>
+<line x1="525.0" y1="72.0" x2="525.0" y2="1061.0" stroke="#57606a" stroke-width="1.2" />
+<path d="M525.0,477.0 L500.0,477.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="525" cy="477.0" r="2.8" fill="#57606a"/>
+<path d="M525.0,419.0 L500.0,419.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="525" cy="419.0" r="2.8" fill="#57606a"/>
+<path d="M525.0,827.0 L500.0,827.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="525" cy="827.0" r="2.8" fill="#57606a"/>
+<path d="M525.0,769.0 L500.0,769.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="525" cy="769.0" r="2.8" fill="#57606a"/>
+<path d="M525.0,535.0 L590.0,535.0 A5,5 0 0 1 600.0,535.0 L660.0,535.0 A5,5 0 0 1 670.0,535.0 L730.0,535.0 A5,5 0 0 1 740.0,535.0 L800.0,535.0 A5,5 0 0 1 810.0,535.0 L870.0,535.0 A5,5 0 0 1 880.0,535.0 L920.0,535.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="525" cy="535.0" r="2.8" fill="#57606a"/>
+<path d="M525.0,419.0 L590.0,419.0 A5,5 0 0 1 600.0,419.0 L660.0,419.0 A5,5 0 0 1 670.0,419.0 L730.0,419.0 A5,5 0 0 1 740.0,419.0 L800.0,419.0 A5,5 0 0 1 810.0,419.0 L870.0,419.0 A5,5 0 0 1 880.0,419.0 L920.0,419.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="525" cy="419.0" r="2.8" fill="#57606a"/>
+<path d="M525.0,1061.0 L590.0,1061.0 A5,5 0 0 1 600.0,1061.0 L660.0,1061.0 A5,5 0 0 1 670.0,1061.0 L730.0,1061.0 A5,5 0 0 1 740.0,1061.0 L800.0,1061.0 A5,5 0 0 1 810.0,1061.0 L870.0,1061.0 A5,5 0 0 1 880.0,1061.0 L920.0,1061.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="525" cy="1061.0" r="2.8" fill="#57606a"/>
+<path d="M525.0,769.0 L590.0,769.0 A5,5 0 0 1 600.0,769.0 L660.0,769.0 A5,5 0 0 1 670.0,769.0 L730.0,769.0 A5,5 0 0 1 740.0,769.0 L800.0,769.0 A5,5 0 0 1 810.0,769.0 L870.0,769.0 A5,5 0 0 1 880.0,769.0 L920.0,769.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="525" cy="769.0" r="2.8" fill="#57606a"/>
+<rect x="529" y="88" width="132" height="58" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/>
+<text x="595" y="102" text-anchor="middle" class="ext-st">«external system»</text>
+<text x="595" y="118" text-anchor="middle" class="ext-name">Map &amp; Routing</text>
+<text x="595" y="133" text-anchor="middle" class="ext-sub">OpenFreeMap · OSRM</text>
+<line x1="595.0" y1="146.0" x2="595.0" y2="711.0" stroke="#57606a" stroke-width="1.2" />
+<path d="M595.0,653.0 L530.0,653.0 A5,5 0 0 0 520.0,653.0 L500.0,653.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="595" cy="653.0" r="2.8" fill="#57606a"/>
+<path d="M595.0,711.0 L530.0,711.0 A5,5 0 0 0 520.0,711.0 L500.0,711.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="595" cy="711.0" r="2.8" fill="#57606a"/>
+<rect x="599" y="162" width="132" height="58" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/>
+<text x="665" y="176" text-anchor="middle" class="ext-st">«external system»</text>
+<text x="665" y="192" text-anchor="middle" class="ext-name">PayMongo Gateway</text>
+<text x="665" y="207" text-anchor="middle" class="ext-sub">(GCash / Maya)</text>
+<line x1="665.0" y1="220.0" x2="665.0" y2="769.0" stroke="#57606a" stroke-width="1.2" />
+<path d="M665.0,769.0 L600.0,769.0 A5,5 0 0 0 590.0,769.0 L530.0,769.0 A5,5 0 0 0 520.0,769.0 L500.0,769.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="665" cy="769.0" r="2.8" fill="#57606a"/>
+<rect x="669" y="14" width="132" height="58" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/>
+<text x="735" y="28" text-anchor="middle" class="ext-st">«external system»</text>
+<text x="735" y="44" text-anchor="middle" class="ext-name">Push Channel</text>
+<text x="735" y="59" text-anchor="middle" class="ext-sub">(Pusher / Echo)</text>
+<line x1="735.0" y1="72.0" x2="735.0" y2="1119.0" stroke="#57606a" stroke-width="1.2" />
+<path d="M735.0,653.0 L670.0,653.0 A5,5 0 0 0 660.0,653.0 L600.0,653.0 A5,5 0 0 0 590.0,653.0 L530.0,653.0 A5,5 0 0 0 520.0,653.0 L500.0,653.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="735" cy="653.0" r="2.8" fill="#57606a"/>
+<path d="M735.0,1119.0 L670.0,1119.0 A5,5 0 0 0 660.0,1119.0 L600.0,1119.0 A5,5 0 0 0 590.0,1119.0 L530.0,1119.0 A5,5 0 0 0 520.0,1119.0 L500.0,1119.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="735" cy="1119.0" r="2.8" fill="#57606a"/>
+<rect x="739" y="88" width="132" height="58" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/>
+<text x="805" y="102" text-anchor="middle" class="ext-st">«external system»</text>
+<text x="805" y="118" text-anchor="middle" class="ext-name">Scheduler</text>
+<text x="805" y="133" text-anchor="middle" class="ext-sub">(cron · schedule:run)</text>
+<line x1="805.0" y1="146.0" x2="805.0" y2="1061.0" stroke="#57606a" stroke-width="1.2" />
+<path d="M805.0,769.0 L740.0,769.0 A5,5 0 0 0 730.0,769.0 L670.0,769.0 A5,5 0 0 0 660.0,769.0 L600.0,769.0 A5,5 0 0 0 590.0,769.0 L530.0,769.0 A5,5 0 0 0 520.0,769.0 L500.0,769.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="805" cy="769.0" r="2.8" fill="#57606a"/>
+<path d="M805.0,1061.0 L740.0,1061.0 A5,5 0 0 0 730.0,1061.0 L670.0,1061.0 A5,5 0 0 0 660.0,1061.0 L600.0,1061.0 A5,5 0 0 0 590.0,1061.0 L530.0,1061.0 A5,5 0 0 0 520.0,1061.0 L500.0,1061.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="805" cy="1061.0" r="2.8" fill="#57606a"/>
+<path d="M805.0,535.0 L870.0,535.0 A5,5 0 0 1 880.0,535.0 L920.0,535.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="805" cy="535.0" r="2.8" fill="#57606a"/>
+<path d="M805.0,419.0 L870.0,419.0 A5,5 0 0 1 880.0,419.0 L920.0,419.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="805" cy="419.0" r="2.8" fill="#57606a"/>
+<path d="M805.0,1003.0 L870.0,1003.0 A5,5 0 0 1 880.0,1003.0 L920.0,1003.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="805" cy="1003.0" r="2.8" fill="#57606a"/>
+<path d="M805.0,1061.0 L870.0,1061.0 A5,5 0 0 1 880.0,1061.0 L920.0,1061.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="805" cy="1061.0" r="2.8" fill="#57606a"/>
+<path d="M805.0,769.0 L870.0,769.0 A5,5 0 0 1 880.0,769.0 L920.0,769.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="805" cy="769.0" r="2.8" fill="#57606a"/>
+<rect x="809" y="162" width="132" height="58" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/>
+<text x="875" y="176" text-anchor="middle" class="ext-st">«external system»</text>
+<text x="875" y="192" text-anchor="middle" class="ext-name">Phone (scanner)</text>
+<text x="875" y="207" text-anchor="middle" class="ext-sub">(OR / CR photos)</text>
+<line x1="875.0" y1="220.0" x2="875.0" y2="1003.0" stroke="#57606a" stroke-width="1.2" />
+<path d="M875.0,1003.0 L920.0,1003.0" fill="none" stroke="#57606a" stroke-width="1.2"/>
+<circle cx="875" cy="1003.0" r="2.8" fill="#57606a"/>
+<line x1="295.0" y1="402.8" x2="295.0" y2="377.2" stroke="#444" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#open)"/>
+<text x="303.0" y="393.5" class="rel">«extend»</text>
+<line x1="295.0" y1="518.8" x2="295.0" y2="493.2" stroke="#444" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#open)"/>
+<text x="303.0" y="509.5" class="rel">«extend»</text>
+<line x1="295.0" y1="752.8" x2="295.0" y2="727.2" stroke="#444" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#open)"/>
+<text x="303.0" y="743.5" class="rel">«extend»</text>
+<line x1="985.0" y1="435.2" x2="985.0" y2="460.8" stroke="#444" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#open)"/>
+<text x="993.0" y="451.5" class="rel">«include»</text>
 <g class="actor" stroke="#2F6FB5" stroke-width="2" fill="#E3F0FF" stroke-linecap="round">
-<circle cx="100" cy="491" r="9"/>
-<line x1="100" y1="500" x2="100" y2="528"/>
-<line x1="85" y1="510" x2="115" y2="510"/>
-<line x1="100" y1="528" x2="88" y2="546"/>
-<line x1="100" y1="528" x2="112" y2="546"/>
+<circle cx="100" cy="555" r="9"/>
+<line x1="100" y1="564" x2="100" y2="592"/>
+<line x1="85" y1="574" x2="115" y2="574"/>
+<line x1="100" y1="592" x2="88" y2="610"/>
+<line x1="100" y1="592" x2="112" y2="610"/>
 </g>
-<text x="100" y="564" text-anchor="middle" class="actor-label">Guest</text>
-<line x1="115.0" y1="510.0" x2="230.0" y2="297.0" stroke="#2F6FB5" stroke-width="1.4" />
-<line x1="115.0" y1="510.0" x2="230.0" y2="413.0" stroke="#2F6FB5" stroke-width="1.4" />
-<line x1="115.0" y1="510.0" x2="230.0" y2="355.0" stroke="#2F6FB5" stroke-width="1.4" />
-<line x1="115.0" y1="510.0" x2="230.0" y2="471.0" stroke="#2F6FB5" stroke-width="1.4" />
-<line x1="115.0" y1="510.0" x2="230.0" y2="589.0" stroke="#2F6FB5" stroke-width="1.4" />
-<line x1="115.0" y1="510.0" x2="230.0" y2="647.0" stroke="#2F6FB5" stroke-width="1.4" />
+<text x="100" y="628" text-anchor="middle" class="actor-label">Guest</text>
+<line x1="115.0" y1="574.0" x2="230.0" y2="361.0" stroke="#2F6FB5" stroke-width="1.4" />
+<line x1="115.0" y1="574.0" x2="230.0" y2="477.0" stroke="#2F6FB5" stroke-width="1.4" />
+<line x1="115.0" y1="574.0" x2="230.0" y2="419.0" stroke="#2F6FB5" stroke-width="1.4" />
+<line x1="115.0" y1="574.0" x2="230.0" y2="535.0" stroke="#2F6FB5" stroke-width="1.4" />
+<line x1="115.0" y1="574.0" x2="230.0" y2="653.0" stroke="#2F6FB5" stroke-width="1.4" />
+<line x1="115.0" y1="574.0" x2="230.0" y2="711.0" stroke="#2F6FB5" stroke-width="1.4" />
 <g class="actor" stroke="#1F8F6B" stroke-width="2" fill="#DDF3EC" stroke-linecap="round">
-<circle cx="100" cy="682.0" r="9"/>
-<line x1="100" y1="691.0" x2="100" y2="719.0"/>
-<line x1="85" y1="701.0" x2="115" y2="701.0"/>
-<line x1="100" y1="719.0" x2="88" y2="737.0"/>
-<line x1="100" y1="719.0" x2="112" y2="737.0"/>
+<circle cx="100" cy="746.0" r="9"/>
+<line x1="100" y1="755.0" x2="100" y2="783.0"/>
+<line x1="85" y1="765.0" x2="115" y2="765.0"/>
+<line x1="100" y1="783.0" x2="88" y2="801.0"/>
+<line x1="100" y1="783.0" x2="112" y2="801.0"/>
 </g>
-<text x="100" y="755.0" text-anchor="middle" class="actor-label">Commuter</text>
-<line x1="115.0" y1="701.0" x2="230.0" y2="589.0" stroke="#1F8F6B" stroke-width="1.4" />
-<line x1="115.0" y1="701.0" x2="230.0" y2="647.0" stroke="#1F8F6B" stroke-width="1.4" />
-<line x1="115.0" y1="701.0" x2="230.0" y2="705.0" stroke="#1F8F6B" stroke-width="1.4" />
-<line x1="115.0" y1="701.0" x2="230.0" y2="763.0" stroke="#1F8F6B" stroke-width="1.4" />
-<line x1="115.0" y1="701.0" x2="230.0" y2="821.0" stroke="#1F8F6B" stroke-width="1.4" />
+<text x="100" y="819.0" text-anchor="middle" class="actor-label">Commuter</text>
+<line x1="115.0" y1="765.0" x2="230.0" y2="653.0" stroke="#1F8F6B" stroke-width="1.4" />
+<line x1="115.0" y1="765.0" x2="230.0" y2="711.0" stroke="#1F8F6B" stroke-width="1.4" />
+<line x1="115.0" y1="765.0" x2="230.0" y2="769.0" stroke="#1F8F6B" stroke-width="1.4" />
+<line x1="115.0" y1="765.0" x2="230.0" y2="827.0" stroke="#1F8F6B" stroke-width="1.4" />
+<line x1="115.0" y1="765.0" x2="230.0" y2="885.0" stroke="#1F8F6B" stroke-width="1.4" />
 <g class="actor" stroke="#C46A12" stroke-width="2" fill="#FFEBD6" stroke-linecap="round">
-<circle cx="100" cy="1003.0" r="9"/>
-<line x1="100" y1="1012.0" x2="100" y2="1040.0"/>
-<line x1="85" y1="1022.0" x2="115" y2="1022.0"/>
-<line x1="100" y1="1040.0" x2="88" y2="1058.0"/>
-<line x1="100" y1="1040.0" x2="112" y2="1058.0"/>
+<circle cx="100" cy="1067.0" r="9"/>
+<line x1="100" y1="1076.0" x2="100" y2="1104.0"/>
+<line x1="85" y1="1086.0" x2="115" y2="1086.0"/>
+<line x1="100" y1="1104.0" x2="88" y2="1122.0"/>
+<line x1="100" y1="1104.0" x2="112" y2="1122.0"/>
 </g>
-<text x="100" y="1076.0" text-anchor="middle" class="actor-label">Driver</text>
-<line x1="115.0" y1="1022.0" x2="230.0" y2="939.0" stroke="#C46A12" stroke-width="1.4" />
-<line x1="115.0" y1="1022.0" x2="230.0" y2="997.0" stroke="#C46A12" stroke-width="1.4" />
-<line x1="115.0" y1="1022.0" x2="230.0" y2="1055.0" stroke="#C46A12" stroke-width="1.4" />
-<line x1="115.0" y1="1022.0" x2="230.0" y2="1113.0" stroke="#C46A12" stroke-width="1.4" />
+<text x="100" y="1140.0" text-anchor="middle" class="actor-label">Driver</text>
+<line x1="115.0" y1="1086.0" x2="230.0" y2="1003.0" stroke="#C46A12" stroke-width="1.4" />
+<line x1="115.0" y1="1086.0" x2="230.0" y2="1061.0" stroke="#C46A12" stroke-width="1.4" />
+<line x1="115.0" y1="1086.0" x2="230.0" y2="1119.0" stroke="#C46A12" stroke-width="1.4" />
+<line x1="115.0" y1="1086.0" x2="230.0" y2="1177.0" stroke="#C46A12" stroke-width="1.4" />
 <g class="actor" stroke="#6B49B8" stroke-width="2" fill="#EBE3FA" stroke-linecap="round">
-<circle cx="1320" cy="361.0" r="9"/>
-<line x1="1320" y1="370.0" x2="1320" y2="398.0"/>
-<line x1="1305" y1="380.0" x2="1335" y2="380.0"/>
-<line x1="1320" y1="398.0" x2="1308" y2="416.0"/>
-<line x1="1320" y1="398.0" x2="1332" y2="416.0"/>
+<circle cx="1320" cy="425.0" r="9"/>
+<line x1="1320" y1="434.0" x2="1320" y2="462.0"/>
+<line x1="1305" y1="444.0" x2="1335" y2="444.0"/>
+<line x1="1320" y1="462.0" x2="1308" y2="480.0"/>
+<line x1="1320" y1="462.0" x2="1332" y2="480.0"/>
 </g>
-<text x="1320" y="434.0" text-anchor="middle" class="actor-label">Driver</text>
-<text x="1320" y="448.0" text-anchor="middle" class="actor-label">Manager</text>
-<line x1="1305.0" y1="380.0" x2="1190.0" y2="297.0" stroke="#6B49B8" stroke-width="1.4" />
-<line x1="1305.0" y1="380.0" x2="1190.0" y2="355.0" stroke="#6B49B8" stroke-width="1.4" />
-<line x1="1305.0" y1="380.0" x2="1190.0" y2="413.0" stroke="#6B49B8" stroke-width="1.4" />
-<line x1="1305.0" y1="380.0" x2="1190.0" y2="471.0" stroke="#6B49B8" stroke-width="1.4" />
+<text x="1320" y="498.0" text-anchor="middle" class="actor-label">Driver</text>
+<text x="1320" y="512.0" text-anchor="middle" class="actor-label">Manager</text>
+<line x1="1305.0" y1="444.0" x2="1190.0" y2="361.0" stroke="#6B49B8" stroke-width="1.4" />
+<line x1="1305.0" y1="444.0" x2="1190.0" y2="419.0" stroke="#6B49B8" stroke-width="1.4" />
+<line x1="1305.0" y1="444.0" x2="1190.0" y2="477.0" stroke="#6B49B8" stroke-width="1.4" />
+<line x1="1305.0" y1="444.0" x2="1190.0" y2="535.0" stroke="#6B49B8" stroke-width="1.4" />
 <g class="actor" stroke="#B83A4B" stroke-width="2" fill="#FBE0E3" stroke-linecap="round">
-<circle cx="1320" cy="682.0" r="9"/>
-<line x1="1320" y1="691.0" x2="1320" y2="719.0"/>
-<line x1="1305" y1="701.0" x2="1335" y2="701.0"/>
-<line x1="1320" y1="719.0" x2="1308" y2="737.0"/>
-<line x1="1320" y1="719.0" x2="1332" y2="737.0"/>
+<circle cx="1320" cy="746.0" r="9"/>
+<line x1="1320" y1="755.0" x2="1320" y2="783.0"/>
+<line x1="1305" y1="765.0" x2="1335" y2="765.0"/>
+<line x1="1320" y1="783.0" x2="1308" y2="801.0"/>
+<line x1="1320" y1="783.0" x2="1332" y2="801.0"/>
 </g>
-<text x="1320" y="755.0" text-anchor="middle" class="actor-label">Admin</text>
-<line x1="1305.0" y1="701.0" x2="1190.0" y2="589.0" stroke="#B83A4B" stroke-width="1.4" />
-<line x1="1305.0" y1="701.0" x2="1190.0" y2="647.0" stroke="#B83A4B" stroke-width="1.4" />
-<line x1="1305.0" y1="701.0" x2="1190.0" y2="705.0" stroke="#B83A4B" stroke-width="1.4" />
-<line x1="1305.0" y1="701.0" x2="1190.0" y2="763.0" stroke="#B83A4B" stroke-width="1.4" />
-<line x1="1305.0" y1="701.0" x2="1190.0" y2="821.0" stroke="#B83A4B" stroke-width="1.4" />
-<line x1="1305.0" y1="701.0" x2="1190.0" y2="471.0" stroke="#B83A4B" stroke-width="1.4" />
-<line x1="1305.0" y1="701.0" x2="1190.0" y2="939.0" stroke="#B83A4B" stroke-width="1.4" />
+<text x="1320" y="819.0" text-anchor="middle" class="actor-label">Admin</text>
+<line x1="1305.0" y1="765.0" x2="1190.0" y2="653.0" stroke="#B83A4B" stroke-width="1.4" />
+<line x1="1305.0" y1="765.0" x2="1190.0" y2="711.0" stroke="#B83A4B" stroke-width="1.4" />
+<line x1="1305.0" y1="765.0" x2="1190.0" y2="769.0" stroke="#B83A4B" stroke-width="1.4" />
+<line x1="1305.0" y1="765.0" x2="1190.0" y2="827.0" stroke="#B83A4B" stroke-width="1.4" />
+<line x1="1305.0" y1="765.0" x2="1190.0" y2="885.0" stroke="#B83A4B" stroke-width="1.4" />
+<line x1="1305.0" y1="765.0" x2="1190.0" y2="535.0" stroke="#B83A4B" stroke-width="1.4" />
+<line x1="1305.0" y1="765.0" x2="1190.0" y2="1003.0" stroke="#B83A4B" stroke-width="1.4" />
 <g class="actor" stroke="#8A7410" stroke-width="2" fill="#F4EDC6" stroke-linecap="round">
-<circle cx="1320" cy="974.0" r="9"/>
-<line x1="1320" y1="983.0" x2="1320" y2="1011.0"/>
-<line x1="1305" y1="993.0" x2="1335" y2="993.0"/>
-<line x1="1320" y1="1011.0" x2="1308" y2="1029.0"/>
-<line x1="1320" y1="1011.0" x2="1332" y2="1029.0"/>
+<circle cx="1320" cy="1038.0" r="9"/>
+<line x1="1320" y1="1047.0" x2="1320" y2="1075.0"/>
+<line x1="1305" y1="1057.0" x2="1335" y2="1057.0"/>
+<line x1="1320" y1="1075.0" x2="1308" y2="1093.0"/>
+<line x1="1320" y1="1075.0" x2="1332" y2="1093.0"/>
 </g>
-<text x="1320" y="1047.0" text-anchor="middle" class="actor-label">Maintenance</text>
-<text x="1320" y="1061.0" text-anchor="middle" class="actor-label">Manager</text>
-<line x1="1305.0" y1="993.0" x2="1190.0" y2="939.0" stroke="#8A7410" stroke-width="1.4" />
-<line x1="1305.0" y1="993.0" x2="1190.0" y2="997.0" stroke="#8A7410" stroke-width="1.4" />
-<line x1="1305.0" y1="993.0" x2="1190.0" y2="1055.0" stroke="#8A7410" stroke-width="1.4" />
-<line x1="710.0" y1="1360.0" x2="411.0" y2="1248.9" stroke="#5F6B73" stroke-width="1.4" />
-<line x1="710.0" y1="1360.0" x2="710.0" y2="1250.0" stroke="#5F6B73" stroke-width="1.4" />
-<line x1="710.0" y1="1360.0" x2="1009.0" y2="1248.9" stroke="#5F6B73" stroke-width="1.4" />
-<g stroke="#5F6B73" stroke-width="2" fill="#ECEFF1" stroke-linecap="round"><circle cx="710.0" cy="1365" r="9"/><line x1="710.0" y1="1374" x2="710.0" y2="1402"/><line x1="695.0" y1="1384" x2="725.0" y2="1384"/><line x1="710.0" y1="1402" x2="698.0" y2="1420"/><line x1="710.0" y1="1402" x2="722.0" y2="1420"/></g>
-<text x="734.0" y="1390" class="actor-label" fill="#1b1f23">Authenticated User</text>
-<text x="734.0" y="1405" class="sub" font-style="italic">abstract actor — any signed-in role</text>
-<path d="M710.0,1422 L701.0,1440 L719.0,1440 Z" fill="#fff" stroke="#444" stroke-width="1.4"/>
-<line x1="710.0" y1="1440.0" x2="710.0" y2="1468.0" stroke="#444" stroke-width="1.4" />
-<line x1="40.0" y1="1468.0" x2="1385.0" y2="1468.0" stroke="#444" stroke-width="1.4" />
-<line x1="85.0" y1="701.0" x2="40.0" y2="701.0" stroke="#444" stroke-width="1.4" />
-<line x1="85.0" y1="1022.0" x2="40.0" y2="1022.0" stroke="#444" stroke-width="1.4" />
-<line x1="1335.0" y1="380.0" x2="1385.0" y2="380.0" stroke="#444" stroke-width="1.4" />
-<line x1="1335.0" y1="701.0" x2="1385.0" y2="701.0" stroke="#444" stroke-width="1.4" />
-<line x1="1335.0" y1="993.0" x2="1385.0" y2="993.0" stroke="#444" stroke-width="1.4" />
-<line x1="40.0" y1="701.0" x2="40.0" y2="1468.0" stroke="#444" stroke-width="1.4" />
-<line x1="1385.0" y1="380.0" x2="1385.0" y2="1468.0" stroke="#444" stroke-width="1.4" />
-<ellipse cx="365.0" cy="297.0" rx="135" ry="19" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="297.0" rx="135" ry="19" fill="#E3F0FF" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="301.3" text-anchor="middle"><tspan class="uc-id">E001</tspan><tspan class="uc-name" dx="6">Login</tspan></text>
-<ellipse cx="365.0" cy="355.0" rx="135" ry="19" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="355.0" rx="135" ry="19" fill="#E3F0FF" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="359.3" text-anchor="middle"><tspan class="uc-id">E011</tspan><tspan class="uc-name" dx="6">Reset Password</tspan></text>
-<ellipse cx="365.0" cy="413.0" rx="135" ry="19" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="413.0" rx="135" ry="19" fill="#E3F0FF" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="417.3" text-anchor="middle"><tspan class="uc-id">E002</tspan><tspan class="uc-name" dx="6">Create Account</tspan></text>
-<ellipse cx="365.0" cy="471.0" rx="135" ry="19" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="471.0" rx="135" ry="19" fill="#E3F0FF" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="475.3" text-anchor="middle"><tspan class="uc-id">E022</tspan><tspan class="uc-name" dx="6">Driver Registration</tspan></text>
-<ellipse cx="365.0" cy="589.0" rx="135" ry="19" fill="#fff" stroke="#1F8F6B" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="589.0" rx="135" ry="19" fill="#DDF3EC" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="593.3" text-anchor="middle"><tspan class="uc-id">E003</tspan><tspan class="uc-name" dx="6">Track PUJ</tspan></text>
-<ellipse cx="365.0" cy="647.0" rx="135" ry="19" fill="#fff" stroke="#1F8F6B" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="647.0" rx="135" ry="19" fill="#DDF3EC" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="651.3" text-anchor="middle"><tspan class="uc-id">E004</tspan><tspan class="uc-name" dx="6">Plan Trip</tspan></text>
-<ellipse cx="365.0" cy="705.0" rx="135" ry="19" fill="#fff" stroke="#1F8F6B" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="705.0" rx="135" ry="19" fill="#DDF3EC" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="709.3" text-anchor="middle"><tspan class="uc-id">E006</tspan><tspan class="uc-name" dx="6">Pay Fare</tspan></text>
-<ellipse cx="365.0" cy="763.0" rx="135" ry="19" fill="#fff" stroke="#1F8F6B" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="763.0" rx="135" ry="19" fill="#DDF3EC" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="767.3" text-anchor="middle"><tspan class="uc-id">E005</tspan><tspan class="uc-name" dx="6">Top Up Balance</tspan></text>
-<ellipse cx="365.0" cy="821.0" rx="135" ry="19" fill="#fff" stroke="#1F8F6B" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="821.0" rx="135" ry="19" fill="#DDF3EC" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="825.3" text-anchor="middle"><tspan class="uc-id">E007</tspan><tspan class="uc-name" dx="6">View Payment History</tspan></text>
-<ellipse cx="365.0" cy="939.0" rx="135" ry="19" fill="#fff" stroke="#C46A12" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="939.0" rx="135" ry="19" fill="#FFEBD6" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="943.3" text-anchor="middle"><tspan class="uc-id">E009</tspan><tspan class="uc-name" dx="6">Clock In</tspan></text>
-<ellipse cx="365.0" cy="997.0" rx="135" ry="19" fill="#fff" stroke="#C46A12" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="997.0" rx="135" ry="19" fill="#FFEBD6" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="1001.3" text-anchor="middle"><tspan class="uc-id">E010</tspan><tspan class="uc-name" dx="6">Clock Out</tspan></text>
-<ellipse cx="365.0" cy="1055.0" rx="135" ry="19" fill="#fff" stroke="#C46A12" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="1055.0" rx="135" ry="19" fill="#FFEBD6" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="1059.3" text-anchor="middle"><tspan class="uc-id">E021</tspan><tspan class="uc-name" dx="6">Share Vehicle Location</tspan></text>
-<ellipse cx="365.0" cy="1113.0" rx="135" ry="19" fill="#fff" stroke="#C46A12" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="1113.0" rx="135" ry="19" fill="#FFEBD6" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="1117.3" text-anchor="middle"><tspan class="uc-id">E023</tspan><tspan class="uc-name" dx="6">Driver Dashboard Views</tspan></text>
-<ellipse cx="1055.0" cy="297.0" rx="135" ry="19" fill="#fff" stroke="#6B49B8" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="297.0" rx="135" ry="19" fill="#EBE3FA" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="301.3" text-anchor="middle"><tspan class="uc-id">E013</tspan><tspan class="uc-name" dx="6">Manage Timekeeping</tspan></text>
-<ellipse cx="1055.0" cy="355.0" rx="135" ry="19" fill="#fff" stroke="#6B49B8" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="355.0" rx="135" ry="19" fill="#EBE3FA" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="359.3" text-anchor="middle"><tspan class="uc-id">E014</tspan><tspan class="uc-name" dx="6">Manage Violations</tspan></text>
-<ellipse cx="1055.0" cy="413.0" rx="135" ry="19" fill="#fff" stroke="#6B49B8" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="413.0" rx="135" ry="19" fill="#EBE3FA" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="417.3" text-anchor="middle"><tspan class="uc-id">E024</tspan><tspan class="uc-name" dx="6">Violation Code Management</tspan></text>
-<ellipse cx="1055.0" cy="471.0" rx="135" ry="19" fill="#fff" stroke="#6B49B8" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="471.0" rx="135" ry="19" fill="#EBE3FA" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="475.3" text-anchor="middle"><tspan class="uc-id">E012</tspan><tspan class="uc-name" dx="6">Manage Drivers</tspan></text>
-<ellipse cx="1055.0" cy="589.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="589.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="593.3" text-anchor="middle"><tspan class="uc-id">E018</tspan><tspan class="uc-name" dx="6">Manage Commuters</tspan></text>
-<ellipse cx="1055.0" cy="647.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="647.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="651.3" text-anchor="middle"><tspan class="uc-id">E019</tspan><tspan class="uc-name" dx="6">Manage Fare Rates</tspan></text>
-<ellipse cx="1055.0" cy="705.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="705.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="709.3" text-anchor="middle"><tspan class="uc-id">E020</tspan><tspan class="uc-name" dx="6">View System Reports</tspan></text>
-<ellipse cx="1055.0" cy="763.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="763.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="767.3" text-anchor="middle"><tspan class="uc-id">E027</tspan><tspan class="uc-name" dx="6">Manage Staff Accounts</tspan></text>
-<ellipse cx="1055.0" cy="821.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="821.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="825.3" text-anchor="middle"><tspan class="uc-id">E028</tspan><tspan class="uc-name" dx="6">View Activity Log</tspan></text>
-<ellipse cx="1055.0" cy="939.0" rx="135" ry="19" fill="#fff" stroke="#8A7410" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="939.0" rx="135" ry="19" fill="#F4EDC6" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="943.3" text-anchor="middle"><tspan class="uc-id">E015</tspan><tspan class="uc-name" dx="6">Manage Vehicles</tspan></text>
-<ellipse cx="1055.0" cy="997.0" rx="135" ry="19" fill="#fff" stroke="#8A7410" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="997.0" rx="135" ry="19" fill="#F4EDC6" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="1001.3" text-anchor="middle"><tspan class="uc-id">E016</tspan><tspan class="uc-name" dx="6">Manage Maintenance Schedule</tspan></text>
-<ellipse cx="1055.0" cy="1055.0" rx="135" ry="19" fill="#fff" stroke="#8A7410" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="1055.0" rx="135" ry="19" fill="#F4EDC6" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="1059.3" text-anchor="middle"><tspan class="uc-id">E017</tspan><tspan class="uc-name" dx="6">Manage Maintenance Tasks</tspan></text>
-<ellipse cx="365.0" cy="1231.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/>
-<ellipse cx="365.0" cy="1231.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75" stroke="none"/>
-<text x="365.0" y="1235.3" text-anchor="middle"><tspan class="uc-id">E008</tspan><tspan class="uc-name" dx="6">Change Password</tspan></text>
-<ellipse cx="710.0" cy="1231.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/>
-<ellipse cx="710.0" cy="1231.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75" stroke="none"/>
-<text x="710.0" y="1235.3" text-anchor="middle"><tspan class="uc-id">E025</tspan><tspan class="uc-name" dx="6">Profile &amp; Dashboard Views</tspan></text>
-<ellipse cx="1055.0" cy="1231.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/>
-<ellipse cx="1055.0" cy="1231.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75" stroke="none"/>
-<text x="1055.0" y="1235.3" text-anchor="middle"><tspan class="uc-id">E026</tspan><tspan class="uc-name" dx="6">Account Deletion</tspan></text>
-<rect x="70" y="1316" width="420" height="132" rx="6" fill="#fff" stroke="#c9d1d9"/>
-<text x="82" y="1334" class="grp" fill="#1b1f23">Legend</text>
-<line x1="84.0" y1="1356.0" x2="122.0" y2="1356.0" stroke="#2F6FB5" stroke-width="1.4" />
-<text x="134" y="1360" class="leg">Association — actor takes part in the use case</text>
-<line x1="84.0" y1="1378.0" x2="122.0" y2="1378.0" stroke="#57606a" stroke-width="1.2" />
-<text x="134" y="1382" class="leg">Association to an external system the use case depends on</text>
-<line x1="84" y1="1400" x2="122" y2="1400" stroke="#444" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#open)"/>
-<text x="134" y="1404" class="leg">«extend» / «include» — arrow points at the base / included use case</text>
-<line x1="84.0" y1="1422.0" x2="112.0" y2="1422.0" stroke="#444" stroke-width="1.4" />
-<path d="M122,1422 L112,1417 L112,1427 Z" fill="#fff" stroke="#444" stroke-width="1.3"/>
-<text x="134" y="1426" class="leg">Generalisation — role is a specialisation of Authenticated User</text>
+<text x="1320" y="1111.0" text-anchor="middle" class="actor-label">Maintenance</text>
+<text x="1320" y="1125.0" text-anchor="middle" class="actor-label">Manager</text>
+<line x1="1305.0" y1="1057.0" x2="1190.0" y2="1003.0" stroke="#8A7410" stroke-width="1.4" />
+<line x1="1305.0" y1="1057.0" x2="1190.0" y2="1061.0" stroke="#8A7410" stroke-width="1.4" />
+<line x1="1305.0" y1="1057.0" x2="1190.0" y2="1119.0" stroke="#8A7410" stroke-width="1.4" />
+<line x1="710.0" y1="1424.0" x2="411.0" y2="1312.9" stroke="#5F6B73" stroke-width="1.4" />
+<line x1="710.0" y1="1424.0" x2="710.0" y2="1314.0" stroke="#5F6B73" stroke-width="1.4" />
+<line x1="710.0" y1="1424.0" x2="1009.0" y2="1312.9" stroke="#5F6B73" stroke-width="1.4" />
+<g stroke="#5F6B73" stroke-width="2" fill="#ECEFF1" stroke-linecap="round"><circle cx="710.0" cy="1429" r="9"/><line x1="710.0" y1="1438" x2="710.0" y2="1466"/><line x1="695.0" y1="1448" x2="725.0" y2="1448"/><line x1="710.0" y1="1466" x2="698.0" y2="1484"/><line x1="710.0" y1="1466" x2="722.0" y2="1484"/></g>
+<text x="734.0" y="1454" class="actor-label" fill="#1b1f23">Authenticated User</text>
+<text x="734.0" y="1469" class="sub" font-style="italic">abstract actor — any signed-in role</text>
+<path d="M710.0,1486 L701.0,1504 L719.0,1504 Z" fill="#fff" stroke="#444" stroke-width="1.4"/>
+<line x1="710.0" y1="1504.0" x2="710.0" y2="1532.0" stroke="#444" stroke-width="1.4" />
+<line x1="40.0" y1="1532.0" x2="1385.0" y2="1532.0" stroke="#444" stroke-width="1.4" />
+<line x1="85.0" y1="765.0" x2="40.0" y2="765.0" stroke="#444" stroke-width="1.4" />
+<line x1="85.0" y1="1086.0" x2="40.0" y2="1086.0" stroke="#444" stroke-width="1.4" />
+<line x1="1335.0" y1="444.0" x2="1385.0" y2="444.0" stroke="#444" stroke-width="1.4" />
+<line x1="1335.0" y1="765.0" x2="1385.0" y2="765.0" stroke="#444" stroke-width="1.4" />
+<line x1="1335.0" y1="1057.0" x2="1385.0" y2="1057.0" stroke="#444" stroke-width="1.4" />
+<line x1="40.0" y1="765.0" x2="40.0" y2="1532.0" stroke="#444" stroke-width="1.4" />
+<line x1="1385.0" y1="444.0" x2="1385.0" y2="1532.0" stroke="#444" stroke-width="1.4" />
+<ellipse cx="365.0" cy="361.0" rx="135" ry="19" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="361.0" rx="135" ry="19" fill="#E3F0FF" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="365.3" text-anchor="middle"><tspan class="uc-id">E001</tspan><tspan class="uc-name" dx="6">Login</tspan></text>
+<ellipse cx="365.0" cy="419.0" rx="135" ry="19" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="419.0" rx="135" ry="19" fill="#E3F0FF" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="423.3" text-anchor="middle"><tspan class="uc-id">E011</tspan><tspan class="uc-name" dx="6">Reset Password</tspan></text>
+<ellipse cx="365.0" cy="477.0" rx="135" ry="19" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="477.0" rx="135" ry="19" fill="#E3F0FF" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="481.3" text-anchor="middle"><tspan class="uc-id">E002</tspan><tspan class="uc-name" dx="6">Create Account</tspan></text>
+<ellipse cx="365.0" cy="535.0" rx="135" ry="19" fill="#fff" stroke="#2F6FB5" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="535.0" rx="135" ry="19" fill="#E3F0FF" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="539.3" text-anchor="middle"><tspan class="uc-id">E022</tspan><tspan class="uc-name" dx="6">Driver Registration</tspan></text>
+<ellipse cx="365.0" cy="653.0" rx="135" ry="19" fill="#fff" stroke="#1F8F6B" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="653.0" rx="135" ry="19" fill="#DDF3EC" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="657.3" text-anchor="middle"><tspan class="uc-id">E003</tspan><tspan class="uc-name" dx="6">Track PUJ</tspan></text>
+<ellipse cx="365.0" cy="711.0" rx="135" ry="19" fill="#fff" stroke="#1F8F6B" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="711.0" rx="135" ry="19" fill="#DDF3EC" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="715.3" text-anchor="middle"><tspan class="uc-id">E004</tspan><tspan class="uc-name" dx="6">Plan Trip</tspan></text>
+<ellipse cx="365.0" cy="769.0" rx="135" ry="19" fill="#fff" stroke="#1F8F6B" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="769.0" rx="135" ry="19" fill="#DDF3EC" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="773.3" text-anchor="middle"><tspan class="uc-id">E006</tspan><tspan class="uc-name" dx="6">Pay Fare</tspan></text>
+<ellipse cx="365.0" cy="827.0" rx="135" ry="19" fill="#fff" stroke="#1F8F6B" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="827.0" rx="135" ry="19" fill="#DDF3EC" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="831.3" text-anchor="middle"><tspan class="uc-id">E005</tspan><tspan class="uc-name" dx="6">Top Up Balance</tspan></text>
+<ellipse cx="365.0" cy="885.0" rx="135" ry="19" fill="#fff" stroke="#1F8F6B" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="885.0" rx="135" ry="19" fill="#DDF3EC" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="889.3" text-anchor="middle"><tspan class="uc-id">E007</tspan><tspan class="uc-name" dx="6">View Payment History</tspan></text>
+<ellipse cx="365.0" cy="1003.0" rx="135" ry="19" fill="#fff" stroke="#C46A12" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="1003.0" rx="135" ry="19" fill="#FFEBD6" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="1007.3" text-anchor="middle"><tspan class="uc-id">E009</tspan><tspan class="uc-name" dx="6">Clock In</tspan></text>
+<ellipse cx="365.0" cy="1061.0" rx="135" ry="19" fill="#fff" stroke="#C46A12" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="1061.0" rx="135" ry="19" fill="#FFEBD6" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="1065.3" text-anchor="middle"><tspan class="uc-id">E010</tspan><tspan class="uc-name" dx="6">Clock Out</tspan></text>
+<ellipse cx="365.0" cy="1119.0" rx="135" ry="19" fill="#fff" stroke="#C46A12" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="1119.0" rx="135" ry="19" fill="#FFEBD6" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="1123.3" text-anchor="middle"><tspan class="uc-id">E021</tspan><tspan class="uc-name" dx="6">Share Vehicle Location</tspan></text>
+<ellipse cx="365.0" cy="1177.0" rx="135" ry="19" fill="#fff" stroke="#C46A12" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="1177.0" rx="135" ry="19" fill="#FFEBD6" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="1181.3" text-anchor="middle"><tspan class="uc-id">E023</tspan><tspan class="uc-name" dx="6">Driver Dashboard Views</tspan></text>
+<ellipse cx="1055.0" cy="361.0" rx="135" ry="19" fill="#fff" stroke="#6B49B8" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="361.0" rx="135" ry="19" fill="#EBE3FA" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="365.3" text-anchor="middle"><tspan class="uc-id">E013</tspan><tspan class="uc-name" dx="6">Manage Timekeeping</tspan></text>
+<ellipse cx="1055.0" cy="419.0" rx="135" ry="19" fill="#fff" stroke="#6B49B8" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="419.0" rx="135" ry="19" fill="#EBE3FA" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="423.3" text-anchor="middle"><tspan class="uc-id">E014</tspan><tspan class="uc-name" dx="6">Manage Violations</tspan></text>
+<ellipse cx="1055.0" cy="477.0" rx="135" ry="19" fill="#fff" stroke="#6B49B8" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="477.0" rx="135" ry="19" fill="#EBE3FA" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="481.3" text-anchor="middle"><tspan class="uc-id">E024</tspan><tspan class="uc-name" dx="6">Violation Code Management</tspan></text>
+<ellipse cx="1055.0" cy="535.0" rx="135" ry="19" fill="#fff" stroke="#6B49B8" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="535.0" rx="135" ry="19" fill="#EBE3FA" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="539.3" text-anchor="middle"><tspan class="uc-id">E012</tspan><tspan class="uc-name" dx="6">Manage Drivers</tspan></text>
+<ellipse cx="1055.0" cy="653.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="653.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="657.3" text-anchor="middle"><tspan class="uc-id">E018</tspan><tspan class="uc-name" dx="6">Manage Commuters</tspan></text>
+<ellipse cx="1055.0" cy="711.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="711.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="715.3" text-anchor="middle"><tspan class="uc-id">E019</tspan><tspan class="uc-name" dx="6">Manage Fare Rates</tspan></text>
+<ellipse cx="1055.0" cy="769.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="769.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="773.3" text-anchor="middle"><tspan class="uc-id">E020</tspan><tspan class="uc-name" dx="6">View System Reports</tspan></text>
+<ellipse cx="1055.0" cy="827.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="827.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="831.3" text-anchor="middle"><tspan class="uc-id">E027</tspan><tspan class="uc-name" dx="6">Manage Staff Accounts</tspan></text>
+<ellipse cx="1055.0" cy="885.0" rx="135" ry="19" fill="#fff" stroke="#B83A4B" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="885.0" rx="135" ry="19" fill="#FBE0E3" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="889.3" text-anchor="middle"><tspan class="uc-id">E028</tspan><tspan class="uc-name" dx="6">View Activity Log</tspan></text>
+<ellipse cx="1055.0" cy="1003.0" rx="135" ry="19" fill="#fff" stroke="#8A7410" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="1003.0" rx="135" ry="19" fill="#F4EDC6" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="1007.3" text-anchor="middle"><tspan class="uc-id">E015</tspan><tspan class="uc-name" dx="6">Manage Vehicles</tspan></text>
+<ellipse cx="1055.0" cy="1061.0" rx="135" ry="19" fill="#fff" stroke="#8A7410" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="1061.0" rx="135" ry="19" fill="#F4EDC6" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="1065.3" text-anchor="middle"><tspan class="uc-id">E016</tspan><tspan class="uc-name" dx="6">Manage Maintenance Schedule</tspan></text>
+<ellipse cx="1055.0" cy="1119.0" rx="135" ry="19" fill="#fff" stroke="#8A7410" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="1119.0" rx="135" ry="19" fill="#F4EDC6" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="1123.3" text-anchor="middle"><tspan class="uc-id">E017</tspan><tspan class="uc-name" dx="6">Manage Maintenance Tasks</tspan></text>
+<ellipse cx="365.0" cy="1295.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/>
+<ellipse cx="365.0" cy="1295.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75" stroke="none"/>
+<text x="365.0" y="1299.3" text-anchor="middle"><tspan class="uc-id">E008</tspan><tspan class="uc-name" dx="6">Change Password</tspan></text>
+<ellipse cx="710.0" cy="1295.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/>
+<ellipse cx="710.0" cy="1295.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75" stroke="none"/>
+<text x="710.0" y="1299.3" text-anchor="middle"><tspan class="uc-id">E025</tspan><tspan class="uc-name" dx="6">Profile &amp; Dashboard Views</tspan></text>
+<ellipse cx="1055.0" cy="1295.0" rx="135" ry="19" fill="#fff" stroke="#5F6B73" stroke-width="1.6"/>
+<ellipse cx="1055.0" cy="1295.0" rx="135" ry="19" fill="#ECEFF1" fill-opacity="0.75" stroke="none"/>
+<text x="1055.0" y="1299.3" text-anchor="middle"><tspan class="uc-id">E026</tspan><tspan class="uc-name" dx="6">Account Deletion</tspan></text>
+<rect x="70" y="1380" width="420" height="132" rx="6" fill="#fff" stroke="#c9d1d9"/>
+<text x="82" y="1398" class="grp" fill="#1b1f23">Legend</text>
+<line x1="84.0" y1="1420.0" x2="122.0" y2="1420.0" stroke="#2F6FB5" stroke-width="1.4" />
+<text x="134" y="1424" class="leg">Association — actor takes part in the use case</text>
+<line x1="84.0" y1="1442.0" x2="122.0" y2="1442.0" stroke="#57606a" stroke-width="1.2" />
+<text x="134" y="1446" class="leg">Association to an external system the use case depends on</text>
+<line x1="84" y1="1464" x2="122" y2="1464" stroke="#444" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#open)"/>
+<text x="134" y="1468" class="leg">«extend» / «include» — arrow points at the base / included use case</text>
+<line x1="84.0" y1="1486.0" x2="112.0" y2="1486.0" stroke="#444" stroke-width="1.4" />
+<path d="M122,1486 L112,1481 L112,1491 Z" fill="#fff" stroke="#444" stroke-width="1.3"/>
+<text x="134" y="1490" class="leg">Generalisation — role is a specialisation of Authenticated User</text>
 </svg>

@@ -43,6 +43,16 @@
 4. System validates: `year` **required, integer, 1990–2030**; `brand`, `model`, `plate_number`, `status`, `acquisition_date` **required**; `plate_number` **unique** (E2); `status` **in `active, maintenance, inactive, disposed`**; `exp_disposal_date` **after `acquisition_date`**; `driver_id` **exists** and assignable (E4).
 5. System stores the vehicle — detaching `driver_id` when the status is not roadworthy — and confirms *"Vehicle successfully added."*
 
+**A7 – Add a Vehicle by Scanning Its Papers with a Phone**
+1. In the **Add Vehicle** modal the Maintenance Manager clicks **"Scan with phone"** (shown only when the server has Tesseract installed and `VEHICLE_SCAN_ENABLED` is on). The system opens a scan session (`POST /vehicle-scans`) and shows its link as a **QR code** with a 15-minute countdown.
+2. The manager points a phone camera at the code. The phone opens `/scan/{token}` (no sign-in: the 40-character random token is the only credential, and it only lets the phone send photos to that one session). The page asks for a photo of the **Certificate of Registration** and, optionally, the **Official Receipt**. The phone shrinks and straightens the photos before sending them.
+3. The server reads the photos with **Tesseract on the same machine** (nothing is sent to a third party): it turns the page upright, reads it in three independent passes, finds each printed label (PLATE NO., CHASSIS NO., MAKE, SERIES, YEAR MODEL, FUEL…) by its position and reads the value in that cell. A page with a label missing is read from the CR's fixed grid. The phone is told only "sent"; it is never shown what was read.
+4. The manager's modal, which polls the session, fills in *Plate number, VIN, Brand, Model, Year* and *Fuel type* and shows **"Check these against the papers"**: thumbnails of the photos (private, `no-store`), each value marked **Read clearly** or **Check carefully**, alternative readings to pick from (*"or RYJ 2039"*), and warnings when the CR and OR disagree (plate, year, fuel). A value read by only one pass, corrected from a look-alike character (O/0, I/1), or in doubt is marked *check*; a chassis number is **always** marked *check*; a value that could not be read is left empty.
+5. **Save is disabled until the manager ticks "I have checked these details against the document."** The server enforces the same rule (`scan_confirmed`): a scan session belonging to someone else, not finished, already used or expired is refused (422), and so is a missing confirmation.
+6. On saving, the vehicle is created through the normal validation, the photos and the read results are **deleted**, the session is marked used, and the audit trail records *Vehicle added from scanned papers* with which fields were read, which the manager corrected and which needed a second look (names only, never the values).
+
+Closing the form, pressing *Cancel scan* or starting another scan deletes the photos at once; `php artisan vehicle-scans:purge` (every 10 minutes) removes anything left after the 15 minutes. A finished scan gets a fresh 15 minutes to check.
+
 **A2 – Edit a Vehicle**
 1. In the list (or from the detail modal), the Maintenance Manager clicks the edit icon.
 2. System displays the **Edit Vehicle** modal pre-filled with the record.
@@ -70,6 +80,15 @@
 1. Maintenance Manager uses the search box, the status chips (*Active / Maintenance / Inactive*), the *All Fuel Types* and *All Vehicles* (assigned / unassigned) selects, or the sort select (*Newest First / Oldest First / Brand A–Z*).
 2. System filters and re-orders the table client-side and updates the row counter.
 
+**A8 – Overdue maintenance is flagged, and can block a vehicle going active**
+1. The **Vehicles** list shows a rose *"N services overdue"* badge (or an amber *"N due soon"* one) under a vehicle's name, linking to its preventive-maintenance page; the Maintenance Manager's dashboard lists every flagged vehicle under *Maintenance needs attention*. What counts as overdue or due soon, and the daily email, are in UCN_SC_E016 A3.
+2. With `MAINTENANCE_BLOCK_ACTIVE_WHEN_OVERDUE=true` (**off by default**) a vehicle that is not `active` cannot be set back to `active` while any service is overdue (E7). Vehicles already active are not affected.
+
+**A9 – A vehicle that loses its driver gets a replacement**
+1. When a driver on a vehicle is **suspended**, or their **licence expires**, the seat they held becomes a vacancy and the system assigns the best free driver (UCN_SC_E012 A8). A vehicle that had two drivers gets two again and a 30-day alternating roster is written from today (A6); a single-driver vehicle gets one.
+2. Vehicles still waiting for a driver are listed on the Maintenance Manager's dashboard under *Vehicles waiting for a driver* and reported to the managers once a day.
+3. Assigning or unassigning drivers on this page is never treated as a vacancy, and a unit that is not `active` has no seat to fill.
+
 ---
 
 ## Postconditions
@@ -82,6 +101,8 @@
 6. A vehicle that still has a driver cannot be deleted: the driver must be unassigned first.
 7. The *Assigned Driver* list offers only **approved, non-suspended** drivers who do **not already hold another vehicle** (the vehicle being edited keeps its own driver). The server enforces the same: one vehicle per driver.
 
+8. A vehicle added from scanned papers has its photos deleted and the scan recorded as used (A7).
+9. A vehicle with an overdue or due-soon service is flagged on the list and the dashboard (A8).
 ---
 
 ## Exceptions
@@ -104,11 +125,14 @@ Any required field is empty or out of range (year, status, acquisition date). Sy
 **E6 – Cannot Delete a Vehicle With Service History**
 The vehicle already has maintenance or preventive-maintenance records. System refuses the deletion with *"This vehicle has maintenance records and cannot be deleted. Mark its status as Disposed instead."*
 
+**E7 – Cannot Go Active While a Service Is Overdue (only with `MAINTENANCE_BLOCK_ACTIVE_WHEN_OVERDUE=true`)**
+Setting a vehicle that is `maintenance`, `inactive` or `disposed` to `active` while a preventive-maintenance service is overdue is refused on the `status` field: *"This vehicle cannot go active while a service is overdue (Oil change). Log the service first."*
+
 ---
 
 ## Known Gaps / Notes
 
-- **Vehicles that lose a driver get a replacement.** When a driver on a vehicle is suspended, or their licence expires (the hourly `vehicles:cover-vacancies` job then takes them off it), the seat is filled with the best free driver automatically; vehicles still waiting for one are listed on the Maintenance dashboard. Manually assigning or unassigning drivers on this page is never treated as a vacancy.
+- **The phone scan helps, it does not decide** (A7). Measured on synthetic specimens (`tests/Fixtures/ocr`, `php artisan vehicle-scan:evaluate`): values were correct in the form on 100% of clean pages and flatbed scans, 94% of phone photos and 91% of photocopies, and none was ever marked *read clearly* while wrong; the rest are flagged *check* or left empty. Real papers (stamps, creases, worn print) will read worse, and a forged paper reads exactly like a genuine one. A chassis number is always marked *check*.
 
 - **"Active vehicle" in E3 means "clocked in right now", not "on the road"** — a vehicle assigned to a driver who is not clocked in can be disposed with no further check.
 - **Hard deletion is still available** for a vehicle with no maintenance history; its location history rows are removed with it (foreign keys cascade).
@@ -131,6 +155,10 @@ The vehicle already has maintenance or preventive-maintenance records. System re
 | Menu | `config/menu.php` — *Vehicles* (maintenance_manager) |
 | Middleware | `auth`, `verified`, `role:maintenance_manager` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_a_driver_cannot_be_assigned_to_a_vehicle_under_maintenance`, `test_a_vehicle_with_a_clocked_in_driver_cannot_be_disposed`, `test_setting_a_vehicle_to_maintenance_detaches_its_driver`, `test_a_vehicle_under_maintenance_is_not_shown_as_active`, `test_a_commuter_cannot_reach_the_vehicle_management_page`, `test_a_vehicle_with_maintenance_records_cannot_be_deleted`) |
+| Phone scan | `app/Services/VehicleScan/` (`RegistrationDocumentReader`, `DocumentExtractor`, `FieldNormalizer`, `TesseractClient`, `ImagePreparer`), `VehicleScanController`, `PhoneScanController`, `app/Models/VehicleScanSession.php`, `resources/views/vehicle-scan/phone.blade.php`, the scan panel in `resources/views/maintenance-manager/vehicles.blade.php`, `VehicleController::store()` (`resolveScan()`, `consumeScan()`), `config/vehicle_scan.php`, `vehicle-scans:purge` (every 10 minutes); schema `2026_10_28_090000_create_vehicle_scan_sessions_table.php` |
+| Maintenance flags | `app/Services/MaintenanceDueService.php`, `VehicleController::index()` / `assertServiceNotOverdue()`, `config/maintenance.php` |
+| Replacement | `app/Services/ReplacementDriverService.php`, `app/Models/DriverVacancy.php`, `config/fleet.php` |
+| Tests (automation) | `tests/Feature/VehicleScanReaderTest.php`, `VehicleScanFlowTest.php`, `AutoUpdatingTimestampTest.php`, `AutomationTest.php` (maintenance flags and block), `ReplacementDriverTest.php` |
 | Related | UCN_SC_E016 (Maintenance Schedule), UCN_SC_E017 (Maintenance Tasks), UCN_SC_E009/E010 (clock in / out), UCN_SC_E003 (Track PUJ) |
 --- Update Note ---
 Vehicle issues (E3/E4 map removal, driver detachment, disposal guards) are now enforced and working; document reflects current working state.

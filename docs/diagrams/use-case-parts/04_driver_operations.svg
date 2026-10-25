@@ -12,8 +12,10 @@
 <text x="24" y="48" class="sub">Shift clock, availability and live location sharing.</text>
 <rect x="190" y="62" width="380" height="344" rx="10" fill="#FCFCFD" stroke="#30363d" stroke-width="2"/>
 <text x="206" y="84" class="grp" fill="#30363d">SmartCommute — Web Commute System</text>
-<line x1="655.0" y1="289.0" x2="515.0" y2="289.0" stroke="#57606a" stroke-width="1.2" />
-<rect x="655" y="261.0" width="170" height="56" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/><text x="740" y="277.0" text-anchor="middle" class="xs">«external system»</text><text x="740" y="292.0" text-anchor="middle" class="xn">Push Channel</text><text x="740" y="307.0" text-anchor="middle" class="xb">(Pusher / Echo)</text>
+<line x1="655.0" y1="303.0" x2="515.0" y2="289.0" stroke="#57606a" stroke-width="1.2" />
+<line x1="655.0" y1="227.0" x2="515.0" y2="227.0" stroke="#57606a" stroke-width="1.2" />
+<rect x="655" y="275.0" width="170" height="56" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/><text x="740" y="291.0" text-anchor="middle" class="xs">«external system»</text><text x="740" y="306.0" text-anchor="middle" class="xn">Push Channel</text><text x="740" y="321.0" text-anchor="middle" class="xb">(Pusher / Echo)</text>
+<rect x="655" y="199.0" width="170" height="56" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/><text x="740" y="215.0" text-anchor="middle" class="xs">«external system»</text><text x="740" y="230.0" text-anchor="middle" class="xn">Scheduler</text><text x="740" y="245.0" text-anchor="middle" class="xb">(cron · schedule:run)</text>
 <g stroke="#C46A12" stroke-width="2" fill="#FFEBD6" stroke-linecap="round"><circle cx="100" cy="235.0" r="9"/><line x1="100" y1="244.0" x2="100" y2="272.0"/><line x1="85" y1="254.0" x2="115" y2="254.0"/><line x1="100" y1="272.0" x2="88" y2="290.0"/><line x1="100" y1="272.0" x2="112" y2="290.0"/></g>
 <text x="100" y="308.0" text-anchor="middle" class="al">Driver</text>
 <line x1="115.0" y1="254.0" x2="245.0" y2="165.0" stroke="#C46A12" stroke-width="1.4" />

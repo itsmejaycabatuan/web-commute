@@ -83,6 +83,8 @@ More than 10,000 entries match. System exports the newest 10,000; the Admin narr
 
 ## Known Gaps / Notes
 
+- **Entries written by automated jobs have no signed-in actor.** The auto-close of a shift, the inactivity warning and automatic suspension, the repeat-violator and fare-evasion flags, the replacement of a driver, the scheduled reports and the use of a scanned vehicle all appear with the event names listed in `docs/AUDIT_TRAIL.md`; the *Who* column shows no email for the jobs that run without a user, and the description says what happened.
+
 - **Entries are kept 365 days** (`ACTIVITY_LOG_RETENTION_DAYS`); the daily `activitylog:clean` job deletes older ones, so the page cannot show history beyond that. The scheduler must be running.
 - **Entries written before the audit trail was rebuilt** have a *Legacy* category, no record, no field values and no IP address. They are listed (except the "Action performed" noise) but carry little detail.
 - **The record link is a label, not a link.** An entry names its record (*Vehicle #12*), but the page does not open that record, and the record may since have been deleted — the description and `Details` still say what it was.
@@ -105,4 +107,5 @@ More than 10,000 entries match. System exports the newest 10,000; the Admin narr
 | Writing the trail | `app/Support/Audit.php`, `app/Models/Concerns/Audited.php`; design in `docs/AUDIT_TRAIL.md` |
 | Schema | `activity_log`; `database/migrations/2026_10_21_100000_add_created_at_index_to_activity_log.php` |
 | Tests | `tests/Feature/ActivityLogPageTest.php`, `tests/Feature/AuditTrailTest.php` |
+| Events added by automation | `app/Support/AuditCatalog.php` — `inactivity_warned`, `repeat_violator_flagged`, `fare_evasion_flagged`, `vacancy_opened`, `replacement_assigned`, `released_from_vehicle`, `vehicle_scan_used`, `report_sent` |
 | Related | UCN_SC_E001 (Login — sign-in events), UCN_SC_E018 / E027 (suspensions, staff), UCN_SC_E020 (report export, also audited) |

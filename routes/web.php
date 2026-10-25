@@ -12,6 +12,8 @@ use App\Http\Controllers\DevMarkerController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\DriverManagerController;
 use App\Http\Controllers\DutyRosterController;
+use App\Http\Controllers\PhoneScanController;
+use App\Http\Controllers\VehicleScanController;
 use App\Http\Controllers\FareController;
 use App\Http\Controllers\MaintenanceManagerController;
 use App\Http\Controllers\PaymentController;
@@ -145,6 +147,12 @@ Route::get('/session/status', fn () => response()->json(['active' => true]))
 Route::post('/webhooks/paymongo', [PaymentController::class, 'webhook'])
     ->name('paymongo.webhook');
 
+// (Each throttle below has its own bucket name: unnamed throttles share one counter per user, and the polling would eat the others.)
+// Scan a vehicle's registration papers with a phone (the Add Vehicle form shows this link as a QR code). The phone
+// signs in with nothing: the long random token in the link is the credential for that one scan session.
+Route::get('/scan/{token}', [PhoneScanController::class, 'show'])->middleware('throttle:60,1,vscan-phone')->name('vehicle-scan.phone');
+Route::post('/scan/{token}', [PhoneScanController::class, 'upload'])->middleware('throttle:12,1,vscan-upload')->name('vehicle-scan.upload');
+
 Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
 
     Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
@@ -158,6 +166,12 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
         Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
         Route::post('/vehicles', [VehicleController::class, 'store'])->name('vehicles.store');
         Route::patch('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
+
+        // The desktop side of the phone scan: start, poll, look at the photos, cancel.
+        Route::post('/vehicle-scans', [VehicleScanController::class, 'store'])->middleware('throttle:10,1,vscan-start')->name('vehicle-scan.store');
+        Route::get('/vehicle-scans/{session}', [VehicleScanController::class, 'show'])->middleware('throttle:120,1,vscan-poll')->name('vehicle-scan.show');
+        Route::get('/vehicle-scans/{session}/page/{n}', [VehicleScanController::class, 'page'])->whereNumber('n')->name('vehicle-scan.page');
+        Route::delete('/vehicle-scans/{session}', [VehicleScanController::class, 'destroy'])->name('vehicle-scan.destroy');
         Route::delete('/vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
     });
 

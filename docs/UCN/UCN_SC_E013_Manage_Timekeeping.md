@@ -45,6 +45,12 @@
 1. Driver Manager clicks one of the chips *All*, *Regular*, *Sick*, *Vacation*, *Overtime*.
 2. System filters the table client-side to the selected type; the entry counter updates. **Overtime** means `overtime_hours > 0`.
 
+**A3 – Review a shift the system closed automatically**
+1. A driver forgot to clock out and the system closed the shift (UCN_SC_E010 A4). On the **Time Keeping** page the entry carries an amber **Auto-closed** badge next to its type, and the **Needs review** filter (with a count) lists every such entry not yet reviewed.
+2. The Driver Manager compares the credited hours (a regular 8-hour shift, no overtime) with what the driver really worked and clicks **Mark reviewed** (`PATCH /time-keeping/{entry}/review`).
+3. System stamps `reviewed_at`, writes *Reviewed auto-closed time entry …* to the audit trail and confirms *"Shift marked as reviewed."* The badge reads *Auto-closed · reviewed*. Reviewing an entry that was not auto-closed, or one already reviewed, is refused.
+4. Review only **acknowledges** the entry; its hours cannot be edited here (see Known Gaps).
+
 ---
 
 ## Postconditions
@@ -54,6 +60,7 @@
 3. The system notifies the Driver Manager with a success message.
 4. `hours_worked` and `overtime_hours` are derived server-side; they are never trusted from the client.
 
+5. An auto-closed shift is flagged until a Driver Manager marks it reviewed (A3).
 ---
 
 ## Exceptions
@@ -77,7 +84,7 @@ The shift being written shares part of the day with an entry that already exists
 
 ## Known Gaps / Notes
 
-- **Auto-closed shifts need a review.** Shifts closed by the system (UCN_SC_E010) show an *Auto-closed* badge, count toward the *Needs review* filter, and have a **Mark reviewed** button (`PATCH /time-keeping/{entry}/review`, recorded in the audit trail). Review only acknowledges the entry — the hours it carries are the credited regular shift, and there is still no way to edit them (see the note below).
+- **Reviewing only acknowledges an auto-closed shift** (A3): its credited hours cannot be corrected here, because time entries are immutable (below).
 - **Shifts cannot span midnight.** An overnight shift (e.g. 22:00 → 06:00) is rejected by E4; the manager must split it into two dated entries.
 - **No overlap check against the driver's own clock-in** (UCN_SC_E009) — a manager entry and a self-clocked entry on the same day are only blocked when they genuinely overlap in time.
 - **Entries are immutable**: there is no edit or delete for a manager-entered row; only the driver's own clock-out (E010) fills in `time_out`.
@@ -97,4 +104,6 @@ The shift being written shares part of the day with an entry that already exists
 | Menu | `config/menu.php` — *Time Keeping* (driver_manager) |
 | Middleware | `auth`, `verified`, `role:driver_manager` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_a_time_entry_where_clock_out_precedes_clock_in_is_rejected`, `test_an_overlapping_shift_is_rejected`, `test_a_second_non_overlapping_shift_is_accepted`) |
+| Review | `DriverManagerController::timeKeepingReview()`, route `driver-manager.time-keeping.review`, the *Needs review* filter and badge in `resources/views/driver-manager/time-keeping.blade.php` |
+| Tests (automation) | `tests/Feature/AutomationTest.php` — `test_driver_manager_can_review_an_auto_closed_shift`, `test_review_is_refused_for_a_normal_entry_and_for_other_roles` |
 | Related | UCN_SC_E009 (Clock In), UCN_SC_E010 (Clock Out), UCN_SC_E012 (Manage Drivers) |

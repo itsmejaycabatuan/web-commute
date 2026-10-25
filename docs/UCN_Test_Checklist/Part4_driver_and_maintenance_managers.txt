@@ -4,7 +4,7 @@
 
  Source of truth : docs/UCN/UCN_SC_E0xx_*.md  (open the matching file if a step is unclear)
  Test data       : docs/MANUAL_TEST_CHECKLIST.md + database/seeders/DevSeeder.php
- Built           : 2026-10-22
+ Built           : 2026-10-25
 
  The 5 parts (this file is Part 4):
      1  Accounts and Access                  E001 E002 E008 E011 E022 E026
@@ -18,7 +18,8 @@
  BEFORE YOU START (everyone)
 ----------------------------------------------------------------------------------------------
 
- 1. Load the baseline data (safe to re-run any time, it never duplicates rows):
+ 1. Load the baseline data (it adds what is missing; on a database that already holds drivers with other codes
+    it can stop with "Duplicate entry 'DRV-000002'" - see MANUAL_TEST_CHECKLIST.md, so use a fresh database then):
 
         /opt/lampp/bin/php artisan db:seed --class=DevSeeder
 
@@ -134,6 +135,24 @@ Notes for this part
  [ ] E9. Approve an already-approved driver / reject an already-rejected one -> "This driver is already
          approved." / "...already rejected."
 
+ AUTOMATION (added Oct 2026)
+ [ ] N1. Register a driver (E022): every Admin and Driver Manager is emailed "New driver application". Approve or
+         reject: the driver is emailed the decision.
+ [ ] N2. Inactive 3 days: `php artisan drivers:inactivity-check --dry-run` lists the driver; a real run emails a
+         warning once. 7 days and a day after the warning: the driver is suspended automatically and the
+         vehicle is released. A driver is never suspended before being warned.
+ [ ] N3. Replacement: suspend liza.mercado@ (DEF-5678) while a spare approved driver exists -> the vehicle gets
+         the spare automatically; the spare and the Maintenance Manager are emailed; the Activity Log shows "Vehicle
+         lost a driver" and "Replacement driver assigned". (Re-assign Liza's vehicle afterwards.)
+ [ ] N4. Shared vehicle: suspend one of two drivers -> the replacement joins and Duty Roster shows a new
+         alternating roster from today.
+ [ ] N5. No spare: the Maintenance Manager dashboard shows "Vehicles waiting for a driver"; approve a spare, run
+         `php artisan vehicles:cover-vacancies` -> the panel empties. AUTO_REPLACE_DRIVERS=false -> only an email naming
+         the best free drivers.
+ [ ] N6. Expired licence on a driver with a vehicle: `php artisan vehicles:cover-vacancies` takes them off the
+         vehicle (not suspended), emails them and replaces them.
+ [ ] N7. Removing a driver by hand on the Vehicles page opens no vacancy.
+
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
 
@@ -167,6 +186,11 @@ Notes for this part
  [ ] E3. Blank field, or a negative / non-numeric fine -> per-field validation messages.
  [ ] E4. Delete an in-use code -> blocked (same as A4).
  [ ] E5. (*) Database failure -> generic error message.
+
+ AUTOMATION (added Oct 2026)
+ [ ] N1. A freshly seeded database lists 14 codes (UV01-UV14, the PUJ schedule). WARNING: running
+         `php artisan db:seed --class=ViolationCodeSeeder` REPLACES the whole table and deletes the violation logs
+         that belong to the old codes - only do it on a test database. DevSeeder re-runs it only when the code count differs.
 
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
@@ -206,6 +230,13 @@ Notes for this part
  [ ] E6. Future incident date -> "The date of violation must be a date before or equal to today." (the date
          picker is also capped at today). In bulk add the message names the row.
  Also: a driver manager cannot open admin pages or maintenance pages (HTTP 403).
+
+ AUTOMATION (added Oct 2026)
+ [ ] N1. Log a violation: the "Offense" list is filled by the system from the code and the driver's history,
+         and the fine is priced automatically; the driver is emailed once per entry (a bulk of two sends two).
+ [ ] N2. "Mark Paid" emails "Your fine was marked as paid"; "Mark Unpaid" sends nothing.
+ [ ] N3. Three violations for one driver inside 30 days, then `php artisan drivers:flag-repeat-violators --dry-run`
+         lists the driver; a real run emails the Driver Managers once, with one Activity Log entry.
 
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
@@ -267,6 +298,29 @@ Notes for this part
  [ ] E6. Delete a vehicle with maintenance history -> "This vehicle has maintenance records and cannot be
          deleted. Mark its status as Disposed instead." A vehicle with a driver shows a locked delete icon.
 
+ SCAN WITH PHONE (added Oct 2026)  -- needs tesseract-ocr; specimens: python3 tests/Fixtures/ocr/generate_samples.py
+ [ ] S1. Add Vehicle shows "Have the registration papers?" and a "Scan with phone" button. Without Tesseract the
+         button is not shown.
+ [ ] S2. Pressing it shows a QR code, three steps and a 15:00 countdown.
+ [ ] S3. The link opens a phone-sized page with a CR slot and an optional OR slot. Send a photo (a real phone, or
+         the specimen images) -> the desktop form fills plate, VIN, brand, model, year and fuel; the thumbnails and
+         "Check these against the papers" appear; the Add Vehicle button stays disabled until "I have checked these
+         details against the document" is ticked.
+ [ ] S4. A CR and an OR of two different vehicles -> "...differs between the papers" and an "or ..." choice.
+ [ ] S5. A photo of something else -> refused on the phone ("does not look like an LTO Official Receipt or
+         Certificate of Registration").
+ [ ] S6. Close the form or press "Cancel scan" -> the session ends; storage/app/vehicle-scans/ is empty.
+ [ ] S7. Wait 15 minutes without sending -> "The scan code expired"; "Try again" starts a new one; the old link
+         answers "expired". The same link after saving also answers "expired".
+ [ ] S8. Tick the box and save -> the vehicle is listed; the Activity Log shows "Vehicle added from scanned papers"
+         with the field NAMES (read / corrected / needing a second look) and no values.
+ [ ] S9. Add a vehicle by hand -> unchanged, nothing about a scan in the log.
+ [ ] S10. On a real phone (iOS and Android): camera and photo library both work; portrait and landscape read; the
+         page is readable at 375 px.
+ AUTOMATION (added Oct 2026)
+ [ ] N1. "Vehicles waiting for a driver" panel on the dashboard (see E012 N5); a vehicle's maintenance badge.
+ [ ] N2. MAINTENANCE_BLOCK_ACTIVE_WHEN_OVERDUE=true: setting an overdue maintenance vehicle back to Active is refused.
+
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
 
@@ -294,6 +348,12 @@ Notes for this part
          recorded reading of N km."; nothing changes.
  [ ] E3. Leave a required field empty or malformed (odometer, date, cost) -> offending fields listed; nothing stored.
  [ ] E4. (*) Database failure -> operation cancelled and notified.
+
+ AUTOMATION (added Oct 2026)
+ [ ] N1. `php artisan maintenance:due-alerts --dry-run` lists vehicles with overdue and due-soon services; a real run
+         emails every active Maintenance Manager (the scheduler runs it daily at 07:00); with nothing due it sends nothing.
+ [ ] N2. The same vehicles carry a badge on Vehicles and a "Maintenance needs attention" panel on the dashboard.
+ [ ] N3. A task with only a distance interval is not overdue merely for lacking a time interval.
 
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________

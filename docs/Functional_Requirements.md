@@ -85,7 +85,8 @@ Satisfied when:
 - a marker appears for every roadworthy vehicle (`active` or `inactive`) that has reported within the last 5 minutes, coloured by its driver's availability (green available, red unavailable, blue unknown), updating in real time with a polling fallback;
 - tapping a marker shows plate / route, an **approximate** location (never exact — see FR-E021), the driver's availability and an ETA; ETA badges show within 5 km and the nearest PUJ within 10 km is offered as a shortcut;
 - a vehicle set to `maintenance` or `disposed` leaves the map immediately;
-- one status banner at a time explains offline, map-service, routing, location-denied and no-PUJ conditions, in that priority; a Guest is limited to 3 fare lookups per day.
+- one status banner at a time explains offline, map-service, routing, location-denied and no-PUJ conditions, in that priority; a Guest is limited to 3 fare lookups per day;
+- a vehicle whose driver's shift the system closed automatically (FR-E010) leaves the map at once, while its GPS history is kept.
 
 ## FR-E004 — Plan Trip
 
@@ -109,20 +110,25 @@ Satisfied when:
 - the amount is a preset (₱50 / 100 / 200 / 500) or a custom ₱10 – ₱100,000, paid by a self-service method (GCash or Maya);
 - success credits exactly that amount and writes a top-up history record; a repeat of the same top-up within 2 minutes is credited only once;
 - a Commuter can search and filter their own top-up history and see the total added;
-- an Admin can list every top-up with its status and filter by search, status, method, date and amount, with the "funds added" total counting completed top-ups only.
+- an Admin can list every top-up with its status and filter by search, status, method, date and amount, with the "funds added" total counting completed top-ups only;
+- the Commuter is emailed a receipt for each completed top-up (amount, method, new balance); a failed email never fails the top-up. Top-ups are credited at once and are not gateway payments, so none is left pending.
 
 ## FR-E006 — Pay Fare
 
 **Source:** [UCN_SC_E006](UCN/UCN_SC_E006_Pay_Fare.md) · **Actor:** Commuter · **Priority:** Must
 
-**The system shall let a Commuter pay for a planned trip by Wallet, GCash or Maya, at a fare the server prices itself.**
+**The system shall let a Commuter pay for a planned trip by Wallet, GCash or Maya, on board, at a fare the server prices itself.**
 
 Satisfied when:
+- before the checkout opens, the Commuter has **scanned a QR code** the Admin generated (inside the PUJ, in the app or with the phone camera); a scan lasts 15 minutes and covers one fare, and a payment without a fresh scan is refused (`REQUIRE_QR_SCAN`, on by default);
 - the fare is **re-priced on the server** from the published rate table and shown with the wallet balance and the three methods; an unknown method, or an empty fare table, is refused;
 - a **Wallet** payment deducts the fare and records a paid payment, or is refused with no change when the balance is short;
-- a **GCash / Maya** payment opens a hosted checkout, is recorded as `pending` without touching the wallet, and is settled by a signed webhook or by reconciling with the gateway on return; it ends `paid`, `failed` or `cancelled` (also after 12 hours open) and never charges the wallet;
+- a **GCash / Maya** payment opens a hosted checkout, is recorded as `pending` without touching the wallet, and is settled by a signed webhook, by reconciling with the gateway on return, or by a scheduled reconciliation every 10 minutes that catches a missed webhook; it ends `paid`, `failed` or `cancelled` (also after 12 hours open) and never charges the wallet;
 - with the gateway disabled a GCash / Maya payment is recorded as declared and paid, with no external call;
-- every payment has a unique transaction id and a replay never charges twice; the receipt is rendered from the stored record, so refreshing creates no second payment.
+- every payment has a unique transaction id and a replay never charges twice; the receipt is rendered from the stored record, so refreshing creates no second payment;
+- the Commuter is **emailed one receipt** when a fare is paid (by any route) and an email when a gateway payment fails; a failed email never changes the payment;
+- the checkout sends the Commuter's position so the server can match it to a PUJ that is broadcasting within about 150 m, and the payment then records that **vehicle and its driver on duty**; the position itself is never stored. When `QR_REQUIRE_NEARBY_VEHICLE` is on (off by default) a scan that was not matched to a vehicle cannot pay;
+- repeated payment-gateway errors (3 in 15 minutes) email the Admins once, and a Commuter with 3 or more scans never followed by a fare in 7 days is flagged to the Admins.
 
 ## FR-E007 — View Payment History
 
@@ -155,7 +161,10 @@ Satisfied when:
 
 Satisfied when:
 - clocking in creates today's timekeeping record with the current time (Asia/Manila) and sets the driver `active`;
-- a second clock-in on the same day, or one by a user with no driver profile, is refused; a suspended or unapproved driver cannot clock in.
+- a second clock-in on the same day, or one by a user with no driver profile, is refused; a suspended or unapproved driver cannot clock in;
+- a driver can only clock in on a day they may drive: they must have a vehicle assigned and, when two drivers share it, today must be their day on the duty roster (FR-E015); otherwise they are told why;
+- a shift the system has already closed automatically today (FR-E010) counts as the day's shift, so a second clock-in is refused;
+- clocking in clears an inactivity warning (FR-E012).
 
 ## FR-E010 — Clock Out
 
@@ -165,7 +174,8 @@ Satisfied when:
 
 Satisfied when:
 - clocking out stores the time-out, the hours worked (2 decimals) and the overtime beyond 8 hours, and sets the driver `inactive`;
-- a clock-out with no open shift, or with no driver profile, is refused.
+- a clock-out with no open shift, or with no driver profile, is refused;
+- a shift left open is **closed automatically**: after 14 hours, or once its date has passed, the system credits a regular 8-hour shift with no overtime, flags it as auto-closed for review (FR-E013), sets the driver inactive unless a newer shift is open, takes the vehicle off the map (keeping its history) and stops the driver's phone broadcasting until the next shift; the close is audited.
 
 ## FR-E011 — Reset Password
 
@@ -189,7 +199,10 @@ Satisfied when:
 - an added driver (name, email, password, licence number / code / expiry, Philippine mobile number, licence image) gets a generated driver code and is approved at once; duplicate emails and licence numbers are refused; a **pending** registration can only be approved or rejected, not edited;
 - an approved driver can be **suspended** (optional reason) and reactivated — suspension blocks sign-in, clock-in and broadcasting, takes effect on an open session, and detaches the driver's vehicle;
 - a driver can be deleted unless a vehicle is still assigned; one who also has payments or top-ups is anonymised instead (see FR-E026);
-- every change is recorded in the audit trail.
+- every change is recorded in the audit trail;
+- an Admin and every Driver Manager are **emailed when a driver applies**, and the driver is emailed when the application is approved or rejected;
+- a driver who does not clock in is **warned by email after 3 days** (to contact HR) and, if they stay away more than 7 days and a day after the warning, **suspended automatically**; clocking in clears the warning and reactivating a driver restarts the count;
+- a driver who leaves a vehicle because they were **suspended or their licence expired** (an expired-licence driver is taken off the vehicle, not suspended) leaves a **vacancy**, which the system fills with the best free driver — approved, not suspended, licence valid, no vehicle, no inactivity warning, fewest recent violations and overtime — rebuilding a 30-day alternating roster when the vehicle is shared again; the replacement and the Maintenance Managers are emailed, and a vacancy nobody can fill stays open, is retried hourly and is reported daily.
 
 ## FR-E013 — Manage Timekeeping
 
@@ -200,7 +213,8 @@ Satisfied when:
 Satisfied when:
 - the ledger shows driver, date, shift, hours, overtime and type, and filters by All / Regular / Sick / Vacation / Overtime;
 - a shift or leave (sick / vacation) entry can be added, with hours and overtime derived by the server;
-- a clock-out not after the clock-in, and a shift overlapping an existing entry for that driver and date, are refused.
+- a clock-out not after the clock-in, and a shift overlapping an existing entry for that driver and date, are refused;
+- a shift the system closed automatically (FR-E010) shows an *Auto-closed* badge, is listed under a *Needs review* filter with a count, and can be marked reviewed by a Driver Manager, which is audited; reviewing only acknowledges the entry and does not change its hours.
 
 ## FR-E014 — Manage Violations
 
@@ -211,7 +225,9 @@ Satisfied when:
 Satisfied when:
 - violation codes (code, name, fines for the 1st, 2nd, 3rd and 4th+ offence) can be created singly or in bulk, edited and deleted; codes are unique and one in use cannot be deleted;
 - one or many violations can be logged against a driver (code, offence instance, fine, place, date, time, optional remarks), and the incident date cannot be in the future;
-- the log searches by driver name or licence number and by date range, 10 entries per page.
+- the log searches by driver name or licence number and by date range, 10 entries per page;
+- choosing a driver and a violation code **selects the offense number** from how many times that code was already logged against the driver (and, in a bulk entry, earlier in the same batch) and fills in the matching fine; the manager can override it;
+- the driver is **emailed** about each logged violation and each fine marked paid, and a driver with 3 or more violations in 30 days is flagged to the Driver Managers once per window.
 
 ## FR-E015 — Manage Vehicles
 
@@ -222,8 +238,11 @@ Satisfied when:
 Satisfied when:
 - the fleet lists, searches, filters (status, fuel type, assigned / unassigned) and sorts, 10 per page, and each vehicle can be viewed in full;
 - a vehicle has a unique plate number, a year from 1990 to 2030, a status of `active`, `inactive`, `maintenance` or `disposed`, and an expected disposal date after its acquisition date;
-- a driver may be assigned only to an `active` or `inactive` vehicle, only if approved and not suspended, and only one vehicle each; moving a vehicle to any other status detaches its driver and, for `maintenance` / `disposed`, removes it from the live map;
-- a vehicle cannot be disposed of while its driver is clocked in, and one with maintenance history or a driver cannot be deleted (it is marked `disposed` instead).
+- a driver may be assigned only to an `active` vehicle, only if approved and not suspended, and only one vehicle each; **up to two drivers may share** a vehicle and take turns on a duty roster the Maintenance Manager generates (alternating, 2–120 days) and swaps by day, and a driver can only clock in, go active or broadcast on their own duty day; moving a vehicle to any other status detaches its drivers and, for `maintenance` / `disposed`, removes it from the live map;
+- a vehicle cannot be disposed of while its driver is clocked in, and one with maintenance history or a driver cannot be deleted (it is marked `disposed` instead);
+- a vehicle can be **added by scanning its papers with a phone**: the form shows a QR code, the phone photographs the Certificate of Registration (and the Official Receipt), the server reads them locally and fills in plate, chassis/VIN, make, model, year and fuel, marking each value *read clearly* or *check carefully* and flagging disagreement between the two papers; **the vehicle cannot be saved until the manager confirms they checked the details against the document**, the server enforces it, and the photos are deleted when the vehicle is saved, the form is closed or 15 minutes pass;
+- a vehicle with an overdue or due-soon service is flagged on the list and the dashboard and, when switched on, cannot be set back to `active` while a service is overdue (FR-E016);
+- a vehicle that loses a driver to suspension or an expired licence gets a replacement automatically (FR-E012), and one still waiting for a driver is listed on the dashboard.
 
 ## FR-E016 — Manage Maintenance Schedule
 
@@ -233,7 +252,8 @@ Satisfied when:
 
 Satisfied when:
 - each task shows its interval, last service date, odometer, cost, comments and the **computed** next due date and odometer, and the schedule can be switched between vehicles;
-- a logged service (odometer ≥ 0 and not lower than the vehicle's last reading, date, cost ≥ 0, optional comments) replaces that task's previous record and feeds the dashboard history and cost figures.
+- a logged service (odometer ≥ 0 and not lower than the vehicle's last reading, date, cost ≥ 0, optional comments) replaces that task's previous record and feeds the dashboard history and cost figures;
+- a service **due soon** (within 7 days or 500 km) or **overdue** is flagged on the schedule, the vehicle list and the dashboard and is emailed to the Maintenance Managers in a daily digest; the vehicle's current reading is the highest odometer logged for it, and a task with no interval is never due.
 
 ## FR-E017 — Manage Maintenance Tasks
 
@@ -278,7 +298,9 @@ Satisfied when:
 Satisfied when:
 - a **Financial Overview**, **Driver Performance** or **Maintenance & Fleet** report can be generated for a chosen range;
 - a start date after the end date is refused; an empty result says so with zeroed figures; a ledger whose newest transaction is over a day old shows a staleness warning;
-- the report can be exported as a CSV named by type and date, and the export is recorded in the audit trail.
+- the report can be exported as a CSV named by type and date, and the export is recorded in the audit trail;
+- the Admin is **emailed a weekly and a monthly report** (revenue by method, top-ups, failed payments, violations and fines, hours and overtime, distance, maintenance spend, overdue services, repeat violators, unpaid scans) with the figures — and optionally the period's audit trail — as CSV attachments, and each send is audited;
+- **Fleet Analytics** shows, for the last 7, 30 or 90 days, hours, overtime, distance, fare revenue, violations and maintenance cost per driver and per vehicle, an 8-week hours-and-overtime trend, repeat violators and commuters with unpaid scans, computed from the stored records; it is for the Admin only.
 
 ## FR-E021 — Share Vehicle Location (Driver Broadcast)
 
@@ -290,7 +312,9 @@ Satisfied when:
 - the Driver's browser sends the position at most once every 2 seconds, and the server accepts it only from a signed-in, non-suspended driver for the vehicle assigned to them (and `active`);
 - the latest position is stored, a history entry is kept and the vehicle is marked active; a vehicle with no broadcast for 5 minutes is marked inactive;
 - riders receive only a position moved to a random point within **200 m** of the real one — the exact coordinates are never published;
-- a repeated timestamp is accepted as a no-op, and a temporary storage failure is retried once after 5 seconds.
+- a repeated timestamp is accepted as a no-op, and a temporary storage failure is retried once after 5 seconds;
+- each stored position records the **kilometres driven** since the vehicle's previous ping (0 after a 10-minute gap or an implausible jump), which feeds the driver's distance today and Fleet Analytics;
+- a broadcast is refused for a driver whose shift the system closed automatically (FR-E010) until their next shift.
 
 ## FR-E022 — Driver Registration
 
@@ -301,7 +325,8 @@ Satisfied when:
 Satisfied when:
 - the application takes name, email, Philippine contact number, password (≥ 8, confirmed), accepted terms and a licence image (JPG / PNG, up to 2 MB);
 - the user, the driver profile (with a generated driver code), the `driver` role and the stored image are created together or not at all, and the applicant is sent to the login page;
-- the applicant cannot sign in to driver features until a Driver Manager approves (FR-E012); registration is rate-limited and recorded in the audit trail.
+- the applicant cannot sign in to driver features until a Driver Manager approves (FR-E012); registration is rate-limited and recorded in the audit trail;
+- every Admin and Driver Manager is emailed when an application is submitted.
 
 ## FR-E023 — Driver Dashboard Views
 
@@ -312,7 +337,8 @@ Satisfied when:
 Satisfied when:
 - the weekly timekeeping view shows hours, overtime and each day's status, and moves between weeks;
 - the violations view shows the driver's own violations, read-only, with totals and the latest violation, 10 per page;
-- the Driver can switch availability between `active` and `inactive`; any other value is rejected.
+- the Driver can switch availability between `active` and `inactive`; any other value is rejected;
+- a day whose shift was closed automatically is tagged as such, and the dashboard's distance today shows the kilometres recorded from the driver's broadcasts.
 
 ## FR-E024 — Admin Violation Code Management
 
@@ -323,7 +349,8 @@ Satisfied when:
 Satisfied when:
 - a code has a unique code, a name and a fine (≥ 0) for each of the 1st, 2nd, 3rd and 4th+ offence, and can be added in bulk;
 - a code referenced by any violation log cannot be deleted;
-- the pages are available to the Driver Manager role only (others get 403, guests are sent to login).
+- the pages are available to the Driver Manager role only (others get 403, guests are sent to login);
+- a fresh installation is seeded with the **violations most often written up against PUJ drivers** — 14 codes, `UV01`–`UV14`, each with four fine tiers — which the Driver Manager can edit; reseeding replaces the whole table (and the logs that belong to it).
 
 ## FR-E025 — Profile and Dashboard Views
 
@@ -334,7 +361,8 @@ Satisfied when:
 Satisfied when:
 - a Commuter's profile shows their fare payments, top-ups and wallet balance;
 - an **Admin** dashboard shows total revenue, funds added, active users, the five latest fares and top-ups and 7-day series; a **Driver** dashboard shows their details, today's record, weekly hours and overtime, assigned vehicle and recent violations; a **Driver Manager** dashboard lists drivers, timekeeping and violation logs; a **Maintenance Manager** dashboard shows fleet information, a cost summary and service history;
-- a user who opens a page not meant for their role is returned to the map with a message.
+- a user who opens a page not meant for their role is returned to the map with a message;
+- the **Maintenance Manager** dashboard also lists vehicles waiting for a driver and vehicles with overdue or due-soon services, each panel shown only when it has something to show.
 
 ## FR-E026 — Account Deletion
 
@@ -368,6 +396,7 @@ Satisfied when:
 
 Satisfied when — **recording** (design and event list: [AUDIT_TRAIL.md](AUDIT_TRAIL.md)):
 - after it happens, the system records every sign-in, failed and blocked sign-in, sign-out, password change and reset, account registration, creation, suspension, reactivation, role change and removal (deleted or anonymised), driver approval and rejection, and every create / update / delete of vehicles, maintenance tasks and service records, violation codes and logs, time entries, fare guides and fare rates, payments and top-ups — naming the record and the acting user, with the old and new value of each field that changed;
+- the **automatic** jobs write to the same trail, with no signed-in actor: a shift closed or reviewed, an inactivity warning and an automatic suspension, a driver flagged as a repeat violator, a commuter flagged for unpaid scans, a vacancy opened and a replacement assigned, a driver released for an expired licence, a vehicle added from scanned papers (which fields were read and which the manager corrected, never the values), and each scheduled report sent;
 - every entry carries the IP address, the user agent and a snapshot of the actor's email and role; passwords, tokens and licence-image data are never stored;
 - page views, map polling, location broadcasts and availability toggles are never recorded; a failure to record never stops the action; entries older than 365 days are deleted daily.
 
@@ -387,8 +416,9 @@ and **reviewing**:
 | **Commuter** | FR-E003, FR-E004 as a Guest, plus FR-E005 top up · FR-E006 pay a fare · FR-E007 payment history · FR-E008 change password · FR-E025 profile · FR-E026 delete account |
 | **Driver** | FR-E008 · FR-E009 clock in · FR-E010 clock out · FR-E021 share location · FR-E023 timekeeping, violations, availability · FR-E025 dashboard · FR-E026 |
 | **Driver Manager** | FR-E008 · FR-E012 drivers · FR-E013 timekeeping · FR-E014 violations · FR-E024 violation codes · FR-E025 dashboard |
-| **Maintenance Manager** | FR-E008 · FR-E015 vehicles · FR-E016 maintenance schedule · FR-E017 maintenance tasks · FR-E025 dashboard |
-| **Admin** | FR-E008 · FR-E012 and FR-E015 (shared pages) · FR-E018 commuters · FR-E019 fare rates · FR-E020 reports · FR-E027 staff · FR-E028 activity log · FR-E005 / FR-E007 ledgers · FR-E025 dashboard |
+| **Maintenance Manager** | FR-E008 · FR-E015 vehicles, duty roster and phone scan · FR-E016 maintenance schedule and due alerts · FR-E017 maintenance tasks · FR-E025 dashboard |
+| **Admin** | FR-E008 · FR-E012 and FR-E015 (shared pages) · FR-E018 commuters · FR-E019 fare rates · FR-E020 reports, scheduled reports and Fleet Analytics · FR-E027 staff · FR-E028 activity log · FR-E005 / FR-E007 ledgers · FR-E006 gateway alerts and QR codes · FR-E025 dashboard |
+| **System (scheduler)** | Runs with no user: FR-E010 closes forgotten shifts · FR-E012 warns and suspends inactive drivers and replaces drivers who leave a vehicle · FR-E006 reconciles payments · FR-E016 emails due services · FR-E014 flags repeat violators · FR-E020 sends the weekly and monthly reports · all listed in [AUTOMATED_FEATURES.md](AUTOMATED_FEATURES.md) |
 
 ---
 
@@ -399,7 +429,7 @@ one (it then becomes part of the matching `FR-Exxx`), defer it or drop it.
 
 | ID | Candidate change | Why it matters | Affects |
 |---|---|---|---|
-| GAP-01 | Paying a fare shall issue a boarding permission (ticket / one-time ride token) that a driver or vehicle can verify. | Today a payment is a ledger entry only; nothing proves a rider paid. The UCN calls it the largest functional gap. | FR-E006 |
+| GAP-01 | Paying a fare shall issue a boarding permission (ticket / one-time ride token) that a driver or vehicle can verify. | A fare is now attributed to a vehicle and driver and unpaid scans are flagged, but a driver still has no screen that shows who has paid. | FR-E006 |
 | GAP-02 | The system shall price the trip's **distance** on the server instead of trusting the browser's routing call. | The fare can no longer be tampered with but the distance still can. | FR-E006 |
 | GAP-03 | Discounted fares (Student / Elderly / PWD) shall be applied only after the rider's eligibility is verified. | The calculator shows a discount but only the regular fare is charged. | FR-E006 |
 | GAP-04 | A Commuter shall be able to request a refund or dispute a fare; an Admin shall be able to settle it (and a wallet balance could be refunded on account deletion). | Paid payments are immutable and there is no recourse; deletion is refused while the wallet holds money. | FR-E006, FR-E026 |
@@ -409,8 +439,8 @@ one (it then becomes part of the matching `FR-Exxx`), defer it or drop it.
 | GAP-08 | The owner of an account shall be notified by email when their password is changed or reset. | Only the audit trail records it. | FR-E008, FR-E011 |
 | GAP-09 | The system shall enforce a password policy beyond length (complexity, reuse prevention). | Length-only today. | FR-E008 |
 | GAP-10 | A user shall be able to see and end individual signed-in sessions. | Sessions can only be ended all at once. | FR-E008 |
-| GAP-11 | A Driver Manager shall be able to edit or delete a time entry, and to adjust a driver's self-recorded shift. | Entries are immutable; corrections are impossible. | FR-E010, FR-E013 |
-| GAP-12 | Shifts shall be allowed to span midnight and a driver to have more than one shift per day. | Overnight shifts are rejected; one shift per day is enforced. | FR-E009, FR-E013 |
+| GAP-11 | A Driver Manager shall be able to edit or delete a time entry, and to adjust a driver's self-recorded shift. | Entries are immutable; corrections are impossible, so the hours credited to an auto-closed shift can only be acknowledged, not corrected. | FR-E010, FR-E013 |
+| GAP-12 | Shifts shall be allowed to span midnight and a driver to have more than one shift per day. | Overnight shifts are rejected; one shift per day is enforced; and a shift still open after midnight is closed automatically. | FR-E009, FR-E013 |
 | GAP-13 | Clock-in and clock-out shall verify the driver's location and vehicle. | Any device, anywhere, can clock in or out. | FR-E009, FR-E010 |
 | GAP-14 | The schedule shall keep service history rather than overwrite it. | Only the latest service per task survives in the schedule (the Maintenance Logs page keeps the history). Overdue alerts now exist — see UCN_SC_E016. | FR-E016 |
 | GAP-15 | Maintenance tasks shall be deactivatable instead of deletable, and unique by name. | Deleting a task erases its cost history; duplicates are allowed. | FR-E017 |
@@ -422,3 +452,6 @@ one (it then becomes part of the matching `FR-Exxx`), defer it or drop it.
 | GAP-21 | The fare-guide importer shall accept guides with a different layout and shall retire the previous fare set. | Two fixed row bands; old sets accumulate. | FR-E019 |
 | GAP-22 | A staff user shall have a profile page of their own. | Only commuters have `/profile`. | FR-E025 |
 | GAP-23 | The history and aggregate pages shall show a distinct error state instead of an empty list when a query fails. | "No results" and "something broke" look identical. | FR-E007 |
+| GAP-24 | A vehicle's **registration expiry** (from its CR / OR) shall be recorded and an alert sent before it lapses. | The phone scan reads the plate, chassis, make, model, year and fuel but nothing records when the registration expires, so a lapsed registration is only noticed on the road. | FR-E015, FR-E016 |
+| GAP-25 | Notifications shall also reach people **inside the app** and by push or SMS. | Every automatic message is an email today (`NOTIFICATION_CHANNELS` is ready for more channels), so someone without mail access still finds out only by opening a page. | FR-E005, FR-E006, FR-E012, FR-E014 |
+| GAP-26 | The phone scan shall check that the papers are **genuine** (against the LTO, or a second source). | It reads what is printed, so a forged paper reads exactly like a genuine one; the manager's confirmation is the only check. | FR-E015 |

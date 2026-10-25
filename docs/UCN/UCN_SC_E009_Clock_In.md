@@ -35,6 +35,10 @@
 1. The authenticated user has the `driver` role but no `Driver` row.
 2. System aborts with *"Driver profile not found."* instead of crashing.
 
+**A3 – The shift was already closed by the system today**
+1. A forgotten clock-out is closed automatically (UCN_SC_E010 A4). If that closed *today's* record, the driver presses **"Clock In"** again.
+2. System finds today's record and refuses: *"You have already clocked in today."* — one shift per day applies to an auto-closed shift too. The driver is back on duty at the next shift.
+
 ---
 
 ## Postconditions
@@ -64,6 +68,8 @@ The driver has no vehicle. System performs **no** write, leaves the status uncha
 ---
 
 ## Known Gaps / Notes
+
+- **Clocking in clears an inactivity warning** (UCN_SC_E012 A7): a driver who was emailed for staying away starts a fresh count. A shift that the system later closes for them counts as a clock-in for that purpose.
 
 - **One shift per day, enforced.** `clockIn` rejects a second record for the same date, so a driver **cannot** clock in twice (e.g. an AM and a PM shift). Multi-split shifts would need a different uniqueness rule.
 - **No GPS / location verification.** The original precondition *"the driver's device GPS is enabled and permissions are granted"* is **not checked** — clock-in works from any device, anywhere.

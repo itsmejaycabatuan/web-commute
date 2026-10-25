@@ -46,6 +46,10 @@
 2. At step 5, the System treats the submission as a new file and stores it under a unique name; no deduplication is performed.
 3. System continues with step 6.
 
+**A4 – The Admins and Driver Managers are told of the application**
+1. After the records are created (main flow step 8) the system emails every active **Admin** and **Driver Manager**: the applicant's name and email, with a link to the drivers page (`DriverApplicationReceived`).
+2. A mail failure is logged and skipped; the registration is never affected. The applicant is emailed the decision later (UCN_SC_E012 A6).
+
 ---
 
 ## Postconditions
@@ -121,3 +125,5 @@ The guest submits more than **6 registration attempts per minute** (same throttl
 | Events | `Illuminate\Auth\Events\Registered` fired after successful creation |
 | Redirect target | `route('login')` → `/login` |
 | Related UCNs | UCN_SC_E002 (Commuter Create Account), UCN_SC_E012 (Manage Drivers – approval/reject flow), UCN_SC_E009/E010 (Clock In/Out), UCN_SC_E015 (Manage Vehicles – vehicle assignment) |
+| Notification | `app/Notifications/DriverApplicationReceived.php`, sent from `DriverController::store()` through `app/Support/Notifier.php` |
+| Tests (automation) | `tests/Feature/AutomationPhase2Test.php` — `test_driver_registration_notifies_admins_and_driver_managers` |

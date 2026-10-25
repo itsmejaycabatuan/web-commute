@@ -33,6 +33,8 @@ EXT = {
     "map": ["Map & Routing", "OpenFreeMap · Photon · OSRM"],
     "paymongo": ["PayMongo Gateway", "(GCash / Maya)"],
     "pusher": ["Push Channel", "(Pusher / Echo)"],
+    "scheduler": ["Scheduler", "(cron · schedule:run)"],
+    "phone": ["Phone (scanner)", "(OR / CR photos)"],
 }
 
 # ------------------------------------------------------------------ part definitions
@@ -50,27 +52,28 @@ PARTS = [
          groups=[("Map & Commuter Services", TEAL, ["E003", "E004", "E006", "E005", "E007"])],
          actors={"guest": ("L", ["E003", "E004"]),
                  "commuter": ("L", ["E003", "E004", "E006", "E005", "E007"])},
-         ext={"pusher": ["E003"], "map": ["E003", "E004"], "paymongo": ["E006"]}),
+         ext={"pusher": ["E003"], "map": ["E003", "E004"], "paymongo": ["E006"],
+              "email": ["E005", "E006"], "scheduler": ["E006"]}),
     dict(file="04_driver_operations", title="Driver Operations",
          note="Shift clock, availability and live location sharing.",
          groups=[("Driver Operations", ORANGE, ["E009", "E010", "E021", "E023"])],
          actors={"driver": ("L", ["E009", "E010", "E021", "E023"])},
-         ext={"pusher": ["E021"]}),
+         ext={"pusher": ["E021"], "scheduler": ["E010"]}),
     dict(file="05_driver_management", title="Driver Management",
          note="Driver roster, timekeeping ledger and violations. Admin shares the Manage Drivers page.",
          groups=[("Driver Management", PURPLE, ["E013", "E014", "E024", "E012"])],
          actors={"drvmgr": ("L", ["E013", "E014", "E024", "E012"]), "admin": ("R", ["E012"])},
-         ext={}),
+         ext={"email": ["E012", "E014"], "scheduler": ["E012", "E014"]}),
     dict(file="06_fleet_maintenance", title="Fleet Maintenance",
          note="Vehicles, preventive-maintenance schedule and task catalogue. Admin shares the Vehicles page.",
          groups=[("Fleet Maintenance", OLIVE, ["E015", "E016", "E017"])],
          actors={"maint": ("L", ["E015", "E016", "E017"]), "admin": ("R", ["E015"])},
-         ext={}),
+         ext={"email": ["E016"], "scheduler": ["E015", "E016"], "phone": ["E015"]}),
     dict(file="07_administration", title="Administration",
          note="Commuter accounts, fare rates, system reports, staff accounts and the audit trail.",
          groups=[("Administration", ROSE, ["E018", "E019", "E020", "E027", "E028"])],
          actors={"admin": ("L", ["E018", "E019", "E020", "E027", "E028"])},
-         ext={}),
+         ext={"email": ["E020"], "scheduler": ["E020"]}),
 ]
 
 OVERVIEW_PACKAGES = {  # id -> (name, colour, ids)
@@ -193,9 +196,20 @@ def build_part(p):
         y += h + 22
     bottom = y - 22 + 20
     rel = [r for r in UC_REL if r[0] in pos and r[1] in pos]
+    ext_y = spread([(k, sum(pos[t][1] for t in ts) / len(ts)) for k, ts in ext.items()], 76)
     leg_y = bottom + 34
+    if ext_y:
+        leg_y = max(leg_y, max(ext_y.values()) + 28 + 30)
+    wide = bool(ext) and any(side == "R" for side, _ in actors.values())
+    if wide:  # room for the right-hand actors moved down below (see "placed" further on)
+        for side, ts in actors.values():
+            if side == "R":
+                leg_y = max(leg_y, sum(pos[t][1] for t in ts) / len(ts) + 95 + 100)
     H = leg_y + 24
     W = 860
+    wide = bool(ext) and any(side == "R" for side, _ in actors.values())
+    if wide:
+        W = 1020
     c = Canvas()
     head(c, W, int(H), f"SmartCommute use-case diagram — {p['title']}")
     c.add(f'<text x="24" y="30" class="ttl">Use-Case Diagram — {escape(p["title"])}</text>')
@@ -209,8 +223,7 @@ def build_part(p):
             c.add(f'<text x="{gx + 12}" y="{gy + 19}" class="grp" fill="{col[1]}">{escape(title)}</text>')
 
     # externals (right of the boundary)
-    ext_y = spread([(k, sum(pos[t][1] for t in ts) / len(ts)) for k, ts in ext.items()], 76)
-    EXC = 740
+    EXC = 900 if wide else 740
     for k, ts in ext.items():
         ey = ext_y[k]
         for t in ts:
@@ -243,6 +256,10 @@ def build_part(p):
     placed = {}
     for side in ("L", "R"):
         placed.update(spread(want[side], 112))
+    if wide:  # keep right-hand actors clear of the lines running out to the external systems
+        for k, (side, _) in actors.items():
+            if side == "R":
+                placed[k] += 95
     for k, (side, ts) in actors.items():
         x = 100 if side == "L" else 700
         arm = c.actor(k, x, placed[k], "(any signed-in role)" if k == "auth" else None)

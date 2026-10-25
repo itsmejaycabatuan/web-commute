@@ -16,6 +16,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>SmartCommute | Vehicle Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
@@ -999,6 +1000,115 @@
                         <!-- ── Scrollable Body ── -->
                         <div class="flex-1 overflow-y-auto px-6 sm:px-8 py-5 sm:py-6 space-y-5">
 
+                            <!-- ── Scan the registration papers with a phone (Add only) ── -->
+                            <div x-show="editMode === 'add' && scanAvailable" x-cloak
+                                class="rounded-2xl border border-blue-500/20 bg-blue-500/[0.04] p-4">
+
+                                <!-- Not started -->
+                                <div x-show="!scan" class="flex items-center justify-between gap-3">
+                                    <div>
+                                        <p class="text-[11px] font-bold text-gray-800 dark:text-[#ddd]"><i class="fa-solid fa-mobile-screen-button text-blue-500 mr-1.5"></i> Have the registration papers?</p>
+                                        <p class="text-[9px] text-gray-500 dark:text-[#666] mt-0.5">Photograph the CR (and OR) with your phone and the details fill in here. You check them before saving.</p>
+                                    </div>
+                                    <button type="button" @click="startScan()"
+                                        class="shrink-0 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-bold uppercase tracking-widest transition">
+                                        Scan with phone
+                                    </button>
+                                </div>
+
+                                <!-- Waiting for the phone / reading / problem -->
+                                <div x-show="scan && scan.status !== 'ready'" class="flex flex-col sm:flex-row items-center gap-4">
+                                    <div x-show="['pending', 'processing'].includes(scan?.status)" class="shrink-0 bg-white p-2 rounded-xl border border-gray-200">
+                                        <div id="scan-qr" class="w-[176px] h-[176px]"></div>
+                                    </div>
+                                    <div class="flex-1 text-center sm:text-left">
+                                        <template x-if="scan?.status === 'pending'">
+                                            <div>
+                                                <p class="text-[11px] font-bold text-gray-800 dark:text-[#ddd]">Scan this code with your phone</p>
+                                                <ol class="text-[9px] text-gray-500 dark:text-[#666] mt-1.5 space-y-0.5 list-decimal list-inside">
+                                                    <li>Open your phone's camera and point it at the code.</li>
+                                                    <li>Photograph the Certificate of Registration (and the Official Receipt).</li>
+                                                    <li>Come back here: the details fill in by themselves.</li>
+                                                </ol>
+                                                <p class="text-[8px] text-gray-400 dark:text-[#444] mt-2">Expires in <span x-text="Math.floor(scanSecondsLeft / 60) + ':' + String(scanSecondsLeft % 60).padStart(2, '0')"></span></p>
+                                            </div>
+                                        </template>
+                                        <template x-if="scan?.status === 'processing'">
+                                            <div>
+                                                <p class="text-[11px] font-bold text-gray-800 dark:text-[#ddd]"><i class="fa-solid fa-circle-notch fa-spin text-blue-500 mr-1.5"></i> Reading the photos…</p>
+                                                <p class="text-[9px] text-gray-500 dark:text-[#666] mt-1">This takes up to half a minute.</p>
+                                            </div>
+                                        </template>
+                                        <template x-if="['failed', 'expired', 'cancelled'].includes(scan?.status)">
+                                            <div>
+                                                <p class="text-[11px] font-bold text-rose-600 dark:text-rose-400"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>
+                                                    <span x-text="scan.status === 'failed' ? (scan.error || 'We could not read those photos.') : 'The scan code expired.'"></span></p>
+                                                <button type="button" @click="startScan()" class="mt-2 text-[9px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">Try again</button>
+                                            </div>
+                                        </template>
+                                        <button type="button" x-show="['pending', 'processing'].includes(scan?.status)" @click="resetScan(true)"
+                                            class="mt-3 text-[8px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444] hover:text-gray-600">Cancel scan</button>
+                                    </div>
+                                </div>
+
+                                <!-- Review what was read -->
+                                <div x-show="scan?.status === 'ready'">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="text-[11px] font-bold text-gray-800 dark:text-[#ddd]"><i class="fa-solid fa-clipboard-check text-emerald-500 mr-1.5"></i> Check these against the papers</p>
+                                            <p class="text-[9px] text-gray-500 dark:text-[#666] mt-0.5">The form below is filled in from your photos. A reader can mistake 0 for O, 8 for B and similar: compare each value with the paper, character by character.</p>
+                                        </div>
+                                        <button type="button" @click="startScan()" class="shrink-0 text-[8px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">Scan again</button>
+                                    </div>
+
+                                    <div class="mt-3 flex flex-wrap gap-2" x-show="(scan?.pages || []).length">
+                                        <template x-for="(url, n) in scan.pages" :key="url">
+                                            <a :href="url" target="_blank" rel="noopener" class="block w-20 h-14 rounded-lg overflow-hidden border border-gray-200 dark:border-[#333] bg-gray-100"
+                                                title="Open the photo to compare">
+                                                <img :src="url" class="w-full h-full object-cover" alt="Photo of the paper">
+                                            </a>
+                                        </template>
+                                    </div>
+
+                                    <ul class="mt-3 space-y-1.5">
+                                        <template x-for="[key, label] in scanFieldLabels" :key="key">
+                                            <li class="flex flex-wrap items-center gap-2 text-[10px]">
+                                                <span class="w-24 text-gray-400 dark:text-[#555] font-bold uppercase tracking-wider text-[8px]" x-text="label"></span>
+                                                <template x-if="scanFlags[key]">
+                                                    <span class="flex flex-wrap items-center gap-2">
+                                                        <span class="font-mono font-bold text-gray-800 dark:text-[#ddd]" x-text="editForm[key] || '—'"></span>
+                                                        <span class="px-1.5 py-0.5 rounded-md border text-[8px] font-bold uppercase"
+                                                            :class="scanFlags[key].status === 'check' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'"
+                                                            x-text="scanFlags[key].status === 'check' ? 'Check carefully' : 'Read clearly'"></span>
+                                                        <template x-for="alt in (scanFlags[key].alternatives || [])" :key="alt">
+                                                            <button type="button" @click="editForm[key] = alt" class="px-1.5 py-0.5 rounded-md border border-gray-300 dark:border-[#333] text-[8px] font-mono text-gray-500 hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
+                                                                x-text="'or ' + alt" title="Use this reading instead"></button>
+                                                        </template>
+                                                    </span>
+                                                </template>
+                                                <template x-if="!scanFlags[key]">
+                                                    <span class="text-gray-400 dark:text-[#555] italic">not found on the papers: type it in below</span>
+                                                </template>
+                                            </li>
+                                        </template>
+                                    </ul>
+
+                                    <ul class="mt-3 space-y-1" x-show="(scan?.warnings || []).length">
+                                        <template x-for="w in scan.warnings" :key="w">
+                                            <li class="text-[9px] font-semibold text-amber-600 dark:text-amber-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i><span x-text="w"></span></li>
+                                        </template>
+                                    </ul>
+
+                                    <label class="mt-4 flex items-start gap-2.5 p-3 rounded-xl border cursor-pointer"
+                                        :class="editErrors.scan_confirmed ? 'border-rose-400 bg-rose-500/5' : 'border-gray-200 dark:border-[#2a2a2a] bg-white/60 dark:bg-[#0f0f0f]'">
+                                        <input type="checkbox" x-model="editForm.scan_confirmed" class="mt-0.5 rounded">
+                                        <span class="text-[10px] font-bold text-gray-700 dark:text-[#ccc]">I have checked these details against the document.</span>
+                                    </label>
+                                    <p x-show="editErrors.scan_confirmed" x-text="[].concat(editErrors.scan_confirmed || [])[0]" class="mt-1 text-[9px] font-semibold text-rose-500"></p>
+                                    <p x-show="editErrors.scan_session_id" x-text="[].concat(editErrors.scan_session_id || [])[0]" class="mt-1 text-[9px] font-semibold text-rose-500"></p>
+                                </div>
+                            </div>
+
                             <!-- Identification Section -->
                             <div>
                                 <p
@@ -1013,7 +1123,7 @@
                                         <input type="text" x-model="editForm.plate_number"
                                             placeholder="e.g. ABC-1234"
                                             class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold font-mono uppercase"
-                                            :class="editErrors.plate_number ? 'border-rose-400 dark:border-rose-500/50' : ''">
+                                            :class="[editErrors.plate_number ? 'border-rose-400 dark:border-rose-500/50' : '', scanClass('plate_number')]">
                                         <p x-show="editErrors.plate_number" x-text="editErrors.plate_number"
                                             class="text-[8px] text-rose-500 mt-1 font-medium"></p>
                                     </div>
@@ -1022,6 +1132,7 @@
                                             class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1.5">VIN</label>
                                         <input type="text" x-model="editForm.vin"
                                             placeholder="Vehicle Identification Number"
+                                            :class="scanClass('vin')"
                                             class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold font-mono uppercase">
 <p x-show="editErrors.vin" x-text="[].concat(editErrors.vin || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
                                     </div>
@@ -1041,7 +1152,7 @@
                                             <span class="text-rose-400">*</span></label>
                                         <input type="text" x-model="editForm.brand" placeholder="Toyota"
                                             class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold"
-                                            :class="editErrors.brand ? 'border-rose-400 dark:border-rose-500/50' : ''">
+                                            :class="[editErrors.brand ? 'border-rose-400 dark:border-rose-500/50' : '', scanClass('brand')]">
                                         <p x-show="editErrors.brand" x-text="editErrors.brand"
                                             class="text-[8px] text-rose-500 mt-1 font-medium"></p>
                                     </div>
@@ -1051,7 +1162,7 @@
                                             <span class="text-rose-400">*</span></label>
                                         <input type="text" x-model="editForm.model" placeholder="Hilux"
                                             class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold"
-                                            :class="editErrors.model ? 'border-rose-400 dark:border-rose-500/50' : ''">
+                                            :class="[editErrors.model ? 'border-rose-400 dark:border-rose-500/50' : '', scanClass('model')]">
                                         <p x-show="editErrors.model" x-text="editErrors.model"
                                             class="text-[8px] text-rose-500 mt-1 font-medium"></p>
                                     </div>
@@ -1059,7 +1170,7 @@
                                         <label
                                             class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1.5">Year</label>
                                         <input type="number" x-model="editForm.year" placeholder="2024"
-                                            min="1900" max="2099"
+                                            min="1900" max="2099" :class="scanClass('year')"
                                             class="form-input w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold font-mono">
 <p x-show="editErrors.year" x-text="[].concat(editErrors.year || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
                                     </div>
@@ -1067,7 +1178,7 @@
                                         <label
                                             class="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444] block mb-1.5">Fuel
                                             Type</label>
-                                        <select x-model="editForm.fuel_type"
+                                        <select x-model="editForm.fuel_type" :class="scanClass('fuel_type')"
                                             class="form-input form-select w-full px-3.5 py-2.5 rounded-xl text-[10px] font-bold cursor-pointer">
                                             <option value="">Select type</option>
                                             <option value="Diesel">Diesel</option>
@@ -1213,7 +1324,8 @@
                                     class="px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-[#555] hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-[#222] transition-all">
                                     Cancel
                                 </button>
-                                <button type="button" @click="submitEditForm()" :disabled="editSubmitting"
+                                <button type="button" @click="submitEditForm()" :disabled="editSubmitting || (scanApplied && !editForm.scan_confirmed)"
+                                    :title="scanApplied && !editForm.scan_confirmed ? 'Tick the box to confirm you checked the details against the document' : ''"
                                     class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest text-white transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
                                     :class="editMode === 'add'
                                         ?
@@ -1330,6 +1442,16 @@
                 },
                 editErrors: {},
                 editSubmitting: false,
+
+                // ── Scan the registration papers with a phone ──
+                scanAvailable: @json($scanAvailable),
+                scan: null,            // the live session: { id, status, phone_url, expires_in, fields, warnings, pages, error }
+                scanTimer: null,
+                scanClock: null,
+                scanSecondsLeft: 0,
+                scanApplied: false,    // the form was filled from a scan: saving needs the manager's confirmation
+                scanFlags: {},         // field => { value, status: ok|check, alternatives }
+                scanFieldLabels: [['plate_number', 'Plate number'], ['vin', 'Chassis / VIN'], ['brand', 'Make'], ['model', 'Series / model'], ['year', 'Year model'], ['fuel_type', 'Fuel']],
 
                 // ── Delete Modal ──
                 showDeleteModal: false,
@@ -1479,12 +1601,109 @@
                         this.$watch(key, () => this.page = 1));
 
                     // A vehicle that is not active cannot carry a driver.
+                    // Closing the form closes the scan, and its photos are deleted.
+                    this.$watch('showEditModal', open => { if (!open) this.resetScan(true); });
+
                     this.$watch('editForm.status', status => {
                         if (status !== 'active') this.editForm.driver_id = this.editForm.second_driver_id = '';
                     });
                 },
 
+                scanHeaders() {
+                    return {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    };
+                },
+
+                async startScan() {
+                    await this.resetScan(true);
+
+                    try {
+                        const response = await fetch('{{ route('vehicle-scan.store', [], false) }}', { method: 'POST', headers: this.scanHeaders() });
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            this.showToast(data.message || 'Scanning is not available right now.', 'error');
+                            return;
+                        }
+
+                        this.scan = data;
+                        this.scanSecondsLeft = data.expires_in;
+                        this.$nextTick(() => this.drawScanQr());
+                        this.scanTimer = setInterval(() => this.pollScan(), 2000);
+                        this.scanClock = setInterval(() => { if (this.scanSecondsLeft > 0) this.scanSecondsLeft--; }, 1000);
+                    } catch (e) {
+                        this.showToast('Network error. Please try again.', 'error');
+                    }
+                },
+
+                drawScanQr() {
+                    const el = document.getElementById('scan-qr');
+                    if (!el || !window.QRCode || !this.scan) return;
+                    el.innerHTML = '';
+                    new QRCode(el, { text: this.scan.phone_url, width: 176, height: 176, correctLevel: QRCode.CorrectLevel.M });
+                },
+
+                async pollScan() {
+                    if (!this.scan) return;
+
+                    try {
+                        const response = await fetch('{{ route('vehicle-scan.show', ':id', false) }}'.replace(':id', this.scan.id), { headers: this.scanHeaders() });
+                        if (!response.ok) return;
+                        const data = await response.json();
+                        const was = this.scan.status;
+                        this.scan = Object.assign({}, this.scan, data);
+
+                        if (data.status === 'ready' && was !== 'ready') {
+                            this.applyScan(data);
+                            this.stopScanTimers();
+                        } else if (['failed', 'expired', 'cancelled', 'consumed'].includes(data.status)) {
+                            this.stopScanTimers();
+                        }
+                    } catch (e) { /* the next poll tries again */ }
+                },
+
+                // Fill the form with what was read. Nothing is saved: the manager checks and ticks the box first.
+                applyScan(data) {
+                    ['plate_number', 'vin', 'brand', 'model', 'year', 'fuel_type'].forEach(key => {
+                        const field = (data.fields || {})[key];
+                        if (field) this.editForm[key] = key === 'year' ? Number(field.value) : field.value;
+                    });
+                    this.scanFlags = data.fields || {};
+                    this.scanApplied = true;
+                    this.editForm.scan_session_id = data.id;
+                    this.editForm.scan_confirmed = false;
+                },
+
+                scanClass(key) {
+                    const f = this.scanApplied ? this.scanFlags[key] : null;
+                    if (!f) return '';
+                    return f.status === 'check' ? 'ring-1 ring-amber-400 border-amber-400' : 'ring-1 ring-emerald-400/60 border-emerald-400/60';
+                },
+
+                stopScanTimers() {
+                    clearInterval(this.scanTimer);
+                    clearInterval(this.scanClock);
+                    this.scanTimer = this.scanClock = null;
+                },
+
+                async resetScan(cancelOnServer) {
+                    this.stopScanTimers();
+                    const old = this.scan;
+                    this.scan = null;
+                    this.scanApplied = false;
+                    this.scanFlags = {};
+                    delete this.editForm.scan_session_id;
+                    delete this.editForm.scan_confirmed;
+
+                    if (cancelOnServer && old && old.id) {
+                        fetch('{{ route('vehicle-scan.destroy', ':id', false) }}'.replace(':id', old.id), { method: 'DELETE', headers: this.scanHeaders(), keepalive: true }).catch(() => {});
+                    }
+                },
+
                 openAddModal() {
+                    this.resetScan(true);
                     this.editMode = 'add';
                     this.editId = null;
                     this.editForm = {
@@ -1576,6 +1795,7 @@
                             }
                         }
 
+                        this.resetScan(false); // the saved vehicle used the scan: its photos are already deleted
                         this.showEditModal = false;
                         this.showToast(
                             this.editMode === 'add' ? 'Vehicle added successfully.' :

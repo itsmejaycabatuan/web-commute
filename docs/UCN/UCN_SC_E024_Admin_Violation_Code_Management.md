@@ -84,7 +84,7 @@ A PDO exception occurs during any database interaction. System logs the exceptio
 - Fine amounts are stored as plain numbers (no currency formatting) in the database; the view prefixes them with “₱” for display.
 - Violation codes carry **no license-revocation flag** (the feature was removed together with the `is_revoked` column); the 4th+ offense is always a fine.
 - The UI includes a **Bulk Add** modal that allows entering multiple codes at once; each row is validated individually before insertion.
-- The `code` field is limited to 255 characters and is expected to be a short identifier (e.g., “UV01”, “Speeding”).
+- The `code` field is limited to 255 characters and is expected to be a short identifier (the seeded codes are `UV01`–`UV14`; see *Seeded violation codes* below).
 - Deletion is prohibited only when the code is referenced by `violation_logs`; there is no cascade‑delete or soft‑delete mechanism.
 - The view uses Alpine.js for client‑side interactivity (modals, form handling) but all persistence is performed via standard POST/PUT/DELETE requests to the Laravel backend.
 - The code table is filtered in the browser and shown **10 codes per page** with a pager. Add / edit / delete post in the background: a validation error keeps the modal open with the message under its field, and success closes it with a toast.
@@ -100,3 +100,28 @@ A PDO exception occurs during any database interaction. System logs the exceptio
 | View | `resources/views/driver-manager/violation-codes.blade.php` |
 | Model | `App\Models\ViolationCode` |
 | Related UCNs | UCN_SC_E014 (Manage Violations – view logs), UCN_SC_E012 (Manage Drivers – approval/reject) |
+| Seeder | `database/seeders/ViolationCodeSeeder.php` (called by `DatabaseSeeder`; `DevSeeder` calls it only when the table does not hold the seeded set) |
+| Tests (automation) | `tests/Feature/AutomationTest.php` — `test_seeder_replaces_the_violation_codes_with_the_puj_schedule`, `test_seeder_is_repeatable` |
+
+---
+
+## Seeded violation codes
+
+`php artisan db:seed` (`ViolationCodeSeeder`) loads the violations most often written up against Philippine public utility jeepney (PUJ) drivers and operators. **Running it replaces the whole table**: codes made earlier are removed and, because a violation log belongs to its code, so are their logged violations. The amounts follow the LTO traffic schedule, LTFRB/DOTr-LTO Joint Administrative Order 2014-01 (franchise and conduct violations) and RA 10913 (anti-distracted driving); sources disagree on some figures and they are revised from time to time, so treat them as a **starting schedule** to check against current LTFRB / LTO issuances. Any amount can be edited above.
+
+| Code | Violation | 1st | 2nd | 3rd | 4th+ |
+|---|---|---:|---:|---:|---:|
+| `UV01` | Disregarding Traffic Signs / Signals | ₱1,000 | ₱1,000 | ₱1,000 | ₱1,000 |
+| `UV02` | Reckless Driving | ₱2,000 | ₱10,000 | ₱10,000 | ₱10,000 |
+| `UV03` | Using a Mobile Phone While Driving | ₱5,000 | ₱10,000 | ₱15,000 | ₱20,000 |
+| `UV04` | Driving Without a Valid Driver's License | ₱3,000 | ₱3,000 | ₱3,000 | ₱3,000 |
+| `UV05` | Unregistered or Expired Vehicle Registration | ₱10,000 | ₱10,000 | ₱10,000 | ₱10,000 |
+| `UV06` | Operating Without Franchise (Colorum) | ₱50,000 | ₱100,000 | ₱200,000 | ₱200,000 |
+| `UV07` | Operating Outside the Authorized Route | ₱5,000 | ₱10,000 | ₱50,000 | ₱50,000 |
+| `UV08` | Overcharging of Fare | ₱5,000 | ₱10,000 | ₱15,000 | ₱15,000 |
+| `UV09` | Refusal to Convey Passengers | ₱5,000 | ₱10,000 | ₱15,000 | ₱15,000 |
+| `UV10` | Trip Cutting | ₱5,000 | ₱10,000 | ₱15,000 | ₱15,000 |
+| `UV11` | Overloading of Passengers | ₱1,500 | ₱3,000 | ₱5,000 | ₱5,000 |
+| `UV12` | Defective Parts or Accessories (Unroadworthy Vehicle) | ₱500 | ₱1,000 | ₱1,500 | ₱1,500 |
+| `UV13` | Failure to Display Fare Matrix or Franchise Details | ₱500 | ₱1,000 | ₱1,500 | ₱2,000 |
+| `UV14` | Illegal Loading and Unloading of Passengers | ₱500 | ₱1,000 | ₱1,500 | ₱1,500 |

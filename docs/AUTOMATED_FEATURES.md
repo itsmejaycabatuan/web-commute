@@ -23,10 +23,27 @@ Jobs the system now does by itself instead of waiting for someone to do them by 
 | 17  | **Fleet and driver analytics**                | Computed when the Admin opens **Fleet Analytics** (`/analytics`) | Hours, overtime, auto-closed shifts, fares, revenue, violations and fines per driver; distance (from the GPS trail), hours, fares, scan collection rate and maintenance cost per vehicle; an 8-week hours and overtime trend; the repeat violators and unpaid-scan commuters. Last 7, 30 or 90 days. | none | E020 |
 | 18  | **Scheduled reports**                         | `php artisan reports:send weekly` (Mondays 06:00) and `reports:send monthly` (the 1st, 06:30) | Emails the Admins a summary of the last full week or month: fare revenue by method, top-ups, failed payments, violations and fines collected, hours and overtime, distance, maintenance spend, overdue services, repeat violators. The figures come as a CSV, with the period's audit trail as a second CSV. `--to=` sends to one address; `--dry-run` prints the figures. | `config/reports.php` (`REPORT_ATTACH_ACTIVITY_LOG`, `REPORT_ACTIVITY_LOG_LIMIT`) | E020 |
 | 19  | **Replacement driver** | A driver is suspended (by an Admin, or automatically for inactivity) or `php artisan vehicles:cover-vacancies`, hourly | A driver who leaves a vehicle because they were suspended, or because their licence expired (the hourly job takes them off it), leaves a vacancy. The system assigns the best free driver (approved, not suspended, unexpired licence, no vehicle, no inactivity warning; a valid licence first, then fewest violations and least overtime in the last 90 days), rebuilds a 30-day alternating duty roster if the vehicle is shared again, emails the replacement and the Maintenance Managers, and logs it to the audit trail. If nobody is free the vacancy stays open, shows on the Maintenance dashboard, is retried every hour and is reported to the Maintenance Managers once a day. `--dry-run` lists without acting. | `config/fleet.php` (`AUTO_REPLACE_DRIVERS`, `RELEASE_EXPIRED_LICENCE_DRIVERS`, `REPLACEMENT_ROSTER_DAYS`, `VACANCY_REMINDER_HOURS`) | E012, E015 |
+| 20  | **Scan vehicle papers with a phone** | **Scan with phone** in the Add Vehicle form; `php artisan vehicle-scans:purge` every 10 minutes | The desktop shows a QR code; the phone photographs the CR (and OR); the server reads them locally with Tesseract (3 independent passes, label-and-cell extraction, grid completion for labels the OCR dropped) and the form fills itself with plate, chassis/VIN, make, model, year and fuel. Each value is marked *read clearly* or *check carefully*, other readings are offered, and the CR and OR are cross-checked. **The manager must tick "I have checked these details against the document" before the vehicle can be saved** (enforced by the server too). Photos are private, never sent to a third party, and deleted when the vehicle is saved, the form is closed or the session expires. | `config/vehicle_scan.php` (`VEHICLE_SCAN_ENABLED`, `TESSERACT_BINARY`, `VEHICLE_SCAN_TTL_MINUTES`) | E015 |
+
+## Schedule at a glance
+
+From `php artisan schedule:list` (all need the cron entry described below):
+
+| When | Command | Item |
+|---|---|---|
+| every minute | `vehicle:offline-check` | marks vehicles with no recent position offline |
+| every 10 minutes | `payments:reconcile`, `vehicle-scans:purge` | 11 and 20 |
+| every 15 minutes | `shifts:auto-close`, `auth:clear-resets` | 1 |
+| hourly | `payments:expire-pending`, `vehicles:cover-vacancies` | closes payments pending over 12 hours (see PAYMONGO_SETUP.md); 19 |
+| daily 00:00 | `activitylog:clean` | audit trail retention |
+| daily 07:00 | `maintenance:due-alerts` | 5 |
+| daily 08:00 | `drivers:inactivity-check` | 9 |
+| daily 09:00 / 09:30 | `drivers:flag-repeat-violators` / `fares:flag-evasion` | 16 / 15 |
+| Mondays 06:00 / the 1st 06:30 | `reports:send weekly` / `reports:send monthly` | 18 |
 
 ## Notes
 
-- **The scheduler must be running.** Items 1, 5, 9, 11, 15, 16, 18 and 19 only run if `php artisan schedule:run` is called every minute from a cron entry (or a worker) on the host.
+- **The scheduler must be running.** Items 1, 5, 9, 11, 15, 16, 18, 19 and 20 (its cleanup) only run if `php artisan schedule:run` is called every minute from a cron entry (or a worker) on the host.
 - **The seeded fines are indicative.** Overcharging (₱5,000 / 10,000 / 15,000), colorum 1st offense (₱50,000) and the franchise-condition tiers follow LTFRB/DOTr-LTO Joint Administrative Order 2014-01. Sources disagree on the other amounts, so check them against current LTFRB/LTO issuances. The Driver Manager can edit any of them under Violation Codes.
 - **Seeding the codes is destructive.** Running `ViolationCodeSeeder` removes every existing violation code, and the violation logs that belong to them.
 - **Auto-closed hours are an estimate.** Nobody knows when the driver really stopped, so the entry carries the credited regular shift. "Mark reviewed" only acknowledges it; hours can't be edited yet.
@@ -39,6 +56,10 @@ Jobs the system now does by itself instead of waiting for someone to do them by 
 - **Flags are once per window.** The repeat-violator and fare-evasion jobs look in the audit trail for an earlier flag of the same driver or commuter inside the window, so a daily run does not repeat itself.
 - **A replacement fully takes over the seat.** A vehicle that had two drivers gets two again (the new driver and the one who stayed, taking turns, the one who stayed first); a single-driver vehicle gets one. A vehicle that is no longer Active, or that the Maintenance Manager already staffed by hand, has its vacancy closed as "not needed" instead.
 - **An expired licence takes the driver off their vehicle, not off the system.** They keep their account and are emailed; the Maintenance Manager reassigns them after the licence is renewed. Set `RELEASE_EXPIRED_LICENCE_DRIVERS=false` to turn that off. With `AUTO_REPLACE_DRIVERS=false` the system only reports the vacancy and suggests the best free drivers.
+- **The scan needs Tesseract on the server** (`sudo apt-get install -y tesseract-ocr`). Without it the button is hidden and the form works as before. Reading takes roughly 5–15 seconds.
+- **The reader helps, it does not decide.** On the specimen set (`php artisan vehicle-scan:evaluate`) values were correct in the form on 100% of clean pages and scans, 94% of phone photos and 91% of photocopies, with no wrong value marked "read clearly". Real papers (stamps, creases, worn print) will do worse, so every value is confirmed by the manager, a chassis number is always marked "check", and anything unreadable is left empty. It cannot tell a forged paper from a genuine one.
+- **The phone link is a capability.** `/scan/{token}` needs no sign-in: whoever holds the 40-character token can send photos to that one 15-minute session and nothing else (it is single-purpose, rate-limited, CSRF-protected, and the phone is never shown what was read). Do not post the QR code anywhere.
+- **MariaDB timestamp trap, fixed.** MariaDB/MySQL give the first NOT NULL `timestamp` column of a table `ON UPDATE CURRENT_TIMESTAMP`; `qr_scans.scanned_at`, `driver_vacancies.opened_at` and `vehicle_scan_sessions.expires_at` were silently reset by unrelated updates (a QR scan's 15-minute window renewed itself whenever the row was touched). Migration `2026_10_28_100000` removes it.
 
 ## Where it lives
 
@@ -58,5 +79,6 @@ Jobs the system now does by itself instead of waiting for someone to do them by 
 | Analytics | `app/Services/FleetAnalyticsService.php`, `app/Http/Controllers/Admin/AnalyticsController.php`, `resources/views/admin/analytics.blade.php` |
 | Scheduled reports | `app/Services/PeriodReportService.php`, `app/Console/Commands/SendScheduledReport.php`, `app/Notifications/ScheduledReport.php` |
 | Replacement driver | `app/Services/ReplacementDriverService.php`, `app/Console/Commands/CoverVacancies.php`, `Driver::suspend()` / `Driver::releaseFromVehicles()`, `app/Models/DriverVacancy.php`, `config/fleet.php` |
+| Vehicle scan | `app/Services/VehicleScan/` (`RegistrationDocumentReader`, `DocumentExtractor`, `FieldNormalizer`, `TesseractClient`, `ImagePreparer`), `VehicleScanController`, `PhoneScanController`, `VehicleScanSession`, `resources/views/vehicle-scan/phone.blade.php`, the scan panel in `resources/views/maintenance-manager/vehicles.blade.php`, `VehicleController::store()`, `config/vehicle_scan.php` |
 | Schedule | `app/Console/Kernel.php` |
-| Tests | `tests/Feature/AutomationTest.php`, `tests/Feature/AutomationPhase2Test.php`, `tests/Feature/ReplacementDriverTest.php` |
+| Tests | `tests/Feature/AutomationTest.php`, `tests/Feature/AutomationPhase2Test.php`, `tests/Feature/ReplacementDriverTest.php`, `tests/Feature/VehicleScanReaderTest.php`, `tests/Feature/VehicleScanFlowTest.php`, `tests/Feature/AutoUpdatingTimestampTest.php` |

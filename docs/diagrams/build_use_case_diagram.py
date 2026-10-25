@@ -100,10 +100,14 @@ UC_REL = [
 
 # secondary (external) actors: key -> (stereotype-free name lines, lane x, row, [use cases])
 EXTERNAL = {
-    "email": (["Email Service", "(SMTP)"], 580, "A", ["E002", "E011"]),
-    "map": (["Map & Routing", "OpenFreeMap · Photon · OSRM"], 670, "B", ["E003", "E004"]),
-    "paymongo": (["PayMongo Gateway", "(GCash / Maya)"], 760, "A", ["E006"]),
-    "pusher": (["Push Channel", "(Pusher / Echo)"], 850, "B", ["E003", "E021"]),
+    "email": (["Email Service", "(SMTP)"], 525, "A",
+              ["E002", "E011", "E005", "E006", "E012", "E014", "E016", "E020"]),
+    "map": (["Map & Routing", "OpenFreeMap · OSRM"], 595, "B", ["E003", "E004"]),
+    "paymongo": (["PayMongo Gateway", "(GCash / Maya)"], 665, "C", ["E006"]),
+    "pusher": (["Push Channel", "(Pusher / Echo)"], 735, "A", ["E003", "E021"]),
+    "scheduler": (["Scheduler", "(cron · schedule:run)"], 805, "B",
+                  ["E006", "E010", "E012", "E014", "E015", "E016", "E020"]),
+    "phone": (["Phone (scanner)", "(OR / CR photos)"], 875, "C", ["E015"]),
 }
 
 # ----------------------------------------------------------------------------- GEOMETRY
@@ -114,8 +118,8 @@ GROUP_HEAD = 30
 GROUP_W = 310
 GROUP_GAP = 26
 COL_X = {"L": 210, "R": 900}
-TOP = 238
-BOUNDARY = dict(x=175, y=172, w=1070)
+TOP = 302
+BOUNDARY = dict(x=175, y=236, w=1070)
 LEFT_ACTOR_X, RIGHT_ACTOR_X = 100, 1320
 LEFT_TRUNK_X, RIGHT_TRUNK_X = 40, 1385
 
@@ -254,11 +258,11 @@ def build():
 
     # ---- external actors (lanes + boxes)
     lane_xs = [v[1] for v in EXTERNAL.values()]
-    rowy = {"A": 14, "B": 88}
+    rowy = {"A": 14, "B": 88, "C": 162}
     box_h = 58
     for key, (names, lx, row, targets) in EXTERNAL.items():
         y0 = rowy[row]
-        add(f'<rect x="{lx - 80}" y="{y0}" width="160" height="{box_h}" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/>')
+        add(f'<rect x="{lx - 66}" y="{y0}" width="132" height="{box_h}" rx="4" fill="#fff" stroke="#57606a" stroke-width="1.4"/>')
         add(f'<text x="{lx}" y="{y0 + 14}" text-anchor="middle" class="ext-st">«external system»</text>')
         add(f'<text x="{lx}" y="{y0 + 30}" text-anchor="middle" class="ext-name">{escape(names[0])}</text>')
         add(f'<text x="{lx}" y="{y0 + 45}" text-anchor="middle" class="ext-sub">{escape(names[1])}</text>')
@@ -266,7 +270,9 @@ def build():
         line(lx, y0 + box_h, lx, lowest, "#57606a", 1.2)
         for t in targets:
             cx, cy = pos[t]
-            hop_h(lx, cx + OVAL_RX, cy, "#57606a", [x for x in lane_xs if x != lx])
+            end = cx + OVAL_RX if cx < lx else cx - OVAL_RX
+            hop_h(lx, end, cy, "#57606a", [x for x in lane_xs if x != lx])
+            add(f'<circle cx="{lx}" cy="{cy:.1f}" r="2.8" fill="#57606a"/>')
 
     # ---- use-case relationships (<<include>>/<<extend>>)
     for a, b, st in UC_REL:

@@ -96,7 +96,6 @@ class ImportantDataSeeder extends Seeder
         $vehicles = [
             [
                 'vehicle_data' => [
-                    'driver_id' => 1,
                     'year' => 2020,
                     'brand' => 'Toyota',
                     'model' => 'HiAce',

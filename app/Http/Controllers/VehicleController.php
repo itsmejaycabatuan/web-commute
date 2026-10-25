@@ -6,6 +6,7 @@ use App\Models\Driver;
 use App\Models\TimeKeeping;
 use App\Models\Vehicle;
 use App\Models\VehicleDutyDay;
+use App\Models\VehicleScanSession;
 use App\Services\MaintenanceDueService;
 use App\Support\Audit;
 use Illuminate\Support\Arr;
@@ -43,7 +44,9 @@ class VehicleController extends Controller
                 'driver_code' => $d->driver_code,
             ]);
 
-        return view('maintenance-manager.vehicles', compact('vehicles', 'drivers'));
+        $scanAvailable = VehicleScanController::available();
+
+        return view('maintenance-manager.vehicles', compact('vehicles', 'drivers', 'scanAvailable'));
     }
 
     /**
@@ -84,6 +87,9 @@ class VehicleController extends Controller
 
     public function store(Request $request)
     {
+        // A vehicle filled from scanned papers is only accepted once the manager has said they checked it.
+        $scan = $this->resolveScan($request);
+
         $validated = $request->validate([
             'year' => 'required|integer|min:1990|max:2030',
             'brand' => 'required|string|max:100',
@@ -110,6 +116,10 @@ class VehicleController extends Controller
 
         $vehicle = Vehicle::create(Arr::except($validated, ['driver_id', 'second_driver_id']));
         $this->syncDrivers($vehicle, $driverIds);
+
+        if ($scan) {
+            $this->consumeScan($scan, $vehicle, $validated);
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -284,6 +294,49 @@ class VehicleController extends Controller
         Audit::log(Audit::FLEET, 'drivers_assigned', 'Set the drivers of vehicle '.($vehicle->plate_number ?: '#'.$vehicle->id), $vehicle, [
             'drivers_before' => $before,
             'drivers_after' => $after,
+        ]);
+    }
+
+    /**
+     * The phone scan this form was filled from, if any. It must be the signed-in person's own, finished, unexpired scan,
+     * and they must have ticked "I checked these details against the document".
+     */
+    private function resolveScan(Request $request): ?VehicleScanSession
+    {
+        if (! $request->filled('scan_session_id')) {
+            return null;
+        }
+
+        $session = VehicleScanSession::where('id', $request->input('scan_session_id'))->where('user_id', $request->user()->id)->first();
+
+        if (! $session || $session->visibleStatus() !== VehicleScanSession::READY) {
+            throw ValidationException::withMessages(['scan_session_id' => 'That scan is no longer available. Scan the papers again, or fill the form in by hand.']);
+        }
+
+        if (! $request->boolean('scan_confirmed')) {
+            throw ValidationException::withMessages(['scan_confirmed' => 'Confirm that you checked the details against the document before saving.']);
+        }
+
+        return $session;
+    }
+
+    /** The vehicle is saved: the photos are deleted, and the audit trail records which values the manager corrected. */
+    private function consumeScan(VehicleScanSession $session, Vehicle $vehicle, array $saved): void
+    {
+        $norm = fn ($v) => strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $v));
+        $read = $session->result['fields'] ?? [];
+
+        $corrected = collect($read)
+            ->filter(fn ($field, $name) => array_key_exists($name, $saved) && $norm($saved[$name]) !== $norm($field['value']))
+            ->keys()->values()->all();
+
+        $session->deleteFiles();
+        $session->update(['status' => VehicleScanSession::CONSUMED, 'consumed_at' => now(), 'vehicle_id' => $vehicle->id, 'result' => null]);
+
+        Audit::log(Audit::FLEET, 'vehicle_scan_used', 'Added vehicle '.$vehicle->plate_number.' from scanned registration papers', $vehicle, [
+            'fields_read' => array_keys($read),
+            'fields_corrected_by_manager' => $corrected,
+            'needed_a_second_look' => collect($read)->where('status', 'check')->keys()->values()->all(),
         ]);
     }
 

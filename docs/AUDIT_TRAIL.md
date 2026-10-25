@@ -20,10 +20,10 @@ retention rule.
 
 | Column | Holds |
 |---|---|
-| `log_name` | **Category** — `auth`, `account`, `driver`, `fleet`, `fare`, `violation`, `timekeeping`, `payment` (filter on this) |
+| `log_name` | **Category** — `auth`, `account`, `driver`, `fleet`, `fare`, `violation`, `timekeeping`, `payment`, `system` (filter on this) |
 | `event` | **Machine name** — see the catalogue below |
 | `description` | A sentence a person can read, e.g. `Created vehicle ABC 123`, `Approved driver DRV-000012` |
-| `causer_type` / `causer_id` | **Who** — the signed-in user (null for a guest or the payment gateway) |
+| `causer_type` / `causer_id` | **Who** — the signed-in user (null for a guest, the payment gateway or an automatic job) |
 | `subject_type` / `subject_id` | **Which record** the event is about (may be gone if it was deleted) |
 | `properties.attributes` / `properties.old` | **New / old values** of the business fields that changed (only those) |
 | `properties.context` | `ip`, `user_agent`, `actor_email`, `actor_role` — a snapshot, so it survives the actor's account being deleted |
@@ -37,19 +37,26 @@ Never stored: passwords or hashes, remember tokens, licence-image data, card or 
 | Category | Events | Written by |
 |---|---|---|
 | `auth` | `login`, `login_failed` (email tried), `login_blocked` (suspended account), `logout`, `password_changed`, `password_reset`, `password_set_by_admin`, `sessions_revoked` | `Audit::log()` in the controllers |
-| `account` | `registered`, `created` (by an admin; has role), `updated` (email / verification), `deleted` / `anonymised` (by an admin), `deleted_self` (own account; `outcome` = deleted or anonymised), `suspended`, `reactivated`, `role_changed` | `Audit::log()` + `User` model |
-| `driver` | `registered` (application submitted), `created` (by an admin), `updated` (licence data; approval and rejection read `Approved driver …` / `Rejected driver …`), `deleted`, `suspended` (reason, vehicle released), `reactivated` | `Audit::log()` + `Driver` model |
-| `fleet` | `created` / `updated` / `deleted` for vehicles, maintenance tasks and service records | `Vehicle`, `MaintenanceTask`, `PreventiveMaintenance` models |
-| `violation` | `created` / `updated` / `deleted` for violation codes and violation logs | `ViolationCode`, `ViolationLog` models |
-| `timekeeping` | `created` / `updated` for time entries (clock-in/out and manager entries — the causer tells them apart) | `TimeKeeping` model |
+| `account` | `registered`, `email_verified`, `created` (by an admin; has role), `updated` (email / verification), `deleted` / `anonymised` (by an admin), `deleted_self` (own account; `outcome` = deleted or anonymised), `suspended`, `reactivated`, `role_changed` | `Audit::log()` + `User` model |
+| `driver` | `registered` (application submitted), `created` (by an admin), `updated` (licence data; approval and rejection read `Approved driver …` / `Rejected driver …`), `deleted`, `suspended` (reason, vehicle released; `automatic: true` when the inactivity job did it), `reactivated`, `inactivity_warned` (days away), `released_from_vehicle` (licence expired: which vehicles) | `Audit::log()` + `Driver` model; the two automatic events are written by `drivers:inactivity-check` and `vehicles:cover-vacancies` with no signed-in actor |
+| `fleet` | `created` / `updated` / `deleted` for vehicles, maintenance tasks, service records and ride QR codes; `drivers_assigned` (who is on a vehicle), `duty_roster_updated` (generated or changed), `vacancy_opened` (a vehicle lost a driver), `replacement_assigned` (who took the seat, `automatic: true`), `vehicle_scan_used` (a vehicle added from scanned papers: **which fields were read, which the manager corrected and which needed a second look — never the values**) | `Vehicle`, `MaintenanceTask`, `PreventiveMaintenance`, `QrCode` models; `VehicleController`, `DutyRosterController`, `ReplacementDriverService` |
+| `violation` | `created` / `updated` / `deleted` for violation codes and violation logs (a fine marked paid reads `Marked violation #… as paid`); `repeat_violator_flagged` (a driver with 3+ violations in 30 days, flagged once per window) | `ViolationCode`, `ViolationLog` models; `drivers:flag-repeat-violators` |
+| `timekeeping` | `created` / `updated` for time entries (clock-in/out and manager entries — the causer tells them apart). A shift the system closed reads `Auto-closed time entry … after the driver did not clock out`; a manager acknowledging it reads `Reviewed auto-closed time entry …` | `TimeKeeping` model; `shifts:auto-close` has no signed-in actor |
 | `payment` | `created` / `updated` for payments (`Payment SC-… marked paid / failed / cancelled`), `created` for top-ups | `Payment`, `TopupHistory` models |
-| `fare` | `created` (fare guide), `fare_guide_imported` (rows), `fare_rates_updated` (one entry, per-tier old → new) | `Fare` model + `FareController` |
-| `system` | `report_exported` (which report, date range), `activity_log_exported` (rows, filters) | `ReportController`, `ActivityLogController` |
+| `fare` | `created` (fare guide), `fare_guide_imported` (rows), `fare_rates_updated` (one entry, per-tier old → new), `fare_evasion_flagged` (a commuter with 3+ scans never followed by a fare in 7 days, flagged once per window) | `Fare` model + `FareController`; `fares:flag-evasion` |
+| `system` | `report_exported` (which report, date range), `activity_log_exported` (rows, filters), `report_sent` (a scheduled weekly or monthly report emailed: period, recipients, attachment names) | `ReportController`, `ActivityLogController`, `reports:send` |
+
+### Entries written by the automatic jobs
+
+The jobs listed in [AUTOMATED_FEATURES.md](AUTOMATED_FEATURES.md) run with **no signed-in user**, so their entries have no `causer` and no IP; the description says what happened
+and `properties` carry the facts (`automatic: true`, days away, counts). The same events are also what the jobs use to remember what they have already done: the repeat-violator
+and fare-evasion flags look for an earlier entry for the same driver or commuter inside the window, so **pruning the log (365 days) also forgets those flags**, which is harmless.
 
 ## Deliberately not recorded
 
 Page views and listings · the map's `/track/vehicles/active` polling · location broadcasts · driver availability toggles and the
-clock-in/out status flip · theme and font preferences · developer map markers · `vehicles.is_active` (a heartbeat flag).
+clock-in/out status flip · theme and font preferences · developer map markers · `vehicles.is_active` (a heartbeat flag) · **a commuter's position** (matched to a vehicle and discarded) ·
+**the photos of registration papers and the values read from them** · the emails the system sends (a failed send goes to `storage/logs`, not here).
 Database and gateway failures go to `storage/logs/laravel.log` (`Log::error` with context), not here.
 
 ## Behaviours worth knowing
@@ -126,5 +133,5 @@ The dev database already has all of this. For staging or production, in order:
 2. `php artisan migrate` — drops the unused `routes` / `fleets` tables and adds the `created_at` index on `activity_log`.
 3. `php artisan activitylog:purge-noise --dry-run`, then without `--dry-run` — clears the legacy "Action performed" rows.
 4. Make sure the scheduler runs (`* * * * * cd <app> && php artisan schedule:run`). Without it `activitylog:clean` never prunes, and the payment-expiry,
-   offline-vehicle and reset-token jobs stop too.
+   offline-vehicle and reset-token jobs stop too — and so do all the automatic jobs (shift auto-close, payment reconciliation, replacement drivers, maintenance and report emails: see [AUTOMATED_FEATURES.md](AUTOMATED_FEATURES.md)).
 5. Sign in as an Admin and open **Activity Log**: a fresh sign-in should appear within seconds, with your IP.

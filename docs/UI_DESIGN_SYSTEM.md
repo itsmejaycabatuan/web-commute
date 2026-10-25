@@ -12,6 +12,18 @@ page — landing, auth, the four role consoles and the commuter screens — shar
 | Landing page | `home.blade.php` | Hero with product preview, feature bento, role cards, call-to-action. |
 | Error pages | `resources/views/errors/*` | Branded 403 / 404 / 419 / 429 / 500 / 503. |
 
+## Status badges added with the automation work
+
+Small pills use the same tinted-fill, matching-border pattern everywhere; the meaning is carried by the **word**, not only the colour.
+
+| Badge | Used for | Colour |
+| --- | --- | --- |
+| *Auto-closed* / *auto* | A shift the scheduler closed (Time Keeping, driver Timekeeping) | amber |
+| *Past Due* / *Due Soon* / *On Track* | Preventive maintenance and the Vehicles list | red / amber / green |
+| *Read clearly* / *Check* | A value read from a scanned document, beside the field (Add Vehicle) | green / amber |
+| *Needs review* count | Time Keeping header | amber |
+| *Vehicles waiting for a driver*, *Maintenance needs attention* | Maintenance Manager dashboard panels | amber / red |
+
 ## Design choices
 
 * **Palette** — indigo → violet brand on cool neutrals; dark mode is deep navy rather than pure black.

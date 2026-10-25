@@ -63,13 +63,27 @@
 1. In the list, the actor clicks the suspend icon (or *reactivate* when the driver is already suspended). Only an **approved** driver can be suspended — the icon is not shown for a pending or rejected registration and the server refuses it. A suspension also takes effect on a session that is already open: the driver's next request signs them out.
 2. System displays a confirmation dialog: suspending states that the driver *"will not be able to sign in, clock in or broadcast a location, and is detached from any assigned vehicle"*; an optional **Reason** field is provided.
 3. Driver Manager confirms.
-4. System sets `is_suspended`, records `suspended_at` and the reason, moves the driver `status` to **suspended**, **detaches any assigned vehicle**, writes a `suspended` audit-trail entry (with the reason) and confirms *"Driver suspended. They can no longer sign in."*
-5. Reactiving reverses all of it (`status` back to **inactive**) and confirms *"Driver reactivated."*
+4. System sets `is_suspended`, records `suspended_at` and the reason, moves the driver `status` to **suspended**, **detaches any assigned vehicle** (and removes them from its duty roster from today on), writes a `suspended` audit-trail entry (with the reason) and confirms *"Driver suspended. They can no longer sign in."* The seat they held is then offered to a replacement (A8).
+5. Reactivating reverses all of it (`status` back to **inactive**), starts a fresh inactivity clock (`reactivated_at`, A7) and confirms *"Driver reactivated."* The driver is not put back on the vehicle they left.
 
 **A6 – Approve or Reject a Driver Application**
 1. A **pending** driver row shows a **"Review"** button instead of the ID-card icon.
 2. Driver Manager opens the review modal (identity fields next to the licence image) and chooses **"Approve"** or **"Reject"**.
-3. System validates the approve payload (`license_number` unique, `license_code`, `expiration_date`), assigns the generated driver code when the driver has none yet, sets `is_approved = 1` and confirms *"Driver approved. They can sign in now."*, or sets `is_rejected = 1` and confirms *"Driver registration rejected. They cannot sign in until you approve them again."*
+3. System validates the approve payload (`license_number` unique, `license_code`, `expiration_date`), assigns the generated driver code when the driver has none yet, sets `is_approved = 1` and confirms *"Driver approved. They can sign in now."*, or sets `is_rejected = 1` and confirms *"Driver registration rejected. They cannot sign in until you approve them again."* Either way the **driver is emailed the decision** (`DriverApplicationDecided`).
+
+**A7 – A driver who stays away is warned, then suspended (automatic)**
+1. Every day at 08:00 the scheduler runs `php artisan drivers:inactivity-check` over every approved, not-rejected, not-suspended driver and counts the **days since the driver last clocked in**. Leave a Driver Manager recorded counts as activity; a driver who never clocked in counts from the day the account was created or last reinstated (`reactivated_at`).
+2. At `DRIVER_INACTIVITY_WARN_AFTER_DAYS` (default **3**) the driver is emailed once (`DriverInactivityWarning`) to contact HR about the inactivity (`HR_EMAIL` is named in the mail), and `inactivity_warned_at` is stamped. An *Inactivity warning sent* entry is written to the audit trail.
+3. Once the driver has been away **more than** `DRIVER_INACTIVITY_SUSPEND_AFTER_DAYS` (default **7**) **and** the warning has been out for at least a day, the system suspends them exactly as in A5 (reason *"Automatically suspended: inactive for N days"*), logged as `suspended` with `automatic: true`. A driver is **never suspended without a warning first**.
+4. Clocking in again clears the warning, so the next lapse starts afresh. `--dry-run` lists who would be warned or suspended without emailing or suspending anyone.
+
+**A8 – A driver who leaves a vehicle is replaced automatically**
+1. A driver leaves a vehicle when they are **suspended** (A5 or A7) or when their **licence expires** (the hourly `vehicles:cover-vacancies` job takes an approved, not-suspended driver with an expired licence off their vehicle exactly as a suspension would, emails them, and lets them keep their account).
+2. The seat they held becomes a **vacancy** (`driver_vacancies`: vehicle, former driver, reason, the number of drivers the vehicle should have again). A manual unassign on the Vehicles page is never a vacancy.
+3. With `AUTO_REPLACE_DRIVERS` on (default) the system picks the best **free** driver — approved, not suspended, licence not expired, no vehicle, no inactivity warning outstanding — ranked by a valid (rather than soon-to-expire) licence, then fewest violations and least overtime in the last 90 days, and assigns them.
+4. If the vehicle is **shared** again (two drivers) a 30-day alternating duty roster is written from today, the driver already on the vehicle first (UCN_SC_E015 A6); a single-driver vehicle needs none.
+5. The replacement is emailed (vehicle, who they share it with, next duty day), the Maintenance Managers are told, and the audit trail records *vacancy opened* and *replacement assigned*.
+6. If nobody is free the vacancy stays open: it is shown on the Maintenance Manager's dashboard, retried every hour, and reported to the Maintenance Managers once a day with the best candidates. A vacancy whose vehicle left service, or that a manager already staffed, is closed as *not needed* instead. With `AUTO_REPLACE_DRIVERS=false` the system only reports the vacancy and suggests the drivers.
 
 ---
 
@@ -81,6 +95,8 @@
 4. On suspension: the account is locked out of sign-in, clock-in and location broadcast, and any assigned vehicle is released.
 5. On deletion: the driver no longer appears in the list, in driver pickers, or in the driver's own sign-in.
 
+6. A new application and each approval or rejection have been emailed (Admins and Driver Managers are told of an application — UCN_SC_E022; the driver is told the decision — A6).
+7. A driver who left a vehicle by suspension or an expired licence has left a vacancy, and a replacement has been assigned or the vacancy is waiting for one (A8).
 ---
 
 ## Exceptions
@@ -116,10 +132,12 @@ The driver is already in that state. System refuses with *"This driver is alread
 
 ## Known Gaps / Notes
 
+- **Suspension and an expired licence both free the vehicle.** A suspended driver is detached and replaced (A8); an expired-licence driver is released the same way, not suspended. Turn the licence release off with `RELEASE_EXPIRED_LICENCE_DRIVERS=false`.
+
 - **A suspended driver's seat is refilled automatically.** Suspending a driver (by an Admin, or by the inactivity job) takes them off their vehicle and opens a vacancy; the system assigns the best free driver, rebuilds the duty roster if the vehicle is shared, and emails the replacement and the Maintenance Managers. Nobody free: the vacancy stays open and is reported daily. See `docs/AUTOMATED_FEATURES.md`.
 
 - **Drivers added by an admin are approved immediately** (`is_approved = true`), so the approve/reject flow effectively applies only to self-registered drivers (UCN_SC_E002).
-- **Suspension has no expiry and no auto-reactivation** — it must be lifted manually.
+- **Suspension has no expiry and no auto-reactivation** — it must be lifted manually (and an automatic inactivity suspension (A7) needs the same manual lift).
 - **A suspended driver is signed out on their next request**: the `account.active` middleware re-checks the account on every authenticated request, ends the session and sends the driver to the login page (JSON calls get a 403 with the redirect). Sign-in, clock-in, status changes and location broadcast are all refused.
 - **There is no "un-approve"** — the reverse of approve is commented out in the controller.
 - Deleting a driver does not remove the uploaded licence image from storage when it was stored on disk.
@@ -138,4 +156,8 @@ The driver is already in that state. System refuses with *"This driver is alread
 | Menu | `config/menu.php` — *PUJ Drivers* (admin), *Drivers* (driver_manager) |
 | Middleware | `auth`, `verified`, `role:admin|driver_manager` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php`, `tests/Feature/UcnSuspensionTest.php` |
+| Inactivity | `app/Console/Commands/DriverInactivityCheck.php` (`drivers:inactivity-check`, daily 08:00), `app/Notifications/DriverInactivityWarning.php`, `Driver::daysInactive()`, `Driver::inactiveSince()`, `config/timekeeping.php` (`inactivity_*`, `hr_email`); schema `2026_10_26_090000_add_inactivity_tracking_to_drivers_table.php` |
+| Replacement | `app/Services/ReplacementDriverService.php`, `app/Console/Commands/CoverVacancies.php` (`vehicles:cover-vacancies`, hourly), `app/Models/DriverVacancy.php`, `Driver::suspend()` / `releaseFromVehicles()`, `config/fleet.php`; schema `2026_10_27_090000_create_driver_vacancies_table.php` |
+| Emails | `app/Notifications/DriverApplicationDecided.php`, `ReplacementAssigned.php`, `VehicleVacancyFilled.php`, `VehicleVacancyOpen.php`, `LicenceExpiredRelease.php`, via `app/Support/Notifier.php` |
+| Tests (automation) | `tests/Feature/ReplacementDriverTest.php` (22), `tests/Feature/AutomationPhase2Test.php` (`test_driver_hears_about_approval_and_rejection`), `tests/Feature/AutomationTest.php` (inactivity) |
 | Related | UCN_SC_E002 (driver self-registration), UCN_SC_E009/E010 (clock in / out), UCN_SC_E013 (timekeeping), UCN_SC_E014 (violations), UCN_SC_E015 (vehicles) |

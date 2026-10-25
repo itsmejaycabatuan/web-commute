@@ -73,6 +73,8 @@ Guest's device is offline. System cannot fetch the map or PUJ coordinates. Syste
 
 ## Known Gaps / Notes
 
+- **A vehicle leaves the map when its driver's shift is closed automatically** (UCN_SC_E010 A4): its recent position rows are aged past the 5-minute window, so it drops off at once, while the GPS history is kept.
+
 - `/api/markers` (developer/mock markers) returns an empty array outside the `local` environment; in production the map relies solely on live driver broadcasts from `/track/vehicles/active`.
 - "Active PUJ" is determined by **location freshness (5 minutes)**, not by the driver's clock-in (timekeeping) status. Align either the wording of E1 or the backend rule.
 - A1 is a **passive, automatic** indicator limited to 10 km; there is no explicit "nearest PUJ" button.

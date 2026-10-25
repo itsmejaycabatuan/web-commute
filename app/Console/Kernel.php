@@ -35,6 +35,8 @@ class Kernel extends ConsoleKernel
         // The Admins' weekly report (Mondays, covering last week) and monthly report (the 1st, covering last month).
         $schedule->command('reports:send weekly')->weeklyOn(1, '06:00');
         $schedule->command('reports:send monthly')->monthlyOn(1, '06:30');
+        // Registration-paper photos from phone scans never outlive their session.
+        $schedule->command('vehicle-scans:purge')->everyTenMinutes();
         // Audit trail retention (ACTIVITY_LOG_RETENTION_DAYS, default 365) — keeps activity_log from growing forever.
         $schedule->command('activitylog:clean')->daily();
     }

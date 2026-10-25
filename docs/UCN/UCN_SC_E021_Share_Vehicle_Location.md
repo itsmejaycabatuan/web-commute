@@ -51,6 +51,11 @@
 1. In the `local` environment only, an admin can add / toggle / remove synthetic map markers from the map view.
 2. System stores them as `dev_markers` scoped to that admin and renders them alongside the live PUJs. Outside `local` the feature is compiled out entirely (the marker list is empty), so it cannot leak into production.
 
+**A5 – Distance driven is recorded**
+1. When a broadcast is stored, the system measures the great-circle distance from the vehicle's **previous recorded position** (the last history row of any of its position rows) to the new one and stores it as `distance_from_last_pos` (kilometres) on the breadcrumb.
+2. The first ping of a trip, a ping more than **10 minutes** after the previous one, and an implausible jump (over **20 km**) store **0**, so a gap or a GPS glitch is never counted as driving.
+3. The sum feeds the driver's *distance today* figure and Fleet Analytics (UCN_SC_E020 A4). Before this change the column was always 0, so earlier history reads 0 km.
+
 ---
 
 ## Postconditions
@@ -61,6 +66,7 @@
 4. Guests and commuters see the vehicle move on the map, at an **obfuscated** position (200 m radius) with `privacy_radius` included in the payload.
 5. The driver account and the vehicle's trip history are untouched by this flow.
 
+6. The breadcrumb row records the kilometres driven since the vehicle's previous ping (A5).
 ---
 
 ## Exceptions
@@ -83,11 +89,12 @@ The browser cannot reach the endpoint (or the response is dropped). The `fetch` 
 **E6 – Malformed Payload on Retry**
 The queued retry payload is missing a required key. `RetryBroadcastLocation` returns without publishing.
 
+**E7 – The Shift Was Closed Automatically**
+The driver forgot to clock out and the system closed the shift (UCN_SC_E010 A4) within the last 12 hours, and they have not started a new one. The broadcast is refused with a **403** and *"Your shift was closed automatically. Clock in on your next shift to resume."* so a phone left running cannot keep the vehicle on the map.
+
 ---
 
 ## Known Gaps / Notes
-
-- **Distance driven is recorded.** Each accepted broadcast stores `distance_from_last_pos`: the kilometres since the vehicle's previous ping (0 for the first ping of a trip, after a gap over 10 minutes, or for a jump over 20 km). It feeds the driver's *distance today* figure and Fleet Analytics. Before this change it was always 0.
 
 - **No server-side rate limiting.** The 2-second throttle is client-side only (`resources/views/map.blade.php`); a modified client could flood the endpoint.
 - **The route carries no `auth` middleware** — authorization is performed inside the controller, which is why E2/E3/E4 are explicit checks rather than a middleware result.
@@ -115,4 +122,7 @@ The queued retry payload is missing a required key. `RetryBroadcastLocation` ret
 | Dev markers | `app/Http/Controllers/DevMarkerController.php`, routes `driver.dev.*` (signed-in admin on a `local` install only: `auth`, `role:admin`, `env.local`; the `/pusher` test page and `/fire-event` are guarded the same way) |
 | Client | `resources/views/map.blade.php` — `broadcastDriverLocation()`, 2-second throttle, broadcast only when the actor is a driver with an assigned vehicle |
 | Tests | `tests/Feature/VehicleTrackingControllerTest.php`, `tests/Feature/UcnSuspensionTest.php::test_a_suspended_driver_cannot_broadcast_a_location` |
+| Distance | `app/Support/Geo.php` (great-circle distance), `VehicleTrackingController::distanceFromLastPosition()`, `VehicleLocationHistory::vehicleLocation()` |
+| Auto-closed shift | `Driver::shiftWasAutoClosed()`, checked in `VehicleTrackingController::broadcastLocation()` |
+| Tests (automation) | `tests/Feature/AutomationPhase2Test.php` — `test_broadcasts_record_the_distance_driven_between_pings`, `test_a_gps_jump_or_a_long_silence_is_not_counted_as_distance`; `tests/Feature/AutomationTest.php` — `test_location_broadcast_stops_after_the_shift_is_auto_closed` |
 | Related | UCN_SC_E003 (Track PUJ — the read side), UCN_SC_E009/E010 (clock in / out), UCN_SC_E012 (Manage Drivers — suspension), UCN_SC_E015 (Manage Vehicles — status drives map visibility) |

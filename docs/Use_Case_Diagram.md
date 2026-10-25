@@ -18,11 +18,11 @@ do not accept SVG, so use the **PNG** (2× resolution, white background): *Inser
 |---|---|---|---|
 | 1 | Overview | The 7 feature packages and which roles use them | [01_overview.png](diagrams/use-case-parts/01_overview.png) |
 | 2 | Account & Access | E001, E002, E011, E022 (public) and E008, E025, E026 (every signed-in user); Email Service | [02_account_and_access.png](diagrams/use-case-parts/02_account_and_access.png) |
-| 3 | Map & Commuter Services | E003–E007; Map & Routing, Push Channel, PayMongo | [03_map_and_commuter_services.png](diagrams/use-case-parts/03_map_and_commuter_services.png) |
-| 4 | Driver Operations | E009, E010, E021, E023; Push Channel | [04_driver_operations.png](diagrams/use-case-parts/04_driver_operations.png) |
-| 5 | Driver Management | E012, E013, E014, E024; Admin shares E012 | [05_driver_management.png](diagrams/use-case-parts/05_driver_management.png) |
-| 6 | Fleet Maintenance | E015, E016, E017; Admin shares E015 | [06_fleet_maintenance.png](diagrams/use-case-parts/06_fleet_maintenance.png) |
-| 7 | Administration | E018, E019, E020, E027, E028 | [07_administration.png](diagrams/use-case-parts/07_administration.png) |
+| 3 | Map & Commuter Services | E003–E007; Map & Routing, Push Channel, PayMongo, Email Service, Scheduler | [03_map_and_commuter_services.png](diagrams/use-case-parts/03_map_and_commuter_services.png) |
+| 4 | Driver Operations | E009, E010, E021, E023; Push Channel, Scheduler | [04_driver_operations.png](diagrams/use-case-parts/04_driver_operations.png) |
+| 5 | Driver Management | E012, E013, E014, E024; Admin shares E012; Email Service, Scheduler | [05_driver_management.png](diagrams/use-case-parts/05_driver_management.png) |
+| 6 | Fleet Maintenance | E015, E016, E017; Admin shares E015; Email Service, Scheduler, Phone | [06_fleet_maintenance.png](diagrams/use-case-parts/06_fleet_maintenance.png) |
+| 7 | Administration | E018, E019, E020, E027, E028; Email Service, Scheduler | [07_administration.png](diagrams/use-case-parts/07_administration.png) |
 
 SVG versions sit beside each PNG. They are regenerated with `python3 docs/diagrams/build_use_case_parts.py`, which reads
 its content from `build_use_case_diagram.py` so the pieces and the full diagram cannot drift apart.
@@ -44,9 +44,11 @@ Companion documents: [Functional Requirements](Functional_Requirements.md) ·
 | **Maintenance Manager** | Primary | Back-office staff who run the fleet and preventive maintenance. | `role:maintenance_manager` |
 | **Admin** | Primary | System administrator: commuters, fare rates, reports, staff accounts, the activity log; may also use the driver and vehicle pages. | `role:admin` |
 | **Authenticated User** | Abstract | Generalisation of the five signed-in roles above. Holds the use cases every signed-in user has (E008, E025, E026). | — |
-| **Email Service** | Secondary (external) | Mail transport that delivers verification and password-reset links. | E002, E011 |
+| **Email Service** | Secondary (external) | Mail transport that delivers verification and password-reset links, and the system's notifications: application decisions, violation notices, receipts, maintenance and gateway alerts, scheduled reports. | E002, E011; notices in E005, E006, E012, E014, E016, E020 |
 | **Map & Routing Services** | Secondary (external) | OpenFreeMap tiles (MapLibre GL), Photon geocoding, OSRM routing. | E003, E004 |
-| **PayMongo Gateway** | Secondary (external) | Hosted checkout and signed webhooks for GCash / Maya fares. Optional, flag-controlled. | E006 |
+| **PayMongo Gateway** | Secondary (external) | Hosted checkout and signed webhooks for GCash / Maya fares; also asked by the reconciliation job about payments whose webhook never arrived. Optional, flag-controlled. | E006 |
+| **Scheduler** | Secondary (system) | Laravel's `schedule:run`, called every minute from cron. Acts as the system actor of the automatic alternate flows: auto clock-out (E010 A4), inactivity warning and suspension, replacement of a lost driver (E012 A7 / A8), payment reconciliation (E006), maintenance alerts (E016 A3), scheduled reports (E020) and clean-up of scan photos (E015 A7). See [AUTOMATED_FEATURES.md](AUTOMATED_FEATURES.md). | E006, E010, E012, E014, E015, E016, E020 |
+| **Phone (scanner)** | Secondary (device) | The Maintenance Manager's own phone, opened from a QR code with a one-off link, which sends photos of the vehicle's OR/CR to the desktop form. It holds no account. | E015 A7 |
 | **Push Channel** | Secondary (external) | Pusher / Laravel Echo channel `vehicle-locations` that carries live (obfuscated) positions. | E003, E021 |
 
 ## 2. Use-case catalogue by actor
@@ -94,6 +96,11 @@ Companion documents: [Functional Requirements](Functional_Requirements.md) ·
 | «include» | E014 Manage Violations | E024 Violation Code Management | Logging a violation needs a maintained violation-code table; E014 A1–A4 is the same function as E024. |
 
 ## 4. Modelling notes
+
+- **Automatic jobs are drawn as an external actor, not as use cases.** The *Scheduler* box is linked to the use cases whose narratives contain an automatic alternate flow (E006, E010, E012, E014, E015, E016, E020), and the *Phone (scanner)* box to E015. The work itself is written as alternate flows with the system as actor, so the set stays at 28 use cases. The *Email Service* box is linked to every use case that sends a notification. Where the catalogue
+  would otherwise hide a human-facing page, the narrative says so: *Fleet Analytics* is E020 A4 (Admin), the *Vehicles waiting
+  for a driver* panel is E015, the *Needs review* column for auto-closed shifts is E013 A3, and the phone scan of the vehicle's
+  papers is E015 A7. A change that adds a **screen of its own** needs a new use case; a change that only adds a job does not.
 
 - **Grouping.** The dashed packages inside the system boundary group use cases by the part of the product they belong to;
   they carry no UML meaning beyond layout. Each use case is labelled with its UCN id so the diagram traces straight to

@@ -64,7 +64,8 @@ Any future expiry / any CVC.
 ## 5. Webhooks (optional but recommended)
 
 Without a webhook the payment still settles: the **return URL** polls PayMongo
-and reconciles. A webhook is the more reliable path.
+and reconciles, and the scheduler's reconciliation job (below) catches whatever
+the commuter never came back for. A webhook is the quickest path.
 
 PayMongo must reach this app over the public internet. With **ngrok** installed:
 
@@ -130,6 +131,33 @@ needs the usual `php artisan schedule:run` cron) and also whenever a payment lis
 the ledger or a checkout page is opened, so it works without cron. A webhook that
 arrives later for a genuinely paid session still settles the payment.
 
+### Missed webhooks are reconciled every 10 minutes
+
+A commuter who pays and then closes the tab, with the webhook lost on the way, used
+to leave the payment `pending` until it expired. `payments:reconcile` (every 10
+minutes, needs the `schedule:run` cron) now asks PayMongo about each gateway payment
+still `pending` after `PAYMONGO_RECONCILE_AFTER_MINUTES` (5), up to
+`PAYMONGO_RECONCILE_BATCH` (100) per run, and settles or fails it through the same
+code the webhook and the return URL use (`PaymentSettlement`), so the three paths
+cannot disagree and a payment is settled once however many of them arrive.
+
+```bash
+php artisan payments:reconcile --dry-run   # names each payment and what it would do; changes nothing
+php artisan payments:reconcile
+```
+
+- With the gateway off the command does nothing.
+- Three gateway errors in a row stop the run (the gateway is down; asking more only adds noise).
+- **Receipts and notices:** when a payment is settled by any path the commuter is emailed
+  *Receipt for your fare #SC-…* once; a failed one gets *did not go through*; a payment the
+  commuter cancelled at checkout sends nothing.
+- **Gateway failure alert:** a checkout that could not be opened, a payment that could not be
+  looked up, or a declined payment is counted (`GatewayMonitor`). At `GATEWAY_FAILURE_THRESHOLD` (3)
+  failures inside `GATEWAY_FAILURE_WINDOW_MINUTES` (15), the Admins are emailed once, and not
+  again until the window has passed.
+- The activity log records *Payment settled / failed / expired* with *System* as the actor
+  when the scheduler did it.
+
 ### The sandbox checkout page
 
 PayMongo's **test-mode** hosted checkout shows *Authorize / Fail / Expire test
@@ -184,7 +212,8 @@ The whole suite runs **without keys**; every gateway call is faked:
 ./vendor/bin/phpunit tests/Feature/PayMongoPaymentTest.php
 ```
 
-25 tests covering: the disabled-flag fallback, checkout-session creation, the
+Reconciliation, the receipt emails and the gateway alert are covered in
+`tests/Feature/AutomationTest.php` and `AutomationPhase2Test.php`. `PayMongoPaymentTest` has 25 tests covering: the disabled-flag fallback, checkout-session creation, the
 declared payment channel, centavos conversion, anti-tamper re-pricing,
 wallet-stays-internal, gateway failure, signature rejection (unsigned +
 tampered), settlement, replay idempotency, decline, return-URL reconciliation,

@@ -15,3 +15,6 @@ yarn-error.log
 /venv
 .env
 .env.local
+
+# Generated OCR specimens (python3 tests/Fixtures/ocr/generate_samples.py)
+/tests/Fixtures/ocr/samples/

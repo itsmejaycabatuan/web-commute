@@ -58,6 +58,7 @@ The dashboard aggregates role‑specific widgets. The flow differs by role; each
 | 1   | Authenticated maintenance‑manager navigates to `/dashboard`.                      | System verifies the `maintenance_manager` role, loads all `Vehicle` records (with driver), all `Driver` records, and the fleet maintenance summary for a selected vehicle (via query param `vehicle_id` or first vehicle). |
 | 2   |                                                                                   | System returns the `maintenance-manager.dashboard` view with the data (vehicles, drivers, selected vehicle, and summary from `FleetMaintenanceService`). |
 | 3   |                                                                                   | The view shows: **Fleet Information** (plate, year, brand/model, driver), **Cost Summary** (total cost, total services, avg cost/service, cost/km) and a **Service History** tab, all derived from the preventive-maintenance records (UCN_SC_E016). |
+| 4   |                                                                                   | Above the vehicle card the dashboard also shows **Vehicles waiting for a driver** (open vacancies: plate, the driver who left and why, how long ago — UCN_SC_E012 A8) and **Maintenance needs attention** (every vehicle with an overdue or due-soon service, linking to its schedule — UCN_SC_E016 A3). Each panel appears only when there is something to show. |
 
 ---
 
@@ -113,6 +114,8 @@ Any other unhandled exception results in a 500 error page.
 ---
 
 ## Known Gaps / Notes
+
+- **The Admin's sidebar gained *Fleet Analytics*** (UCN_SC_E020 A4). The Admin dashboard itself is unchanged.
 
 - The `/profile` endpoint currently only serves commuter users; staff profile information is viewable via the `/settings` route (see UCN_SC_E008 for password change, but other profile fields like email are edited there). A dedicated staff profile page does not exist in the current codebase.
 - The `/dashboard` endpoint is strictly for staff roles; commuters are expected to use the map (`/map`) as their main interface (documented in UCN_SC_E003). This separation is intentional in the product design.

@@ -32,7 +32,7 @@ C = {  # group -> (header fill, border, body tint)
     "sys": ("#5F6B73", "#5F6B73", "#F3F5F6"),
 }
 GROUP_TITLE = {
-    "id": "Identity & access", "pay": "Wallet & payments", "fare": "Fares",
+    "id": "Identity & access", "pay": "Wallet, payments & ride QR", "fare": "Fares",
     "drv": "Drivers & violations", "flt": "Fleet & maintenance", "trk": "Live tracking",
     "sys": "Framework",
 }
@@ -42,128 +42,219 @@ SCHEMA = {
     "users": ("id", [
         "id:bigint:PK", "email:varchar:UQ", "email_verified_at:timestamp:N", "password:varchar",
         "is_suspended:boolean", "suspended_at:timestamp:N", "anonymised_at:timestamp:N", "remember_token:varchar:N",
-        "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     "user_preferences": ("id", [
-        "id:bigint:PK", "user_id:bigint:FK", "theme:varchar", "font_size:int",
-        "created_at:timestamp:N", "updated_at:timestamp:N"]),
-    "roles": ("id", ["id:bigint:PK", "name:varchar", "guard_name:varchar",
-                     "created_at:timestamp:N", "updated_at:timestamp:N"]),
-    "permissions": ("id", ["id:bigint:PK", "name:varchar", "guard_name:varchar",
-                           "created_at:timestamp:N", "updated_at:timestamp:N"]),
-    "model_has_roles": ("id", ["role_id:bigint:PK,FK", "model_type:varchar:PK", "model_id:bigint:PK"]),
-    "model_has_permissions": ("id", ["permission_id:bigint:PK,FK", "model_type:varchar:PK", "model_id:bigint:PK"]),
-    "role_has_permissions": ("id", ["permission_id:bigint:PK,FK", "role_id:bigint:PK,FK"]),
+        "id:bigint:PK", "user_id:bigint:FK", "theme:varchar", "font_size:int", "created_at:timestamp:N",
+        "updated_at:timestamp:N"
+    ]),
+    "roles": ("id", [
+        "id:bigint:PK", "name:varchar", "guard_name:varchar", "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
+    "permissions": ("id", [
+        "id:bigint:PK", "name:varchar", "guard_name:varchar", "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
+    "model_has_roles": ("id", [
+        "role_id:bigint:PK,FK", "model_type:varchar:PK", "model_id:bigint:PK"
+    ]),
+    "model_has_permissions": ("id", [
+        "permission_id:bigint:PK,FK", "model_type:varchar:PK", "model_id:bigint:PK"
+    ]),
+    "role_has_permissions": ("id", [
+        "permission_id:bigint:PK,FK", "role_id:bigint:PK,FK"
+    ]),
     "personal_access_tokens": ("id", [
         "id:bigint:PK", "tokenable_type:varchar", "tokenable_id:bigint", "name:varchar", "token:varchar:UQ",
-        "abilities:text:N", "last_used_at:timestamp:N", "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "abilities:text:N", "last_used_at:timestamp:N", "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     "sessions": ("id", [
-        "id:varchar:PK", "user_id:bigint:N", "ip_address:varchar:N", "user_agent:text:N",
-        "payload:longtext", "last_activity:int"]),
-    "password_resets": ("id", ["email:varchar", "token:varchar", "created_at:timestamp:N"]),
-    # ---------------------------------------------------------------- wallet & payments
+        "id:varchar:PK", "user_id:bigint:N", "ip_address:varchar:N", "user_agent:text:N", "payload:longtext",
+        "last_activity:int"
+    ]),
+    "password_resets": ("id", [
+        "email:varchar", "token:varchar", "created_at:timestamp:N"
+    ]),
+    "email_verification_codes": ("id", [
+        "id:bigint:PK", "user_id:bigint:FK,UQ", "code_hash:varchar", "attempts:int", "expires_at:timestamp",
+        "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
+    # ---------------------------------------------------------------- wallet & payments, ride QR
     "wallets": ("pay", [
-        "id:bigint:PK", "user_id:bigint:FK", "balance:decimal", "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "id:bigint:PK", "user_id:bigint:FK", "balance:decimal", "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     "topup_histories": ("pay", [
-        "id:bigint:PK", "user_id:bigint:FK", "wallet_id:bigint:FK", "amount_added:decimal",
-        "payment_method:varchar", "status:varchar", "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "id:bigint:PK", "user_id:bigint:FK", "wallet_id:bigint:FK", "amount_added:decimal", "payment_method:varchar",
+        "status:varchar", "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     "payments": ("pay", [
         "id:bigint:PK", "paid_by:bigint:FK", "transaction_id:varchar:UQ", "starting_point:varchar",
         "destination:varchar", "total_distance:decimal", "is_discounted:boolean", "payment_method:varchar",
         "status:varchar", "paymongo_payment_intent_id:varchar:N", "paymongo_checkout_session_id:varchar:N",
         "paymongo_reference_id:varchar:N", "price:decimal", "paid_at:timestamp:N", "failed_at:timestamp:N",
-        "failure_message:text:N", "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "failure_message:text:N", "created_at:timestamp:N", "updated_at:timestamp:N", "vehicle_id:bigint:FK,N",
+        "driver_id:bigint:FK,N"
+    ]),
+    "qr_codes": ("pay", [
+        "id:bigint:PK", "token:varchar:UQ", "is_active:boolean", "created_by:bigint:FK,N", "created_at:timestamp:N",
+        "updated_at:timestamp:N"
+    ]),
+    "qr_scans": ("pay", [
+        "id:bigint:PK", "user_id:bigint:FK", "qr_code_id:bigint:FK,N", "vehicle_id:bigint:FK,N",
+        "driver_id:bigint:FK,N", "matched_distance_m:int:N", "located_at:timestamp:N", "scanned_at:timestamp",
+        "used_at:timestamp:N", "payment_id:bigint:FK,N", "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     # ---------------------------------------------------------------- fares
-    "fares": ("fare", ["id:bigint:PK", "location:varchar", "created_at:timestamp:N", "updated_at:timestamp:N"]),
+    "fares": ("fare", [
+        "id:bigint:PK", "location:varchar", "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     "fare_rates": ("fare", [
-        "id:bigint:PK", "fare_id:bigint:FK", "km:int", "regular:double", "discount:double",
-        "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "id:bigint:PK", "fare_id:bigint:FK", "km:int", "regular:double", "discount:double", "created_at:timestamp:N",
+        "updated_at:timestamp:N"
+    ]),
     # ---------------------------------------------------------------- drivers & violations
     "drivers": ("drv", [
-        "id:bigint:PK", "user_id:bigint:FK", "driver_code:varchar:UQ,N", "name:varchar:N",
-        "expiration_date:date:N", "contact_info:varchar:N", "license_number:varchar:UQ,N",
-        "license_code:varchar:N", "license_image_path:varchar:N", "license_status:varchar:N",
-        "is_approved:boolean", "is_rejected:boolean", "is_suspended:boolean", "suspended_at:timestamp:N",
-        "suspension_reason:varchar:N", "status:varchar:N", "license_image_data:mediumtext:N",
-        "license_image_mime:varchar:N", "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "id:bigint:PK", "user_id:bigint:FK", "driver_code:varchar:UQ,N", "name:varchar:N", "expiration_date:date:N",
+        "contact_info:varchar:N", "license_number:varchar:UQ,N", "license_code:varchar:N",
+        "license_image_path:varchar:N", "license_status:varchar:N", "is_approved:boolean", "is_rejected:boolean",
+        "is_suspended:boolean", "suspended_at:timestamp:N", "suspension_reason:varchar:N",
+        "inactivity_warned_at:timestamp:N", "reactivated_at:timestamp:N", "status:varchar:N",
+        "license_image_data:mediumtext:N", "license_image_mime:varchar:N", "created_at:timestamp:N",
+        "updated_at:timestamp:N"
+    ]),
     "time_keepings": ("drv", [
-        "id:bigint:PK", "driver_id:bigint:FK", "date:date", "time_in:varchar:N", "time_out:varchar:N",
-        "hours_worked:decimal:N", "overtime_hours:decimal:N", "sick:int:N", "vacation:int:N",
-        "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "id:bigint:PK", "driver_id:bigint:FK", "vehicle_id:bigint:FK,N", "date:date", "time_in:varchar:N",
+        "time_out:varchar:N", "hours_worked:decimal:N", "overtime_hours:decimal:N", "auto_closed_at:timestamp:N",
+        "reviewed_at:timestamp:N", "sick:int:N", "vacation:int:N", "created_at:timestamp:N",
+        "updated_at:timestamp:N"
+    ]),
     "violation_codes": ("drv", [
-        "id:bigint:PK", "code:varchar", "violation_name:varchar", "first_offense:decimal",
-        "second_offense:decimal", "third_offense:decimal", "fourth_offense:decimal:N",
-        "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "id:bigint:PK", "code:varchar", "violation_name:varchar", "first_offense:decimal", "second_offense:decimal",
+        "third_offense:decimal", "fourth_offense:decimal:N", "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     "violation_logs": ("drv", [
         "id:bigint:PK", "user_id:bigint:FK", "vc_id:bigint:FK", "violation_instance:varchar",
-        "violation_fine:decimal", "additional_penalties:varchar:N", "date_of_violation:date",
-        "time_of_violation:time", "place_of_violation:varchar", "remarks:varchar:N",
-        "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "violation_fine:decimal", "payment_status:varchar", "paid_at:timestamp:N", "additional_penalties:varchar:N",
+        "date_of_violation:date", "time_of_violation:time", "place_of_violation:varchar", "remarks:varchar:N",
+        "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     # ---------------------------------------------------------------- fleet & maintenance
     "vehicles": ("flt", [
-        "id:bigint:PK", "driver_id:bigint:FK,N", "year:int:N", "brand:varchar:N", "model:varchar:N",
-        "plate_number:varchar:N", "status:varchar:N", "fuel_type:varchar:N", "tank_capacity:varchar:N",
-        "vin:varchar:N", "location:varchar:N", "acquisition_date:date:N", "exp_disposal_date:date:N",
-        "is_active:boolean", "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "id:bigint:PK", "year:int:N", "brand:varchar:N", "model:varchar:N", "plate_number:varchar:N",
+        "status:varchar:N", "fuel_type:varchar:N", "tank_capacity:varchar:N", "vin:varchar:N", "location:varchar:N",
+        "acquisition_date:date:N", "exp_disposal_date:date:N", "created_at:timestamp:N", "updated_at:timestamp:N",
+        "is_active:boolean"
+    ]),
+    "driver_vehicle": ("flt", [
+        "id:bigint:PK", "vehicle_id:bigint:FK", "driver_id:bigint:FK,UQ", "created_at:timestamp:N",
+        "updated_at:timestamp:N"
+    ]),
+    "vehicle_duty_days": ("flt", [
+        "id:bigint:PK", "vehicle_id:bigint:FK", "driver_id:bigint:FK", "duty_date:date", "created_at:timestamp:N",
+        "updated_at:timestamp:N"
+    ]),
+    "driver_vacancies": ("flt", [
+        "id:bigint:PK", "vehicle_id:bigint:FK", "former_driver_id:bigint:FK,N", "reason:varchar",
+        "target_drivers:int", "opened_at:timestamp", "resolved_at:timestamp:N", "resolution:varchar:N",
+        "replacement_driver_id:bigint:FK,N", "last_notified_at:timestamp:N", "created_at:timestamp:N",
+        "updated_at:timestamp:N"
+    ]),
     "maintenance_tasks": ("flt", [
-        "id:bigint:PK", "tasks_performed:varchar", "miles_between_service:int:N",
-        "months_between_service:int:N", "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "id:bigint:PK", "tasks_performed:varchar", "miles_between_service:int:N", "months_between_service:int:N",
+        "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     "preventive_maintenances": ("flt", [
         "id:bigint:PK", "vehicle_id:bigint:FK", "task_id:bigint:FK", "last_service_odo:int:N",
-        "last_service_date:date:N", "last_service_cost:decimal:N", "comments:varchar:N",
-        "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "last_service_date:date:N", "last_service_cost:decimal:N", "comments:varchar:N", "created_at:timestamp:N",
+        "updated_at:timestamp:N"
+    ]),
+    "vehicle_maintenance_logs": ("flt", [
+        "id:bigint:PK", "maintenance_id:bigint:FK,N", "vehicle_id:bigint:FK", "maintenance_task_id:bigint:FK",
+        "service_date:date", "mileage_at_service:int", "performed_by:varchar:N", "cost:decimal",
+        "invoice_number:varchar:N", "remarks:text:N", "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
+    "vehicle_scan_sessions": ("flt", [
+        "id:bigint:PK", "token:varchar:UQ", "user_id:bigint:FK", "status:varchar", "expires_at:timestamp",
+        "files:longtext:N", "result:longtext:N", "error:varchar:N", "uploaded_at:timestamp:N",
+        "consumed_at:timestamp:N", "vehicle_id:bigint:FK,N", "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     # ---------------------------------------------------------------- live tracking
     "vehicle_locations": ("trk", [
         "id:bigint:PK", "vehicle_id:varchar", "user_id:bigint:FK,N", "latitude:decimal", "longitude:decimal",
         "accuracy:decimal:N", "broadcast_timestamp:bigint:N", "speed:decimal:N", "last_update:timestamp",
-        "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     "vehicle_location_histories": ("trk", [
-        "id:bigint:PK", "vehicle_location_id:bigint:FK", "user_id:bigint:FK,N",
-        "distance_from_last_pos:decimal", "latitude:decimal", "longitude:decimal",
-        "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "id:bigint:PK", "vehicle_location_id:bigint:FK", "user_id:bigint:FK,N", "distance_from_last_pos:decimal",
+        "latitude:decimal", "longitude:decimal", "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     "dev_markers": ("trk", [
         "id:bigint:PK", "user_id:bigint:FK", "name:varchar", "lat:decimal", "lng:decimal", "status:varchar",
-        "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     # ---------------------------------------------------------------- framework
     "activity_log": ("sys", [
-        "id:bigint:PK", "log_name:varchar:N", "description:text", "subject_type:varchar:N",
-        "subject_id:bigint:N", "event:varchar:N", "causer_type:varchar:N", "causer_id:bigint:N",
-        "properties:json:N", "batch_uuid:uuid:N", "created_at:timestamp:N", "updated_at:timestamp:N"]),
+        "id:bigint:PK", "log_name:varchar:N", "description:text", "subject_type:varchar:N", "event:varchar:N",
+        "subject_id:bigint:N", "causer_type:varchar:N", "causer_id:bigint:N", "properties:longtext:N",
+        "batch_uuid:varchar:N", "created_at:timestamp:N", "updated_at:timestamp:N"
+    ]),
     "failed_jobs": ("sys", [
-        "id:bigint:PK", "uuid:varchar:UQ", "connection:text", "queue:text", "payload:longtext",
-        "exception:longtext", "failed_at:timestamp"]),
+        "id:bigint:PK", "uuid:varchar:UQ", "connection:text", "queue:text", "payload:longtext", "exception:longtext",
+        "failed_at:timestamp"
+    ]),
 }
 
 # (parent, parent_col, child, child_col, parent_end, child_end, logical?)
 # ends: "1" exactly one, "01" zero-or-one, "0N" zero-or-many
 REL = [
-    ("users", "id", "user_preferences", "user_id", "1", "01", False),
-    ("users", "id", "wallets", "user_id", "1", "01", False),
-    ("users", "id", "payments", "paid_by", "1", "0N", False),
-    ("users", "id", "topup_histories", "user_id", "1", "0N", False),
-    ("wallets", "id", "topup_histories", "wallet_id", "1", "0N", False),
-    ("users", "id", "drivers", "user_id", "1", "01", False),
-    ("drivers", "id", "time_keepings", "driver_id", "1", "0N", False),
-    ("users", "id", "violation_logs", "user_id", "1", "0N", False),
-    ("violation_codes", "id", "violation_logs", "vc_id", "1", "0N", False),
-    ("drivers", "id", "vehicles", "driver_id", "01", "0N", False),
-    ("vehicles", "id", "preventive_maintenances", "vehicle_id", "1", "0N", False),
-    ("maintenance_tasks", "id", "preventive_maintenances", "task_id", "1", "0N", False),
-    ("vehicles", "id", "vehicle_locations", "vehicle_id", "1", "0N", True),
-    ("users", "id", "vehicle_locations", "user_id", "01", "0N", False),
-    ("vehicle_locations", "id", "vehicle_location_histories", "vehicle_location_id", "1", "0N", False),
-    ("users", "id", "vehicle_location_histories", "user_id", "01", "0N", False),
-    ("users", "id", "dev_markers", "user_id", "1", "0N", False),
-    ("fares", "id", "fare_rates", "fare_id", "1", "0N", False),
-    ("roles", "id", "model_has_roles", "role_id", "1", "0N", False),
-    ("permissions", "id", "model_has_permissions", "permission_id", "1", "0N", False),
-    ("permissions", "id", "role_has_permissions", "permission_id", "1", "0N", False),
-    ("roles", "id", "role_has_permissions", "role_id", "1", "0N", False),
-    ("users", "id", "model_has_roles", "model_id", "1", "0N", True),
-    ("users", "id", "model_has_permissions", "model_id", "1", "0N", True),
-    ("users", "id", "personal_access_tokens", "tokenable_id", "1", "0N", True),
-    ("users", "id", "sessions", "user_id", "01", "0N", True),
-    ("users", "id", "activity_log", "causer_id", "01", "0N", True),
-    ("users", "email", "password_resets", "email", "1", "0N", True),
+    ('users', 'id', 'user_preferences', 'user_id', '1', '0N', False),
+    ('users', 'id', 'model_has_roles', 'model_id', '1', '0N', True),
+    ('users', 'id', 'model_has_permissions', 'model_id', '1', '0N', True),
+    ('users', 'id', 'personal_access_tokens', 'tokenable_id', '1', '0N', True),
+    ('users', 'id', 'sessions', 'user_id', '01', '0N', True),
+    ('users', 'email', 'password_resets', 'email', '1', '0N', True),
+    ('users', 'id', 'email_verification_codes', 'user_id', '1', '01', False),
+    ('users', 'id', 'wallets', 'user_id', '1', '0N', False),
+    ('users', 'id', 'topup_histories', 'user_id', '1', '0N', False),
+    ('users', 'id', 'payments', 'paid_by', '1', '0N', False),
+    ('users', 'id', 'qr_codes', 'created_by', '01', '0N', False),
+    ('users', 'id', 'qr_scans', 'user_id', '1', '0N', False),
+    ('users', 'id', 'drivers', 'user_id', '1', '0N', False),
+    ('users', 'id', 'violation_logs', 'user_id', '1', '0N', False),
+    ('users', 'id', 'vehicle_scan_sessions', 'user_id', '1', '0N', False),
+    ('users', 'id', 'vehicle_locations', 'user_id', '01', '0N', False),
+    ('users', 'id', 'vehicle_location_histories', 'user_id', '01', '0N', False),
+    ('users', 'id', 'dev_markers', 'user_id', '1', '0N', False),
+    ('users', 'id', 'activity_log', 'causer_id', '01', '0N', True),
+    ('roles', 'id', 'model_has_roles', 'role_id', '1', '0N', False),
+    ('roles', 'id', 'role_has_permissions', 'role_id', '1', '0N', False),
+    ('permissions', 'id', 'model_has_permissions', 'permission_id', '1', '0N', False),
+    ('permissions', 'id', 'role_has_permissions', 'permission_id', '1', '0N', False),
+    ('wallets', 'id', 'topup_histories', 'wallet_id', '1', '0N', False),
+    ('payments', 'id', 'qr_scans', 'payment_id', '01', '0N', False),
+    ('qr_codes', 'id', 'qr_scans', 'qr_code_id', '01', '0N', False),
+    ('fares', 'id', 'fare_rates', 'fare_id', '1', '0N', False),
+    ('drivers', 'id', 'payments', 'driver_id', '01', '0N', False),
+    ('drivers', 'id', 'qr_scans', 'driver_id', '01', '0N', False),
+    ('drivers', 'id', 'time_keepings', 'driver_id', '1', '0N', False),
+    ('drivers', 'id', 'driver_vehicle', 'driver_id', '1', '01', False),
+    ('drivers', 'id', 'vehicle_duty_days', 'driver_id', '1', '0N', False),
+    ('drivers', 'id', 'driver_vacancies', 'former_driver_id', '01', '0N', False),
+    ('drivers', 'id', 'driver_vacancies', 'replacement_driver_id', '01', '0N', False),
+    ('violation_codes', 'id', 'violation_logs', 'vc_id', '1', '0N', False),
+    ('vehicles', 'id', 'payments', 'vehicle_id', '01', '0N', False),
+    ('vehicles', 'id', 'qr_scans', 'vehicle_id', '01', '0N', False),
+    ('vehicles', 'id', 'time_keepings', 'vehicle_id', '01', '0N', False),
+    ('vehicles', 'id', 'driver_vehicle', 'vehicle_id', '1', '0N', False),
+    ('vehicles', 'id', 'vehicle_duty_days', 'vehicle_id', '1', '0N', False),
+    ('vehicles', 'id', 'driver_vacancies', 'vehicle_id', '1', '0N', False),
+    ('vehicles', 'id', 'preventive_maintenances', 'vehicle_id', '1', '0N', False),
+    ('vehicles', 'id', 'vehicle_maintenance_logs', 'vehicle_id', '1', '0N', False),
+    ('vehicles', 'id', 'vehicle_scan_sessions', 'vehicle_id', '01', '0N', False),
+    ('vehicles', 'id', 'vehicle_locations', 'vehicle_id', '1', '0N', True),
+    ('maintenance_tasks', 'id', 'preventive_maintenances', 'task_id', '1', '0N', False),
+    ('maintenance_tasks', 'id', 'vehicle_maintenance_logs', 'maintenance_task_id', '1', '0N', False),
+    ('preventive_maintenances', 'id', 'vehicle_maintenance_logs', 'maintenance_id', '01', '0N', False),
+    ('vehicle_locations', 'id', 'vehicle_location_histories', 'vehicle_location_id', '1', '0N', False),
 ]
 ARROW = {"1": "teetee", "01": "teeodot", "0N": "crowodot"}
 
@@ -186,7 +277,8 @@ SUMMARY = {
     "violation_codes": ("Violation Code", "violation_codes", "drv", ["id", "code", "violation_name", "first_offense"]),
     "violation_logs": ("Violation Log", "violation_logs", "drv", ["id", "user_id", "vc_id", "violation_fine",
                                                                     "date_of_violation", "place_of_violation"]),
-    "vehicles": ("Vehicle", "vehicles", "flt", ["id", "driver_id", "plate_number", "brand", "model", "year", "status"]),
+    "driver_vehicle": ("Driver–Vehicle", "driver_vehicle", "flt", ["id", "driver_id", "vehicle_id"]),
+    "vehicles": ("Vehicle", "vehicles", "flt", ["id", "plate_number", "brand", "model", "year", "status", "is_active"]),
     "maintenance_tasks": ("Maintenance Task", "maintenance_tasks", "flt",
                           ["id", "tasks_performed", "miles_between_service", "months_between_service"]),
     "preventive_maintenances": ("Preventive Maintenance", "preventive_maintenances", "flt",
@@ -202,7 +294,8 @@ SUM_REL = [  # parent, child, label
     ("users", "payments", "pays"),
     ("users", "drivers", "is profile of"),
     ("drivers", "time_keepings", "records"),
-    ("drivers", "vehicles", "is assigned"),
+    ("drivers", "driver_vehicle", "holds"),
+    ("vehicles", "driver_vehicle", "is driven by"),
     ("users", "violation_logs", "is cited in"),
     ("violation_codes", "violation_logs", "classifies"),
     ("vehicles", "preventive_maintenances", "is serviced by"),
@@ -258,18 +351,21 @@ def edge(parent, pcol, child, ccol, pend, cend, logical, label=None, side="R"):
 GRID_FULL = [
     ["roles", "permissions", "failed_jobs"],
     ["model_has_roles", "model_has_permissions", "role_has_permissions", "user_preferences",
-     "sessions", "personal_access_tokens", "password_resets", "activity_log"],
-    ["violation_codes", "users"],
+     "sessions", "personal_access_tokens", "password_resets", "email_verification_codes", "activity_log"],
+    ["violation_codes", "users", "qr_codes"],
     ["violation_logs", "wallets", "payments", "drivers"],
-    ["topup_histories", "time_keepings", "vehicles", "maintenance_tasks", "fares"],
-    ["preventive_maintenances", "vehicle_locations", "fare_rates"],
+    ["topup_histories", "time_keepings", "driver_vehicle", "vehicle_duty_days", "driver_vacancies",
+     "maintenance_tasks", "fares"],
+    ["vehicles", "fare_rates"],
+    ["preventive_maintenances", "vehicle_maintenance_logs", "vehicle_locations", "vehicle_scan_sessions", "qr_scans"],
     ["vehicle_location_histories", "dev_markers"],
 ]
 GRID_SUMMARY = [
     ["roles", "users", "violation_codes"],
     ["wallets", "payments", "drivers", "violation_logs"],
-    ["topup_histories", "time_keepings", "vehicles", "maintenance_tasks", "fares"],
-    ["preventive_maintenances", "vehicle_locations", "fare_rates"],
+    ["topup_histories", "time_keepings", "driver_vehicle", "maintenance_tasks", "fares"],
+    ["vehicles", "fare_rates"],
+    ["preventive_maintenances", "vehicle_locations"],
 ]
 
 

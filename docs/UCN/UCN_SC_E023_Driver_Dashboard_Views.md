@@ -74,6 +74,10 @@ Any other unhandled exception results in a 500 error page (or the Laravel defaul
 
 ## Known Gaps / Notes
 
+- **Distance today is real.** The driver dashboard's *distance today* sums the kilometres recorded between broadcasts (UCN_SC_E021 A5); it read 0 before because the trail never stored a distance.
+
+- **Auto-closed shifts show an *auto* tag.** A day whose shift the system closed for a forgotten clock-out (UCN_SC_E010 A4) shows a small amber *auto* beside its hours.
+
 - The time‑keeping view distinguishes between **Complete**, **Active**, **Absent**, **Sick**, **Vacation**, **Upcoming**, and **Waiting** states based on the presence of `time_in`, `time_out`, `sick`, `vacation` flags and whether the date is past/today/future.
 - The violation view is **read‑only**; drivers cannot add, edit, or delete violations through this interface (those actions are reserved for admins/managers via UCN_SC_E014).
 - The status toggle only affects the `status` column on the `driver` table; it does **not** automatically clock the driver in or out. Clock‑in/out actions are handled separately via UCN_SC_E009/E010.

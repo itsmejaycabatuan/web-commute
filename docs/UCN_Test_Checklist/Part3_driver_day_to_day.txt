@@ -4,7 +4,7 @@
 
  Source of truth : docs/UCN/UCN_SC_E0xx_*.md  (open the matching file if a step is unclear)
  Test data       : docs/MANUAL_TEST_CHECKLIST.md + database/seeders/DevSeeder.php
- Built           : 2026-10-22
+ Built           : 2026-10-25
 
  The 5 parts (this file is Part 3):
      1  Accounts and Access                  E001 E002 E008 E011 E022 E026
@@ -18,7 +18,8 @@
  BEFORE YOU START (everyone)
 ----------------------------------------------------------------------------------------------
 
- 1. Load the baseline data (safe to re-run any time, it never duplicates rows):
+ 1. Load the baseline data (it adds what is missing; on a database that already holds drivers with other codes
+    it can stop with "Duplicate entry 'DRV-000002'" - see MANUAL_TEST_CHECKLIST.md, so use a fresh database then):
 
         /opt/lampp/bin/php artisan db:seed --class=DevSeeder
 
@@ -117,6 +118,9 @@ Notes for this part
  [ ] E3. Already clocked in -> "You have already clocked in today." (same as A1).
  Also: carlos.bautista@ (suspended) cannot even log in, so cannot clock in.
 
+ AUTOMATION (added Oct 2026)
+ [ ] N1. After a shift was auto-closed for the day (E010 N1), Clock In is refused ("already clocked in today").
+
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
 
@@ -154,6 +158,11 @@ Notes for this part
          the 5-minute window closes; no retry.
  [ ] E6. (*) A queued retry with a missing key -> nothing is published. Developer test.
 
+ AUTOMATION (added Oct 2026)
+ [ ] N1. Distance: after broadcasting for a while, Fleet Analytics shows kilometres for the vehicle (0 for dates before
+         distance was recorded).
+ [ ] N2. After an auto-close (E010 N1) the broadcast is refused with the shift message.
+
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
 
@@ -179,6 +188,15 @@ Notes for this part
  [ ] E1. (*) Database failure -> "Clock-out failed. Please try again later."; shift stays open.
  [ ] E2. No active shift -> "No active shift found to clock out." (same as A1).
  [ ] E3. (*) Driver profile missing -> "Driver profile not found." (same as A3).
+
+ AUTOMATION (added Oct 2026)
+ [ ] N1. Forgotten clock-out: give Ramon's open shift yesterday's date, run `php artisan shifts:auto-close`
+         -> shift closed with 8 hours and 0 overtime, driver inactive, vehicle off the map, an amber "Auto-closed"
+         badge on Time Keeping (Driver Manager) and on the driver's own Timekeeping page. Run it again ->
+         nothing changes (this command has no --dry-run).
+ [ ] N2. The auto-closed driver's phone keeps broadcasting -> refused ("Your shift was closed automatically...").
+ [ ] N3. The vehicle's recorded locations stay in the database (only their age moves); distance for the day
+         is still computed.
 
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
@@ -215,6 +233,9 @@ Notes for this part
  [ ] E4. (*) Any other unhandled error -> 500 page.
  Also: a driver cannot open /commuters, /vehicles or /reports (HTTP 403).
 
+ AUTOMATION (added Oct 2026)
+ [ ] N1. The driver's own Timekeeping page tags an auto-closed day "auto".
+
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
 
@@ -246,6 +267,10 @@ Notes for this part
          existing time entry for the driver on that date."
  Also: only one of in/out given for a shift is rejected. A driver manager cannot open admin pages
  (/commuters, /reports) or maintenance pages (HTTP 403).
+
+ AUTOMATION (added Oct 2026)
+ [ ] N1. An auto-closed shift (E010 N1) shows an amber "Auto-closed" badge; the page header counts "Needs review".
+ [ ] N2. "Mark reviewed" on that row clears the badge and the count; pressing it again for the same shift says "This shift was already reviewed."
 
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________

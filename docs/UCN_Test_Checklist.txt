@@ -5,7 +5,7 @@
 
 Source of truth : docs/UCN/UCN_SC_E0xx_*.md   (open the matching file if a step below is unclear)
 Test data       : docs/MANUAL_TEST_CHECKLIST.md  +  database/seeders/DevSeeder.php
-Last built      : 2026-10-22
+Last built      : 2026-10-25
 
 
 ----------------------------------------------------------------------------------------------
@@ -43,7 +43,8 @@ Last built      : 2026-10-22
  BEFORE YOU START (everyone)
 ----------------------------------------------------------------------------------------------
 
- 1. Load the baseline data (safe to re-run any time, it never duplicates rows):
+ 1. Load the baseline data (it adds what is missing; on a database that already holds drivers with other codes
+    it can stop with "Duplicate entry 'DRV-000002'" - see MANUAL_TEST_CHECKLIST.md, so use a fresh database then):
 
         /opt/lampp/bin/php artisan db:seed --class=DevSeeder
 
@@ -369,6 +370,11 @@ Notes for this part
          itself when you go back online.
  [ ] Priority check: offline beats map-service beats routing-service beats location-denied beats no-puj.
 
+ AUTOMATION (added Oct 2026)
+ [ ] N1. A vehicle whose shift was auto-closed (see E010 N1) and a vehicle in maintenance / disposed are not on the
+         map; a vehicle whose driver is suspended disappears at the next map refresh.
+ [ ] N2. (guest or commuter) The markers show no exact position: refresh and the blur moves, within ~200 m.
+
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
 
@@ -434,6 +440,13 @@ Notes for this part
  [ ] E5. Submit 6+ top-ups in one minute (use different amounts) -> blocked with HTTP 429.
  [ ] E6. Covered by E3 + E5 (duplicate and rate-limit protection) - tick when both pass.
 
+ AUTOMATION (added Oct 2026)
+ [ ] N1. A completed top-up emails "Your wallet was topped up" once (set MAIL_MAILER=log and read
+         storage/logs/laravel.log).
+ [ ] N2. (gateway on) A top-up left pending: run `php artisan payments:reconcile --dry-run` -> it names the
+         payment; without --dry-run it settles it and the wallet is credited exactly once.
+ [ ] N3. A broken mail server never fails the top-up; the error is only in the log.
+
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
 
@@ -482,6 +495,19 @@ Notes for this part
  [ ] E10. (*) No published fare rates -> "Fares are unavailable right now. Please try again later."
  Also check as juan.delacruz@: history shows paid, pending, failed and cancelled rows with distinct labels;
  opening the pending row shows the "processing" screen and does NOT claim success.
+
+ AUTOMATION (added Oct 2026)
+ [ ] N1. Pay by wallet -> an email "Receipt for your fare #SC-..." arrives once. A failed GCash payment sends
+         "did not go through"; one cancelled at checkout sends nothing.
+ [ ] N2. Pending GCash payment 6+ minutes old, webhook never sent: `php artisan payments:reconcile` settles or
+         fails it (and sends the receipt). `--dry-run` only reports. The gateway off -> "not enabled".
+ [ ] N3. Three gateway errors inside 15 minutes -> every Admin is emailed once; no repeat inside the window.
+ [ ] N4. On board check: with a driver broadcasting within ~150 m the checkout shows "On board ABC-1234" and the
+         payment is attributed to that vehicle and driver. Nobody near -> pays normally, unattributed.
+         With QR_REQUIRE_NEARBY_VEHICLE=true -> "We couldn't find a SmartCommute PUJ near you", Confirm
+         Payment is refused, nothing charged. Location refused -> "Allow location access...".
+ [ ] N5. Three scans in a week that were never paid: `php artisan fares:flag-evasion --dry-run` lists the
+         commuter; a real run emails the Admins once and writes one Activity Log entry.
 
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
@@ -557,6 +583,9 @@ Notes for this part
  [ ] E3. Already clocked in -> "You have already clocked in today." (same as A1).
  Also: carlos.bautista@ (suspended) cannot even log in, so cannot clock in.
 
+ AUTOMATION (added Oct 2026)
+ [ ] N1. After a shift was auto-closed for the day (E010 N1), Clock In is refused ("already clocked in today").
+
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
 
@@ -594,6 +623,11 @@ Notes for this part
          the 5-minute window closes; no retry.
  [ ] E6. (*) A queued retry with a missing key -> nothing is published. Developer test.
 
+ AUTOMATION (added Oct 2026)
+ [ ] N1. Distance: after broadcasting for a while, Fleet Analytics shows kilometres for the vehicle (0 for dates before
+         distance was recorded).
+ [ ] N2. After an auto-close (E010 N1) the broadcast is refused with the shift message.
+
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
 
@@ -619,6 +653,15 @@ Notes for this part
  [ ] E1. (*) Database failure -> "Clock-out failed. Please try again later."; shift stays open.
  [ ] E2. No active shift -> "No active shift found to clock out." (same as A1).
  [ ] E3. (*) Driver profile missing -> "Driver profile not found." (same as A3).
+
+ AUTOMATION (added Oct 2026)
+ [ ] N1. Forgotten clock-out: give Ramon's open shift yesterday's date, run `php artisan shifts:auto-close`
+         -> shift closed with 8 hours and 0 overtime, driver inactive, vehicle off the map, an amber "Auto-closed"
+         badge on Time Keeping (Driver Manager) and on the driver's own Timekeeping page. Run it again ->
+         nothing changes (this command has no --dry-run).
+ [ ] N2. The auto-closed driver's phone keeps broadcasting -> refused ("Your shift was closed automatically...").
+ [ ] N3. The vehicle's recorded locations stay in the database (only their age moves); distance for the day
+         is still computed.
 
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
@@ -655,6 +698,9 @@ Notes for this part
  [ ] E4. (*) Any other unhandled error -> 500 page.
  Also: a driver cannot open /commuters, /vehicles or /reports (HTTP 403).
 
+ AUTOMATION (added Oct 2026)
+ [ ] N1. The driver's own Timekeeping page tags an auto-closed day "auto".
+
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
 
@@ -686,6 +732,10 @@ Notes for this part
          existing time entry for the driver on that date."
  Also: only one of in/out given for a shift is rejected. A driver manager cannot open admin pages
  (/commuters, /reports) or maintenance pages (HTTP 403).
+
+ AUTOMATION (added Oct 2026)
+ [ ] N1. An auto-closed shift (E010 N1) shows an amber "Auto-closed" badge; the page header counts "Needs review".
+ [ ] N2. "Mark reviewed" on that row clears the badge and the count; pressing it again for the same shift says "This shift was already reviewed."
 
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
@@ -748,6 +798,24 @@ Notes for this part
  [ ] E9. Approve an already-approved driver / reject an already-rejected one -> "This driver is already
          approved." / "...already rejected."
 
+ AUTOMATION (added Oct 2026)
+ [ ] N1. Register a driver (E022): every Admin and Driver Manager is emailed "New driver application". Approve or
+         reject: the driver is emailed the decision.
+ [ ] N2. Inactive 3 days: `php artisan drivers:inactivity-check --dry-run` lists the driver; a real run emails a
+         warning once. 7 days and a day after the warning: the driver is suspended automatically and the
+         vehicle is released. A driver is never suspended before being warned.
+ [ ] N3. Replacement: suspend liza.mercado@ (DEF-5678) while a spare approved driver exists -> the vehicle gets
+         the spare automatically; the spare and the Maintenance Manager are emailed; the Activity Log shows "Vehicle
+         lost a driver" and "Replacement driver assigned". (Re-assign Liza's vehicle afterwards.)
+ [ ] N4. Shared vehicle: suspend one of two drivers -> the replacement joins and Duty Roster shows a new
+         alternating roster from today.
+ [ ] N5. No spare: the Maintenance Manager dashboard shows "Vehicles waiting for a driver"; approve a spare, run
+         `php artisan vehicles:cover-vacancies` -> the panel empties. AUTO_REPLACE_DRIVERS=false -> only an email naming
+         the best free drivers.
+ [ ] N6. Expired licence on a driver with a vehicle: `php artisan vehicles:cover-vacancies` takes them off the
+         vehicle (not suspended), emails them and replaces them.
+ [ ] N7. Removing a driver by hand on the Vehicles page opens no vacancy.
+
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
 
@@ -781,6 +849,11 @@ Notes for this part
  [ ] E3. Blank field, or a negative / non-numeric fine -> per-field validation messages.
  [ ] E4. Delete an in-use code -> blocked (same as A4).
  [ ] E5. (*) Database failure -> generic error message.
+
+ AUTOMATION (added Oct 2026)
+ [ ] N1. A freshly seeded database lists 14 codes (UV01-UV14, the PUJ schedule). WARNING: running
+         `php artisan db:seed --class=ViolationCodeSeeder` REPLACES the whole table and deletes the violation logs
+         that belong to the old codes - only do it on a test database. DevSeeder re-runs it only when the code count differs.
 
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
@@ -820,6 +893,13 @@ Notes for this part
  [ ] E6. Future incident date -> "The date of violation must be a date before or equal to today." (the date
          picker is also capped at today). In bulk add the message names the row.
  Also: a driver manager cannot open admin pages or maintenance pages (HTTP 403).
+
+ AUTOMATION (added Oct 2026)
+ [ ] N1. Log a violation: the "Offense" list is filled by the system from the code and the driver's history,
+         and the fine is priced automatically; the driver is emailed once per entry (a bulk of two sends two).
+ [ ] N2. "Mark Paid" emails "Your fine was marked as paid"; "Mark Unpaid" sends nothing.
+ [ ] N3. Three violations for one driver inside 30 days, then `php artisan drivers:flag-repeat-violators --dry-run`
+         lists the driver; a real run emails the Driver Managers once, with one Activity Log entry.
 
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
@@ -881,6 +961,29 @@ Notes for this part
  [ ] E6. Delete a vehicle with maintenance history -> "This vehicle has maintenance records and cannot be
          deleted. Mark its status as Disposed instead." A vehicle with a driver shows a locked delete icon.
 
+ SCAN WITH PHONE (added Oct 2026)  -- needs tesseract-ocr; specimens: python3 tests/Fixtures/ocr/generate_samples.py
+ [ ] S1. Add Vehicle shows "Have the registration papers?" and a "Scan with phone" button. Without Tesseract the
+         button is not shown.
+ [ ] S2. Pressing it shows a QR code, three steps and a 15:00 countdown.
+ [ ] S3. The link opens a phone-sized page with a CR slot and an optional OR slot. Send a photo (a real phone, or
+         the specimen images) -> the desktop form fills plate, VIN, brand, model, year and fuel; the thumbnails and
+         "Check these against the papers" appear; the Add Vehicle button stays disabled until "I have checked these
+         details against the document" is ticked.
+ [ ] S4. A CR and an OR of two different vehicles -> "...differs between the papers" and an "or ..." choice.
+ [ ] S5. A photo of something else -> refused on the phone ("does not look like an LTO Official Receipt or
+         Certificate of Registration").
+ [ ] S6. Close the form or press "Cancel scan" -> the session ends; storage/app/vehicle-scans/ is empty.
+ [ ] S7. Wait 15 minutes without sending -> "The scan code expired"; "Try again" starts a new one; the old link
+         answers "expired". The same link after saving also answers "expired".
+ [ ] S8. Tick the box and save -> the vehicle is listed; the Activity Log shows "Vehicle added from scanned papers"
+         with the field NAMES (read / corrected / needing a second look) and no values.
+ [ ] S9. Add a vehicle by hand -> unchanged, nothing about a scan in the log.
+ [ ] S10. On a real phone (iOS and Android): camera and photo library both work; portrait and landscape read; the
+         page is readable at 375 px.
+ AUTOMATION (added Oct 2026)
+ [ ] N1. "Vehicles waiting for a driver" panel on the dashboard (see E012 N5); a vehicle's maintenance badge.
+ [ ] N2. MAINTENANCE_BLOCK_ACTIVE_WHEN_OVERDUE=true: setting an overdue maintenance vehicle back to Active is refused.
+
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
 
@@ -908,6 +1011,12 @@ Notes for this part
          recorded reading of N km."; nothing changes.
  [ ] E3. Leave a required field empty or malformed (odometer, date, cost) -> offending fields listed; nothing stored.
  [ ] E4. (*) Database failure -> operation cancelled and notified.
+
+ AUTOMATION (added Oct 2026)
+ [ ] N1. `php artisan maintenance:due-alerts --dry-run` lists vehicles with overdue and due-soon services; a real run
+         emails every active Maintenance Manager (the scheduler runs it daily at 07:00); with nothing due it sends nothing.
+ [ ] N2. The same vehicles carry a badge on Vehicles and a "Maintenance needs attention" panel on the dashboard.
+ [ ] N3. A task with only a distance interval is not overdue merely for lacking a time interval.
 
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________
@@ -1055,6 +1164,12 @@ Notes for this part
  [ ] E4. If the newest transaction is over a day old -> warning "Some of the data may not be included in the
          analytics..." (re-seed or wait a day to see this).
  [ ] E5. Start date later than end date -> "The start date must be before the end date."; no report.
+
+ AUTOMATION (added Oct 2026)
+ [ ] N1. Fleet Analytics (Admin sidebar): 7 / 30 / 90-day buttons, six totals, the 8-week chart, repeat-violator and
+         unpaid-scan lists, driver and vehicle tables. Other roles -> 403 on /analytics.
+ [ ] N2. `php artisan reports:send weekly --dry-run` prints last week's figures; `--to=you@example.com` emails them
+         with a CSV (and the activity log). Revenue and top-up totals equal the Reports page for the same dates.
 
  RESULT:  [ ] PASS   [ ] FAIL        Tested by: ______________  Date: ____/____/______
  Notes: ______________________________________________________________________________________

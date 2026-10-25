@@ -73,6 +73,27 @@
 1. The commuter selects **Wallet**; the card displays the live balance.
 2. System subtracts the fare and stores the method as `Wallet`. The gateway is never contacted.
 
+**A6 – The fare is attributed to the vehicle and the driver the commuter rides**
+1. After scanning the ride QR code, the checkout page asks the browser for the commuter's position and sends it to `POST /payment/scan/locate` (`payment.scan.locate`).
+2. System looks for an **active** vehicle whose driver's phone broadcast within the last `QR_BROADCAST_FRESH_MINUTES` (5) and which is within `QR_NEARBY_METERS` (150 m, widened by up to 100 m for a vague GPS fix) of the commuter, and takes the nearest (`NearbyVehicleFinder`).
+3. System records that vehicle, the driver on duty and the distance on the scan (`qr_scans.vehicle_id`, `driver_id`, `matched_distance_m`, `located_at`) and tells the page *"On board ABC 1234."*. **The commuter's coordinates are matched and discarded: they are never stored.**
+4. The payment that spends the scan inherits `vehicle_id` and `driver_id` (`payments`), so every fare belongs to a vehicle and a driver without anyone typing it; Fleet Analytics (UCN_SC_E020 A4) reports revenue per driver and vehicle from it.
+5. With `QR_REQUIRE_NEARBY_VEHICLE=true` (**off by default**) a scan that was not matched to a vehicle cannot pay: the checkout answers *"We couldn't confirm you are on a SmartCommute PUJ…"*, charges nothing and keeps the scan (E11). Without it, an unmatched scan still pays, only unattributed.
+
+**A7 – A missed webhook is reconciled automatically**
+1. Every 10 minutes the scheduler runs `php artisan payments:reconcile` (only while the gateway is enabled). It takes gateway payments still `pending` after `PAYMONGO_RECONCILE_AFTER_MINUTES` (5), at most `PAYMONGO_RECONCILE_BATCH` (100), and asks PayMongo about each one.
+2. An intent the gateway reports as paid is settled; one it reports as failed is closed as `failed`; anything else is left alone. A run stops after 3 gateway errors in a row. `--dry-run` reports without changing anything.
+3. The webhook, the return page and this job all go through one `PaymentSettlement`, so whichever arrives first wins and the others find the payment already settled.
+
+**A8 – Receipts and failure emails**
+1. When a payment becomes **paid** (wallet, webhook, return page or reconciliation) the commuter is emailed **one** receipt: reference, trip, method, amount, time and a link to the receipt page.
+2. When a gateway payment ends **failed** the commuter is emailed that it did not go through and that nothing was charged. A payment the commuter cancelled, or that expired, is not emailed.
+3. A mail failure is logged and never changes the payment (`Notifier`).
+
+**A9 – Repeated gateway failures alert the Admins**
+1. Each gateway error is counted: a checkout that could not be opened, a payment that could not be looked up, a reconciliation call that failed.
+2. When `GATEWAY_FAILURE_THRESHOLD` (3) errors fall inside `GATEWAY_FAILURE_WINDOW_MINUTES` (15), every Admin is emailed once for that window, with the most recent error (`GatewayMonitor`).
+
 ---
 
 ## Postconditions
@@ -82,6 +103,8 @@
 3. For a gateway payment: `status = paid` with `paid_at` set, and the PayMongo checkout-session / payment-intent ids stored for reconciliation.
 4. The commuter sees the **digital receipt**, and the payment appears in their history (UCN_SC_E007) with a status badge for anything still `pending` / `failed` / `cancelled`.
 
+5. When the scan was located, the payment carries the `vehicle_id` and `driver_id` of the vehicle the commuter rode (A6).
+6. A **paid** payment has been emailed to the commuter as a receipt; a gateway payment that failed has been emailed as such (A8).
 ---
 
 ## Exceptions
@@ -116,20 +139,25 @@ The commuter has no wallet row (data inconsistency). System aborts with HTTP 404
 **E10 – Fare Table Empty**
 No fare rates are published for the current fare table, so the fare cannot be priced. System responds with *"Fares are unavailable right now. Please try again later."*
 
+**E11 – Not On a PUJ (only with `QR_REQUIRE_NEARBY_VEHICLE=true`)**
+The scan was not matched to a vehicle (no PUJ near the commuter, or location refused). `process` redirects back with *"We couldn't confirm you are on a SmartCommute PUJ. Allow location access on this page, make sure you are inside the vehicle, then try again."*, creates no payment and does not spend the scan.
+
 ---
 
 ## Known Gaps / Notes
 
+- **Top-ups are not reconciled** because they are not gateway payments (UCN_SC_E005): reconciliation (A7), failure emails and the gateway alert apply to **fare** payments through GCash / Maya.
+
 - **The gateway is flag-controlled, and a safety rail refuses to arm it unsafely.** With it off, GCash/Maya are recorded as *declared* and **never charged*. `PayMongoService::configProblems()` refuses to run when the key type and base URL disagree (live key + sandbox host, sandbox key + live host), when a **live key is armed outside `production`**, when the host is not a PayMongo host, or when the secret key is empty. Each refusal logs `PAYMONGO CONFIGURATION REFUSED` and degrades to the declared-payment flow — it never 500s.
 - **`statement_descriptor` is not honoured** on a checkout session (only on a standalone payment intent); PayMongo falls back to the merchant's registered descriptor.
-- **No boarding permission / ticket.** Paying does **not** create a trip, a one-time ride token, or any state a driver or vehicle can verify. This remains the largest functional gap in this use case.
+- **No boarding permission a driver can check.** Paying attributes the fare to a vehicle and driver (A6) and a scan that is never followed by a fare is counted (`php artisan fares:flag-evasion`, daily 09:30: 3 unpaid scans in 7 days flags the commuter to the Admins, once per window), but a driver still has no screen that shows who has paid. The attribution depends on the driver's phone broadcasting and on the commuter allowing location.
 - **The fare is re-priced server-side, but the *distance* is still client-supplied** (it comes from the browser's OSRM call). The amount can no longer be tampered with, but the distance can. Closing it means routing the trip server-side.
 - **Discount fares are not verified.** The calculator displays a discounted figure for Student/Elderly/PWD, but only the **regular** fare is priced and charged server-side; no ID is checked.
 - **No refunds, cancellations, or fare disputes** from the commuter side. Once `paid`, a payment is immutable.
 - **No webhook event-deduplication store.** Settlement is idempotent (`pending → paid` only happens once), but replayed events are not recorded.
 - **No dead-letter/queue handling** — webhook processing is synchronous, so a slow PayMongo call blocks the request.
 - The receipt is rendered by a single view (`commuter/viewreceipt.blade.php`); the former duplicate `commuter/receipt.blade.php` was removed in favour of POST/redirect/GET.
-- Receipts are in-app only — no email or PDF.
+- Receipts are emailed (A8) and shown in-app; there is no PDF.
 
 ---
 
@@ -148,4 +176,12 @@ No fare rates are published for the current fare table, so the fare cannot be pr
 | Views | `resources/views/commuter/payment.blade.php`, `viewreceipt.blade.php`, `paymentpending.blade.php` |
 | Models | `app/Models/Payment.php` (`status`, gateway ids, `STATUS_*` constants), `app/Models/Wallet.php` |
 | Tests | `tests/Feature/PayMongoPaymentTest.php` (29), `tests/Feature/UcnRegressionTest.php` |
+| Settlement | `app/Services/PaymentSettlement.php` — the one place a fare becomes paid or failed, and where receipts / failure emails are sent |
+| Reconciliation | `app/Console/Commands/ReconcilePayments.php` (`payments:reconcile`, every 10 minutes), `config/paymongo.php` (`reconcile_after_minutes`, `reconcile_batch`) |
+| Gateway alert | `app/Services/GatewayMonitor.php`, `app/Notifications/GatewayAlert.php`, `config/alerts.php` (`gateway_failure_threshold`, `gateway_failure_window_minutes`) |
+| Emails | `app/Notifications/PaymentReceipt.php`, `PaymentFailed.php`, sent through `app/Support/Notifier.php` |
+| Vehicle attribution | `app/Services/NearbyVehicleFinder.php`, `RideVerificationController::locate()` (`payment.scan.locate`), `PaymentController::process()`, the location script in `resources/views/commuter/payment.blade.php`, `config/qr.php` |
+| Fare-evasion flag | `app/Console/Commands/FlagFareEvasion.php`, `app/Notifications/FareEvasionFlag.php`, `config/alerts.php` (`fare_evasion_scans`, `fare_evasion_days`) |
+| Schema | `database/migrations/2026_10_26_090000_add_vehicle_attribution_to_qr_scans_and_payments.php`, `2026_10_28_100000_stop_timestamps_updating_themselves.php` |
+| Tests (automation) | `tests/Feature/AutomationPhase2Test.php` — settlement, reconciliation, gateway alert, locate, attribution, the on-board check, fare-evasion flag |
 | Related | UCN_SC_E005 (Top-up), UCN_SC_E007 (Payment History) |

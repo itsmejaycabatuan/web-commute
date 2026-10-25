@@ -54,6 +54,7 @@
 2. A digital top-up / transaction record has been generated and saved (`TopupHistory`).
 3. The commuter sees a success confirmation and the updated balance.
 
+4. The commuter is emailed a **top-up receipt** (amount, method, new balance). A mail failure is logged and never fails the top-up (`Notifier`).
 ---
 
 ## Exceptions
@@ -98,3 +99,5 @@ Covered by E5 (request-level) and E3 (duplicate-level). Automated credential-stu
 | Allowed methods | `PaymentController::SELF_SERVICE_TOPUP_METHODS = ['gcash', 'maya']` |
 | View | `resources/views/commuter/topup.blade.php`, `topuphistory.blade.php` |
 | Models | `app/Models/Wallet.php`, `app/Models/TopupHistory.php` |
+| Receipt email | `app/Notifications/TopupReceipt.php`, sent through `app/Support/Notifier.php`; the channels are `config/alerts.php` (`NOTIFICATION_CHANNELS`, default `mail`) |
+| Tests (automation) | `tests/Feature/AutomationPhase2Test.php` (`test_topup_emails_a_receipt_with_the_new_balance`, `test_notifier_never_lets_a_failing_send_break_the_caller`) |
