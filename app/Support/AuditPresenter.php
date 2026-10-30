@@ -85,7 +85,6 @@ class AuditPresenter
             $rows[] = [
                 'km' => $tier['km'].' km',
                 'regular' => self::money($tier['regular']['old'] ?? null).' → '.self::money($tier['regular']['new'] ?? null),
-                'discount' => self::money($tier['discount']['old'] ?? null).' → '.self::money($tier['discount']['new'] ?? null),
             ];
         }
 

@@ -75,7 +75,7 @@ class PaymentControllerTest extends TestCase
     {
         // A deterministic rate table; the server prices the fare, not the browser.
         $fare = Fare::factory()->create();
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25, 'discount' => 13.75]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25]);
 
         $user = $this->commuterWithWallet(500);
 

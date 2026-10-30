@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DevMarker;
+use App\Support\ServiceCorridor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,13 +27,19 @@ class DevMarkerController extends Controller
             'lng' => 'required|numeric',
         ]);
 
+        $onRoad = ServiceCorridor::snap((float) $request->lat, (float) $request->lng);
+
+        if (! $onRoad) {
+            return back()->with('error', 'Markers can only be placed on the Minglanilla to IT Park road.');
+        }
+
         $existing = DB::table('dev_markers')->count();
 
         DevMarker::create([
             'user_id' => Auth::id(),
             'name' => $this->names()[($existing) % count($this->names())],
-            'lat' => $request->lat,
-            'lng' => $request->lng,
+            'lat' => $onRoad['lat'],
+            'lng' => $onRoad['lng'],
             'status' => 'active',
         ]);
 

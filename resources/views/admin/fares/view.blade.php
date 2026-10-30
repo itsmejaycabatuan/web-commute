@@ -54,10 +54,6 @@
                                     class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
                                     REGULAR
                                 </th>
-                                <th scope="col"
-                                    class="text-center px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                                    STUDENT/ELDERLY/DISABLED
-                                </th>
                             </tr>
                         </thead>
                         <tbody class=" divide-y divide-gray-200">
@@ -70,10 +66,6 @@
                                     <td
                                         class="text-center px-6 py-4 whitespace-nowrap text-sm text-white border-r border-gray-200 align-top">
                                         {{ $rate->regular }}
-                                    </td>
-                                    <td
-                                        class="text-center px-6 py-4 text-sm text-white border-r border-gray-200 font-mono">
-                                        {{ $rate->discount }}
                                     </td>
                                 </tr>
                             @endforeach

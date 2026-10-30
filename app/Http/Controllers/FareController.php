@@ -50,7 +50,6 @@ class FareController extends Controller
         //     $rates[] = [
         //         'km' => $output[$i]['km'],
         //         'regular' => $output[$i]['regular'],
-        //         'discount' => $output[$i]['discount']
         //     ];
         // }
 
@@ -58,7 +57,6 @@ class FareController extends Controller
         //     $rates[] = [
         //         'km' => $output[$i]['km'],
         //         'regular' => $output[$i]['regular'],
-        //         'discount' => $output[$i]['discount']
         //     ];
         // }
 
@@ -122,7 +120,6 @@ class FareController extends Controller
                         'fare_id' => $fare->id,
                         'km' => $output[$i]['km'],
                         'regular' => $output[$i]['regular'],
-                        'discount' => $output[$i]['discount'],
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
@@ -133,7 +130,6 @@ class FareController extends Controller
                         'fare_id' => $fare->id,
                         'km' => $output[$i]['km'],
                         'regular' => $output[$i]['regular'],
-                        'discount' => $output[$i]['discount'],
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
@@ -177,10 +173,8 @@ class FareController extends Controller
             'rates' => ['required', 'array', 'min:1'],
             'rates.*.id' => ['nullable', 'integer'],
             'rates.*.regular' => ['required', 'numeric', 'min:0.01'],
-            'rates.*.discount' => ['required', 'numeric', 'min:0.01'],
         ], [
             'rates.*.regular.min' => 'A fare rate must be greater than zero.',
-            'rates.*.discount.min' => 'A discount rate must be greater than zero.',
         ]);
 
         // E3 — Database error: the update is all-or-nothing and the Admin is told.
@@ -194,16 +188,14 @@ class FareController extends Controller
 
                     FareRate::where('id', $rateId)->update([
                         'regular' => $data['regular'],
-                        'discount' => $data['discount'],
                     ]);
 
                     // Written with the query builder (one UPDATE per tier), so no model event fires:
                     // collect old → new here and log the whole edit as one entry below.
-                    if ($before && ((float) $before->regular !== (float) $data['regular'] || (float) $before->discount !== (float) $data['discount'])) {
+                    if ($before && (float) $before->regular !== (float) $data['regular']) {
                         $changes[] = [
                             'km' => $before->km,
                             'regular' => ['old' => (float) $before->regular, 'new' => (float) $data['regular']],
-                            'discount' => ['old' => (float) $before->discount, 'new' => (float) $data['discount']],
                         ];
                     }
                 }

@@ -25,7 +25,7 @@
 | --- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | 1   | Admin opens up the dashboard on the map.                           | System displays the dashboard with the admin analytics.                                                |
 | 2   | Admin clicks the **"Fare Rates"** item on the sidebar.             | System redirects to the Fare Rates page (`fares.index`), showing the tier count and the min/max fare summary strip. |
-| 3   |                                                                            | System displays the rate table with columns **Distance (km)**, **Regular** and **Discount**, the **"Edit Rates"** button and the PDF upload form. |
+| 3   |                                                                            | System displays the rate table with columns **Distance (km)** and **Regular**, the **"Edit Rates"** button and the PDF upload form. |
 
 > Steps 4+ are the alternate flows (A1–A2); the main flow is "open the table and read it".
 
@@ -37,11 +37,11 @@
 1. On the page, the Admin selects a file with **"Select File"** — an official **LFTFRB fare guide (PDF)** — then presses **"Upload"**.
 2. System validates the upload: `fare` **required, file, mimes:pdf**.
 3. System stores the file and runs the extraction script (`resources/scripts/extractPdf.py`) inside the project virtualenv, then parses the returned JSON.
-4. Inside a transaction, System creates the **Fare** record and inserts the parsed tiers (`fare_rates`: km, regular, discount) for the 1–25 km and 27–51 km bands, then confirms *"File uploaded successfully!"*
+4. Inside a transaction, System creates the **Fare** record and inserts the parsed tiers (`fare_rates`: km, regular) for the 1–25 km and 27–51 km bands, then confirms *"File uploaded successfully!"*
 
 **A2 – Edit One or More Fare Rates**
 1. On the page, the Admin clicks **"Edit Rates"**.
-2. System switches the Regular and Discount cells into editable number inputs and reveals the *"Editing Mode"* save bar.
+2. System switches the Regular cells into editable number inputs and reveals the *"Editing Mode"* save bar.
 3. Admin edits one or multiple fare rates and clicks **"Save Changes"**.
 4. System validates the whole payload (E2, E4) and, in one transaction, updates each `fare_rates` row, then confirms *"Rates updated successfully"*.
 
@@ -68,7 +68,7 @@ The save was submitted with no rate rows at all (nothing to persist). System rej
 The insert/update fails at the database level. System cancels the operation and notifies the Admin.
 
 **E4 – Rate Cannot be Zero or Negative**
-A submitted Regular or Discount value is `0` or below. System rejects the submission with *"A fare rate must be greater than zero."* / *"A discount rate must be greater than zero."*, leaving every previous value untouched.
+A submitted Regular value is `0` or below. System rejects the submission with *"A fare rate must be greater than zero."*, leaving every previous value untouched.
 
 **E5 – Document File Is Required**
 No file was selected, or the selected file is not a PDF. System rejects the upload with the corresponding validation message and stores nothing.

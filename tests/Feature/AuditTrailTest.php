@@ -332,11 +332,11 @@ class AuditTrailTest extends TestCase
     public function test_a_fare_rate_edit_is_audited_as_one_entry_with_old_and_new_values()
     {
         $admin = $this->userWithRole('admin');
-        $rate = FareRate::factory()->create(['regular' => 20, 'discount' => 16]);
+        $rate = FareRate::factory()->create(['regular' => 20]);
         $before = $this->entries('fare_rates_updated')->count();
 
         $this->actingAs($admin)->put(route('fares.bulk-update'), [
-            'rates' => [$rate->id => ['id' => $rate->id, 'regular' => 25.5, 'discount' => 16]],
+            'rates' => [$rate->id => ['id' => $rate->id, 'regular' => 25.5]],
         ])->assertSessionHas('success');
 
         $entries = $this->entries('fare_rates_updated', 'fare');
@@ -345,19 +345,17 @@ class AuditTrailTest extends TestCase
         $change = $entries->last()->properties['changes'][0];
         $this->assertEquals(20, $change['regular']['old']);
         $this->assertEquals(25.5, $change['regular']['new']);
-        $this->assertEquals(16, $change['discount']['old']);
-        $this->assertEquals(16, $change['discount']['new']);
         $this->assertSame($admin->id, $entries->last()->causer_id);
     }
 
     public function test_saving_fare_rates_without_changing_anything_writes_nothing()
     {
         $admin = $this->userWithRole('admin');
-        $rate = FareRate::factory()->create(['regular' => 20, 'discount' => 16]);
+        $rate = FareRate::factory()->create(['regular' => 20]);
         $before = $this->entries('fare_rates_updated')->count();
 
         $this->actingAs($admin)->put(route('fares.bulk-update'), [
-            'rates' => [$rate->id => ['id' => $rate->id, 'regular' => 20, 'discount' => 16]],
+            'rates' => [$rate->id => ['id' => $rate->id, 'regular' => 20]],
         ])->assertSessionHas('success');
 
         $this->assertCount($before, $this->entries('fare_rates_updated'));

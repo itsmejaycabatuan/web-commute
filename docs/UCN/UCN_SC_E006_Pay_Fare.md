@@ -152,7 +152,6 @@ The scan was not matched to a vehicle (no PUJ near the commuter, or location ref
 - **`statement_descriptor` is not honoured** on a checkout session (only on a standalone payment intent); PayMongo falls back to the merchant's registered descriptor.
 - **No boarding permission a driver can check.** Paying attributes the fare to a vehicle and driver (A6) and a scan that is never followed by a fare is counted (`php artisan fares:flag-evasion`, daily 09:30: 3 unpaid scans in 7 days flags the commuter to the Admins, once per window), but a driver still has no screen that shows who has paid. The attribution depends on the driver's phone broadcasting and on the commuter allowing location.
 - **The fare is re-priced server-side, but the *distance* is still client-supplied** (it comes from the browser's OSRM call). The amount can no longer be tampered with, but the distance can. Closing it means routing the trip server-side.
-- **Discount fares are not verified.** The calculator displays a discounted figure for Student/Elderly/PWD, but only the **regular** fare is priced and charged server-side; no ID is checked.
 - **No refunds, cancellations, or fare disputes** from the commuter side. Once `paid`, a payment is immutable.
 - **No webhook event-deduplication store.** Settlement is idempotent (`pending → paid` only happens once), but replayed events are not recorded.
 - **No dead-letter/queue handling** — webhook processing is synchronous, so a slow PayMongo call blocks the request.

@@ -36,9 +36,9 @@ class PayMongoPaymentTest extends TestCase
 
         // A small deterministic rate table: 5 km => ₱17.25 (=> 18), 10 km => ₱28.25 (=> 29)
         $fare = Fare::factory()->create();
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 1, 'regular' => 15, 'discount' => 12]);
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25, 'discount' => 13.75]);
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 10, 'regular' => 28.25, 'discount' => 22.5]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 1, 'regular' => 15]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 10, 'regular' => 28.25]);
 
         $this->enableGateway(false);
         PayMongoService::flushConfigCache();

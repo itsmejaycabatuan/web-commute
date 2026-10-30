@@ -71,7 +71,7 @@ class ActivityLogController extends Controller
                 $r = AuditPresenter::present($activity);
 
                 $changes = collect($r['changes'])->map(fn ($c) => "{$c['field']}: {$c['old']} → {$c['new']}")
-                    ->merge(collect($r['tiers'])->map(fn ($t) => "{$t['km']}: regular {$t['regular']}, discount {$t['discount']}"))
+                    ->merge(collect($r['tiers'])->map(fn ($t) => "{$t['km']}: regular {$t['regular']}"))
                     ->implode('; ');
                 $details = collect($r['facts'])->map(fn ($v, $k) => "{$k}: {$v}")->implode('; ');
 

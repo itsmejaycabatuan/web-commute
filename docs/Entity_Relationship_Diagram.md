@@ -34,7 +34,7 @@ regenerated from `information_schema` (columns, `key_column_usage`, single-colum
 | Wallet | `wallets` | A commuter's stored balance | E005, E006 |
 | Top-up History | `topup_histories` | One row per wallet top-up, with a status | E005 |
 | Payment | `payments` | One row per fare payment: gateway ids, lifecycle status, and — when the commuter's QR scan was located — the `vehicle_id` and `driver_id` the fare belongs to | E006, E007 |
-| Fare / Fare Rate | `fares`, `fare_rates` | A published fare guide and its distance tiers (regular and discount price) | E004, E019 |
+| Fare / Fare Rate | `fares`, `fare_rates` | A published fare guide and its distance tiers (regular price) | E004, E019 |
 | Driver | `drivers` | Driver profile attached to a user: licence, approval, suspension, availability, and the inactivity-warning columns (`inactivity_warned_at`, `reactivated_at`) | E012, E022 |
 | Time Keeping | `time_keepings` | One row per driver per day: in, out, hours, overtime, leave, the vehicle worked, and the auto-close markers (`auto_closed_at`, `reviewed_at`) | E009, E010, E013 |
 | Violation Code | `violation_codes` | Offence catalogue with fines for 1st–4th+ offence (seeded with the PUJ schedule `UV01`–`UV14`) | E014, E024 |

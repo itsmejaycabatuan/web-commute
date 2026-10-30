@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\DevMarker;
 use App\Models\User;
+use App\Support\ServiceCorridor;
 use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Spatie\Permission\Models\Role;
@@ -29,7 +30,7 @@ class DevMarkerControllerTest extends TestCase
         $this->app['env'] = 'local';
 
         $this->withoutMiddleware([VerifyCsrfToken::class])
-            ->post(route('driver.dev.add-marker'), ['lat' => 14.5995, 'lng' => 120.9842])
+            ->post(route('driver.dev.add-marker'), ['lat' => 10.284729, 'lng' => 123.859999])
             ->assertRedirect(route('login'));
 
         $this->withoutMiddleware([VerifyCsrfToken::class])
@@ -43,7 +44,7 @@ class DevMarkerControllerTest extends TestCase
 
         $this->actingAs($this->userWithRole('commuter'))
             ->withoutMiddleware([VerifyCsrfToken::class])
-            ->post(route('driver.dev.add-marker'), ['lat' => 14.5995, 'lng' => 120.9842])
+            ->post(route('driver.dev.add-marker'), ['lat' => 10.284729, 'lng' => 123.859999])
             ->assertForbidden();
     }
 
@@ -51,7 +52,7 @@ class DevMarkerControllerTest extends TestCase
     {
         $this->actingAs($this->userWithRole('admin'))
             ->withoutMiddleware([VerifyCsrfToken::class])
-            ->post(route('driver.dev.add-marker'), ['lat' => 14.5995, 'lng' => 120.9842])
+            ->post(route('driver.dev.add-marker'), ['lat' => 10.284729, 'lng' => 123.859999])
             ->assertNotFound();
     }
 
@@ -62,7 +63,7 @@ class DevMarkerControllerTest extends TestCase
 
         $this->actingAs($admin)
             ->withoutMiddleware([VerifyCsrfToken::class])
-            ->post(route('driver.dev.add-marker'), ['lat' => 14.5995, 'lng' => 120.9842])
+            ->post(route('driver.dev.add-marker'), ['lat' => 10.284729, 'lng' => 123.859999])
             ->assertSessionHas('success');
 
         $marker = DevMarker::where('user_id', $admin->id)->firstOrFail();
@@ -76,5 +77,34 @@ class DevMarkerControllerTest extends TestCase
             ->withoutMiddleware([VerifyCsrfToken::class])
             ->delete(route('driver.dev.remove-marker', ['marker' => $marker->id]));
         $this->assertDatabaseMissing('dev_markers', ['id' => $marker->id]);
+    }
+
+    public function test_markers_off_the_minglanilla_it_park_road_are_rejected()
+    {
+        $this->app['env'] = 'local';
+        $admin = $this->userWithRole('admin');
+
+        // Manila - nowhere near the fixed corridor.
+        $this->actingAs($admin)
+            ->withoutMiddleware([VerifyCsrfToken::class])
+            ->post(route('driver.dev.add-marker'), ['lat' => 14.5995, 'lng' => 120.9842])
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseMissing('dev_markers', ['user_id' => $admin->id]);
+    }
+
+    public function test_markers_near_the_road_are_snapped_onto_it()
+    {
+        $this->app['env'] = 'local';
+        $admin = $this->userWithRole('admin');
+
+        // ~30 m east of a point on the corridor.
+        $this->actingAs($admin)
+            ->withoutMiddleware([VerifyCsrfToken::class])
+            ->post(route('driver.dev.add-marker'), ['lat' => 10.284729, 'lng' => 123.860270])
+            ->assertSessionHas('success');
+
+        $marker = DevMarker::where('user_id', $admin->id)->firstOrFail();
+        $this->assertLessThan(1, ServiceCorridor::nearest((float) $marker->lat, (float) $marker->lng)['distance']);
     }
 }

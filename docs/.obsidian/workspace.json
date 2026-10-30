@@ -11,14 +11,12 @@
             "id": "9f89179a0caa52b5",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "image",
               "state": {
-                "file": "AUTOMATED_FEATURES.md",
-                "mode": "source",
-                "source": false
+                "file": "diagrams/use_case_diagram.png"
               },
-              "icon": "lucide-file",
-              "title": "AUTOMATED_FEATURES"
+              "icon": "lucide-image",
+              "title": "use_case_diagram"
             }
           }
         ]
@@ -190,10 +188,11 @@
   },
   "active": "9f89179a0caa52b5",
   "lastOpenFiles": [
+    "AUTOMATED_FEATURES.md",
+    "UCN/build_combined.py",
     "Entity_Relationship_Diagram.md.tmp.5492.0208f2ec4a7b",
     "diagrams/erd_summary.dot",
     "diagrams/erd_full.dot",
-    "UCN/build_combined.py",
     "Non_Functional_Requirements.md",
     "MANUAL_TEST_CHECKLIST.md",
     "Functional_Requirements.md",

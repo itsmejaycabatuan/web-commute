@@ -294,35 +294,35 @@ class DevSeeder extends Seeder
             ['SM Seaside City', 'Mandaue City Hall', 12.9],
         ];
 
-        // user => list of [days ago, place index, method, status, discounted]
+        // user => list of [days ago, place index, method, status]
         $plans = [
             'commuter@gmail.com' => [
-                [28, 0, 'Wallet', 'paid', false], [21, 1, 'Wallet', 'paid', true],
-                [14, 2, 'GCash', 'paid', false], [6, 3, 'Wallet', 'paid', false],
-                [1, 4, 'Wallet', 'paid', false],
+                [28, 0, 'Wallet', 'paid'], [21, 1, 'Wallet', 'paid'],
+                [14, 2, 'GCash', 'paid'], [6, 3, 'Wallet', 'paid'],
+                [1, 4, 'Wallet', 'paid'],
             ],
             'maria.santos@example.com' => [
-                [13, 0, 'Wallet', 'paid', false], [10, 5, 'Maya', 'paid', true],
-                [7, 6, 'Wallet', 'paid', false], [4, 7, 'GCash', 'paid', false],
-                [2, 1, 'Wallet', 'paid', false], [0, 3, 'Wallet', 'paid', false],
+                [13, 0, 'Wallet', 'paid'], [10, 5, 'Maya', 'paid'],
+                [7, 6, 'Wallet', 'paid'], [4, 7, 'GCash', 'paid'],
+                [2, 1, 'Wallet', 'paid'], [0, 3, 'Wallet', 'paid'],
             ],
             // Wallet is empty. Covers pending, failed and cancelled gateway payments.
             'juan.delacruz@example.com' => [
-                [12, 0, 'GCash', 'paid', false], [8, 4, 'Maya', 'paid', false],
-                [5, 2, 'GCash', 'failed', false], [3, 6, 'Maya', 'cancelled', false],
-                [0, 5, 'GCash', 'pending', false],
+                [12, 0, 'GCash', 'paid'], [8, 4, 'Maya', 'paid'],
+                [5, 2, 'GCash', 'failed'], [3, 6, 'Maya', 'cancelled'],
+                [0, 5, 'GCash', 'pending'],
             ],
             'ana.reyes@example.com' => [
-                [26, 0, 'Wallet', 'paid', false], [24, 1, 'Wallet', 'paid', true],
-                [22, 2, 'GCash', 'paid', false], [20, 3, 'Wallet', 'paid', false],
-                [18, 4, 'Maya', 'paid', true], [16, 5, 'Wallet', 'paid', false],
-                [14, 6, 'Wallet', 'paid', false], [11, 7, 'GCash', 'paid', false],
-                [9, 0, 'Wallet', 'paid', true], [7, 1, 'Wallet', 'paid', false],
-                [5, 2, 'Maya', 'paid', false], [3, 3, 'Wallet', 'paid', false],
-                [1, 4, 'Wallet', 'paid', false], [0, 5, 'GCash', 'paid', false],
+                [26, 0, 'Wallet', 'paid'], [24, 1, 'Wallet', 'paid'],
+                [22, 2, 'GCash', 'paid'], [20, 3, 'Wallet', 'paid'],
+                [18, 4, 'Maya', 'paid'], [16, 5, 'Wallet', 'paid'],
+                [14, 6, 'Wallet', 'paid'], [11, 7, 'GCash', 'paid'],
+                [9, 0, 'Wallet', 'paid'], [7, 1, 'Wallet', 'paid'],
+                [5, 2, 'Maya', 'paid'], [3, 3, 'Wallet', 'paid'],
+                [1, 4, 'Wallet', 'paid'], [0, 5, 'GCash', 'paid'],
             ],
             'pedro.lim@example.com' => [
-                [11, 6, 'Wallet', 'paid', false],
+                [11, 6, 'Wallet', 'paid'],
             ],
         ];
 
@@ -331,10 +331,10 @@ class DevSeeder extends Seeder
             $wallet = Wallet::where('user_id', $user->id)->firstOrFail();
             $seeded = Payment::where('paid_by', $user->id)->where('transaction_id', 'like', 'SEED-%')->exists();
 
-            foreach ($rows as $i => [$daysAgo, $placeIdx, $method, $status, $discounted]) {
+            foreach ($rows as $i => [$daysAgo, $placeIdx, $method, $status]) {
                 [$from, $to, $km] = $places[$placeIdx];
                 $tier = $this->tierFor($km);
-                $price = (float) ceil($discounted ? $tier->discount : $tier->regular);
+                $price = (float) ceil($tier->regular);
                 $at = now()->subDays($daysAgo)->setTime(7 + ($i * 2) % 12, 20 + $i);
                 if ($at->isFuture()) {
                     $at = now()->subMinutes(30 + $i);
@@ -345,7 +345,7 @@ class DevSeeder extends Seeder
                     'starting_point' => $from,
                     'destination' => $to,
                     'total_distance' => $km,
-                    'is_discounted' => $discounted,
+                    'is_discounted' => false,
                     'payment_method' => $method,
                     'price' => $price,
                     'status' => $status,

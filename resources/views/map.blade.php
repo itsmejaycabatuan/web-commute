@@ -105,18 +105,21 @@
 
         /* ═══ MAP STATUS BANNER (E1 no PUJ / E2 permission / E3 map / E4 offline) ═══ */
         #map-alert {
-            position: absolute;
-            /* Sits just under the fixed header, which is taller on mobile. */
-            top: 104px;
+            position: fixed;
+            /* Sits just under the fixed header. --map-header-bottom is measured from the real
+               header (syncMapOverlayOffsets), since it wraps to a variable height on mobile;
+               104px is only the pre-script fallback. */
+            top: calc(var(--map-header-bottom, 96px) + 8px);
             left: 50%;
             transform: translateX(-50%);
             /* Above the canvas, but never over a marker popup (z-index 25). */
             z-index: 18;
-            max-width: min(400px, calc(100vw - 24px));
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 11px 15px;
+            width: max-content;
+            max-width: min(400px, calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+            /* A long message scrolls inside the banner instead of running off a short screen. */
+            max-height: calc(100dvh - var(--map-header-bottom, 96px) - 96px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
             border-radius: 14px;
             background: var(--ov-bg);
             backdrop-filter: blur(16px);
@@ -124,15 +127,104 @@
             border: 1px solid var(--ov-border);
             box-shadow: var(--ov-shadow);
             font-family: var(--sc-font, 'Plus Jakarta Sans', sans-serif);
-            /* Purely informational: never swallow map drags / marker clicks. */
-            pointer-events: none;
             animation: mapAlertIn 0.25s ease;
         }
 
+        /* Collapsed by default (title only); tapping the banner reveals the message. */
+        #map-alert .ma-toggle {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            width: 100%;
+            padding: 11px 15px;
+            border: 0;
+            border-radius: 14px;
+            background: transparent;
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #map-alert .ma-toggle > div {
+            min-width: 0;
+        }
+
+        #map-alert .ma-toggle:focus-visible {
+            outline: 2px solid var(--ov-accent);
+            outline-offset: 2px;
+        }
+
+        #map-alert .ma-chevron {
+            margin-left: auto;
+            padding-left: 6px;
+            font-size: 11px;
+            line-height: 1.6;
+            color: var(--ov-dim);
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+
+        #map-alert.expanded .ma-chevron {
+            transform: rotate(180deg);
+        }
+
+        #map-alert:not(.expanded) .ma-msg {
+            display: none;
+        }
+
+        #map-alert:not(.expanded) .ma-title {
+            margin-bottom: 0;
+        }
+
+        #map-alert .ma-title,
+        #map-alert .ma-msg {
+            overflow-wrap: anywhere;
+        }
+
         @media (max-width: 640px) {
+            /* Full-width strip on phones so the title and message wrap instead of squeezing
+               into a narrow pill, with a 44px tap target for the expand/collapse button. */
             #map-alert {
-                top: 132px;
+                width: calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+                max-width: none;
+            }
+
+            #map-alert .ma-toggle {
+                min-height: 44px;
                 padding: 10px 13px;
+                align-items: center;
+            }
+
+            #map-alert .ma-icon {
+                font-size: 15px;
+            }
+
+            #map-alert .ma-title {
+                font-size: 12px;
+                letter-spacing: 0.1em;
+                line-height: 1.35;
+            }
+
+            #map-alert .ma-msg {
+                font-size: 13px;
+                line-height: 1.55;
+            }
+
+            #map-alert .ma-chevron {
+                padding: 8px 2px 8px 8px;
+                font-size: 12px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #map-alert {
+                animation: none;
+            }
+
+            #map-alert .ma-chevron {
+                transition: none;
             }
         }
 
@@ -750,9 +842,11 @@
             top: 5rem;
         }
 
+        /* On phones the toasts span the full width, so they start below the status banner
+           when one is showing (--map-toast-top is set by syncMapOverlayOffsets). */
         @media (max-width: 767px) {
             html body .app-toast-stack {
-                top: 10rem;
+                top: var(--map-toast-top, 10rem);
             }
         }
 
@@ -1125,6 +1219,54 @@
             filter: invert(1) opacity(0.9);
         }
 
+        /* "Back to my location" - big pill pinned to the bottom of the map,
+           only shown while the user's position is out of view. */
+        #recenter-btn {
+            position: absolute;
+            left: 50%;
+            bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+            transform: translate(-50%, 12px);
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 52px;
+            max-width: calc(100vw - 32px);
+            padding: 0 28px;
+            border: 0;
+            border-radius: 999px;
+            background: #2563eb;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            white-space: nowrap;
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.45);
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease, background 0.15s ease;
+        }
+
+        #recenter-btn.visible {
+            opacity: 1;
+            transform: translate(-50%, 0);
+            pointer-events: auto;
+        }
+
+        #recenter-btn:hover {
+            background: #1d4ed8;
+        }
+
+        #recenter-btn:active {
+            background: #1e40af;
+        }
+
+        #recenter-btn:focus-visible {
+            outline: 3px solid #93c5fd;
+            outline-offset: 2px;
+        }
+
         .line-glow {
             background: #e2e8f0;
             height: 1px;
@@ -1194,6 +1336,10 @@
         }
 
         .search-item {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: transparent;
             padding: 10px 14px;
             cursor: pointer;
             transition: background 0.15s ease;
@@ -1216,6 +1362,15 @@
         .dark .search-item:hover,
         .dark .search-item.highlighted {
             background: #1a1a1a;
+        }
+
+        .search-item:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+        }
+
+        .search-item:disabled:hover {
+            background: transparent;
         }
 
         .search-item .result-name {
@@ -1441,6 +1596,7 @@
         /* The floating header would otherwise cover the top of the map. */
         html.is-landscape #map-alert,
         html.is-landscape #nearest-vehicle-indicator {
+            width: auto;
             max-width: min(22rem, 45vw);
         }
 
@@ -2401,36 +2557,39 @@
                                     </div>
                                     <div class="space-y-3">
                                         <div class="flex gap-2 items-center">
-                                            <button type="button" onclick="handlePickupBtn()"
+                                            <button type="button" onclick="handlePickupBtn()" title="Use my location"
                                                 class="flex items-center justify-center w-10 h-10 bg-blue-500/10 hover:bg-blue-500/20 p-2.5 rounded-xl border border-blue-500/20 hover:border-blue-500/40 transition shrink-0">
-                                                <i class="fa-solid fa-circle-dot text-xs text-blue-400"></i>
+                                                <i class="fa-solid fa-location-crosshairs text-xs text-blue-400"></i>
                                             </button>
                                             <div class="relative flex-1">
                                                 <div
                                                     class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                                    <i
-                                                        class="fa-solid fa-magnifying-glass text-[10px] text-[#444]"></i>
+                                                    <i class="fa-solid fa-location-crosshairs text-[10px] text-[#444]"></i>
                                                 </div>
-                                                <input type="text" placeholder="Search pick-up point"
+                                                <input type="text" placeholder="Locating you…" readonly
                                                     name="pickup" id="pickup" autocomplete="off"
+                                                    title="Your location is the starting point"
                                                     class="map-input w-full rounded-xl pl-9 pr-4 py-2.5 text-xs text-white">
-                                                <div id="pickup-dropdown" class="search-dropdown"></div>
                                             </div>
                                         </div>
                                         <div class="flex gap-2 items-center">
-                                            <button type="button" onclick="handleDestinationBtn()"
+                                            <button type="button" onclick="handleDestinationBtn()" title="Tap the road to set a destination"
                                                 class="flex items-center justify-center w-10 h-10 bg-red-500/10 hover:bg-red-500/20 p-2.5 rounded-xl border border-red-500/20 hover:border-red-500/40 transition shrink-0">
                                                 <i class="fa-solid fa-location-dot text-xs text-red-400"></i>
                                             </button>
                                             <div class="relative flex-1">
                                                 <div
                                                     class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                                    <i
-                                                        class="fa-solid fa-magnifying-glass text-[10px] text-[#444]"></i>
+                                                    <i class="fa-solid fa-list text-[10px] text-[#444]"></i>
                                                 </div>
-                                                <input type="text" placeholder="Search destination"
+                                                <div
+                                                    class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                                    <i class="fa-solid fa-chevron-down text-[9px] text-[#444]"></i>
+                                                </div>
+                                                <input type="text" placeholder="Set destination" readonly
                                                     name="destination" id="destination" autocomplete="off"
-                                                    class="map-input w-full rounded-xl pl-9 pr-4 py-2.5 text-xs text-white">
+                                                    aria-haspopup="listbox"
+                                                    class="map-input w-full rounded-xl pl-9 pr-8 py-2.5 text-xs text-white cursor-pointer">
                                                 <div id="destination-dropdown" class="search-dropdown"></div>
                                             </div>
                                         </div>
@@ -2453,19 +2612,6 @@
                                                     class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#555]"></i>
                                                 <input type="text" readonly name="price-regular"
                                                     id="price-regular"
-                                                    class="map-input w-full rounded-lg pl-7 pr-3 py-2 text-xs text-white text-center font-semibold"
-                                                    value="0">
-                                            </div>
-                                        </div>
-                                        <div class="bg-[#111] rounded-xl p-3 border border-[#1e1e1e]">
-                                            <span
-                                                class="text-[9px] font-bold uppercase tracking-[0.15em] text-[#444] block mb-2">Student
-                                                / Elderly / PWD</span>
-                                            <div class="relative flex-1">
-                                                <i
-                                                    class="fa-solid fa-peso-sign absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#555]"></i>
-                                                <input type="text" readonly name="price-discount"
-                                                    id="price-discount"
                                                     class="map-input w-full rounded-lg pl-7 pr-3 py-2 text-xs text-white text-center font-semibold"
                                                     value="0">
                                             </div>
@@ -2962,6 +3108,10 @@
                                         if (typeof window.applyInitialPosition === 'function') {
                                             window.applyInitialPosition();
                                         }
+                                        // The fare calculator uses the same fix as the starting point.
+                                        if (typeof window.onUserLocationFix === 'function') {
+                                            window.onUserLocationFix(lat, lng, accuracy);
+                                        }
                                     },
 
                                     stop: function() {
@@ -3180,7 +3330,7 @@ _updateBadges: function() {
                                         <input type="hidden" name="lat" id="dev-marker-lat">
                                         <input type="hidden" name="lng" id="dev-marker-lng">
                                         <div class="flex gap-2 mb-3">
-                                            <button type="submit" onclick="captureMapCenter()"
+                                            <button type="submit" onclick="return captureMapCenter()"
                                                 class="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 flex items-center justify-center gap-2 transition active:scale-[0.98] text-white text-[9px] font-bold uppercase tracking-widest">
                                                 <i class="fa-solid fa-location-crosshairs text-[8px]"></i>
                                                 <span>Add at Center</span>
@@ -3192,6 +3342,10 @@ _updateBadges: function() {
                                             </button>
                                         </div>
                                     </form>
+
+                                    @if (session('error'))
+                                        <p class="mb-2 text-[9px] font-bold text-red-400">{{ session('error') }}</p>
+                                    @endif
 
                                     <!-- Marker list -->
                                     <div class="space-y-1.5 max-h-[140px] overflow-y-auto custom-scroll pr-0.5">
@@ -3376,12 +3530,16 @@ _updateBadges: function() {
                                 // ══════════════════════════════════════════════
                                 var devPlacingMode = false;
 
+                                /* Returns false (cancelling the submit) when the map centre is off the road. */
                                 function captureMapCenter() {
                                     var m = window.map;
-                                    if (!m || typeof m.getCanvas !== 'function') return;
+                                    if (!m || typeof m.getCanvas !== 'function') return false;
                                     var c = m.getCenter();
-                                    document.getElementById('dev-marker-lat').value = c.lat;
-                                    document.getElementById('dev-marker-lng').value = c.lng;
+                                    var onRoad = window.snapToCorridor(c.lng, c.lat);
+                                    if (!onRoad) return false;
+                                    document.getElementById('dev-marker-lat').value = onRoad.lat;
+                                    document.getElementById('dev-marker-lng').value = onRoad.lng;
+                                    return true;
                                 }
 
                                 function enableMarkerPlacement() {
@@ -3407,12 +3565,15 @@ _updateBadges: function() {
                                     m.on('click', function(e) {
                                         // Dev placement takes priority
                                         if (devPlacingMode) {
+                                            // Off-road clicks are rejected; stay in placing mode to retry.
+                                            var onRoad = window.snapToCorridor(e.lngLat.lng, e.lngLat.lat);
+                                            if (!onRoad) return;
                                             devPlacingMode = false;
                                             var btn = document.getElementById('dev-place-btn');
                                             if (btn) btn.classList.remove('placing');
                                             m.getCanvas().style.cursor = '';
-                                            document.getElementById('dev-marker-lat').value = e.lngLat.lat;
-                                            document.getElementById('dev-marker-lng').value = e.lngLat.lng;
+                                            document.getElementById('dev-marker-lat').value = onRoad.lat;
+                                            document.getElementById('dev-marker-lng').value = onRoad.lng;
                                             document.getElementById('dev-marker-form').submit();
                                             return;
                                         }
@@ -4186,14 +4347,14 @@ sim._lastEtaUpdate = null;
                 }
             }
 
+            /* The starting point is the commuter's own location: this re-reads it. */
             function handlePickupBtn() {
-                if (window.innerWidth < 768 && window._leftMobileOpen) {
-                    closeMobileSidebar('left');
-                }
-                if (typeof toggleSelection === 'function') toggleSelection('pickup');
+                if (typeof window.useMyLocation === 'function') window.useMyLocation();
             }
 
             function handleDestinationBtn() {
+                // Gate first: the commuter has to be on/near the route to set a destination.
+                if (typeof window.canSetDestination === 'function' && !window.canSetDestination()) return;
                 if (window.innerWidth < 768 && window._leftMobileOpen) {
                     closeMobileSidebar('left');
                 }
@@ -4225,7 +4386,6 @@ sim._lastEtaUpdate = null;
              *  E3 - map/tile service failure  -> 'map-service'
              *  E4 - device offline            -> 'offline'
              *  E4/E004 - routing service down -> 'routing-service'
-             *  E4/E004 - no place found      -> 'location-not-found'
              * Priorities: offline > map-service > routing-service > location-denied > no-puj
              * ══════════════════════════════════════════════ */
             window.mapAlerts = {};
@@ -4254,11 +4414,23 @@ sim._lastEtaUpdate = null;
                     title: 'Route unavailable',
                     msg: 'The routing service failed to respond, so the distance and fare could not be calculated. Please try again.'
                 },
-                'location-not-found': {
+                'user-off-route': {
                     type: 'warning',
-                    icon: 'fa-magnifying-glass',
-                    title: 'Location not found',
-                    msg: 'That place could not be found. Try a different name, or tap a point directly on the map.'
+                    icon: 'fa-person-walking',
+                    title: "You're away from the route",
+                    msg: 'Move onto or near the Minglanilla to IT Park road to set a destination. Your location is used as the starting point.'
+                },
+                'user-no-fix': {
+                    type: 'warning',
+                    icon: 'fa-location-crosshairs',
+                    title: 'Waiting for your location',
+                    msg: 'Allow location access so your position can be used as the starting point, then try again.'
+                },
+                'off-corridor': {
+                    type: 'warning',
+                    icon: 'fa-road',
+                    title: 'Pick a point on the road',
+                    msg: 'Markers can only be placed on the highlighted Minglanilla to IT Park road. Tap closer to the line.'
                 },
                 'no-puj': {
                     type: 'info',
@@ -4267,7 +4439,7 @@ sim._lastEtaUpdate = null;
                     msg: 'No PUJ drivers are clocked in right now, so there are no markers on the map.'
                 }
             };
-            var MAP_ALERT_PRIORITY = ['offline', 'map-service', 'routing-service', 'location-denied', 'no-puj'];
+            var MAP_ALERT_PRIORITY = ['offline', 'map-service', 'routing-service', 'location-denied', 'user-no-fix', 'user-off-route', 'off-corridor', 'no-puj'];
 
             window.showMapAlert = function(key) {
                 window.mapAlerts[key] = true;
@@ -4279,6 +4451,52 @@ sim._lastEtaUpdate = null;
                 window.renderMapAlert();
             };
 
+            /* Publish where the fixed header (and the banner, when showing) end, so the banner
+               and the phone toasts sit just below them whatever height the header wraps to. */
+            window.syncMapOverlayOffsets = function() {
+                var header = document.querySelector('body > header');
+                var alertEl = document.getElementById('map-alert');
+                var root = document.documentElement.style;
+                var headerBottom = header ? Math.ceil(header.getBoundingClientRect().bottom) : 0;
+                if (headerBottom) root.setProperty('--map-header-bottom', headerBottom + 'px');
+                var below = headerBottom;
+                if (alertEl && !alertEl.classList.contains('hidden')) {
+                    below = Math.max(below, Math.ceil(alertEl.getBoundingClientRect().bottom));
+                }
+                if (below) root.setProperty('--map-toast-top', (below + 8) + 'px');
+            };
+
+            (function() {
+                var queued = false;
+                function schedule() {
+                    if (queued) return;
+                    queued = true;
+                    requestAnimationFrame(function() {
+                        queued = false;
+                        window.syncMapOverlayOffsets();
+                    });
+                }
+                window.addEventListener('resize', schedule);
+                window.addEventListener('orientationchange', schedule);
+                window.addEventListener('load', schedule);
+                // This script runs before the banner/header exist, so observe them once parsed.
+                function observe() {
+                    if (window.ResizeObserver) {
+                        var ro = new ResizeObserver(schedule);
+                        var nodes = [document.getElementById('map-alert'), document.querySelector('body > header')];
+                        nodes.forEach(function(node) {
+                            if (node) ro.observe(node);
+                        });
+                    }
+                    schedule();
+                }
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', observe);
+                } else {
+                    observe();
+                }
+            })();
+
             window.renderMapAlert = function() {
                 var el = document.getElementById('map-alert');
                 if (!el) return;
@@ -4289,6 +4507,7 @@ sim._lastEtaUpdate = null;
                     if (el.dataset.active) delete el.dataset.active;
                     el.classList.add('hidden');
                     el.setAttribute('aria-hidden', 'true');
+                    window.syncMapOverlayOffsets();
                     return;
                 }
                 var key = active[0];
@@ -4296,12 +4515,17 @@ sim._lastEtaUpdate = null;
                 // Skip DOM work when the same alert is already on screen, so a
                 // repeated event can't restart the entry animation/flicker.
                 if (el.dataset.active === key) return;
+                el.dataset.active = key;
+                // A new alert starts collapsed (title only).
+                el.classList.remove('expanded');
+                el.querySelector('.ma-toggle').setAttribute('aria-expanded', 'false');
                 el.dataset.type = meta.type;
                 el.classList.remove('hidden');
                 el.setAttribute('aria-hidden', 'false');
                 el.querySelector('.ma-icon').className = 'fa-solid ' + meta.icon + ' ma-icon';
                 document.getElementById('map-alert-title').textContent = meta.title;
                 document.getElementById('map-alert-msg').textContent = meta.msg;
+                window.syncMapOverlayOffsets();
             };
 
             /* ── E1: show/hide the "no PUJ" banner from marker state ── */
@@ -4546,9 +4770,11 @@ sim._lastEtaUpdate = null;
 
             maplibregl.setRTLTextPlugin('https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js');
 
+            // Pan limit: the whole of Cebu province (mainland, Bantayan,
+            // Camotes, Malapascua), not just the service corridor.
             const bounds = [
-                [123.77516124821591, 10.229235293025951],
-                [123.91768276426876, 10.332535160307074]
+                [123.2, 9.35],
+                [124.5, 11.45]
             ];
 
             // Basemap follows the theme that was applied in <head>
@@ -4592,6 +4818,48 @@ sim._lastEtaUpdate = null;
 
             // Expose the control so the ETA engine can reuse its last fix
             window.geolocateCtrlRef = geolocateCtrl;
+
+            /* ── "Back to my location" button ──
+               A big pill at the bottom of the map. Only shown while the user's
+               last known position is outside the visible map area (they
+               panned/zoomed away), so it never clutters the map when they are
+               already in view. */
+            var recenterCtrl = (function() {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.id = 'recenter-btn';
+                btn.setAttribute('aria-label', 'Back to my location');
+                btn.tabIndex = -1;
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i><span>Back to my location</span>';
+                btn.addEventListener('click', function() {
+                    var eta = window.ETA;
+                    if (!eta || eta.userLat === null) return;
+                    // Fly to the last known fix; if tracking is off, also switch it on
+                    // (the fly still happens when the browser can't deliver a new fix).
+                    if (window.locationTrackingState() === 'OFF') window.enableLocationTracking();
+                    map.flyTo({
+                        center: [eta.userLng, eta.userLat],
+                        zoom: Math.max(map.getZoom(), 15),
+                        duration: 1200
+                    });
+                });
+                map.getContainer().appendChild(btn);
+
+                var ctrl = {
+                    update: function() {
+                        var eta = window.ETA;
+                        var show = !!(eta && eta.userLat !== null && eta.userLng !== null &&
+                            !map.getBounds().contains([eta.userLng, eta.userLat]));
+                        btn.classList.toggle('visible', show);
+                        btn.tabIndex = show ? 0 : -1;
+                    }
+                };
+                map.on('move', ctrl.update);
+                return ctrl;
+            })();
+            // A fresh GPS fix can move the user in or out of view without the map moving.
+            // (deferred so ETA has stored the new fix first)
+            geolocateCtrl.on('geolocate', function() { setTimeout(function() { recenterCtrl.update(); }, 0); });
 
             /* ── Auto-enable the locate control once permission is granted ──
                GeolocateControl only shows its active (blue) state after the
@@ -4743,6 +5011,57 @@ sim._lastEtaUpdate = null;
                 if (window.clearMapAlert) window.clearMapAlert('map-service');
                 if (typeof window.updatePujEmptyState === 'function') window.updatePujEmptyState();
             });
+
+            // ═══════════════ SERVICE CORRIDOR (static road) ═══════════════
+            // Markers may only sit on the fixed Minglanilla -> IT Park road. The
+            // geometry/tolerance come from App\Support\ServiceCorridor, the same
+            // source the server validates against.
+            window.CORRIDOR = @json(\App\Support\ServiceCorridor::geojson());
+            window.CORRIDOR_TOLERANCE_M = {{ \App\Support\ServiceCorridor::TOLERANCE_METERS }};
+            window.CORRIDOR_USER_TOLERANCE_M = {{ \App\Support\ServiceCorridor::USER_TOLERANCE_METERS }};
+
+            /* Show a map alert and clear it again after `ms` (one timer per key). */
+            window._flashTimers = {};
+            window.flashMapAlert = function(key, ms) {
+                window.showMapAlert(key);
+                clearTimeout(window._flashTimers[key]);
+                window._flashTimers[key] = setTimeout(function() {
+                    window.clearMapAlert(key);
+                }, ms || 6000);
+            };
+
+            /* Closest point on the corridor to (lng, lat): {lng, lat, distance(m)}. */
+            window.nearestOnCorridor = function(lng, lat) {
+                var mPerDegLat = 111195;
+                var mPerDegLng = mPerDegLat * Math.cos(lat * Math.PI / 180);
+                var best = {lng: lng, lat: lat, distance: Infinity};
+                window.CORRIDOR.features.forEach(function(f) {
+                    var line = f.geometry.coordinates;
+                    for (var i = 0; i < line.length - 1; i++) {
+                        var ax = (line[i][0] - lng) * mPerDegLng, ay = (line[i][1] - lat) * mPerDegLat;
+                        var bx = (line[i + 1][0] - lng) * mPerDegLng, by = (line[i + 1][1] - lat) * mPerDegLat;
+                        var dx = bx - ax, dy = by - ay, lenSq = dx * dx + dy * dy;
+                        var t = lenSq > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / lenSq)) : 0;
+                        var px = ax + t * dx, py = ay + t * dy;
+                        var d = Math.sqrt(px * px + py * py);
+                        if (d < best.distance) {
+                            best = {lng: lng + px / mPerDegLng, lat: lat + py / mPerDegLat, distance: d};
+                        }
+                    }
+                });
+                return best;
+            };
+
+            /* On-road position for the point, or null (and a short alert) when it is off the road. */
+            window.snapToCorridor = function(lng, lat) {
+                var n = window.nearestOnCorridor(lng, lat);
+                if (n.distance <= window.CORRIDOR_TOLERANCE_M) {
+                    window.clearMapAlert('off-corridor');
+                    return n;
+                }
+                window.flashMapAlert('off-corridor', 5000);
+                return null;
+            };
 
             // ═══════════════ MAP STATE ═══════════════
             let userLat = null;
@@ -4963,6 +5282,26 @@ sim._lastEtaUpdate = null;
                     }
                 });
 
+                // ── Static service corridor (the only place markers may go) ──
+                if (!map.getSource('service-corridor')) map.addSource('service-corridor', {
+                    type: 'geojson',
+                    data: window.CORRIDOR
+                });
+                if (!map.getLayer('service-corridor-glow')) map.addLayer({
+                    id: 'service-corridor-glow',
+                    type: 'line',
+                    source: 'service-corridor',
+                    layout: {'line-join': 'round', 'line-cap': 'round'},
+                    paint: {'line-color': '#10b981', 'line-width': 14, 'line-opacity': 0.18, 'line-blur': 6}
+                });
+                if (!map.getLayer('service-corridor-line')) map.addLayer({
+                    id: 'service-corridor-line',
+                    type: 'line',
+                    source: 'service-corridor',
+                    layout: {'line-join': 'round', 'line-cap': 'round'},
+                    paint: {'line-color': '#10b981', 'line-width': 4, 'line-opacity': 0.8, 'line-dasharray': [2, 1.5]}
+                });
+
                 if (!map.getSource('route')) map.addSource('route', {
                     type: 'geojson',
                     data: {
@@ -5062,6 +5401,9 @@ sim._lastEtaUpdate = null;
             map.on('style.load', function() {
                 window.previousMapStyleUrl = null;
                 window.initMapLayers();
+                // A style swap destroys the point sources: put the trip markers back.
+                if (userLat !== null) setPointSource('pickup-point', userLng, userLat);
+                if (vehicleLat !== null) setPointSource('destination-point', vehicleLng, vehicleLat);
                 if (window.updatePrivacyZones) window.updatePrivacyZones();
                 if (window.updatePujEmptyState) window.updatePujEmptyState();
                 // ETA badges + the Nearest-PUJ indicator depend on marker DOM,
@@ -5073,45 +5415,16 @@ sim._lastEtaUpdate = null;
             map.on('click', function(e) {
                 if (!selectionMode) return;
 
-                const lng = e.lngLat.lng;
-                const lat = e.lngLat.lat;
+                // Only the Minglanilla -> IT Park road is selectable; snap onto it.
+                const snapped = window.snapToCorridor(e.lngLat.lng, e.lngLat.lat);
+                if (!snapped) return;  // stay in selection mode so they can retry
+                const lng = snapped.lng;
+                const lat = snapped.lat;
 
-                if (selectionMode === 'pickup') {
-                    userLat = lat;
-                    userLng = lng;
-
-
-                    if (window.ETA) window.ETA._receivePosition(lat, lng, 20);
-
-                    if (map.getSource('pickup-point')) {
-                        map.getSource('pickup-point').setData({
-                            type: 'FeatureCollection',
-                            features: [{
-                                type: 'Feature',
-                                geometry: {
-                                    type: 'Point',
-                                    coordinates: [lng, lat]
-                                },
-                                properties: {}
-                            }]
-                        });
-                    }
-
-                    reverseGeocode(lng, lat).then(name => {
-                        document.getElementById('pickup').value = name;
-                    });
-
-                    selectionMode = null;
-                    map.getCanvas().style.cursor = '';
-                    const statusIndicator = document.getElementById('status-indicator');
-                    if (statusIndicator) statusIndicator.classList.add('hidden');
-
-                    calculateRoute();
-                    onMapLocationSelected();
-
-                } else if (selectionMode === 'destination') {
+                if (selectionMode === 'destination') {
                     vehicleLat = lat;
                     vehicleLng = lng;
+                    selectedStopIdx = null;
 
                     if (map.getSource('destination-point')) {
                         map.getSource('destination-point').setData({
@@ -5127,9 +5440,8 @@ sim._lastEtaUpdate = null;
                         });
                     }
 
-                    reverseGeocode(lng, lat).then(name => {
-                        document.getElementById('destination').value = name;
-                    });
+                    const stop = window.CORRIDOR_STOPS[nearestStopIdx(lat, lng)];
+                    document.getElementById('destination').value = 'Near ' + stop.name + ', ' + stop.area;
 
                     selectionMode = null;
                     map.getCanvas().style.cursor = '';
@@ -5140,25 +5452,6 @@ sim._lastEtaUpdate = null;
                     onMapLocationSelected();
                 }
             });
-
-            // ═══════════════ REVERSE GEOCODE ═══════════════
-            async function reverseGeocode(lon, lat) {
-                try {
-                    const res = await fetch('https://photon.komoot.io/reverse?lon=' + lon + '&lat=' + lat + '&lang=en');
-                    const data = await res.json();
-                    if (data.features && data.features.length > 0) {
-                        const f = data.features[0];
-                        const name = f.properties.name || '';
-                        const city = f.properties.city || '';
-                        const state = f.properties.state || '';
-                        const detail = [name, city, state].filter(Boolean).join(', ');
-                        return detail || lat.toFixed(5) + ', ' + lon.toFixed(5);
-                    }
-                } catch (e) {
-                    console.error('Reverse geocode error:', e);
-                }
-                return lat.toFixed(5) + ', ' + lon.toFixed(5);
-            }
 
             const fareRates = @json($rates->sortBy('km')->values());
 
@@ -5184,7 +5477,6 @@ sim._lastEtaUpdate = null;
                 // Guard against a stale/failed calculation
                 document.getElementById('distance').value = '';
                 document.getElementById('price-regular').value = '';
-                document.getElementById('price-discount').value = '';
 
                 try {
                     if (!navigator.onLine) {
@@ -5205,7 +5497,6 @@ sim._lastEtaUpdate = null;
                         // Direct lookup from database
                         const fare = getFareFromDB(distKm);
                         document.getElementById('price-regular').value = fare.regular;
-                        document.getElementById('price-discount').value = fare.discount;
 
                         // Draw route on map
                         if (map.getSource('route')) {
@@ -5248,8 +5539,7 @@ sim._lastEtaUpdate = null;
             function getFareFromDB(distKm) {
                 if (fareRates.length === 0) {
                     return {
-                        regular: 0,
-                        discount: 0
+                        regular: 0
                     };
                 }
 
@@ -5259,15 +5549,13 @@ sim._lastEtaUpdate = null;
                 if (applicable.length > 0) {
                     const rate = applicable[applicable.length - 1];
                     return {
-                        regular: Math.ceil(rate.regular),
-                        discount: Math.ceil(rate.discount)
+                        regular: Math.ceil(rate.regular)
                     };
                 }
 
                 // If distance is less than first tier, use first tier
                 return {
-                    regular: Math.ceil(fareRates[0].regular),
-                    discount: Math.ceil(fareRates[0].discount)
+                    regular: Math.ceil(fareRates[0].regular)
                 };
             }
 
@@ -5278,12 +5566,13 @@ sim._lastEtaUpdate = null;
                 vehicleLat = null;
                 vehicleLng = null;
                 selectionMode = null;
+                selectedStopIdx = null;
+                pickupFromGps = false;
 
                 document.getElementById('pickup').value = '';
                 document.getElementById('destination').value = '';
                 document.getElementById('distance').value = '0';
                 document.getElementById('price-regular').value = '0';
-                document.getElementById('price-discount').value = '0';
 
                 if (map.getSource('route')) {
                     map.getSource('route').setData({
@@ -5307,213 +5596,192 @@ sim._lastEtaUpdate = null;
                 map.getCanvas().style.cursor = '';
                 const statusIndicator = document.getElementById('status-indicator');
                 if (statusIndicator) statusIndicator.classList.add('hidden');
+
+                // The starting point is always the commuter's own location.
+                applyPickupFromGps(false);
             };
 
-            // ═══════════════ PLACE SEARCH ═══════════════
-            async function searchPlaces(query) {
-                if (query.length < 2) return [];
-                try {
-                    const res = await fetch(
-                        'https://photon.komoot.io/api/?q=' + encodeURIComponent(query) +
-                        '&bbox=123.775,10.229,123.918,10.333&limit=6&lang=en'
-                    );
-                    const data = await res.json();
-                    return data.features.map(f => ({
-                        name: f.properties.name || '',
-                        city: f.properties.city || '',
-                        state: f.properties.state || '',
-                        country: f.properties.country || '',
-                        lon: f.geometry.coordinates[0],
-                        lat: f.geometry.coordinates[1]
-                    }));
-                } catch (e) {
-                    console.error('Search error:', e);
-                    return [];
-                }
+            // ═══════════════ START POINT + DESTINATION STOPS ═══════════════
+            // The starting point is the commuter's own location, and it only counts
+            // when they are on or near the Minglanilla -> IT Park road. The
+            // destination is then picked from the fixed stops (or by tapping the road).
+            window.CORRIDOR_STOPS = @json(\App\Support\ServiceCorridor::stops());
+            let selectedStopIdx = null;
+            let userGps = null;          // last raw GPS fix {lat, lng}
+            let userNearRoute = false;   // fix is within CORRIDOR_USER_TOLERANCE_M of the road
+            let pickupFromGps = false;   // the current pickup came from the GPS fix
+
+            function metersBetween(lat1, lng1, lat2, lng2) {
+                const mLat = 111195, mLng = 111195 * Math.cos(lat1 * Math.PI / 180);
+                return Math.hypot((lng2 - lng1) * mLng, (lat2 - lat1) * mLat);
             }
 
-            function renderResults(results, dropdownId, inputId, field) {
-                const dropdown = document.getElementById(dropdownId);
-                if (!dropdown) return;
+            function nearestStopIdx(lat, lng) {
+                let best = 0, bestD = Infinity;
+                window.CORRIDOR_STOPS.forEach((s, i) => {
+                    const d = metersBetween(lat, lng, s.lat, s.lng);
+                    if (d < bestD) { bestD = d; best = i; }
+                });
+                return best;
+            }
 
-                if (results.length === 0) {
-                    // E2 (UCN_SC_E004) - location/place not found
-                    if (window.showMapAlert) window.showMapAlert('location-not-found');
-                    setTimeout(function() {
-                        if (window.clearMapAlert) window.clearMapAlert('location-not-found');
-                    }, 6000);
-                    dropdown.innerHTML = '<div class="search-no-results">No results found</div>';
-                    dropdown.classList.add('active');
+            function setPointSource(name, lng, lat) {
+                const src = map.getSource(name);
+                if (!src) return;
+                src.setData({
+                    type: 'FeatureCollection',
+                    features: lat === null ? [] : [{
+                        type: 'Feature',
+                        geometry: {type: 'Point', coordinates: [lng, lat]},
+                        properties: {}
+                    }]
+                });
+            }
+
+            /* Called with every GPS fix (see ETA._receivePosition). */
+            window.onUserLocationFix = function(lat, lng) {
+                userGps = {lat: lat, lng: lng};
+                const near = window.nearestOnCorridor(lng, lat);
+                userNearRoute = near.distance <= window.CORRIDOR_USER_TOLERANCE_M;
+
+                window.clearMapAlert('user-no-fix');
+                if (userNearRoute) window.clearMapAlert('user-off-route');
+                // Set the start once; later fixes don't silently re-price a route.
+                if (!pickupFromGps) applyPickupFromGps(false);
+            };
+
+            /* Use the last GPS fix as the pickup, snapped onto the road. */
+            function applyPickupFromGps(recalc) {
+                const input = document.getElementById('pickup');
+                if (!input || !map) return;
+
+                if (!userGps) {
+                    input.value = '';
+                    input.placeholder = 'Locating you…';
+                    return;
+                }
+                if (!userNearRoute) {
+                    pickupFromGps = false;
+                    userLat = null;
+                    userLng = null;
+                    input.value = '';
+                    input.placeholder = 'Not near the route';
+                    setPointSource('pickup-point', 0, null);
                     return;
                 }
 
-                dropdown.innerHTML = results.map((r, i) => {
-                    const detail = [r.city, r.state, r.country].filter(Boolean).join(', ');
-                    return '<div class="search-item" data-index="' + i + '" data-field="' + field + '">' +
-                        '<div class="result-name">' + r.name + '</div>' +
-                        (detail ? '<div class="result-detail">' + detail + '</div>' : '') +
-                        '</div>';
-                }).join('');
-
-                dropdown.querySelectorAll('.search-item').forEach(item => {
-                    item.addEventListener('mousedown', function(e) {
-                        e.preventDefault();
-                        const idx = parseInt(this.dataset.index);
-                        const r = results[idx];
-                        const display = r.name + ([r.city, r.state, r.country].filter(Boolean).join(', ') ?
-                            ' — ' + [r.city, r.state, r.country].filter(Boolean).join(', ') : '');
-
-                        document.getElementById(inputId).value = display;
-
-                        if (field === 'pickup') {
-                            userLat = r.lat;
-                            userLng = r.lon;
-                            if (map.getSource('pickup-point')) {
-                                map.getSource('pickup-point').setData({
-                                    type: 'FeatureCollection',
-                                    features: [{
-                                        type: 'Feature',
-                                        geometry: {
-                                            type: 'Point',
-                                            coordinates: [r.lon, r.lat]
-                                        },
-                                        properties: {}
-                                    }]
-                                });
-                            }
-                        } else {
-                            vehicleLat = r.lat;
-                            vehicleLng = r.lon;
-                            if (map.getSource('destination-point')) {
-                                map.getSource('destination-point').setData({
-                                    type: 'FeatureCollection',
-                                    features: [{
-                                        type: 'Feature',
-                                        geometry: {
-                                            type: 'Point',
-                                            coordinates: [r.lon, r.lat]
-                                        },
-                                        properties: {}
-                                    }]
-                                });
-                            }
-                        }
-
-                        dropdown.classList.remove('active');
-                        calculateRoute();
-                    });
-                });
-
-                dropdown.classList.add('active');
+                const on = window.nearestOnCorridor(userGps.lng, userGps.lat);
+                const stop = window.CORRIDOR_STOPS[nearestStopIdx(on.lat, on.lng)];
+                userLat = on.lat;
+                userLng = on.lng;
+                pickupFromGps = true;
+                input.value = 'My location · near ' + stop.name;
+                setPointSource('pickup-point', on.lng, on.lat);
+                if (recalc) calculateRoute();
             }
 
-            let pickupTimer = null;
-            let destinationTimer = null;
+            /* The pickup button: re-read the GPS position (asking again if needed). */
+            window.useMyLocation = function() {
+                const done = function() {
+                    if (!userNearRoute) window.flashMapAlert('user-off-route', 8000);
+                    applyPickupFromGps(vehicleLat !== null);
+                };
+                if (!navigator.geolocation) {
+                    window.flashMapAlert('user-no-fix');
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    window.onUserLocationFix(pos.coords.latitude, pos.coords.longitude);
+                    pickupFromGps = false;
+                    done();
+                }, function() {
+                    window.flashMapAlert('user-no-fix');
+                }, {enableHighAccuracy: true, maximumAge: 10000, timeout: 10000});
+            };
+
+            /* Gate for setting a destination: the commuter has to be on/near the route. */
+            window.canSetDestination = function() {
+                if (!userGps) {
+                    window.flashMapAlert('user-no-fix');
+                    return false;
+                }
+                if (!userNearRoute) {
+                    window.flashMapAlert('user-off-route', 8000);
+                    return false;
+                }
+                if (!pickupFromGps) applyPickupFromGps(false);
+                return true;
+            };
+
+            function renderStops() {
+                const dropdown = document.getElementById('destination-dropdown');
+                if (!dropdown) return;
+
+                dropdown.innerHTML = window.CORRIDOR_STOPS.map((s, i) => {
+                    // The stop you're standing at can't also be where you're going.
+                    const here = userLat !== null && metersBetween(userLat, userLng, s.lat, s.lng) < 150;
+                    return '<button type="button" class="search-item" role="option" data-index="' + i + '"' +
+                        (here ? ' disabled title="This is where you are"' : '') + '>' +
+                        '<div class="result-name">' + s.name + '</div>' +
+                        '<div class="result-detail">' + s.area + '</div></button>';
+                }).join('');
+
+                dropdown.querySelectorAll('.search-item:not(:disabled)').forEach(item => {
+                    item.addEventListener('click', function() {
+                        chooseDestination(parseInt(this.dataset.index));
+                        dropdown.classList.remove('active');
+                    });
+                });
+            }
+
+            function chooseDestination(idx) {
+                const stop = window.CORRIDOR_STOPS[idx];
+                selectedStopIdx = idx;
+                vehicleLat = stop.lat;
+                vehicleLng = stop.lng;
+                document.getElementById('destination').value = stop.name + ', ' + stop.area;
+                setPointSource('destination-point', stop.lng, stop.lat);
+                calculateRoute();
+            }
+
+            function toggleStopList() {
+                const dropdown = document.getElementById('destination-dropdown');
+                if (!dropdown) return;
+                if (dropdown.classList.contains('active')) {
+                    dropdown.classList.remove('active');
+                    return;
+                }
+                if (!window.canSetDestination()) return;
+                renderStops();
+                dropdown.classList.add('active');
+            }
 
             // The fare-calculator inputs only exist for guests/commuters. Never let a
             // missing element throw here — that would abort the whole module (Echo
             // subscriptions, GPS broadcasting, live vehicle markers) for other roles.
-            const pickupInput = document.getElementById('pickup');
             const destinationInput = document.getElementById('destination');
-
-            pickupInput?.addEventListener('input', function() {
-                clearTimeout(pickupTimer);
-                const val = this.value.trim();
-                const dropdown = document.getElementById('pickup-dropdown');
-
-                if (val.length < 2) {
-                    dropdown.classList.remove('active');
-                    dropdown.innerHTML = '';
-                    return;
+            destinationInput?.addEventListener('click', toggleStopList);
+            destinationInput?.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const dd = document.getElementById('destination-dropdown');
+                    if (!dd.classList.contains('active')) toggleStopList();
+                } else if (e.key === 'Escape') {
+                    document.getElementById('destination-dropdown')?.classList.remove('active');
                 }
-
-                dropdown.innerHTML =
-                    '<div class="search-loading"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Searching...</div>';
-                dropdown.classList.add('active');
-
-                pickupTimer = setTimeout(async () => {
-                    const results = await searchPlaces(val);
-                    renderResults(results, 'pickup-dropdown', 'pickup', 'pickup');
-                }, 300);
             });
 
-            destinationInput?.addEventListener('input', function() {
-                clearTimeout(destinationTimer);
-                const val = this.value.trim();
-                const dropdown = document.getElementById('destination-dropdown');
-
-                if (val.length < 2) {
-                    dropdown.classList.remove('active');
-                    dropdown.innerHTML = '';
-                    return;
-                }
-
-                dropdown.innerHTML =
-                    '<div class="search-loading"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Searching...</div>';
-                dropdown.classList.add('active');
-
-                destinationTimer = setTimeout(async () => {
-                    const results = await searchPlaces(val);
-                    renderResults(results, 'destination-dropdown', 'destination', 'destination');
-                }, 300);
-            });
+            // The first GPS fix usually lands before the map exists: pick it up now.
+            if (window.ETA && window.ETA.userLat !== null && window.ETA.userLat !== undefined) {
+                window.onUserLocationFix(window.ETA.userLat, window.ETA.userLng);
+            }
 
             document.addEventListener('click', function(e) {
-                if (!e.target.closest('#pickup') && !e.target.closest('#pickup-dropdown')) {
-                    const dd = document.getElementById('pickup-dropdown');
-                    if (dd) dd.classList.remove('active');
-                }
                 if (!e.target.closest('#destination') && !e.target.closest('#destination-dropdown')) {
                     const dd = document.getElementById('destination-dropdown');
                     if (dd) dd.classList.remove('active');
                 }
             });
-
-            function setupKeyboardNav(inputId, dropdownId) {
-                const input = document.getElementById(inputId);
-                const dropdown = document.getElementById(dropdownId);
-                if (!input || !dropdown) return;
-                let highlighted = -1;
-
-                input.addEventListener('keydown', function(e) {
-                    const items = dropdown.querySelectorAll('.search-item');
-                    if (!items.length || !dropdown.classList.contains('active')) return;
-
-                    if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        highlighted = Math.min(highlighted + 1, items.length - 1);
-                        items.forEach((it, i) => it.classList.toggle('highlighted', i === highlighted));
-                        items[highlighted].scrollIntoView({
-                            block: 'nearest'
-                        });
-                    } else if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        highlighted = Math.max(highlighted - 1, 0);
-                        items.forEach((it, i) => it.classList.toggle('highlighted', i === highlighted));
-                        items[highlighted].scrollIntoView({
-                            block: 'nearest'
-                        });
-                    } else if (e.key === 'Enter' && highlighted >= 0) {
-                        e.preventDefault();
-                        items[highlighted].dispatchEvent(new MouseEvent('mousedown'));
-                        highlighted = -1;
-                    } else if (e.key === 'Escape') {
-                        dropdown.classList.remove('active');
-                        highlighted = -1;
-                    }
-                });
-
-                const observer = new MutationObserver(() => {
-                    if (!dropdown.classList.contains('active')) highlighted = -1;
-                });
-                observer.observe(dropdown, {
-                    attributes: true,
-                    attributeFilter: ['class']
-                });
-            }
-
-            setupKeyboardNav('pickup', 'pickup-dropdown');
-            setupKeyboardNav('destination', 'destination-dropdown');
 
             // ═══════════════ LIVE VEHICLE MARKERS ═══════════════
             // One renderer for BOTH sources (Echo event + REST poll) so a vehicle can
@@ -6153,11 +6421,15 @@ window.dummyMapPopups[d.id] = { popup: popup, data: d };
 
         <!-- Map Status Banner: E1 no PUJ / E2 location denied / E3 map service down / E4 offline -->
         <div id="map-alert" class="hidden" data-type="info" role="status" aria-live="polite">
-            <i class="fa-solid fa-circle-info ma-icon"></i>
-            <div>
-                <p class="ma-title" id="map-alert-title">Notice</p>
-                <p class="ma-msg" id="map-alert-msg"></p>
-            </div>
+            <button type="button" class="ma-toggle" aria-expanded="false" aria-controls="map-alert-msg"
+                onclick="var a = document.getElementById('map-alert'); this.setAttribute('aria-expanded', a.classList.toggle('expanded'));">
+                <i class="fa-solid fa-circle-info ma-icon"></i>
+                <div>
+                    <p class="ma-title" id="map-alert-title">Notice</p>
+                    <p class="ma-msg" id="map-alert-msg"></p>
+                </div>
+                <i class="fa-solid fa-chevron-down ma-chevron" aria-hidden="true"></i>
+            </button>
         </div>
 
         <!-- Nearest Vehicle ETA Indicator -->

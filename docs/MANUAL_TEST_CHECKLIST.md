@@ -65,7 +65,6 @@ Log in as `commuter@gmail.com` unless noted.
 
 **Map and fare**
 - [x] Map loads, and a pickup and destination give a distance and a fare.
-- [x] The discounted fare is lower than the regular fare.
 - [x] "Buy a Ride" without both a pickup and a destination shows "Pick-up point and destination is required."
 - [x] Recent receipts (last 3) show on the map side panel.
 - [x] Active drivers appear on the map. The seeded pings last only 5 minutes, so re-run the seeder or broadcast from a driver (§3).

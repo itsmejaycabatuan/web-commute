@@ -160,7 +160,6 @@ class ImportantDataSeeder extends Seeder
                     'fare_id' => $fare->id,
                     'km' => $output[$i]['km'],
                     'regular' => $output[$i]['regular'],
-                    'discount' => $output[$i]['discount'],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
@@ -171,7 +170,6 @@ class ImportantDataSeeder extends Seeder
                     'fare_id' => $fare->id,
                     'km' => $output[$i]['km'],
                     'regular' => $output[$i]['regular'],
-                    'discount' => $output[$i]['discount'],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];

@@ -34,8 +34,8 @@ class QrRideVerificationTest extends TestCase
         $this->withoutMiddleware(VerifyCsrfToken::class);
 
         $fare = Fare::factory()->create();
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 1, 'regular' => 15, 'discount' => 12]);
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25, 'discount' => 13.75]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 1, 'regular' => 15]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25]);
     }
 
     protected function user(string $role): User

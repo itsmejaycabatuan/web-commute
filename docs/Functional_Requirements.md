@@ -95,8 +95,8 @@ Satisfied when:
 **The system shall let a user choose a pick-up and a destination and shall show the route, the distance and the fare.**
 
 Satisfied when:
-- points are set by tapping the map or searching a place (from 2 characters, up to 6 matches, inside the service area); an address that cannot be resolved falls back to its coordinates;
-- the recommended driving route and its distance in kilometres are drawn, and the regular and discounted fare are shown from the active fare table (highest distance tier not above the distance, rounded up to whole pesos);
+- the pick-up is the user's own location and the destination is chosen from the fixed stops (or by tapping the road); both lie on the fixed Minglanilla to Cebu IT Park road, and a destination can only be set while the user is on or within 150 m of that road;
+- the recommended driving route and its distance in kilometres are drawn, and the fare is shown from the active fare table (highest distance tier not above the distance, rounded up to whole pesos);
 - a reset action clears the points, route and fare; a routing failure clears distance and fare with an explanation; with no fare rates the distance still shows and the fare reads 0;
 - *Buy a Ride* takes a Commuter to payment and a Guest to registration, and is rejected while either point is missing.
 
@@ -285,7 +285,7 @@ Satisfied when:
 
 Satisfied when:
 - an uploaded fare guide (PDF) is parsed into distance tiers and stored as a new fare set;
-- regular and discount rates can be edited in bulk; the whole save is refused if it is empty or any rate is zero or negative;
+- regular rates can be edited in bulk; the whole save is refused if it is empty or any rate is zero or negative;
 - fare pricing and the map's rate display always use the most recent fare set;
 - an import and each bulk edit (per-tier old → new) are recorded in the audit trail.
 
@@ -431,7 +431,6 @@ one (it then becomes part of the matching `FR-Exxx`), defer it or drop it.
 |---|---|---|---|
 | GAP-01 | Paying a fare shall issue a boarding permission (ticket / one-time ride token) that a driver or vehicle can verify. | A fare is now attributed to a vehicle and driver and unpaid scans are flagged, but a driver still has no screen that shows who has paid. | FR-E006 |
 | GAP-02 | The system shall price the trip's **distance** on the server instead of trusting the browser's routing call. | The fare can no longer be tampered with but the distance still can. | FR-E006 |
-| GAP-03 | Discounted fares (Student / Elderly / PWD) shall be applied only after the rider's eligibility is verified. | The calculator shows a discount but only the regular fare is charged. | FR-E006 |
 | GAP-04 | A Commuter shall be able to request a refund or dispute a fare; an Admin shall be able to settle it (and a wallet balance could be refunded on account deletion). | Paid payments are immutable and there is no recourse; deletion is refused while the wallet holds money. | FR-E006, FR-E026 |
 | GAP-05 | A top-up shall go through the payment gateway (with a pending → settled state) rather than crediting the wallet on form submit. | No gateway, transaction id or signature check on top-ups. | FR-E005 |
 | GAP-06 | An Admin shall be able to record a cash / admin-settlement top-up. | The commuter option was removed and no admin UI replaced it. | FR-E005 |

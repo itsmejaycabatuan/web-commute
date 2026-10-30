@@ -65,12 +65,12 @@ class FareControllerTest extends TestCase
     public function test_fare_bulk_update_rejects_a_zero_rate()
     {
         $admin = User::factory()->create()->assignRole('admin');
-        $rate = FareRate::factory()->create(['regular' => 20, 'discount' => 16]);
+        $rate = FareRate::factory()->create(['regular' => 20]);
 
         $response = $this->actingAs($admin)
             ->withoutMiddleware(VerifyCsrfToken::class)
             ->put(route('fares.bulk-update'), [
-                'rates' => [$rate->id => ['id' => $rate->id, 'regular' => 0, 'discount' => 16]],
+                'rates' => [$rate->id => ['id' => $rate->id, 'regular' => 0]],
             ]);
 
         $response->assertSessionHasErrors('rates.*.regular');
@@ -80,17 +80,16 @@ class FareControllerTest extends TestCase
     public function test_admin_can_bulk_update_fare_rates()
     {
         $admin = User::factory()->create()->assignRole('admin');
-        $rate = FareRate::factory()->create(['regular' => 20, 'discount' => 16]);
+        $rate = FareRate::factory()->create(['regular' => 20]);
 
         $this->actingAs($admin)
             ->withoutMiddleware(VerifyCsrfToken::class)
             ->put(route('fares.bulk-update'), [
-                'rates' => [$rate->id => ['id' => $rate->id, 'regular' => 25.5, 'discount' => 20.4]],
+                'rates' => [$rate->id => ['id' => $rate->id, 'regular' => 25.5]],
             ])
             ->assertSessionHas('success');
 
         $this->assertEquals(25.5, (float) $rate->fresh()->regular);
-        $this->assertEquals(20.4, (float) $rate->fresh()->discount);
     }
 
     public function test_fare_bulk_update_with_valid_data()
@@ -115,5 +114,18 @@ class FareControllerTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('fares.index'));
         $response->assertStatus(403);
+    }
+
+    public function test_fare_rates_no_longer_carry_a_discounted_price()
+    {
+        $this->assertFalse(\Illuminate\Support\Facades\Schema::hasColumn('fare_rates', 'discount'));
+
+        $admin = User::factory()->create()->assignRole('admin');
+        FareRate::factory()->create(['regular' => 20]);
+
+        $this->actingAs($admin)
+            ->get(route('fares.index'))
+            ->assertOk()
+            ->assertDontSee('Discounted');
     }
 }

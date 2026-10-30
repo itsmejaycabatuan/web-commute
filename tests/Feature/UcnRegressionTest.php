@@ -32,8 +32,8 @@ class UcnRegressionTest extends TestCase
         // Deterministic rate table so fare re-pricing is predictable:
         // 5.2 km falls in the 5 km tier => ceil(17.25) = PHP 18.
         $fare = Fare::factory()->create();
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 1, 'regular' => 15, 'discount' => 12]);
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25, 'discount' => 13.75]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 1, 'regular' => 15]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25]);
     }
 
     protected function commuter(float $balance = 500): User

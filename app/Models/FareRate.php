@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $fare_id
  * @property int $km
  * @property float $regular
- * @property float $discount
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\Fare $fare
@@ -20,7 +19,6 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|FareRate newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|FareRate query()
  * @method static \Illuminate\Database\Eloquent\Builder|FareRate whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|FareRate whereDiscount($value)
  * @method static \Illuminate\Database\Eloquent\Builder|FareRate whereFareId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|FareRate whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|FareRate whereKm($value)
@@ -36,7 +34,6 @@ class FareRate extends Model
         'fare_id',
         'km',
         'regular',
-        'discount'
     ];
 
     public function fare() {

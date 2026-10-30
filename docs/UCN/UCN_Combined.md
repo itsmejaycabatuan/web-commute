@@ -399,7 +399,7 @@ Guest's device is offline. System cannot fetch the map or PUJ coordinates. Syste
 | **Goal**              | Allow Guest to see the distance and fare prices for their commute.                                                                                                                |
 | **Trigger**           | Guest opens the sidebar on the map.                                                                                                                                               |
 | **Preconditions**     | 1. System routing engine is operational.<br>2. User has an active internet connection.<br>3. Both a start point and a destination have been selected (by map click or by search). |
-| **Supporting Actors** | External Geocoding Service (Photon), External Routing Service (OSRM), Fare rate table (`FareRate`)                                                                                |
+| **Supporting Actors** | External Routing Service (OSRM), the browser's geolocation, Fare rate table (`FareRate`)                                                                                |
 
 ---
 
@@ -407,10 +407,10 @@ Guest's device is offline. System cannot fetch the map or PUJ coordinates. Syste
 
 | #   | Actor's Action                                         | System Response                                                                                                                                                                                                     |
 | --- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | User opens the sidebar on the map page.                | System displays a fare calculator with input fields for origin and destination, plus distance and fare output fields.                                                                                               |
-| 2   | User selects Origin and destination (via map or text). | System places **Point A** and **Point B** markers on the map. Text entries are resolved by the geocoding service (Photon), restricted to the service-area bounding box; a tap on the map places the point directly. |
+| 1   | User opens the sidebar on the map page.                | System displays a fare calculator with a starting point (the user's own location), a destination button, and distance and fare output fields. The road the service covers (Minglanilla to Cebu IT Park) is drawn as a fixed green line.                                                                                               |
+| 2   | User presses **Set destination** and picks a stop from the list (or taps the highlighted road). | System uses the user's GPS position as **Point A**, snapped onto the road, and only lets a destination be set when that position is on or within 150 m of the road (a side road counts). The destination is a fixed stop or a tapped point snapped to the road (within 60 m); it is **Point B**. |
 | 3   |                                                        | System requests a driving route from the routing service (OSRM) and draws the recommended route path on the map, then fits the map bounds to it.                                                                    |
-| 4   |                                                        | System displays the total **distance (km)** and the **fare costs** (regular and discounted), looked up from the active fare-rate table by distance tier.                                                            |
+| 4   |                                                        | System displays the total **distance (km)** and the **fare cost**, looked up from the active fare-rate table by distance tier.                                                            |
 
 **Fare calculation detail**
 - Fare is looked up by finding the **highest distance tier ≤ the calculated distance** (`getFareFromDB()`); values are rounded up to whole pesos.
@@ -420,14 +420,12 @@ Guest's device is offline. System cannot fetch the map or PUJ coordinates. Syste
 
 ### Alternate Flow
 
-**A1 – Guest selects points by tapping the map**
-1. Guest taps **"Set pick-up"** then clicks a point on the map (or vice versa for the destination).
-2. System places the marker and reverse-geocodes the point to a readable address.
+**A1 – Guest taps the road for the destination**
+1. Guest presses the destination pin button, then taps a point on the highlighted road.
+2. System snaps the point onto the road, labels it *"Near <stop>"*, places the marker and calculates the trip.
 
-**A2 – Guest searches for a place by name**
-1. Guest types at least 2 characters into the origin or destination field.
-2. System queries the geocoding service and lists up to 6 matches inside the service area.
-3. Guest selects a result; System places the marker and calculates the trip.
+**A2 – Guest refreshes the starting point**
+1. Guest presses the start-point button; System re-reads the GPS position and sets it as the starting point again (subject to the 150 m route check).
 
 **A3 – Guest changes their mind**
 1. Guest presses **"Reset Route"**.
@@ -456,9 +454,10 @@ Guest's device is offline. System cannot fetch the map or PUJ coordinates. Syste
 **E1 – Fare Prices Unavailable**
 No fare rates exist for the current fare period. The System still displays the calculated distance, but the fare price is shown as **0**.
 
-**E2 – Location / Place Not Found**
-- *No search match:* the System shows **"No results found"** in the dropdown and a banner: *"Location not found — That place could not be found. Try a different name, or tap a point directly on the map."* The banner clears after ~6 seconds.
-- *Reverse-geocode failure:* the System falls back to displaying the raw coordinates (`lat, lon`) and **still places the marker**.
+**E2 – Location Unavailable or Off the Route**
+- *No GPS fix:* the System shows the banner *"Waiting for your location — Allow location access so your position can be used as the starting point, then try again."* and the destination cannot be set.
+- *Away from the route:* the user's position is more than 150 m from the Minglanilla to IT Park road. The System shows *"You're away from the route — Move onto or near the Minglanilla to IT Park road to set a destination."* and the destination cannot be set. The banners clear automatically.
+- *Tap off the road:* a destination tap more than 60 m from the road is rejected with *"Pick a point on the road"*; the System stays in selection mode.
 
 **E3 – Routing API Timeout or Failure**
 The external routing service fails to respond, returns a non-`Ok` code, or returns a non-2xx status. The System clears the distance/fare fields and displays a banner: *"Route unavailable — The routing service failed to respond, so the distance and fare could not be calculated. Please try again."* The banner clears automatically on the next successful calculation.
@@ -485,11 +484,11 @@ Guest has used all 3 daily fare calculations. The System displays the limit moda
 
 | Element | Location |
 |---|---|
-| Fare calculator UI | `resources/views/map.blade.php` (left sidebar, `#distance`, `#price-regular`, `#price-discount`) |
+| Fare calculator UI | `resources/views/map.blade.php` (left sidebar, `#distance`, `#price-regular`) |
 | Route calculation | `resources/views/map.blade.php::calculateRoute()` → OSRM `router.project-osrm.org` |
 | Fare lookup | `resources/views/map.blade.php::getFareFromDB()` + `@json($rates)` |
-| Place search | `resources/views/map.blade.php::searchPlaces()` → Photon `photon.komoot.io` |
-| Reverse geocoding | `resources/views/map.blade.php` (reverse geocode call) |
+| Destination stops + start-point check | `resources/views/map.blade.php` (stop picker, `onUserLocationFix`), `App\Support\ServiceCorridor` |
+| Static road | `resources/geo/minglanilla-itpark-corridor.geojson` |
 | Route layers | `resources/views/map.blade.php` → `route`, `route-line`, `route-line-glow` |
 | Point markers | `resources/views/map.blade.php` → `pickup-point`, `destination-point` sources |
 | Guest daily limit | `resources/views/map.blade.php` → `DAILY_LIMIT`, `toggleLimitModal()` |
@@ -758,7 +757,6 @@ The scan was not matched to a vehicle (no PUJ near the commuter, or location ref
 - **`statement_descriptor` is not honoured** on a checkout session (only on a standalone payment intent); PayMongo falls back to the merchant's registered descriptor.
 - **No boarding permission a driver can check.** Paying attributes the fare to a vehicle and driver (A6) and a scan that is never followed by a fare is counted (`php artisan fares:flag-evasion`, daily 09:30: 3 unpaid scans in 7 days flags the commuter to the Admins, once per window), but a driver still has no screen that shows who has paid. The attribution depends on the driver's phone broadcasting and on the commuter allowing location.
 - **The fare is re-priced server-side, but the *distance* is still client-supplied** (it comes from the browser's OSRM call). The amount can no longer be tampered with, but the distance can. Closing it means routing the trip server-side.
-- **Discount fares are not verified.** The calculator displays a discounted figure for Student/Elderly/PWD, but only the **regular** fare is priced and charged server-side; no ID is checked.
 - **No refunds, cancellations, or fare disputes** from the commuter side. Once `paid`, a payment is immutable.
 - **No webhook event-deduplication store.** Settlement is idempotent (`pending → paid` only happens once), but replayed events are not recorded.
 - **No dead-letter/queue handling** — webhook processing is synchronous, so a slow PayMongo call blocks the request.
@@ -2287,7 +2285,7 @@ The Admin deletes or suspends their own account. System refuses with *"You canno
 | --- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | 1   | Admin opens up the dashboard on the map.                           | System displays the dashboard with the admin analytics.                                                |
 | 2   | Admin clicks the **"Fare Rates"** item on the sidebar.             | System redirects to the Fare Rates page (`fares.index`), showing the tier count and the min/max fare summary strip. |
-| 3   |                                                                            | System displays the rate table with columns **Distance (km)**, **Regular** and **Discount**, the **"Edit Rates"** button and the PDF upload form. |
+| 3   |                                                                            | System displays the rate table with columns **Distance (km)** and **Regular**, the **"Edit Rates"** button and the PDF upload form. |
 
 > Steps 4+ are the alternate flows (A1–A2); the main flow is "open the table and read it".
 
@@ -2299,11 +2297,11 @@ The Admin deletes or suspends their own account. System refuses with *"You canno
 1. On the page, the Admin selects a file with **"Select File"** — an official **LFTFRB fare guide (PDF)** — then presses **"Upload"**.
 2. System validates the upload: `fare` **required, file, mimes:pdf**.
 3. System stores the file and runs the extraction script (`resources/scripts/extractPdf.py`) inside the project virtualenv, then parses the returned JSON.
-4. Inside a transaction, System creates the **Fare** record and inserts the parsed tiers (`fare_rates`: km, regular, discount) for the 1–25 km and 27–51 km bands, then confirms *"File uploaded successfully!"*
+4. Inside a transaction, System creates the **Fare** record and inserts the parsed tiers (`fare_rates`: km, regular) for the 1–25 km and 27–51 km bands, then confirms *"File uploaded successfully!"*
 
 **A2 – Edit One or More Fare Rates**
 1. On the page, the Admin clicks **"Edit Rates"**.
-2. System switches the Regular and Discount cells into editable number inputs and reveals the *"Editing Mode"* save bar.
+2. System switches the Regular cells into editable number inputs and reveals the *"Editing Mode"* save bar.
 3. Admin edits one or multiple fare rates and clicks **"Save Changes"**.
 4. System validates the whole payload (E2, E4) and, in one transaction, updates each `fare_rates` row, then confirms *"Rates updated successfully"*.
 
@@ -2330,7 +2328,7 @@ The save was submitted with no rate rows at all (nothing to persist). System rej
 The insert/update fails at the database level. System cancels the operation and notifies the Admin.
 
 **E4 – Rate Cannot be Zero or Negative**
-A submitted Regular or Discount value is `0` or below. System rejects the submission with *"A fare rate must be greater than zero."* / *"A discount rate must be greater than zero."*, leaving every previous value untouched.
+A submitted Regular value is `0` or below. System rejects the submission with *"A fare rate must be greater than zero."*, leaving every previous value untouched.
 
 **E5 – Document File Is Required**
 No file was selected, or the selected file is not a PDF. System rejects the upload with the corresponding validation message and stores nothing.
@@ -3321,7 +3319,7 @@ Any other role (or a guest) is refused (403 / redirect to login).
 | --- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Admin clicks **"Activity Log"** on the sidebar.  | System verifies the `admin` role and lists the entries **newest first, 10 per page**, with the number of entries, how many were written today and — when there are any — how many **failed sign-ins** happened in the last 24 hours (a link to those entries). |
 | 2   |                                                  | Each row shows **When** (Philippine time), **Who** (the signed-in user's email and role, or *Not signed in / system*), **What happened** (a category badge, an event badge and a readable description), **Record** (e.g. *Vehicle #12*) and the **IP address**. |
-| 3   | Admin clicks a row.                              | System expands it: **What changed** — a *Field / Before / After* table of the business fields that changed (a fare-rate edit shows a *Distance / Regular / Discount* table instead) plus any extra facts (e.g. the suspension reason) — and **Where it came from**: entry number, exact time, IP address, device (e.g. *Chrome on Windows*) and the browser string. |
+| 3   | Admin clicks a row.                              | System expands it: **What changed** — a *Field / Before / After* table of the business fields that changed (a fare-rate edit shows a *Distance / Regular* table instead) plus any extra facts (e.g. the suspension reason) — and **Where it came from**: entry number, exact time, IP address, device (e.g. *Chrome on Windows*) and the browser string. |
 
 ---
 

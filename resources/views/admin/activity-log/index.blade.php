@@ -242,16 +242,14 @@
                                                     <thead>
                                                         <tr class="text-[8px] uppercase tracking-wider text-gray-400 dark:text-[#444]">
                                                             <th class="py-1 pr-3 font-bold">Distance</th>
-                                                            <th class="py-1 pr-3 font-bold">Regular fare</th>
-                                                            <th class="py-1 font-bold">Discount fare</th>
+                                                            <th class="py-1 font-bold">Regular fare</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody class="divide-y divide-gray-200 dark:divide-[#1a1a1a]">
                                                         @foreach ($r['tiers'] as $t)
                                                             <tr>
                                                                 <td class="py-1.5 pr-3 font-bold text-gray-600 dark:text-[#bbb]">{{ $t['km'] }}</td>
-                                                                <td class="py-1.5 pr-3 text-gray-600 dark:text-[#aaa]">{{ $t['regular'] }}</td>
-                                                                <td class="py-1.5 text-gray-600 dark:text-[#aaa]">{{ $t['discount'] }}</td>
+                                                                <td class="py-1.5 text-gray-600 dark:text-[#aaa]">{{ $t['regular'] }}</td>
                                                             </tr>
                                                         @endforeach
                                                     </tbody>

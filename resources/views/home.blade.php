@@ -1174,8 +1174,7 @@
                                     <span class="mock-badge">● On time</span>
                                 </div>
                                 <div class="mock-fare">
-                                    <div class="on"><small>Regular</small><b>₱ 13.00</b></div>
-                                    <div><small>Discounted</small><b>₱ 10.40</b></div>
+                                    <div class="on"><small>Fare</small><b>₱ 13.00</b></div>
                                 </div>
                             </div>
                         </div>
@@ -1231,7 +1230,7 @@
                     <div class="lp-card span-3 reveal" style="--t: 99 102 241">
                         <span class="lp-ico"><i class="fa-solid fa-receipt"></i></span>
                         <h4>Official fares</h4>
-                        <p>Regular and discounted fares, worked out by distance from the published fare table.</p>
+                        <p>Fares worked out by distance from the published fare table.</p>
                     </div>
                     <div class="lp-card span-3 reveal" data-d="1" style="--t: 236 72 153">
                         <span class="lp-ico"><i class="fa-solid fa-shield-halved"></i></span>

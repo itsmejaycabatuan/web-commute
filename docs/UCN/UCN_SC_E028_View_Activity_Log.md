@@ -21,7 +21,7 @@
 | --- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Admin clicks **"Activity Log"** on the sidebar.  | System verifies the `admin` role and lists the entries **newest first, 10 per page**, with the number of entries, how many were written today and — when there are any — how many **failed sign-ins** happened in the last 24 hours (a link to those entries). |
 | 2   |                                                  | Each row shows **When** (Philippine time), **Who** (the signed-in user's email and role, or *Not signed in / system*), **What happened** (a category badge, an event badge and a readable description), **Record** (e.g. *Vehicle #12*) and the **IP address**. |
-| 3   | Admin clicks a row.                              | System expands it: **What changed** — a *Field / Before / After* table of the business fields that changed (a fare-rate edit shows a *Distance / Regular / Discount* table instead) plus any extra facts (e.g. the suspension reason) — and **Where it came from**: entry number, exact time, IP address, device (e.g. *Chrome on Windows*) and the browser string. |
+| 3   | Admin clicks a row.                              | System expands it: **What changed** — a *Field / Before / After* table of the business fields that changed (a fare-rate edit shows a *Distance / Regular* table instead) plus any extra facts (e.g. the suspension reason) — and **Where it came from**: entry number, exact time, IP address, device (e.g. *Chrome on Windows*) and the browser string. |
 
 ---
 

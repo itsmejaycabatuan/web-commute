@@ -311,8 +311,8 @@ class AutomationPhase2Test extends TestCase
     {
         Notification::fake();
         $fare = Fare::factory()->create();
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 1, 'regular' => 15, 'discount' => 12]);
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25, 'discount' => 13.75]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 1, 'regular' => 15]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25]);
         $user = $this->commuter();
 
         $this->actingAs($user)->post(route('payment.process'), [
@@ -413,8 +413,8 @@ class AutomationPhase2Test extends TestCase
         config(['alerts.gateway_failure_threshold' => 1]);
         Http::fake(['api.paymongo.com/*' => Http::response(['errors' => [['detail' => 'nope']]], 500)]);
         $fare = Fare::factory()->create();
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 1, 'regular' => 15, 'discount' => 12]);
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25, 'discount' => 13.75]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 1, 'regular' => 15]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25]);
         $admin = $this->staff('admin');
         $user = $this->commuter();
 
@@ -516,8 +516,8 @@ class AutomationPhase2Test extends TestCase
     private function fareTable(): void
     {
         $fare = Fare::factory()->create();
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 1, 'regular' => 15, 'discount' => 12]);
-        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25, 'discount' => 13.75]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 1, 'regular' => 15]);
+        FareRate::factory()->create(['fare_id' => $fare->id, 'km' => 5, 'regular' => 17.25]);
     }
 
     public function test_the_fare_is_attributed_to_the_vehicle_and_driver_the_commuter_rode(): void

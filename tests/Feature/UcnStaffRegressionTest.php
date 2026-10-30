@@ -626,13 +626,13 @@ class UcnStaffRegressionTest extends TestCase
     public function test_a_zero_or_negative_fare_rate_is_rejected()
     {
         $fare = \App\Models\Fare::factory()->create();
-        $rate = \App\Models\FareRate::factory()->create(['fare_id' => $fare->id, 'regular' => 15, 'discount' => 12]);
+        $rate = \App\Models\FareRate::factory()->create(['fare_id' => $fare->id, 'regular' => 15]);
 
         $this->actingAs($this->admin())
             ->withoutMiddleware(VerifyCsrfToken::class)
             ->put(route('fares.bulk-update'), [
                 'rates' => [
-                    $rate->id => ['id' => $rate->id, 'regular' => 0, 'discount' => -5],
+                    $rate->id => ['id' => $rate->id, 'regular' => 0],
                 ],
             ])
             ->assertSessionHasErrors();
@@ -653,13 +653,13 @@ class UcnStaffRegressionTest extends TestCase
     public function test_a_valid_rate_submission_is_saved()
     {
         $fare = \App\Models\Fare::factory()->create();
-        $rate = \App\Models\FareRate::factory()->create(['fare_id' => $fare->id, 'regular' => 15, 'discount' => 12]);
+        $rate = \App\Models\FareRate::factory()->create(['fare_id' => $fare->id, 'regular' => 15]);
 
         $this->actingAs($this->admin())
             ->withoutMiddleware(VerifyCsrfToken::class)
             ->put(route('fares.bulk-update'), [
                 'rates' => [
-                    $rate->id => ['id' => $rate->id, 'regular' => 18, 'discount' => 14],
+                    $rate->id => ['id' => $rate->id, 'regular' => 18],
                 ],
             ])
             ->assertSessionHas('success');

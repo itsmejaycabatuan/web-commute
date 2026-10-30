@@ -9,7 +9,7 @@
 | **Goal**              | Allow Guest to see the distance and fare prices for their commute.                                                                                                                |
 | **Trigger**           | Guest opens the sidebar on the map.                                                                                                                                               |
 | **Preconditions**     | 1. System routing engine is operational.<br>2. User has an active internet connection.<br>3. Both a start point and a destination have been selected (by map click or by search). |
-| **Supporting Actors** | External Geocoding Service (Photon), External Routing Service (OSRM), Fare rate table (`FareRate`)                                                                                |
+| **Supporting Actors** | External Routing Service (OSRM), the browser's geolocation, Fare rate table (`FareRate`)                                                                                |
 
 ---
 
@@ -17,10 +17,10 @@
 
 | #   | Actor's Action                                         | System Response                                                                                                                                                                                                     |
 | --- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | User opens the sidebar on the map page.                | System displays a fare calculator with input fields for origin and destination, plus distance and fare output fields.                                                                                               |
-| 2   | User selects Origin and destination (via map or text). | System places **Point A** and **Point B** markers on the map. Text entries are resolved by the geocoding service (Photon), restricted to the service-area bounding box; a tap on the map places the point directly. |
+| 1   | User opens the sidebar on the map page.                | System displays a fare calculator with a starting point (the user's own location), a destination button, and distance and fare output fields. The road the service covers (Minglanilla to Cebu IT Park) is drawn as a fixed green line.                                                                                               |
+| 2   | User presses **Set destination** and picks a stop from the list (or taps the highlighted road). | System uses the user's GPS position as **Point A**, snapped onto the road, and only lets a destination be set when that position is on or within 150 m of the road (a side road counts). The destination is a fixed stop or a tapped point snapped to the road (within 60 m); it is **Point B**. |
 | 3   |                                                        | System requests a driving route from the routing service (OSRM) and draws the recommended route path on the map, then fits the map bounds to it.                                                                    |
-| 4   |                                                        | System displays the total **distance (km)** and the **fare costs** (regular and discounted), looked up from the active fare-rate table by distance tier.                                                            |
+| 4   |                                                        | System displays the total **distance (km)** and the **fare cost**, looked up from the active fare-rate table by distance tier.                                                            |
 
 **Fare calculation detail**
 - Fare is looked up by finding the **highest distance tier ≤ the calculated distance** (`getFareFromDB()`); values are rounded up to whole pesos.
@@ -30,14 +30,12 @@
 
 ## Alternate Flow
 
-**A1 – Guest selects points by tapping the map**
-1. Guest taps **"Set pick-up"** then clicks a point on the map (or vice versa for the destination).
-2. System places the marker and reverse-geocodes the point to a readable address.
+**A1 – Guest taps the road for the destination**
+1. Guest presses the destination pin button, then taps a point on the highlighted road.
+2. System snaps the point onto the road, labels it *"Near <stop>"*, places the marker and calculates the trip.
 
-**A2 – Guest searches for a place by name**
-1. Guest types at least 2 characters into the origin or destination field.
-2. System queries the geocoding service and lists up to 6 matches inside the service area.
-3. Guest selects a result; System places the marker and calculates the trip.
+**A2 – Guest refreshes the starting point**
+1. Guest presses the start-point button; System re-reads the GPS position and sets it as the starting point again (subject to the 150 m route check).
 
 **A3 – Guest changes their mind**
 1. Guest presses **"Reset Route"**.
@@ -66,9 +64,10 @@
 **E1 – Fare Prices Unavailable**
 No fare rates exist for the current fare period. The System still displays the calculated distance, but the fare price is shown as **0**.
 
-**E2 – Location / Place Not Found**
-- *No search match:* the System shows **"No results found"** in the dropdown and a banner: *"Location not found — That place could not be found. Try a different name, or tap a point directly on the map."* The banner clears after ~6 seconds.
-- *Reverse-geocode failure:* the System falls back to displaying the raw coordinates (`lat, lon`) and **still places the marker**.
+**E2 – Location Unavailable or Off the Route**
+- *No GPS fix:* the System shows the banner *"Waiting for your location — Allow location access so your position can be used as the starting point, then try again."* and the destination cannot be set.
+- *Away from the route:* the user's position is more than 150 m from the Minglanilla to IT Park road. The System shows *"You're away from the route — Move onto or near the Minglanilla to IT Park road to set a destination."* and the destination cannot be set. The banners clear automatically.
+- *Tap off the road:* a destination tap more than 60 m from the road is rejected with *"Pick a point on the road"*; the System stays in selection mode.
 
 **E3 – Routing API Timeout or Failure**
 The external routing service fails to respond, returns a non-`Ok` code, or returns a non-2xx status. The System clears the distance/fare fields and displays a banner: *"Route unavailable — The routing service failed to respond, so the distance and fare could not be calculated. Please try again."* The banner clears automatically on the next successful calculation.
@@ -95,11 +94,11 @@ Guest has used all 3 daily fare calculations. The System displays the limit moda
 
 | Element | Location |
 |---|---|
-| Fare calculator UI | `resources/views/map.blade.php` (left sidebar, `#distance`, `#price-regular`, `#price-discount`) |
+| Fare calculator UI | `resources/views/map.blade.php` (left sidebar, `#distance`, `#price-regular`) |
 | Route calculation | `resources/views/map.blade.php::calculateRoute()` → OSRM `router.project-osrm.org` |
 | Fare lookup | `resources/views/map.blade.php::getFareFromDB()` + `@json($rates)` |
-| Place search | `resources/views/map.blade.php::searchPlaces()` → Photon `photon.komoot.io` |
-| Reverse geocoding | `resources/views/map.blade.php` (reverse geocode call) |
+| Destination stops + start-point check | `resources/views/map.blade.php` (stop picker, `onUserLocationFix`), `App\Support\ServiceCorridor` |
+| Static road | `resources/geo/minglanilla-itpark-corridor.geojson` |
 | Route layers | `resources/views/map.blade.php` → `route`, `route-line`, `route-line-glow` |
 | Point markers | `resources/views/map.blade.php` → `pickup-point`, `destination-point` sources |
 | Guest daily limit | `resources/views/map.blade.php` → `DAILY_LIMIT`, `toggleLimitModal()` |

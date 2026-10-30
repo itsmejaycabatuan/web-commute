@@ -38,7 +38,7 @@ class FareCalculator
     }
 
     /**
-     * The regular (non-discounted) fare for a trip of $distanceKm kilometres.
+     * The fare for a trip of $distanceKm kilometres.
      *
      * Tiering mirrors the client: use the highest tier whose `km` is <= the trip
      * distance; if the trip is shorter than the first tier, use the first tier.

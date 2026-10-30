@@ -140,10 +140,9 @@
             @php
                 $minRegular = $rates->min('regular') ?? 0;
                 $maxRegular = $rates->max('regular') ?? 0;
-                $minDiscount = $rates->min('discount') ?? 0;
             @endphp
 
-            <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-5 sm:mb-6">
                 <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-blue-500">
                     <div class="flex items-center gap-2 mb-2 sm:mb-3">
                         <div class="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center">
@@ -180,19 +179,6 @@
                     </div>
                     <span
                         class="text-2xl sm:text-3xl font-black tracking-tight text-amber-500 dark:text-amber-400">₱{{ number_format($maxRegular, 2) }}</span>
-                </div>
-
-                <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-purple-500">
-                    <div class="flex items-center gap-2 mb-2 sm:mb-3">
-                        <div class="w-6 h-6 rounded-md bg-purple-500/10 flex items-center justify-center">
-                            <i class="fa-solid fa-percent text-[8px] text-purple-500 dark:text-purple-400"></i>
-                        </div>
-                        <span
-                            class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Min
-                            Discount</span>
-                    </div>
-                    <span
-                        class="text-2xl sm:text-3xl font-black tracking-tight text-purple-500 dark:text-purple-400">₱{{ number_format($minDiscount, 2) }}</span>
                 </div>
             </div>
 
@@ -257,16 +243,6 @@
                                             Regular
                                         </div>
                                     </th>
-                                    <th class="px-4 sm:px-6 py-3 font-bold">
-                                        <div class="flex items-center gap-2">
-                                            <div
-                                                class="w-5 h-5 rounded-md bg-amber-500/10 flex items-center justify-center">
-                                                <i
-                                                    class="fa-solid fa-tag text-[7px] text-amber-500 dark:text-amber-400"></i>
-                                            </div>
-                                            Discounted
-                                        </div>
-                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-[#1a1a1a]">
@@ -302,23 +278,6 @@
                                                         name="rates[{{ $rate->id }}][regular]"
                                                         value="{{ $rate->regular }}"
                                                         class="w-24 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-[#111] border border-emerald-500/15 text-[11px] text-emerald-500 dark:text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500/40 transition">
-                                                </div>
-                                            </template>
-                                        </td>
-
-                                        <td class="px-4 sm:px-6 py-3.5">
-                                            <template x-if="!editing">
-                                                <span
-                                                    class="text-[12px] font-bold text-amber-500 dark:text-amber-400 font-mono">₱{{ number_format($rate->discount, 2) }}</span>
-                                            </template>
-                                            <template x-if="editing">
-                                                <div class="flex items-center gap-2">
-                                                    <span
-                                                        class="text-[10px] text-gray-400 dark:text-[#333] font-bold">₱</span>
-                                                    <input type="number" step="0.01"
-                                                        name="rates[{{ $rate->id }}][discount]"
-                                                        value="{{ $rate->discount }}"
-                                                        class="w-24 px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-[#111] border border-amber-500/15 text-[11px] text-amber-500 dark:text-amber-400 font-mono font-bold focus:outline-none focus:border-amber-500/40 transition">
                                                 </div>
                                             </template>
                                         </td>

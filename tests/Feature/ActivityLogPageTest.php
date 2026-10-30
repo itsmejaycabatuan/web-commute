@@ -115,7 +115,7 @@ class ActivityLogPageTest extends TestCase
     {
         $this->entry(Audit::FARE, 'fare_rates_updated', 'Updated 1 fare rate(s) ZZTIER', [
             'rows_changed' => 1,
-            'changes' => [['km' => 7, 'regular' => ['old' => 20, 'new' => 25.5], 'discount' => ['old' => 16, 'new' => 16]]],
+            'changes' => [['km' => 7, 'regular' => ['old' => 20, 'new' => 25.5]]],
         ]);
 
         $this->actingAs($this->userWithRole('admin'))
