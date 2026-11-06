@@ -451,7 +451,7 @@
 
                 <!-- Week Navigation Header -->
                 <div class="p-4 sm:p-5 md:p-6 pb-0">
-                    <div class="flex items-center justify-between mb-4 sm:mb-5">
+                    <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-3 mb-4 sm:mb-5">
                         <div class="flex items-center gap-2 sm:gap-2.5">
                             <div
                                 class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#111] border border-[#1e1e1e] flex items-center justify-center">
@@ -561,7 +561,7 @@
                                     class="flex items-stretch border-t {{ $isToday ? 'border-blue-500/10' : 'border-[#161616]' }}">
                                     <!-- Time In -->
                                     <div
-                                        class="flex-1 px-3.5 py-2.5 flex items-center gap-2 border-r {{ $isToday ? 'border-blue-500/10' : 'border-[#161616]' }}">
+                                        class="flex-1 min-w-0 px-2 sm:px-3.5 py-2.5 flex items-center gap-1.5 sm:gap-2 border-r {{ $isToday ? 'border-blue-500/10' : 'border-[#161616]' }}">
                                         <i class="fa-solid fa-right-to-bracket text-[8px] text-[#333]"></i>
                                         <div>
                                             <p class="text-[7px] font-bold uppercase text-[#333]">In</p>
@@ -577,7 +577,7 @@
                                     </div>
                                     <!-- Time Out -->
                                     <div
-                                        class="flex-1 px-3.5 py-2.5 flex items-center gap-2 border-r {{ $isToday ? 'border-blue-500/10' : 'border-[#161616]' }}">
+                                        class="flex-1 min-w-0 px-2 sm:px-3.5 py-2.5 flex items-center gap-1.5 sm:gap-2 border-r {{ $isToday ? 'border-blue-500/10' : 'border-[#161616]' }}">
                                         <i class="fa-solid fa-right-from-bracket text-[8px] text-[#333]"></i>
                                         <div>
                                             <p class="text-[7px] font-bold uppercase text-[#333]">Out</p>
@@ -593,7 +593,7 @@
                                     </div>
                                     <!-- Hours -->
                                     <div
-                                        class="flex-1 px-3.5 py-2.5 flex items-center gap-2 border-r {{ $isToday ? 'border-blue-500/10' : 'border-[#161616]' }}">
+                                        class="flex-1 min-w-0 px-2 sm:px-3.5 py-2.5 flex items-center gap-1.5 sm:gap-2 border-r {{ $isToday ? 'border-blue-500/10' : 'border-[#161616]' }}">
                                         <i class="fa-regular fa-clock text-[8px] text-[#333]"></i>
                                         <div>
                                             <p class="text-[7px] font-bold uppercase text-[#333]">Hrs</p>
@@ -608,7 +608,7 @@
                                         </div>
                                     </div>
                                     <!-- OT -->
-                                    <div class="flex-1 px-3.5 py-2.5 flex items-center gap-2">
+                                    <div class="flex-1 min-w-0 px-2 sm:px-3.5 py-2.5 flex items-center gap-1.5 sm:gap-2">
                                         <i class="fa-solid fa-bolt text-[8px] text-[#333]"></i>
                                         <div>
                                             <p class="text-[7px] font-bold uppercase text-[#333]">OT</p>

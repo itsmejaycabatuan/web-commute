@@ -7,6 +7,7 @@ use App\Models\Driver;
 use App\Models\Payment;
 use App\Models\PreventiveMaintenance;
 use App\Models\TopupHistory;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -22,8 +23,7 @@ class ReportController extends Controller
     public function generate(Request $request)
     {
         $type = $request->get('type', 'financial');
-        $start = $request->get('start_date');
-        $end = $request->get('end_date');
+        [$start, $end] = $this->dates($request);
 
         try {
             if (! in_array($type, self::REPORT_TYPES, true)) {
@@ -58,6 +58,31 @@ class ReportController extends Controller
     }
 
     /**
+     * The report window as the page shows it: the dates asked for, else the last 7 days up to today. The page
+     * fills its date boxes with those same defaults, so opening it must report them instead of an empty window.
+     *
+     * @return array{0: string, 1: string} Y-m-d start and end
+     */
+    private function dates(Request $request): array
+    {
+        return [
+            $request->get('start_date') ?: now()->subDays(7)->toDateString(),
+            $request->get('end_date') ?: now()->toDateString(),
+        ];
+    }
+
+    /**
+     * The window as timestamps. A bare end date means midnight at the START of that day, so querying with it
+     * dropped every payment made on the last day (today's, with the default range): the end runs to 23:59:59.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function window(?string $start, ?string $end): array
+    {
+        return [Carbon::parse($start)->startOfDay(), Carbon::parse($end)->endOfDay()];
+    }
+
+    /**
      * Guard for the aggregation window before any query is run.
      */
     private function assertValidRange(?string $start, ?string $end): void
@@ -87,17 +112,19 @@ class ReportController extends Controller
         // Default return structure
         $data = [];
 
+        [$from, $to] = $this->window($start, $end);
+
         if ($type === 'financial') {
             // 1. Calculate Stats
             $data['financialStats'] = [
-                'total_revenue' => Payment::whereBetween('paid_at', [$start, $end])->sum('price'),
-                'total_topups' => TopupHistory::completed()->whereBetween('created_at', [$start, $end])->sum('amount_added'),
-                'tx_count' => Payment::whereBetween('paid_at', [$start, $end])->count(),
+                'total_revenue' => Payment::whereBetween('paid_at', [$from, $to])->sum('price'),
+                'total_topups' => TopupHistory::completed()->whereBetween('created_at', [$from, $to])->sum('amount_added'),
+                'tx_count' => Payment::whereBetween('paid_at', [$from, $to])->count(),
             ];
 
             // 2. Prepare Chart Data (Dynamic Logic)
             // Group payments by date and sum the price
-            $revenueByDate = Payment::whereBetween('paid_at', [$start, $end])
+            $revenueByDate = Payment::whereBetween('paid_at', [$from, $to])
                 ->selectRaw('DATE(paid_at) as date, SUM(price) as total')
                 ->groupBy('date')
                 ->orderBy('date')
@@ -143,7 +170,7 @@ class ReportController extends Controller
                 ->map(function ($driver) {
                     return [
                         'name' => $driver->name,
-                        'status' => $driver->status ?? 'Inactive',
+                        'status' => strtolower((string) ($driver->status ?: 'inactive')),
                         // Cast to float because your migration says hours_worked is a string
                         'hours_worked' => (float) ($driver->total_hours ?? 0),
                     ];
@@ -158,48 +185,75 @@ class ReportController extends Controller
                 ->pluck('count', 'status')
                 ->toArray();
 
-            // Ensure we pass the data in the order expected by the Chart, filling missing keys with 0
+            // In the order the chart expects, filling missing keys with 0. The column holds lowercase values
+            // (`active`, `inactive`, `suspended`); looking them up capitalised made every slice 0 and the chart blank.
             $data['driverStatusLabels'] = ['Active', 'Inactive', 'Suspended'];
             $data['driverStatusData'] = [
-                ($statusCounts['Active'] ?? 0),
-                ($statusCounts['Inactive'] ?? 0),
-                ($statusCounts['Suspended'] ?? 0),
+                (int) ($statusCounts['active'] ?? 0),
+                (int) ($statusCounts['inactive'] ?? 0),
+                (int) ($statusCounts['suspended'] ?? 0),
             ];
         }
 
         if ($type === 'maintenance') {
-            $now = now();
+            $rows = $this->maintenanceRows();
 
-            // 1. Pending: Scheduled for the future
-            $data['maintStats']['pending'] = PreventiveMaintenance::where('last_service_date', '>', $now)->count();
+            // Pending: a service with something coming up (a due date or odometer) that is not yet overdue.
+            $data['maintStats']['pending'] = $rows->whereIn('status', [PreventiveMaintenance::OK, PreventiveMaintenance::DUE_SOON])
+                ->where('scheduled', true)->count();
 
-            // 2. Overdue: Scheduled date has passed
-            $data['maintStats']['overdue'] = PreventiveMaintenance::where('last_service_date', '<', $now)->count();
+            // Overdue: past its due date, or past the odometer reading it was due at.
+            $data['maintStats']['overdue'] = $rows->where('status', PreventiveMaintenance::OVERDUE)->count();
 
-            // 3. Completed: services recorded within the selected date range
-            $data['maintStats']['completed'] = PreventiveMaintenance::whereBetween('created_at', [$start, $end])->count();
+            // Completed: services recorded within the selected date range.
+            $data['maintStats']['completed'] = PreventiveMaintenance::whereBetween('created_at', [$from, $to])->count();
 
-            // 4. Upcoming Schedule (For the table)
-            // Get scheduled items where the due date is >= now (Pending) or < now (Overdue)
-            $upcomingSchedule = PreventiveMaintenance::with(['vehicle', 'maintenanceTask'])
-                ->orderBy('last_service_date', 'asc')
-                ->get()
-                ->map(function ($item) {
-                    $dueDate = $item->last_service_date;
-                    $isOverdue = $dueDate && $dueDate->isPast();
-
-                    return [
-                        'vehicle_plate' => $item->vehicle?->plate_number ?? 'N/A',
-                        'task_name' => $item->maintenanceTask?->tasks_performed ?? 'Unknown Task',
-                        'due_date' => $dueDate ? $dueDate->format('Y-m-d') : 'N/A',
-                        'is_overdue' => $isOverdue,
-                    ];
-                })->toArray();
-
-            $data['upcomingSchedule'] = $upcomingSchedule;
+            $data['upcomingSchedule'] = $rows->all();
         }
 
         return $data;
+    }
+
+    /**
+     * Every recorded service with its REAL due date and status (the model's nextDueDate() / dueStatus()), the
+     * most urgent first. `last_service_date` is when the service was last done, not when it falls due: treating it
+     * as the due date called every past service "overdue". As on the Maintenance Manager's pages, a vehicle's current
+     * odometer is the highest reading logged for it, and disposed units are left out.
+     *
+     * @return \Illuminate\Support\Collection<int, array{vehicle_plate: string, task_name: string, due_date: string, due_at: ?Carbon, status: string, status_label: string, scheduled: bool, is_overdue: bool}>
+     */
+    private function maintenanceRows(): \Illuminate\Support\Collection
+    {
+        $records = PreventiveMaintenance::with(['vehicle', 'maintenanceTask'])
+            ->whereHas('vehicle', fn ($q) => $q->where('status', '!=', 'disposed'))
+            ->get();
+
+        $currentOdo = $records->groupBy('vehicle_id')->map(fn ($rows) => $rows->max('last_service_odo'));
+
+        return $records->map(function (PreventiveMaintenance $pm) use ($currentOdo) {
+            $status = $pm->dueStatus($currentOdo[$pm->vehicle_id] ?? null);
+            $due = $pm->nextDueDate();
+            $scheduled = $due !== null || $pm->nextDueOdo() !== null;
+
+            return [
+                'vehicle_plate' => $pm->vehicle?->plate_number ?? 'N/A',
+                'task_name' => $pm->maintenanceTask?->tasks_performed ?? 'Unknown Task',
+                'due_date' => $due ? $due->format('Y-m-d') : 'N/A',
+                'due_at' => $due,
+                'status' => $status,
+                'status_label' => match (true) {
+                    $status === PreventiveMaintenance::OVERDUE => 'Overdue',
+                    $status === PreventiveMaintenance::DUE_SOON => 'Due soon',
+                    $scheduled => 'Scheduled',
+                    default => 'No interval',
+                },
+                'scheduled' => $scheduled,
+                'is_overdue' => $status === PreventiveMaintenance::OVERDUE,
+            ];
+        })->sortBy(fn (array $r) => [
+            $r['is_overdue'] ? 0 : ($r['status'] === PreventiveMaintenance::DUE_SOON ? 1 : 2),
+            $r['due_at'] ? $r['due_at']->timestamp : PHP_INT_MAX,
+        ])->values();
     }
 
     /**
@@ -209,8 +263,8 @@ class ReportController extends Controller
     private function reportIsEmpty(string $type, ?string $start, ?string $end): bool
     {
         return match ($type) {
-            'financial' => Payment::whereBetween('paid_at', [$start, $end])->count() === 0
-                && TopupHistory::whereBetween('created_at', [$start, $end])->count() === 0,
+            'financial' => Payment::whereBetween('paid_at', $this->window($start, $end))->count() === 0
+                && TopupHistory::whereBetween('created_at', $this->window($start, $end))->count() === 0,
             'driver' => Driver::count() === 0,
             'maintenance' => PreventiveMaintenance::count() === 0,
             default => true,
@@ -235,8 +289,7 @@ class ReportController extends Controller
     public function export(Request $request)
     {
         $type = $request->get('type', 'financial');
-        $start = $request->get('start_date');
-        $end = $request->get('end_date');
+        [$start, $end] = $this->dates($request);
 
         $filename = "smartcommute_{$type}_report_" . now()->format('Y-m-d') . '.csv';
 
@@ -252,7 +305,9 @@ class ReportController extends Controller
             'Content-Disposition' => "attachment; filename=\"$filename\"",
         ];
 
-        $callback = function () use ($type, $start, $end) {
+        [$from, $to] = $this->window($start, $end);
+
+        $callback = function () use ($type, $from, $to) {
             $file = fopen('php://output', 'w');
 
             if ($type === 'financial') {
@@ -260,7 +315,7 @@ class ReportController extends Controller
                 fputcsv($file, ['Date', 'Type', 'Reference ID', 'Amount', 'User']);
 
                 // Get Fares
-                $payments = Payment::whereBetween('paid_at', [$start, $end])
+                $payments = Payment::whereBetween('paid_at', [$from, $to])
                     ->with('user:id,email')
                     ->get();
 
@@ -275,7 +330,7 @@ class ReportController extends Controller
                 }
 
                 // Get Topups
-                $topups = TopupHistory::completed()->whereBetween('created_at', [$start, $end])
+                $topups = TopupHistory::completed()->whereBetween('created_at', [$from, $to])
                     ->with('user:id,email')
                     ->get();
 
@@ -299,7 +354,7 @@ class ReportController extends Controller
                 foreach ($drivers as $driver) {
                     fputcsv($file, [
                         $driver->name,
-                        $driver->status ?? 'Inactive',
+                        ucfirst($driver->status ?: 'inactive'),
                         (float) ($driver->total_hours ?? 0),
                     ]);
                 }
@@ -307,20 +362,8 @@ class ReportController extends Controller
                 // 3. MAINTENANCE EXPORT
                 fputcsv($file, ['Vehicle Plate', 'Task', 'Due Date', 'Status']);
 
-                $tasks = PreventiveMaintenance::with(['vehicle', 'maintenanceTask'])
-                    ->orderBy('last_service_date', 'asc')
-                    ->get();
-
-                foreach ($tasks as $task) {
-                    $dueDate = $task->last_service_date;
-                    $isOverdue = $dueDate && $dueDate->isPast();
-
-                    fputcsv($file, [
-                        $task->vehicle?->plate_number ?? 'N/A',
-                        $task->maintenanceTask?->tasks_performed ?? 'Unknown',
-                        $dueDate ? $dueDate->format('Y-m-d') : 'N/A',
-                        $isOverdue ? 'Overdue' : 'Scheduled',
-                    ]);
+                foreach ($this->maintenanceRows() as $row) {
+                    fputcsv($file, [$row['vehicle_plate'], $row['task_name'], $row['due_date'], $row['status_label']]);
                 }
             }
 

@@ -17,6 +17,7 @@ use App\Notifications\VehicleVacancyFilled;
 use App\Notifications\VehicleVacancyOpen;
 use App\Services\ReplacementDriverService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use App\Models\VehicleLocation;
 use Illuminate\Support\Facades\Notification;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Role;
@@ -168,6 +169,117 @@ class ReplacementDriverTest extends TestCase
 
         $this->assertTrue($leaving->fresh()->is_suspended);
         $this->assertSame([$replacement->id], $this->driversOf($vehicle));
+    }
+
+    /** A shift that began $hoursAgo hours ago and is still open, with the vehicle on the live map. */
+    private function onShift(Driver $driver, Vehicle $vehicle, float $hoursAgo): TimeKeeping
+    {
+        $start = now()->timezone('Asia/Manila')->subMinutes((int) round($hoursAgo * 60));
+        $vehicle->forceFill(['is_active' => true])->save();
+        VehicleLocation::create(['vehicle_id' => $vehicle->id, 'latitude' => 10.3, 'longitude' => 123.9, 'last_update' => now(), 'user_id' => $driver->user_id]);
+        $driver->update(['status' => 'active']);
+
+        return TimeKeeping::create([
+            'driver_id' => $driver->id, 'vehicle_id' => $vehicle->id, 'date' => $start->toDateString(), 'time_in' => $start->format('h:i A'),
+            'time_out' => null, 'hours_worked' => 0, 'overtime_hours' => 0, 'sick' => 0, 'vacation' => 0,
+        ]);
+    }
+
+    private function onTheMap(Vehicle $vehicle): bool
+    {
+        return VehicleLocation::where('vehicle_id', $vehicle->id)->where('last_update', '>=', now()->subMinutes(5))->exists();
+    }
+
+    public function test_suspending_a_driver_mid_shift_ends_the_shift_and_takes_an_undriven_vehicle_off_the_map(): void
+    {
+        $leaving = $this->free();
+        $vehicle = $this->vehicleWith($leaving);
+        $shift = $this->onShift($leaving, $vehicle, 3);
+
+        $leaving->suspend('Test');
+
+        $shift->refresh();
+        $this->assertNotNull($shift->time_out, 'the shift ended');
+        $this->assertEqualsWithDelta(3.0, (float) $shift->hours_worked, 0.05);
+        $this->assertEquals(0, (float) $shift->overtime_hours);
+        $this->assertNull($shift->auto_closed_at, 'the end is known, so it is a normal clock-out, not a flagged one');
+        $this->assertSame(0, TimeKeeping::open()->where('driver_id', $leaving->id)->count());
+        $this->assertFalse($this->onTheMap($vehicle), 'nobody is driving it any more');
+        $this->assertFalse((bool) $vehicle->fresh()->is_active);
+        $this->assertTrue(VehicleLocation::where('vehicle_id', $vehicle->id)->exists(), 'GPS history is kept');
+    }
+
+    public function test_hours_past_eight_on_a_suspended_shift_are_overtime(): void
+    {
+        $leaving = $this->free();
+        $shift = $this->onShift($leaving, $this->vehicleWith($leaving), 9.5);
+
+        $leaving->suspend();
+
+        $this->assertEqualsWithDelta(9.5, (float) $shift->refresh()->hours_worked, 0.05);
+        $this->assertEqualsWithDelta(1.5, (float) $shift->overtime_hours, 0.05);
+    }
+
+    public function test_a_shift_forgotten_for_days_is_credited_and_flagged_not_counted_to_now(): void
+    {
+        $leaving = $this->free();
+        $shift = $this->onShift($leaving, $this->vehicleWith($leaving), 40);
+
+        $leaving->suspend();
+
+        $shift->refresh();
+        $this->assertEquals(8.0, (float) $shift->hours_worked);
+        $this->assertEquals(0, (float) $shift->overtime_hours);
+        $this->assertNotNull($shift->auto_closed_at);
+        $this->assertNull($shift->reviewed_at, 'left for the Driver Manager to check');
+    }
+
+    public function test_suspending_a_driver_leaves_the_co_drivers_shift_and_the_vehicle_on_the_map(): void
+    {
+        $leaving = $this->free();
+        $stays = $this->free();
+        $vehicle = $this->vehicleWith($leaving, $stays);
+        $this->onShift($leaving, $vehicle, 2);
+        $theirs = $this->onShift($stays, $vehicle, 1);
+
+        $leaving->suspend();
+
+        $this->assertNull($theirs->refresh()->time_out, 'the other driver is still on the road');
+        $this->assertTrue($this->onTheMap($vehicle));
+    }
+
+    public function test_the_admin_is_told_what_happened_to_the_vehicle_and_the_roster(): void
+    {
+        $admin = User::factory()->create(['email_verified_at' => now()])->assignRole('admin');
+
+        // A replacement joins a vehicle shared with someone else: the roster is rebuilt.
+        $leaving = $this->free();
+        $stays = $this->free();
+        $vehicle = $this->vehicleWith($leaving, $stays);
+        $replacement = $this->free();
+
+        $this->actingAs($admin)->patch(route('drivers.suspension', $leaving), ['suspension_reason' => 'Test']);
+        $message = session('success');
+        $this->assertStringContainsString($vehicle->plate_number, $message);
+        $this->assertStringContainsString($replacement->name, $message);
+        $this->assertStringContainsString('roster was rebuilt', $message);
+
+        // Nobody free: the seat stays open and the co-driver has the vehicle to themselves.
+        Driver::query()->update(['is_approved' => false]);
+        $a = $this->free();
+        $b = $this->free();
+        $second = $this->vehicleWith($a, $b);
+        Driver::whereIn('id', [$a->id, $b->id])->update(['is_approved' => true]);
+        $this->actingAs($admin)->patch(route('drivers.suspension', $a), ['suspension_reason' => 'Test']);
+        $message = session('success');
+        $this->assertStringContainsString($second->plate_number, $message);
+        $this->assertStringContainsString('no free driver', $message);
+        $this->assertStringContainsString($b->name, $message);
+
+        // A driver with no vehicle gets the plain message.
+        $idle = $this->free();
+        $this->actingAs($admin)->patch(route('drivers.suspension', $idle), ['suspension_reason' => 'Test']);
+        $this->assertSame('Driver suspended. They can no longer sign in.', session('success'));
     }
 
     public function test_a_failure_finding_a_replacement_never_undoes_the_suspension(): void

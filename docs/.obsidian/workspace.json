@@ -11,12 +11,26 @@
             "id": "9f89179a0caa52b5",
             "type": "leaf",
             "state": {
-              "type": "image",
+              "type": "markdown",
               "state": {
-                "file": "diagrams/use_case_diagram.png"
+                "file": "UCN/UCN_SC_E027_Manage_Staff_Accounts.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-image",
-              "title": "use_case_diagram"
+              "icon": "lucide-file",
+              "title": "UCN_SC_E027_Manage_Staff_Accounts"
+            }
+          },
+          {
+            "id": "9775a4c1ef5cc4cc",
+            "type": "leaf",
+            "state": {
+              "type": "release-notes",
+              "state": {
+                "currentVersion": "1.15.0"
+              },
+              "icon": "lucide-book-up",
+              "title": "Release Notes 1.15.0"
             }
           }
         ]
@@ -188,33 +202,38 @@
   },
   "active": "9f89179a0caa52b5",
   "lastOpenFiles": [
+    "UCN/UCN_SC_E028_View_Activity_Log.md",
+    "AUDIT_TRAIL.md",
+    "UI_DESIGN_SYSTEM.md",
     "AUTOMATED_FEATURES.md",
+    "MANUAL_TEST_CHECKLIST.md",
+    "sedb9xC8k",
+    "sedC8aNWC",
+    "sedYEAy0B",
+    "sedx1wE60",
+    "sedNSwjMW",
+    "sedD9Ajx9",
+    "UCN/UCN_SC_E005_Topup_Balance.md.tmp.67903.cfc6725637a8",
+    "diagrams/use_case_diagram.png",
     "UCN/build_combined.py",
     "Entity_Relationship_Diagram.md.tmp.5492.0208f2ec4a7b",
     "diagrams/erd_summary.dot",
-    "diagrams/erd_full.dot",
     "Non_Functional_Requirements.md",
-    "MANUAL_TEST_CHECKLIST.md",
     "Functional_Requirements.md",
-    "UCN/UCN_SC_E028_View_Activity_Log.md",
     "UCN/UCN_SC_E027_Manage_Staff_Accounts.md",
     "UCN/UCN_SC_E026_Account_Deletion.md",
     "UCN/UCN_SC_E025_Profile_and_Dashboard.md",
-    "Functional_Requirements.md.tmp.5327.3ba4a1a92e44",
     "UCN/UCN_SC_E001_Login.md",
     "UCN/UCN_SC_E023_Driver_Dashboard_Views.md",
     "diagrams/erd_full.svg",
     "UCN/UCN_SC_E029_View_Activity_Log.md",
     "README.md",
-    "AUDIT_TRAIL.md",
     "diagrams/erd_full.png",
     "diagrams/erd_summary.png",
-    "AUDIT_TRAIL.md.tmp.5327.f984b1fe02a2",
     "UCN/UCN_Combined.md",
     "Use_Case_Diagram.md",
     "diagrams/use-case-parts/01_overview.png",
     "diagrams/use_case_diagram.svg",
-    "diagrams/use_case_diagram.png",
     "Entity_Relationship_Diagram.md",
     "diagrams/erd_summary.svg",
     "UCN/UCN_SC_E028_Manage_Staff_Accounts.md",
@@ -225,7 +244,6 @@
     "UCN/UCN_SC_E018_Manage_Commuters.md",
     "UCN/UCN_SC_E017_Manage_Maintenance_Tasks.md",
     "UCN/UCN_SC_E016_Manage_Maintenance_Schedule.md",
-    "UCN/UCN_SC_E015_Manage_Vehicles.md",
-    "UCN/UCN_SC_E014_Manage_Violations.md"
+    "UCN/UCN_SC_E015_Manage_Vehicles.md"
   ]
 }

@@ -145,7 +145,9 @@ class PayMongoService
     {
         return match (strtolower($method)) {
             'gcash' => 'gcash',
-            'maya' => 'maya',
+            // PayMongo's API still calls Maya `paymaya`; `maya` is rejected ("maya is an invalid payment_method"),
+            // verified against the sandbox.
+            'maya' => 'paymaya',
             'card', 'credit_card' => 'card',
             default => throw new RuntimeException("Unsupported payment method for the gateway: {$method}"),
         };
@@ -336,7 +338,13 @@ class PayMongoService
         $resource = $attributes['data'] ?? [];
         $resourceAttributes = $resource['attributes'] ?? [];
 
-        $intentId = $resource['id'] ?? $resourceAttributes['payment_intent_id'] ?? null;
+        // A `payment.*` event's own id is the payment (pay_…); the intent it belongs to is an attribute. A
+        // checkout-session event carries it as `payment_intent`. Fall back to the resource id, which is the
+        // intent for the older event shape.
+        $intentId = $resourceAttributes['payment_intent_id']
+            ?? $resourceAttributes['payment_intent']['id']
+            ?? $resource['id']
+            ?? null;
         $referenceId = $resourceAttributes['reference_id'] ?? null;
         $transactionId = $resourceAttributes['metadata']['transaction_id']
             ?? $attributes['metadata']['transaction_id']

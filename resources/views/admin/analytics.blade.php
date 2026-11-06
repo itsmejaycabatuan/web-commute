@@ -109,7 +109,7 @@
                 <span class="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-500 dark:text-[#555] block mb-4">
                     <i class="fa-solid fa-chart-column mr-1"></i> Hours per week (overtime in orange)
                 </span>
-                <div class="flex items-end gap-2 sm:gap-3 h-36">
+                <div class="flex items-end gap-1 sm:gap-3 h-36">
                     @foreach ($trend as $week)
                         @php
                             $total = ($week['hours'] / $peak) * 100;
@@ -120,7 +120,7 @@
                             <div class="w-full rounded-t-md bg-blue-500/30 flex flex-col justify-end overflow-hidden" style="height: {{ max($total, 2) }}%">
                                 <div class="w-full bg-orange-500" style="height: {{ $ot }}%"></div>
                             </div>
-                            <span class="text-[8px] text-gray-400 dark:text-[#444] mt-1.5 truncate">{{ $week['label'] }}</span>
+                            <span class="text-[7px] sm:text-[8px] text-gray-400 dark:text-[#444] mt-1.5 truncate max-w-full">{{ $week['label'] }}</span>
                         </div>
                     @endforeach
                 </div>

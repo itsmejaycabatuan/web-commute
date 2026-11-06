@@ -10,11 +10,13 @@ use App\Notifications\TopupReceipt;
 use App\Services\FareCalculator;
 use App\Services\GatewayMonitor;
 use App\Services\PaymentSettlement;
+use App\Services\TopupSettlement;
 use App\Services\PayMongoService;
 use App\Support\Notifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class PaymentController extends Controller
@@ -33,7 +35,8 @@ class PaymentController extends Controller
         protected PayMongoService $paymongo,
         protected FareCalculator $fares,
         protected PaymentSettlement $settlement,
-        protected GatewayMonitor $gateway
+        protected GatewayMonitor $gateway,
+        protected TopupSettlement $topups
     ) {}
 
     public function index(Request $request)
@@ -59,7 +62,7 @@ class PaymentController extends Controller
         // QR codes inside the PUJ. The trip is kept so it is picked up again after the scan.
         $scan = QrScan::currentFor($userId);
 
-        if (config('qr.required') && ! $scan) {
+        if (QrScan::required() && ! $scan) {
             $request->session()->put('qr_trip', $request->only('pickup', 'destination', 'distance', 'price-regular'));
 
             return redirect()->route('payment.scan')
@@ -127,14 +130,14 @@ class PaymentController extends Controller
         // Pay on board: a fare is only taken against a fresh scan of one of the system's QR codes.
         $scan = QrScan::currentFor($userId);
 
-        if (config('qr.required') && ! $scan) {
+        if (QrScan::required() && ! $scan) {
             return redirect()->route('payment.scan')
                 ->with('error', 'Scan the QR code inside the PUJ to pay your fare.');
         }
 
         // Fare-evasion check: when switched on, the scan must have been matched to a vehicle that is
         // broadcasting right where the commuter is (see RideVerificationController::locate).
-        if ($scan && config('qr.required') && config('qr.require_nearby_vehicle') && ! $scan->isOnVehicle()) {
+        if ($scan && QrScan::required() && config('qr.require_nearby_vehicle') && ! $scan->isOnVehicle()) {
             return back()->with('error', "We couldn't confirm you are on a SmartCommute PUJ. Allow location access on this page, make sure you are inside the vehicle, then try again.");
         }
 
@@ -407,13 +410,32 @@ class PaymentController extends Controller
             $payment = Payment::where('paymongo_reference_id', $event['reference_id'])->first();
         }
 
+        // Not a fare: it may be a wallet top-up. Same order of reliability, same null-safety.
+        $topup = null;
+
         if (! $payment) {
+            if (! empty($event['payment_intent_id'])) {
+                $topup = TopupHistory::where('paymongo_payment_intent_id', $event['payment_intent_id'])->first();
+            }
+
+            if (! $topup && ! empty($event['transaction_id'])) {
+                $topup = TopupHistory::where('transaction_id', $event['transaction_id'])->first();
+            }
+        }
+
+        if (! $payment && ! $topup) {
             Log::warning('PAYMONGO webhook: no matching payment', $event);
 
             return response('OK', 200);
         }
 
         $type = (string) $event['event_type'];
+
+        if ($topup) {
+            $this->applyTopupEvent($topup, $type);
+
+            return response('OK', 200);
+        }
 
         // PayMongo has used both `payment.paid` and `payment.succeeded` naming;
         // accept either rather than dropping a real settlement on the floor.
@@ -432,6 +454,18 @@ class PaymentController extends Controller
         }
 
         return response('OK', 200);
+    }
+
+    /** A signed gateway event for a wallet top-up. Idempotent: settlement credits a wallet at most once. */
+    protected function applyTopupEvent(TopupHistory $topup, string $type): void
+    {
+        if (str_contains($type, 'paid') || str_contains($type, 'succeeded') || str_contains($type, 'success')) {
+            $this->topups->settle($topup);
+        } elseif (str_contains($type, 'failed') || str_contains($type, 'declined')) {
+            $this->topups->fail($topup, 'The payment was declined by the gateway.');
+        } elseif (str_contains($type, 'expired') || str_contains($type, 'cancel')) {
+            $this->topups->cancel($topup, 'The checkout session expired.');
+        }
     }
 
     /**
@@ -529,6 +563,7 @@ class PaymentController extends Controller
 
     public function topup()
     {
+        TopupHistory::expireStale();
         $user = Auth::user();
         $userId = $user->id;
         $balance = $this->walletFor($userId)->balance;
@@ -557,7 +592,6 @@ class PaymentController extends Controller
     {
         $userId = Auth::id();
         $wallet = Wallet::where('user_id', $userId)->firstOrFail();
-        $balance = $wallet->balance;
 
         $request->validate([
             // E5 - Invalid Custom Amount: numeric, at least 10, at most 100000
@@ -567,13 +601,14 @@ class PaymentController extends Controller
         ]);
 
         $amount = round((float) $request->amount, 2);
-        $currentBalance = (float) $balance;
-        $newBalance = round($currentBalance + $amount, 2);
+        $method = (string) $request->{'payment-method'};
 
-        // E3 - Already Paid / duplicate submission guard (idempotency window)
+        // E3 - Already Paid / duplicate submission guard (idempotency window). Only a COMPLETED top-up counts:
+        // one still waiting at the gateway, or abandoned, must not stop the commuter trying again.
         $duplicate = TopupHistory::where('user_id', $userId)
             ->where('amount_added', $amount)
-            ->where('payment_method', $request->{'payment-method'})
+            ->where('payment_method', $method)
+            ->where('status', TopupHistory::STATUS_COMPLETED)
             ->where('created_at', '>=', now()->subMinutes(2))
             ->exists();
 
@@ -581,36 +616,181 @@ class PaymentController extends Controller
             return back()->with('error', 'This top-up was already processed. Please wait a moment before retrying.');
         }
 
+        // ── Through the gateway (GCash / Maya via PayMongo) ──────────────
+        // The wallet is NOT touched here: it is credited by TopupSettlement once PayMongo confirms the money.
+        if ($this->paymongo->enabled()) {
+            return $this->startGatewayTopup($wallet, $amount, $method);
+        }
+
+        // The gateway is switched on but refused to run (bad keys / host), or this is production without a
+        // gateway: crediting a wallet without taking any money would be free money, so say no.
+        if (config('paymongo.enabled') || app()->environment('production')) {
+            Log::error('Top-up refused: no working payment gateway.', ['area' => 'Topupprocess', 'user_id' => $userId]);
+
+            return back()->with('error', 'Top-ups are unavailable right now. Please try again later.');
+        }
+
+        // ── Gateway switched off in a development / test environment ─────
+        // There is no money to wait for, so the top-up is simulated: it goes through the very same settlement
+        // path, just immediately. (Never reachable in production, see above.)
+        return $this->simulatedTopup($wallet, $amount, $method);
+    }
+
+    /**
+     * Open a PayMongo hosted checkout for the top-up and send the commuter there. The top-up row is written
+     * `pending` and only credits the wallet when the webhook, the return URL or the reconciliation job
+     * confirms the payment.
+     */
+    protected function startGatewayTopup(Wallet $wallet, float $amount, string $method): \Illuminate\Http\RedirectResponse
+    {
+        $userId = (int) $wallet->user_id;
+        $transactionId = 'TOPUP-'.strtoupper(Str::random(12));
+
         try {
-            $updated = $wallet->update([
-                'balance' => $newBalance,
+            $session = $this->paymongo->createCheckoutSession(
+                $amount,
+                'SmartCommute wallet top-up '.$transactionId,
+                route('payment.topup.returned', ['ref' => $transactionId]),
+                route('payment.topup.cancelled', ['ref' => $transactionId]),
+                PayMongoService::channelFor($method),
+                ['transaction_id' => $transactionId, 'user_id' => (string) $userId, 'type' => 'topup']
+            );
+        } catch (RuntimeException $e) {
+            Log::error('PayMongo error.', ['area' => 'Topupprocess', 'exception' => $e->getMessage()]);
+            $this->gateway->recordFailure('A top-up checkout could not be opened: '.$e->getMessage());
+
+            return back()->with('error', 'The payment service is unavailable right now. Please try again.');
+        }
+
+        if (empty($session['checkout_url']) || empty($session['payment_intent_id'])) {
+            $this->gateway->recordFailure('The gateway returned a top-up checkout without a link or payment intent.');
+
+            return back()->with('error', 'The payment service is unavailable right now. Please try again.');
+        }
+
+        try {
+            TopupHistory::create([
+                'user_id' => $userId,
+                'wallet_id' => $wallet->id,
+                'transaction_id' => $transactionId,
+                'amount_added' => $amount,
+                'payment_method' => $method,
+                'status' => TopupHistory::STATUS_PENDING,
+                'paymongo_payment_intent_id' => $session['payment_intent_id'],
+                'paymongo_checkout_session_id' => $session['id'],
             ]);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Database error during topup.', ['area' => 'Topupprocess', 'exception' => $e->getMessage()]);
+            Log::error('Database error while opening gateway top-up.', ['area' => 'Topupprocess', 'exception' => $e->getMessage()]);
 
             return back()->with('error', 'Top-up failed. Please try again later.');
         }
 
-        if ($updated) {
+        // The commuter leaves for PayMongo's hosted checkout.
+        return redirect()->away($session['checkout_url']);
+    }
 
+    /** Gateway off, not production: credit at once, through the normal settlement. */
+    protected function simulatedTopup(Wallet $wallet, float $amount, string $method): \Illuminate\Http\RedirectResponse
+    {
+        try {
             $topup = TopupHistory::create([
-                'user_id' => $userId,
+                'user_id' => $wallet->user_id,
                 'wallet_id' => $wallet->id,
+                'transaction_id' => 'TOPUP-'.strtoupper(Str::random(12)),
                 'amount_added' => $amount,
-                'payment_method' => $request->{'payment-method'},
-                'status' => TopupHistory::STATUS_COMPLETED,
+                'payment_method' => $method,
+                'status' => TopupHistory::STATUS_PENDING,
             ]);
 
-            Notifier::send(Auth::user(), new TopupReceipt($topup, $newBalance));
+            $this->topups->settle($topup);
+        } catch (\Exception $e) {
+            Log::error('Database error during topup.', ['area' => 'Topupprocess', 'exception' => $e->getMessage()]);
 
-            return back()->with('success', 'Successfully topped up!');
+            return back()->with('error', 'Top-up failed. Please try again later.');
         }
 
-        return back()->with('error', 'Topup failed.');
+        return back()->with('success', 'Successfully topped up!');
+    }
+
+    /**
+     * Gateway success return URL for a top-up. Also the reconciliation path for a webhook that never
+     * arrived: while the top-up is pending it asks PayMongo directly.
+     */
+    public function topupReturned(Request $request)
+    {
+        TopupHistory::expireStale();
+        $topup = TopupHistory::where('user_id', Auth::id())
+            ->where('transaction_id', (string) $request->query('ref'))
+            ->first();
+
+        if (! $topup) {
+            return redirect()->route('payment.topup.history')->with('error', 'We could not find that top-up.');
+        }
+
+        if ($topup->status === TopupHistory::STATUS_COMPLETED) {
+            return $this->topupDone($topup);
+        }
+
+        if ($topup->status !== TopupHistory::STATUS_PENDING) {
+            return redirect()->route('payment.topup')->with('error', 'That top-up was not completed. Nothing was charged.');
+        }
+
+        // Throttled like the fare screen: the pending page reloads every few seconds.
+        $lastPolled = (int) $request->session()->get('paymongo_topup_polled_at', 0);
+
+        if ($topup->paymongo_payment_intent_id && (time() - $lastPolled) >= 4) {
+            $request->session()->put('paymongo_topup_polled_at', time());
+
+            try {
+                $intent = $this->paymongo->retrievePaymentIntent($topup->paymongo_payment_intent_id);
+            } catch (RuntimeException $e) {
+                Log::warning('PayMongo lookup failed.', ['area' => 'TopupReturned', 'exception' => $e->getMessage()]);
+                $this->gateway->recordFailure('A top-up could not be looked up: '.$e->getMessage());
+            }
+
+            if (isset($intent)) {
+                if ($this->paymongo->isSettled($intent['status'] ?? null)) {
+                    $this->topups->settle($topup);
+
+                    return $this->topupDone($topup->refresh());
+                }
+
+                if ($this->paymongo->isFailed($intent['status'] ?? null)) {
+                    $this->topups->fail($topup, 'The payment was not completed at the gateway.');
+
+                    return redirect()->route('payment.topup')
+                        ->with('error', 'That top-up could not be completed. Nothing was charged.');
+                }
+            }
+        }
+
+        return view('commuter.topuppending', ['topup' => $topup]);
+    }
+
+    protected function topupDone(TopupHistory $topup): \Illuminate\Http\RedirectResponse
+    {
+        return redirect()->route('payment.topup')
+            ->with('success', 'Top-up successful! ₱'.number_format((float) $topup->amount_added, 2).' was added to your wallet.');
+    }
+
+    /** Gateway cancel return URL for a top-up: the commuter backed out of checkout. */
+    public function topupCancelled(Request $request)
+    {
+        $topup = TopupHistory::where('user_id', Auth::id())
+            ->where('transaction_id', (string) $request->query('ref'))
+            ->where('status', TopupHistory::STATUS_PENDING)
+            ->first();
+
+        if ($topup) {
+            $this->topups->cancel($topup, 'Cancelled at checkout.');
+        }
+
+        return redirect()->route('payment.topup')->with('error', 'Top-up cancelled. Nothing was charged.');
     }
 
     public function topupHistory(Request $request)
     {
+        TopupHistory::expireStale();
         $userId = Auth::user()->id;
         $query = TopupHistory::where('user_id', $userId)->with('user', 'wallet');
 

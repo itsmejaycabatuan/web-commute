@@ -188,7 +188,7 @@ class UserController extends Controller
             $totalFundsAdded = TopupHistory::completed()->sum('amount_added');
             $activeUsersCount = Payment::settled()->distinct()->count('paid_by');
             $recentFares = Payment::settled()->with('user')->latest()->take(5)->get();
-            $recentTopups = TopupHistory::with('user')->latest()->take(5)->get();
+            $recentTopups = TopupHistory::completed()->with('user')->latest()->take(5)->get();
             $revenueByDay = Payment::settled()->where('paid_at', '>=', now()->subDays(7))
                 ->selectRaw('DATE(paid_at) as date, SUM(price) as total')
                 ->groupBy('date')->orderBy('date')->pluck('total', 'date')->toArray();
@@ -236,6 +236,7 @@ class UserController extends Controller
             $coDriver = $driver->coDriver();
             $nextDuty = $coDriver ? $driver->nextDutyDate() : null;
             $dutyBlock = $driver->dutyBlock();
+            $dutySchedule = $driver->dutySchedule();
 
             // ── Violations data ──
             $violationLogs = ViolationLog::with('violationCode')
@@ -274,6 +275,7 @@ class UserController extends Controller
                 'coDriver' => $coDriver,
                 'nextDuty' => $nextDuty,
                 'dutyBlock' => $dutyBlock,
+                'dutySchedule' => $dutySchedule,
                 'total_distance' => $total_distance ?? 0,
                 'violationLogs' => $violationLogs,
                 'totalViolations' => $totalViolations,
@@ -370,7 +372,7 @@ class UserController extends Controller
         // UCN_SC_E025 E3 — a failing query is logged and reported, not a raw 500.
         try {
             $payments = Payment::where('paid_by', $userId)->get();
-            $topups = TopupHistory::where('user_id', $userId)->get();
+            $topups = TopupHistory::completed()->where('user_id', $userId)->get();
             $wallet = Wallet::where('user_id', $userId)->first();
         } catch (QueryException $e) {
             report($e);

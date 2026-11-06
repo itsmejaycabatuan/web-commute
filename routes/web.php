@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\QrCodeController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\RideVerificationController;
 use App\Http\Controllers\DevMarkerController;
+use App\Http\Controllers\DevSwitchController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\DriverManagerController;
 use App\Http\Controllers\DutyRosterController;
@@ -60,6 +61,11 @@ Route::middleware(['auth', 'verified', 'account.active', 'role:admin', 'env.loca
     Route::post('/driver/dev/markers/{marker}/toggle', [DevMarkerController::class, 'toggle'])->name('driver.dev.toggle-marker');
     Route::delete('/driver/dev/markers/{marker}', [DevMarkerController::class, 'remove'])->name('driver.dev.remove-marker');
     Route::delete('/driver/dev/markers', [DevMarkerController::class, 'clear'])->name('driver.dev.clear-markers');
+});
+
+// Local-only test switch for the map's dev panel: any signed-in user, because the commuter is the one paying.
+Route::middleware(['auth', 'verified', 'account.active', 'env.local'])->group(function () {
+    Route::post('/dev/skip-qr', [DevSwitchController::class, 'skipQr'])->name('dev.skip-qr');
 });
 
 Route::post('/track/vehicle/broadcast', [VehicleTrackingController::class, 'broadcastLocation'])->name('vehicle.broadcast');
@@ -166,6 +172,7 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
         Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicles.index');
         Route::post('/vehicles', [VehicleController::class, 'store'])->name('vehicles.store');
         Route::patch('/vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
+        Route::patch('/vehicles/{vehicle}/drivers', [VehicleController::class, 'updateDrivers'])->name('vehicles.drivers.update');
 
         // The desktop side of the phone scan: start, poll, look at the photos, cancel.
         Route::post('/vehicle-scans', [VehicleScanController::class, 'store'])->middleware('throttle:10,1,vscan-start')->name('vehicle-scan.store');
@@ -189,9 +196,15 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
     Route::get('/payment/cancelled', [PaymentController::class, 'cancelled'])->name('payment.cancelled');
     Route::get('/payment/topup', [PaymentController::class, 'topup'])->name('payment.topup');
     Route::post('/payment/topup/process', [PaymentController::class, 'topupProcess'])
-        ->middleware('throttle:5,1')
+        ->middleware('throttle:5,1,topup-process')
         ->name('payment.topup.process');
     Route::get('/payment/topup/history', [PaymentController::class, 'topupHistory'])->name('payment.topup.history');
+    // PayMongo sends the commuter back here after the hosted checkout; the pending screen re-polls the returned URL
+    // every few seconds, so it gets its own throttle bucket (an unnamed one is shared with the other throttled routes).
+    Route::get('/payment/topup/returned', [PaymentController::class, 'topupReturned'])
+        ->middleware('throttle:60,1,topup-returned')
+        ->name('payment.topup.returned');
+    Route::get('/payment/topup/cancelled', [PaymentController::class, 'topupCancelled'])->name('payment.topup.cancelled');
 
     Route::get('/topups', [PaymentController::class, 'showTopupsAdmin'])->name('admin.topups')->middleware('role:admin');
     Route::get('/transactions', [PaymentController::class, 'showTransactions'])->name('faretransactions')->middleware('role:admin');
@@ -202,6 +215,14 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
     Route::post('/settings/logout-others', [SettingsController::class, 'logoutOtherDevices'])->name('settings.logout-others');
     Route::patch('/settings/theme', [UserPreferenceController::class, 'updateTheme'])->name('settings.update.theme');
     Route::patch('/settings/font-size', [UserPreferenceController::class, 'updateFontSize'])->name('settings.update.fontsize');
+
+    // The duty roster (who drives a shared vehicle on which day) is the Maintenance Manager's, and the Driver
+    // Manager and the Admin may use the same page: the drivers' schedules are theirs to oversee too.
+    Route::middleware('role:maintenance_manager|driver_manager|admin')->group(function () {
+        Route::get('/duty-roster', [DutyRosterController::class, 'index'])->name('maintenance-manager.duty-roster');
+        Route::post('/duty-roster/{vehicle}/generate', [DutyRosterController::class, 'generate'])->name('maintenance-manager.duty-roster.generate');
+        Route::put('/duty-roster/{vehicle}', [DutyRosterController::class, 'update'])->name('maintenance-manager.duty-roster.update');
+    });
 
     Route::middleware('role:admin|driver_manager')->group(function () {
         Route::get('/drivers', [DriverApprovalController::class, 'index'])->name('drivers.index');
@@ -272,9 +293,6 @@ Route::middleware(['auth', 'verified', 'account.active'])->group(function () {
     Route::middleware('role:maintenance_manager')->group(function () {
         Route::get('/preventive-maintenance', [MaintenanceManagerController::class, 'preventiveMaintenance'])->name('maintenance-manager.preventive-maintenance');
         Route::post('/preventive-maintenance', [MaintenanceManagerController::class, 'preventiveMaintenanceStore'])->name('maintenance-manager.preventive-maintenance.store');
-        Route::get('/duty-roster', [DutyRosterController::class, 'index'])->name('maintenance-manager.duty-roster');
-        Route::post('/duty-roster/{vehicle}/generate', [DutyRosterController::class, 'generate'])->name('maintenance-manager.duty-roster.generate');
-        Route::put('/duty-roster/{vehicle}', [DutyRosterController::class, 'update'])->name('maintenance-manager.duty-roster.update');
         Route::get('/maintenance-logs', [MaintenanceManagerController::class, 'maintenanceLogs'])->name('maintenance-manager.maintenance-logs');
         Route::get('/maintenance-tasks', [MaintenanceManagerController::class, 'maintenanceTasks'])->name('maintenance-manager.maintenance-tasks');
         Route::post('/maintenance-tasks', [MaintenanceManagerController::class, 'maintenanceTasksStore'])->name('maintenance-manager.maintenance-tasks.store');

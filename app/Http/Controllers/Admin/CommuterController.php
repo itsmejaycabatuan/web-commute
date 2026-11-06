@@ -189,7 +189,7 @@ class CommuterController extends Controller
             // Trip History — every fare this commuter has paid, newest first.
             'trips' => $user->payment()->latest('paid_at')->paginate(10, ['*'], 'trips_page')->withQueryString(),
             // Payment History — wallet top-ups/reloads made by this commuter.
-            'topups' => $user->topupHistories()->latest()->paginate(10, ['*'], 'topups_page')->withQueryString(),
+            'topups' => $user->topupHistories()->completed()->latest()->paginate(10, ['*'], 'topups_page')->withQueryString(),
             'totalToppedUp' => (float) $user->topupHistories()->completed()->sum('amount_added'),
         ]);
     }

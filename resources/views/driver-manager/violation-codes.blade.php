@@ -501,7 +501,7 @@
                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0">
                 <div @click.stop
-                    class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-lg w-full max-h-[90vh] overflow-y-auto"
+                    class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-lg w-full max-h-[calc(90vh/var(--sc-zoom,1))] overflow-y-auto"
                     x-show="showModal" x-transition:enter="transition ease-out duration-200"
                     x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                     x-transition:leave="transition ease-in duration-150"
@@ -650,7 +650,7 @@
                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
                 x-transition:leave-end="opacity-0">
                 <div @click.stop class="glass-panel rounded-[2rem] max-w-5xl w-full overflow-hidden flex flex-col"
-                    style="max-height: 90vh;">
+                    style="max-height: calc(90vh / var(--sc-zoom, 1));">
                     <div class="p-6 sm:p-8 pb-4 shrink-0">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">

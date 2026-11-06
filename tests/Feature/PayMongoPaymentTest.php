@@ -230,7 +230,7 @@ class PayMongoPaymentTest extends TestCase
             $body = json_decode($request->body(), true);
 
             return str_contains($request->url(), '/checkout_sessions')
-                && ($body['data']['attributes']['payment_method_types'] ?? null) === ['maya'];
+                && ($body['data']['attributes']['payment_method_types'] ?? null) === ['paymaya'];
         });
     }
 

@@ -45,6 +45,12 @@
 1. Despite being authenticated, the related `Driver` record is absent (e.g., manually deleted).
 2. The controller methods (`timekeeping`, `violations`, `updateStatus`) return an error view or flash *“Driver profile not found.”* and stop further processing.
 
+**A5 – Driver on a shared vehicle views their schedule (dashboard)**
+1. A driver who shares a vehicle with a co-driver opens the **Dashboard**.
+2. System shows a **My Schedule** card built from the duty roster the Maintenance Manager, Driver Manager or Admin created (UCN_SC_E015 A6): the next **14 days** from today, a week per row, each day marked **yours** (green), **the co-driver's** (grey, named in the legend) or **not scheduled** (dashed). Today is outlined. Beneath it: *"You drive N of the next 14 days on PLATE. You can only clock in on your own days."*
+3. If the vehicle is shared but **no day in that window is scheduled**, the card instead says *"No roster set yet"* and to contact the Maintenance Manager — the driver cannot clock in until a day is given to them.
+4. A driver with **no vehicle**, or a vehicle **to themselves**, has no roster and no schedule card (they may drive any day). The card is read-only: the driver cannot change the roster.
+
 ---
 
 ## Postconditions
@@ -52,6 +58,7 @@
 - For **Timekeeping** view: the driver’s weekly time‑in/time‑out, hours, overtime, and daily status are correctly displayed; week navigation updates the shown week.
 - For **Violations** view: the driver’s violation logs are listed with accurate totals and details; summary cards reflect counts and sums.
 - For **Status update**: the driver’s `status` column in the `drivers` table is set to `active` or `inactive`; a success message is shown; subsequent checks (e.g., clock‑in/out) respect the new status.
+- For the **schedule card**: a shared-vehicle driver sees exactly the days the roster gives them, from today for 14 days, and the same roster from the co-driver's side is the mirror image; nothing is written.
 - No side‑effects on other tables (e.g., `TimeKeeping` or `ViolationLog` are read‑only in these flows).
 
 ---
@@ -93,6 +100,7 @@ Any other unhandled exception results in a 500 error page (or the Laravel defaul
 |---|---|
 | Routes | `routes/web.php` — `GET /timekeeping` (`driver.timekeeping`), `GET /violations` (`driver.violations`), `POST /status` (`driver.status.update`) (all inside `role:driver` middleware group) |
 | Controller | `app/Http/Controllers/DriverController.php::timekeeping()`, `violations()`, `updateStatus()` |
-| Views | `resources/views/driver/time-keeping.blade.php`, `resources/views/driver/violations.blade.php` |
-| Models | `App\Models\TimeKeeping`, `App\Models\ViolationLog`, `App\Models\Driver` |
+| Views | `resources/views/driver/time-keeping.blade.php`, `resources/views/driver/violations.blade.php`, `resources/views/driver/dashboard.blade.php` (the *My Schedule* card, `#duty-schedule`) |
+| Models | `App\Models\TimeKeeping`, `App\Models\ViolationLog`, `App\Models\Driver` (`dutySchedule()`), `App\Models\VehicleDutyDay` |
+| Tests (schedule card) | `tests/Feature/DutyRosterTest.php` — `test_a_driver_on_a_shared_vehicle_sees_their_schedule_on_the_dashboard` and three siblings |
 | Related UCNs | UCN_SC_E009 (Clock In), UCN_SC_E010 (Clock Out), UCN_SC_E012 (Manage Drivers – approval), UCN_SC_E014 (Manage Violations – admin view) |

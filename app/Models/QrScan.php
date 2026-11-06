@@ -51,6 +51,20 @@ class QrScan extends Model
         return $this->belongsTo(QrCode::class);
     }
 
+    /**
+     * Does a fare need a fresh scan right now? The `qr.required` rule, unless the "Skip the QR code"
+     * switch of the dev map checks is on. That switch lives in the session and is honoured on a local
+     * install only, so it can never loosen the rule anywhere else.
+     */
+    public static function required(): bool
+    {
+        if (! config('qr.required')) {
+            return false;
+        }
+
+        return ! (app()->environment('local') && session('dev_skip_qr') === true);
+    }
+
     /** The user's unused scan that is still within its validity window, if any. */
     public static function currentFor(int $userId): ?self
     {

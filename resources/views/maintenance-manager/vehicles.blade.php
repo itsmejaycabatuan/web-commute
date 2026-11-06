@@ -567,7 +567,9 @@
                                                 x-text="v.plate_number"></span>
                                         </td>
                                         <td class="px-4 sm:px-6 py-3.5">
-                                            <div class="flex items-center gap-2">
+                                            <button type="button" @click="openDriversModal(v)"
+                                                class="group/drv flex items-center gap-2 -mx-2 px-2 py-1 rounded-lg hover:bg-purple-500/10 transition-colors text-left"
+                                                :title="v.driver_name ? 'Change drivers of ' + v.plate_number : 'Assign a driver to ' + v.plate_number">
                                                 <div class="w-6 h-6 rounded-full bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center shrink-0"
                                                     :class="v.driver_name ? 'bg-purple-500/10 border-purple-500/15' : ''">
                                                     <i class="fa-solid fa-user text-[7px]"
@@ -579,7 +581,9 @@
                                                     :class="v.driver_name ? 'text-gray-700 dark:text-[#ccc]' :
                                                         'text-gray-400 dark:text-[#444]'"
                                                     x-text="v.driver_name || 'Unassigned'"></span>
-                                            </div>
+                                                <i class="fa-solid text-[8px] text-gray-300 dark:text-[#444] group-hover/drv:text-purple-500 transition-colors"
+                                                    :class="v.driver_name ? 'fa-pen' : 'fa-plus'"></i>
+                                            </button>
                                         </td>
                                         <td class="px-4 sm:px-6 py-3.5">
                                             <span
@@ -660,7 +664,7 @@
                     <!-- Table Footer -->
                     <div
                         class="px-4 sm:px-6 py-3 border-t border-gray-200 dark:border-[#1e1e1e] bg-gray-50 dark:bg-[#111] flex flex-col sm:flex-row justify-between gap-2">
-                        <div class="flex items-center gap-4">
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
                             <div class="flex items-center gap-1.5">
                                 <div class="w-2 h-2 rounded-sm bg-emerald-500"></div><span
                                     class="text-[7px] font-bold text-gray-400 dark:text-[#444] uppercase">Active
@@ -704,7 +708,7 @@
                         x-transition:leave="transition ease-in duration-200"
                         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                         x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-                        class="relative w-full max-w-lg glass-panel rounded-[2rem] flex flex-col max-h-[90vh] overflow-hidden">
+                        class="relative w-full max-w-lg glass-panel rounded-[2rem] flex flex-col max-h-[calc(90vh/var(--sc-zoom,1))] overflow-hidden">
                         <!-- Header -->
                         <div
                             class="flex items-center justify-between px-6 sm:px-8 pt-6 sm:pt-7 pb-5 border-b border-gray-200 dark:border-[#1e1e1e] shrink-0">
@@ -964,7 +968,7 @@
                         x-transition:leave="transition ease-in duration-200"
                         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                         x-transition:leave-end="opacity-0 scale-95 translate-y-3"
-                        class="relative w-full max-w-xl glass-panel rounded-[2rem] flex flex-col max-h-[92vh] overflow-hidden">
+                        class="relative w-full max-w-xl glass-panel rounded-[2rem] flex flex-col max-h-[calc(92vh/var(--sc-zoom,1))] overflow-hidden">
 
                         <!-- ── Header ── -->
                         <div
@@ -1062,7 +1066,7 @@
                                     </div>
 
                                     <div class="mt-3 flex flex-wrap gap-2" x-show="(scan?.pages || []).length">
-                                        <template x-for="(url, n) in scan.pages" :key="url">
+                                        <template x-for="(url, n) in (scan?.pages || [])" :key="url">
                                             <a :href="url" target="_blank" rel="noopener" class="block w-20 h-14 rounded-lg overflow-hidden border border-gray-200 dark:border-[#333] bg-gray-100"
                                                 title="Open the photo to compare">
                                                 <img :src="url" class="w-full h-full object-cover" alt="Photo of the paper">
@@ -1094,7 +1098,7 @@
                                     </ul>
 
                                     <ul class="mt-3 space-y-1" x-show="(scan?.warnings || []).length">
-                                        <template x-for="w in scan.warnings" :key="w">
+                                        <template x-for="w in (scan?.warnings || [])" :key="w">
                                             <li class="text-[9px] font-semibold text-amber-600 dark:text-amber-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i><span x-text="w"></span></li>
                                         </template>
                                     </ul>
@@ -1344,6 +1348,85 @@
                 </div>
             </template>
 
+            <!-- ══════════ QUICK DRIVER ASSIGNMENT MODAL ══════════ -->
+            <template x-teleport="body">
+                <div x-show="showDriversModal" x-cloak
+                    class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
+                    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                    @keydown.escape.window="showDriversModal = false" style="display: none;">
+                    <div class="absolute inset-0" @click="showDriversModal = false"></div>
+                    <div x-show="showDriversModal" @click.stop x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-200"
+                        x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                        class="relative w-full max-w-md glass-panel rounded-[2rem] overflow-hidden">
+
+                        <div class="px-6 sm:px-8 pt-7 pb-4 flex items-start justify-between gap-3">
+                            <div>
+                                <h3 class="text-base font-black tracking-tight text-gray-900 dark:text-white">Drivers</h3>
+                                <p class="text-[10px] text-gray-500 dark:text-[#555] mt-0.5">
+                                    <span class="font-bold font-mono text-gray-700 dark:text-[#ccc]" x-text="drvVehicle?.plate_number"></span>
+                                    <span x-text="[drvVehicle?.brand, drvVehicle?.model].filter(Boolean).join(' ')"></span>
+                                </p>
+                            </div>
+                            <button type="button" @click="showDriversModal = false" aria-label="Close"
+                                class="w-8 h-8 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center justify-center">
+                                <i class="fa-solid fa-xmark text-xs"></i>
+                            </button>
+                        </div>
+
+                        <div class="px-6 sm:px-8 pb-2 space-y-3">
+                            <p x-show="drvVehicle && drvVehicle.status !== 'active'"
+                                class="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                                This vehicle is <span x-text="drvVehicle?.status"></span>. A driver can only be assigned to an active vehicle, but you can remove the ones on it.
+                            </p>
+
+                            <div>
+                                <label class="block text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#555] mb-1.5">Driver 1</label>
+                                <select x-model="drvForm.driver_id" aria-label="First driver"
+                                    class="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] font-semibold text-gray-700 dark:text-[#ccc] focus:outline-none focus:border-purple-500">
+                                    <option value="">— No driver —</option>
+                                    <template x-for="d in drvOptions(1)" :key="d.id">
+                                        <option :value="String(d.id)" :selected="String(d.id) === drvForm.driver_id" x-text="d.name + (d.driver_code ? ' (' + d.driver_code + ')' : '')"></option>
+                                    </template>
+                                </select>
+                                <p x-show="drvErrors.driver_id" x-text="[].concat(drvErrors.driver_id || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
+                            </div>
+
+                            <div>
+                                <label class="block text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#555] mb-1.5">Driver 2 (optional, shares the vehicle)</label>
+                                <select x-model="drvForm.second_driver_id" :disabled="!drvForm.driver_id" aria-label="Second driver"
+                                    class="w-full px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] font-semibold text-gray-700 dark:text-[#ccc] focus:outline-none focus:border-purple-500 disabled:opacity-50">
+                                    <option value="">— No second driver —</option>
+                                    <template x-for="d in drvOptions(2)" :key="d.id">
+                                        <option :value="String(d.id)" :selected="String(d.id) === drvForm.second_driver_id" x-text="d.name + (d.driver_code ? ' (' + d.driver_code + ')' : '')"></option>
+                                    </template>
+                                </select>
+                                <p x-show="drvErrors.second_driver_id" x-text="[].concat(drvErrors.second_driver_id || [])[0]" class="mt-1.5 text-[9px] font-semibold text-rose-500 dark:text-rose-400"></p>
+                            </div>
+
+                            <p class="text-[9px] text-gray-400 dark:text-[#444] leading-relaxed">
+                                Only approved drivers who are not suspended and not on another vehicle are listed. Two drivers take turns on the Duty Roster.
+                            </p>
+                        </div>
+
+                        <div class="px-6 sm:px-8 py-5 flex items-center gap-2.5">
+                            <button type="button" @click="showDriversModal = false"
+                                class="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-[#555] hover:text-gray-900 dark:hover:text-white transition-all text-center">
+                                Cancel
+                            </button>
+                            <button type="button" @click="saveDrivers()" :disabled="drvSubmitting"
+                                class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-purple-600/20 transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i x-show="drvSubmitting" class="fa-solid fa-spinner fa-spin text-[9px]"></i>
+                                <span x-text="drvSubmitting ? 'Saving...' : 'Save'"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
             <!-- ══════════ DELETE VEHICLE MODAL ══════════ -->
             <template x-teleport="body">
                 <div x-show="showDeleteModal" x-cloak
@@ -1453,6 +1536,13 @@
                 scanFlags: {},         // field => { value, status: ok|check, alternatives }
                 scanFieldLabels: [['plate_number', 'Plate number'], ['vin', 'Chassis / VIN'], ['brand', 'Make'], ['model', 'Series / model'], ['year', 'Year model'], ['fuel_type', 'Fuel']],
 
+                // ── Quick driver assignment ──
+                showDriversModal: false,
+                drvVehicle: null,
+                drvForm: { driver_id: '', second_driver_id: '' },
+                drvErrors: {},
+                drvSubmitting: false,
+
                 // ── Delete Modal ──
                 showDeleteModal: false,
                 deleteId: null,
@@ -1470,10 +1560,25 @@
                 // Drivers who can still be assigned: not already holding another vehicle
                 // (the vehicle being edited keeps its own driver in the list).
                 get availableDrivers() {
+                    return this.freeDriversFor(this.editId);
+                },
+
+                freeDriversFor(vehicleId) {
                     const taken = new Set(this.vehicles
-                        .filter(v => String(v.id) !== String(this.editId))
+                        .filter(v => String(v.id) !== String(vehicleId))
                         .flatMap(v => (v.driver_ids || []).map(String)));
                     return this.drivers.filter(d => !taken.has(String(d.id)));
+                },
+
+                // Options for one slot of the quick dialog: free drivers, minus the one picked in the other slot.
+                // A vehicle that is out of service only lists the drivers it already has (they can be removed).
+                drvOptions(slot) {
+                    if (!this.drvVehicle) return [];
+                    const other = String(slot === 1 ? this.drvForm.second_driver_id : this.drvForm.driver_id);
+                    const own = (this.drvVehicle.driver_ids || []).map(String);
+                    return this.freeDriversFor(this.drvVehicle.id)
+                        .filter(d => this.drvVehicle.status === 'active' || own.includes(String(d.id)))
+                        .filter(d => !other || String(d.id) !== other);
                 },
 
                 // The two selects: neither lists the driver already chosen in the other.
@@ -1745,6 +1850,52 @@
                     };
                     this.editErrors = {};
                     this.showEditModal = true;
+                },
+
+                openDriversModal(v) {
+                    this.drvVehicle = v;
+                    this.drvForm = {
+                        driver_id: v.driver_id ? String(v.driver_id) : '',
+                        second_driver_id: v.second_driver_id ? String(v.second_driver_id) : '',
+                    };
+                    this.drvErrors = {};
+                    this.showDriversModal = true;
+                },
+
+                async saveDrivers() {
+                    this.drvErrors = {};
+                    this.drvSubmitting = true;
+
+                    try {
+                        const url = '{{ route('vehicles.drivers.update', ':id', false) }}'.replace(':id', this.drvVehicle.id);
+                        const response = await fetch(url, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify(this.drvForm),
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            if (data.errors) this.drvErrors = data.errors;
+                            this.showToast(data.message || 'Something went wrong.', 'error');
+                            return;
+                        }
+
+                        const idx = this.vehicles.findIndex(v => v.id === this.drvVehicle.id);
+                        if (idx !== -1 && data.vehicle) this.vehicles[idx] = data.vehicle;
+
+                        this.showDriversModal = false;
+                        this.showToast(data.message || 'Drivers updated.', 'success');
+                    } catch (e) {
+                        this.showToast('Network error. Please try again.', 'error');
+                    } finally {
+                        this.drvSubmitting = false;
+                    }
                 },
 
                 openDeleteModal(id, plateNumber) {

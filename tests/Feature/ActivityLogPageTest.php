@@ -66,6 +66,30 @@ class ActivityLogPageTest extends TestCase
             ->assertSee(route('activity-log.index'), false); // sidebar link
     }
 
+    public function test_the_category_filter_lists_every_category_alphabetically()
+    {
+        $response = $this->actingAs($this->userWithRole('admin'))->get(route('activity-log.index'))->assertOk();
+
+        $labels = array_values($response->viewData('categories'));
+        $sorted = $labels;
+        sort($sorted, SORT_NATURAL | SORT_FLAG_CASE);
+
+        $this->assertSame($sorted, $labels);
+        $this->assertCount(count(\App\Support\AuditCatalog::CATEGORIES), $labels, 'none dropped');
+        $this->assertSame('Accounts', $labels[0]);
+
+        // The labels appear in the dropdown in that order, after "All categories" (and the values still filter).
+        $html = $response->getContent();
+        $select = substr($html, strpos($html, 'All categories'));
+        $last = 0;
+        foreach ($labels as $label) {
+            $at = strpos($select, htmlspecialchars($label, ENT_QUOTES, 'UTF-8', false) ?: $label, $last);
+            $this->assertNotFalse($at, "{$label} is in the dropdown");
+            $last = $at;
+        }
+        $this->actingAs($this->userWithRole('admin'))->get(route('activity-log.index', ['category' => 'fare']))->assertOk();
+    }
+
     public function test_other_roles_do_not_get_the_menu_entry()
     {
         $this->actingAs($this->userWithRole('driver_manager'))

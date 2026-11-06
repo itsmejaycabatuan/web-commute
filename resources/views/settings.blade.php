@@ -118,13 +118,13 @@
             </div>
 
             <!-- ══════════ TABS ══════════ -->
-            <div class="flex items-center gap-1 mb-6 p-1 bg-gray-100 dark:bg-[#111] rounded-xl w-fit">
+            <div class="flex items-center gap-1 mb-6 p-1 bg-gray-100 dark:bg-[#111] rounded-xl w-fit max-w-full overflow-x-auto">
                 <button @click="activeTab = 'account'"
                     :class="activeTab === 'account'
                         ?
                         'bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white shadow-sm' :
                         'text-gray-500 dark:text-[#555] hover:text-gray-700 dark:hover:text-[#888]'"
-                    class="flex items-center gap-2 px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition">
+                    class="flex shrink-0 items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition">
                     <i class="fa-solid fa-user text-[8px]"></i>
                     <span>Account</span>
                 </button>
@@ -133,7 +133,7 @@
                         ?
                         'bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white shadow-sm' :
                         'text-gray-500 dark:text-[#555] hover:text-gray-700 dark:hover:text-[#888]'"
-                    class="flex items-center gap-2 px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition">
+                    class="flex shrink-0 items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition">
                     <i class="fa-solid fa-shield-halved text-[8px]"></i>
                     <span>Security</span>
                 </button>
@@ -142,7 +142,7 @@
                         ?
                         'bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white shadow-sm' :
                         'text-gray-500 dark:text-[#555] hover:text-gray-700 dark:hover:text-[#888]'"
-                    class="flex items-center gap-2 px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition">
+                    class="flex shrink-0 items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition">
                     <i class="fa-solid fa-sliders text-[8px]"></i>
                     <span>Prefs</span>
                 </button>
@@ -404,6 +404,7 @@
                                     <p class="text-[11px] font-bold text-gray-900 dark:text-white">Font Size</p>
                                     <p class="text-[8px] text-gray-400 dark:text-[#444]">Adjust text for readability
                                     </p>
+                                    <p id="font-scale-note" hidden class="text-[8px] text-amber-600 dark:text-amber-400 mt-0.5"></p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-0.5 p-0.5 rounded-lg bg-gray-100 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]"
@@ -487,12 +488,7 @@
         })();
 
         // ═══ FONT SIZE ═══
-        var fontZoomLevels = {
-            small: 0.875,
-            medium: 1,
-            large: 1.125,
-            xlarge: 1.25
-        };
+        // (The zoom itself comes from partials/font-scale; these map the choice to what is stored in the database.)
         var intToLabel = {
             10: 'small',
             11: 'medium',
@@ -513,8 +509,8 @@
             });
             btn.classList.add('active');
 
-            // Apply zoom
-            document.documentElement.style.zoom = fontZoomLevels[size] || 1;
+            // Apply zoom (limited on narrow screens so the layout is never squeezed: partials/font-scale)
+            scApplyFontZoom(size);
             localStorage.setItem('font-size', size);
 
             // Update Alpine store if available
@@ -534,7 +530,7 @@
                 })
             }).catch(function() {
                 var reverted = localStorage.getItem('font-size') || 'medium';
-                document.documentElement.style.zoom = fontZoomLevels[reverted] || 1;
+                scApplyFontZoom(reverted);
                 document.querySelectorAll('.font-size-btn').forEach(function(b) {
                     b.classList.remove('active');
                 });
@@ -544,6 +540,16 @@
                 }
             });
         }
+
+        // When the chosen size had to be limited for this screen's width, say so (see partials/font-scale).
+        window.addEventListener('sc:fontzoom', function(e) {
+            var el = document.getElementById('font-scale-note');
+            if (!el) return;
+            var d = e.detail;
+            el.hidden = !d.limited;
+            el.textContent = d.limited ? 'Shown at ' + Math.round(d.applied * 100) + '% on this screen so the page keeps fitting. The full size applies on a wider screen.' : '';
+        });
+        if (window.scApplyFontZoom) { scApplyFontZoom(); }
 
         // Initialize font size buttons on page load
         (function() {

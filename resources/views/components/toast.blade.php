@@ -52,7 +52,7 @@
         gap: .5rem;
         align-items: flex-end;
         pointer-events: none;
-        max-width: calc(100vw - 2rem);
+        max-width: calc((100vw / var(--sc-zoom, 1)) - 2rem);
     }
 
     @media (max-width: 767px) {

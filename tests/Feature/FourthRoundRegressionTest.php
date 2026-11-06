@@ -435,8 +435,9 @@ class FourthRoundRegressionTest extends TestCase
     {
         $html = $this->actingAs($this->userWithRole('admin'))->get(route('dashboard'))->assertOk()->getContent();
 
-        // Expanded on desktop widths; tablets (< 1100px) start on the slim icon rail so the page keeps its room.
-        $this->assertMatchesRegularExpression("/Alpine\.store\('sidebar', \{[^}]*?open: window\.innerWidth >= 1100/s", $html);
+        // Expanded on desktop widths; tablets (< 1100px) start on the slim icon rail so the page keeps its room. The width
+        // is the EFFECTIVE one (screen ÷ text zoom): at 125 % a 1366px screen has 1093px to lay out in (FontScaleTest).
+        $this->assertMatchesRegularExpression("/Alpine\.store\('sidebar', \{[^}]*?open: \(window\.innerWidth \/ \(parseFloat\(document\.documentElement\.style\.zoom\) \|\| 1\)\) >= 1100/s", $html);
     }
 
     // ───────────── verification email ─────────────

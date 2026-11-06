@@ -406,4 +406,24 @@ class SecondRoundRegressionTest extends TestCase
         $this->assertStringNotContainsString('is-dark', $css);
         $this->assertStringContainsString('.app-toast--success', $css);
     }
+
+    public function test_the_show_password_button_does_not_move_when_pressed()
+    {
+        // theme.css gives every pressed button scale(.98), which replaced the eye's translateY(-50%) centring
+        // and made it drop half its height on each click. It is centred without a transform now and ignores :active.
+        $shell = file_get_contents(resource_path('views/components/auth/shell.blade.php'));
+        preg_match('/\.au-icon-field \.au-eye \{(.*?)\}/s', $shell, $rule);
+
+        $this->assertNotEmpty($rule, 'the .au-eye rule exists');
+        $this->assertStringNotContainsString('transform', $rule[1], 'the eye is not centred with a transform');
+        $this->assertStringContainsString('margin: auto 0', $rule[1]);
+        $this->assertMatchesRegularExpression('/\.au-icon-field \.au-eye:active \{\s*transform: none;/', $shell);
+
+        // Every auth page that has the button gets the rule from the shared shell.
+        foreach (['/login', '/register', '/register/driver'] as $url) {
+            $html = $this->get($url)->assertOk()->getContent();
+            $this->assertStringContainsString('class="au-eye"', $html, "{$url} has the show password button");
+            $this->assertStringContainsString('.au-icon-field .au-eye:active', $html, "{$url} carries the no-move rule");
+        }
+    }
 }

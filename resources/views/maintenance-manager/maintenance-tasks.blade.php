@@ -243,42 +243,42 @@
 
         <!-- ══════════ STAT CARDS ══════════ -->
         <div class="grid grid-cols-3 gap-3 sm:gap-4 mb-5 sm:mb-6">
-            <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-blue-500">
-                <div class="flex items-center gap-2 mb-2 sm:mb-3">
+            <div class="glass-card min-w-0 p-3 sm:p-5 rounded-[1.25rem] border-l-2 border-l-blue-500">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 sm:mb-3">
                     <div class="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center"><i
                             class="fa-solid fa-list-check text-[8px] text-blue-500 dark:text-blue-400"></i></div>
                     <span
                         class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Total
                         Tasks</span>
                 </div>
-                <div class="flex items-baseline gap-1.5">
+                <div class="flex flex-wrap items-baseline gap-x-1.5">
                     <span
                         class="text-xl sm:text-2xl font-black tracking-tight text-gray-900 dark:text-white">{{ $totalTasks }}</span>
                     <span
                         class="text-xs font-bold text-gray-400 dark:text-[#555]">{{ $totalTasks === 1 ? 'item' : 'items' }}</span>
                 </div>
             </div>
-            <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-emerald-500">
-                <div class="flex items-center gap-2 mb-2 sm:mb-3">
+            <div class="glass-card min-w-0 p-3 sm:p-5 rounded-[1.25rem] border-l-2 border-l-emerald-500">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 sm:mb-3">
                     <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center"><i
                             class="fa-solid fa-road text-[8px] text-emerald-500 dark:text-emerald-400"></i></div>
                     <span
                         class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Km-Based</span>
                 </div>
-                <div class="flex items-baseline gap-1.5">
+                <div class="flex flex-wrap items-baseline gap-x-1.5">
                     <span
                         class="text-xl sm:text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">{{ $withMiles }}</span>
                     <span class="text-xs font-bold text-gray-400 dark:text-[#555]">tasks</span>
                 </div>
             </div>
-            <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-purple-500">
-                <div class="flex items-center gap-2 mb-2 sm:mb-3">
+            <div class="glass-card min-w-0 p-3 sm:p-5 rounded-[1.25rem] border-l-2 border-l-purple-500">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 sm:mb-3">
                     <div class="w-6 h-6 rounded-md bg-purple-500/10 flex items-center justify-center"><i
                             class="fa-solid fa-calendar text-[8px] text-purple-500 dark:text-purple-400"></i></div>
                     <span
                         class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Time-Based</span>
                 </div>
-                <div class="flex items-baseline gap-1.5">
+                <div class="flex flex-wrap items-baseline gap-x-1.5">
                     <span
                         class="text-xl sm:text-2xl font-black tracking-tight text-purple-600 dark:text-purple-400">{{ $withMonths }}</span>
                     <span class="text-xs font-bold text-gray-400 dark:text-[#555]">tasks</span>
@@ -428,7 +428,7 @@
                 x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
                 x-transition:leave-end="opacity-0 scale-95" @click.stop
-                class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-lg w-full max-h-[calc(90vh/var(--sc-zoom,1))] overflow-y-auto">
 
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center gap-3">

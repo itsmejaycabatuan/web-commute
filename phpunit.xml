@@ -27,6 +27,9 @@
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="REQUIRE_QR_SCAN" value="false"/>
+        <!-- The dev .env arms the PayMongo sandbox. Tests must never reach it: the ones that need the gateway
+             enable it themselves with Http::fake(). -->
+        <env name="PAYMONGO_ENABLED" value="false"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
         <!-- <env name="DB_CONNECTION" value="sqlite"/> -->

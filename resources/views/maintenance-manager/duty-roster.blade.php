@@ -194,7 +194,7 @@
                     <div class="w-11 h-11 bg-amber-600 rounded-xl flex items-center justify-center shrink-0"><i
                             class="fa-solid fa-wrench text-sm text-white"></i></div>
                     <div class="min-w-0">
-                        <h2 class="text-sm font-bold text-gray-900 dark:text-white truncate">Maintenance Manager</h2>
+                        <h2 class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ Auth::user()->hasRole('admin') ? 'Administrator' : (Auth::user()->hasRole('driver_manager') ? 'Driver Manager' : 'Maintenance Manager') }}</h2>
                         <p class="text-[10px] text-gray-500 dark:text-[#555] truncate">{{ Auth::user()->email }}</p>
                     </div>
                 </div>
@@ -313,8 +313,8 @@
                 class="glass-card rounded-[1.25rem] sm:rounded-[1.5rem] overflow-hidden">
                 @csrf
                 @method('PUT')
-                <div class="p-4 sm:p-5 flex items-center justify-between gap-3 border-b border-gray-200 dark:border-[#1e1e1e]">
-                    <div class="flex items-center gap-2">
+                <div class="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 dark:border-[#1e1e1e]">
+                    <div class="flex flex-wrap items-center gap-2">
                         <a href="{{ route('maintenance-manager.duty-roster', ['vehicle_id' => $vehicle->id, 'from' => $prevFrom]) }}"
                             class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center text-gray-500 dark:text-[#666] hover:text-gray-900 dark:hover:text-white transition"
                             aria-label="Previous 4 weeks"><i class="fa-solid fa-chevron-left text-[9px]"></i></a>

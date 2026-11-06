@@ -128,4 +128,19 @@ class FareControllerTest extends TestCase
             ->assertOk()
             ->assertDontSee('Discounted');
     }
+
+    public function test_the_save_bar_floats_outside_main_and_still_submits_the_rates_form()
+    {
+        $admin = User::factory()->create()->assignRole('admin');
+        FareRate::factory()->create(['regular' => 20]);
+
+        $html = $this->actingAs($admin)->get(route('fares.index'))->assertOk()->getContent();
+
+        // <main> keeps a transform from its sidebar animation, which would turn `fixed` back into "scrolls
+        // with the page", so the bar must come after it, tied to the form by the button's form attribute.
+        $this->assertStringContainsString('id="fares-bulk-form"', $html);
+        $this->assertMatchesRegularExpression('/<button type="submit" form="fares-bulk-form"/', $html);
+        $this->assertGreaterThan(strpos($html, '</main>'), strpos($html, 'id="fare-save-bar"'), 'the save bar is outside <main>');
+        $this->assertMatchesRegularExpression('/id="fare-save-bar"[^>]*class="fixed /s', $html);
+    }
 }

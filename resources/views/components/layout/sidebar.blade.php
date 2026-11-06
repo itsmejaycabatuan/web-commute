@@ -530,6 +530,60 @@
         font-size: 20px;
     }
 
+    /* Short screens (partials/font-scale sets html.sc-short when the usable height, i.e. screen height ÷ text zoom,
+       is under ~780px): the sidebar's footer is a fixed size, so tighten the rows rather than letting the nav
+       list shrink to a few cut-off items at large text sizes. */
+    html.sc-short .sc-nav {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    html.sc-short .sc-brand {
+        margin-bottom: 8px;
+    }
+
+    html.sc-short .sc-section {
+        margin: 10px 0 4px;
+    }
+
+    html.sc-short .sc-nav-link {
+        min-height: 38px;
+        margin-bottom: 1px;
+    }
+
+    html.sc-short .sc-nav-ico {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        font-size: 12px;
+    }
+
+    html.sc-short .sc-nav .sc-nav-foot {
+        margin-top: 6px;
+        padding-top: 8px;
+    }
+
+    html.sc-short .sc-user {
+        padding: 6px;
+        margin-bottom: 4px;
+    }
+
+    html.sc-short .sc-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+    }
+
+    html.sc-short .sc-act {
+        min-height: 36px;
+    }
+
+    html.sc-short .sc-act-ico {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
     /* Mobile drawer (same dark panel, full height) */
     .sc-drawer {
         background: var(--n-bg);
@@ -594,7 +648,7 @@
 
     <!-- ══════════ MOBILE DRAWER ══════════ -->
     <div id="mobile-drawer"
-        class="sc-drawer fixed top-0 left-0 h-full w-80 max-w-[86vw] z-[65] transform -translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col md:hidden p-3">
+        class="sc-drawer fixed top-0 left-0 h-full w-80 max-w-[calc(86vw/var(--sc-zoom,1))] z-[65] transform -translate-x-full transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] flex flex-col md:hidden p-3">
 
         <div class="sc-brand" style="margin-bottom: 10px;">
             <span class="sc-logo"><i class="fa-solid fa-bus"></i></span>
@@ -758,5 +812,23 @@
         document.querySelectorAll('#mobile-drawer a').forEach(l =>
             l.addEventListener('click', () => setTimeout(closeMobileDrawer, 50))
         );
+
+        // On short screens / large text the nav list scrolls; make sure the page you are on is not left below the fold.
+        // ('nearest' only moves the list when the item is out of view; the sidebar is fixed so the page never moves.)
+        // Row heights keep changing while the page settles (runtime styles, web fonts, text zoom), so it re-runs then.
+        function revealActiveNavItem() {
+            document.querySelectorAll('.sc-nav-scroll').forEach(box => {
+                const active = box.querySelector('.sc-nav-link.is-active');
+                if (active && box.scrollHeight > box.clientHeight) {
+                    active.scrollIntoView({ block: 'nearest' });
+                }
+            });
+        }
+        window.addEventListener('load', () => {
+            revealActiveNavItem();
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(revealActiveNavItem);
+            setTimeout(revealActiveNavItem, 400);
+        });
+        window.addEventListener('sc:fontzoom', () => requestAnimationFrame(revealActiveNavItem));
     </script>
 @endonce

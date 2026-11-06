@@ -16,6 +16,12 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $amount_added
  * @property string $payment_method
  * @property string $status
+ * @property string|null $transaction_id
+ * @property string|null $paymongo_payment_intent_id
+ * @property string|null $paymongo_checkout_session_id
+ * @property \Illuminate\Support\Carbon|null $paid_at
+ * @property \Illuminate\Support\Carbon|null $failed_at
+ * @property string|null $failure_message
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\User $user
@@ -43,7 +49,21 @@ class TopupHistory extends Model
         'amount_added',
         'payment_method',
         'status',
+        'transaction_id',
+        'paymongo_payment_intent_id',
+        'paymongo_checkout_session_id',
+        'paid_at',
+        'failed_at',
+        'failure_message',
     ];
+
+    protected $casts = [
+        'paid_at' => 'datetime',
+        'failed_at' => 'datetime',
+    ];
+
+    /** A gateway top-up still pending after this many hours is closed as expired (nothing was charged). */
+    public const PENDING_TTL_HOURS = 12;
 
     /** Top-up lifecycle states. Only a completed top-up adds money to a wallet. */
     public const STATUS_COMPLETED = 'completed';
@@ -63,6 +83,34 @@ class TopupHistory extends Model
         return $query->where('status', self::STATUS_COMPLETED);
     }
 
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /**
+     * Close every top-up that has been pending for longer than the limit: the gateway's checkout session is
+     * long dead, so it must not sit in the ledger as "pending" forever. They become `cancelled`; the wallet
+     * was never credited.
+     */
+    public static function expireStale(): int
+    {
+        $stale = static::where('status', self::STATUS_PENDING)
+            ->where('created_at', '<', now()->subHours(self::PENDING_TTL_HOURS))
+            ->get();
+
+        // One by one (not a bulk update) so every closure reaches the audit trail.
+        foreach ($stale as $topup) {
+            $topup->update([
+                'status' => self::STATUS_CANCELLED,
+                'failed_at' => now(),
+                'failure_message' => 'Expired: not completed within '.self::PENDING_TTL_HOURS.' hours.',
+            ]);
+        }
+
+        return $stale->count();
+    }
+
     public function user() {
         return $this->belongsTo(User::class);
     }
@@ -77,7 +125,7 @@ class TopupHistory extends Model
 
     protected function auditAttributes(): array
     {
-        return ['user_id', 'wallet_id', 'amount_added', 'payment_method', 'status'];
+        return ['user_id', 'wallet_id', 'transaction_id', 'amount_added', 'payment_method', 'status', 'paid_at', 'failed_at', 'failure_message'];
     }
 
     protected function auditLabel(): string

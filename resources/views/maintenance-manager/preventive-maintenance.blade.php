@@ -561,7 +561,7 @@
                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                 x-transition:leave-end="opacity-0 scale-95 translate-y-2" method="POST"
                 action="{{ route('maintenance-manager.preventive-maintenance.store') }}" @click.stop data-ajax novalidate
-                class="relative w-full max-w-lg glass-panel rounded-[2rem] flex flex-col max-h-[90vh] overflow-hidden modal-panel">
+                class="relative w-full max-w-lg glass-panel rounded-[2rem] flex flex-col max-h-[calc(90vh/var(--sc-zoom,1))] overflow-hidden modal-panel">
                 @csrf
                 <input type="hidden" name="vehicle_id" x-model="form.vehicle_id">
                 <input type="hidden" name="task_id" x-model="form.task_id">

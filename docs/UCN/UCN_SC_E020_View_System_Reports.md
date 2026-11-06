@@ -25,7 +25,7 @@
 | --- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | 1   | Admin opens up the dashboard on the map.                                     | System displays the dashboard with the admin analytics.                                                                   |
 | 2   | Admin clicks the **"Reports & Analytics"** item on the sidebar.               | System redirects to the System Reports page (`reports.generate`), displaying the list of available reports, the report-type selector, the *from* / *to* date inputs, the **"Generate Report"** button and the **"Export CSV"** button. |
-| 3   | Admin selects a report type & date range and clicks **"Generate Report"**.   | System aggregates the data for the selected type and range and renders the report: **Financial Overview** (revenue, top-ups, transaction count, daily revenue chart), **Driver Performance** (total/active drivers, top 5 performers by hours, status distribution) or **Maintenance & Fleet** (pending/overdue/completed counts, upcoming schedule table; *completed* counts the preventive-maintenance records saved in the selected range). Top-up totals count **completed** top-ups only. |
+| 3   | Admin selects a report type & date range and clicks **"Generate Report"**.   | System aggregates the data for the selected type and range and renders the report: **Financial Overview** (revenue, top-ups, transaction count, daily revenue chart), **Driver Performance** (total/active drivers, top 5 performers by hours with their status — *Active*, *Inactive* or *Suspended* — and a status-distribution doughnut with one slice per status) or **Maintenance & Fleet** (pending/overdue/completed counts, schedule table; *completed* counts the preventive-maintenance records saved in the selected range). Top-up totals count **completed** top-ups only. **The range covers whole days:** it runs from 00:00 on the start date to 23:59:59 on the end date, so a payment made today counts in a report that ends today. **Opening the page with no dates reports the last 7 days up to today** — the same dates the page shows in its date boxes. |
 
 ---
 
@@ -85,7 +85,8 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 ## Known Gaps / Notes
 
 - **The export is CSV only.** There is no `.xlsx` writer; opening the file in Excel works but loses column formatting, and a multi-sheet workbook is not produced.
-- **Only the financial report is date-filtered end to end** — the driver report uses all-time totals for the driver cards and the maintenance report ignores the range for the pending/overdue buckets (they are computed against *now*, not against *end date*).
+- **Only the financial report is date-filtered end to end** — the driver report uses all-time totals for the driver cards and the maintenance report's pending/overdue buckets are computed against *today*, not against the *end date*.
+- **Maintenance statuses use the real due date.** Each service's due date is its last service date plus the task's month interval (`PreventiveMaintenance::nextDueDate()`), and it is *Overdue* when that date has passed or the vehicle's latest logged odometer is past the service's due reading, *Due soon* inside the warning window (7 days / 500 km), *Scheduled* otherwise and *No interval* when the task has neither interval. This is the same rule as the Maintenance Manager's pages and the due-alert email; disposed vehicles are left out, and the table lists the most urgent first. The CSV export uses the same rows.
 - **E2 is a catch-all**: any exception during aggregation (including a genuine bug) is reported to the log and shown to the Admin as an aggregation timeout, so a real error can be mistaken for slowness.
 - **E4 is derived from the payments ledger only**; a system with no payments never raises the warning even if other data is stale.
 - On-screen reports are generated on every page load from live queries — there is no caching or snapshotting; the weekly and monthly emails (A3) and Fleet Analytics (A4) are computed the same way, at the moment they run or are opened.
@@ -98,9 +99,10 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 | Element | Location |
 |---|---|
 | Routes | `routes/web.php` — `reports.generate` (`GET /reports`), `reports.export` (`GET /reports/export`), both inside `role:admin` |
-| Controller | `app/Http/Controllers/ReportController.php::generate()`, `buildReport()`, `assertValidRange()`, `reportIsEmpty()`, `syncLagMinutes()`, `export()` |
+| Controller | `app/Http/Controllers/ReportController.php::generate()`, `dates()`, `window()`, `buildReport()`, `maintenanceRows()`, `assertValidRange()`, `reportIsEmpty()`, `syncLagMinutes()`, `export()` |
 | Models | `app/Models/Payment.php`, `app/Models/TopupHistory.php`, `app/Models/Driver.php`, `app/Models/PreventiveMaintenance.php` |
 | View | `resources/views/admin/reports.blade.php` (E2 / E3 / E4 notice banners) |
+| Tests | `tests/Feature/ReportsPageTest.php` (driver chart and badges, whole-day range and default week, real maintenance due dates, CSV), `tests/Feature/UcnStaffRegressionTest.php` (E020 empty window, inverted range) |
 | Menu | `config/menu.php` — *Reports & Analytics* (admin) |
 | Middleware | `auth`, `verified`, `role:admin` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_a_report_over_an_empty_window_reports_no_data`, `test_an_inverted_date_range_is_rejected`) |

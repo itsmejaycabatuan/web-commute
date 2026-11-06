@@ -294,23 +294,45 @@
             padding-left: 44px;
         }
 
+        /*
+         * The show / hide password button. It is centred with top / bottom / auto margins and NOT with
+         * `transform: translateY(-50%)`: theme.css gives every pressed button `transform: scale(.98)`, which
+         * replaced that translate and made the eye drop half its height on every click. It also never
+         * transitions or changes size, so nothing about it moves; only its colour and background do.
+         */
         .au-icon-field .au-eye {
             position: absolute;
-            top: 50%;
+            top: 0;
+            bottom: 0;
             right: 8px;
-            transform: translateY(-50%);
+            margin: auto 0;
             display: grid;
             place-items: center;
             width: 38px;
             height: 38px;
+            padding: 0;
             border-radius: 12px;
             color: var(--sc-mute);
             cursor: pointer;
+            transition: color .15s ease, background-color .15s ease;
         }
 
         .au-icon-field .au-eye:hover {
             color: var(--sc-ink);
             background: var(--sc-surface-3);
+        }
+
+        /* No press-down effect (beats theme.css's button:active scale). */
+        .au-icon-field .au-eye:active {
+            transform: none;
+        }
+
+        /* eye and eye-slash have different glyph widths; a fixed box stops the icon shifting sideways. */
+        .au-icon-field .au-eye i {
+            width: 20px;
+            font-size: 15px;
+            line-height: 1;
+            text-align: center;
         }
 
         .au-err {

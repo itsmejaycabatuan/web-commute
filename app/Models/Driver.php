@@ -245,6 +245,44 @@ class Driver extends Model
     }
 
     /**
+     * This driver's own view of the duty roster: the next `$days` days (today first) of the vehicle they
+     * share, each marked as theirs, the co-driver's, or not scheduled. Null when there is nothing to
+     * schedule — no vehicle, or a vehicle they have to themselves (they may drive it any day).
+     *
+     * @return array{vehicle: Vehicle, co_driver: Driver, days: array<int, array{date: Carbon, owner: ?string}>, mine: int, scheduled: int}|null
+     */
+    public function dutySchedule(int $days = 14): ?array
+    {
+        $vehicle = $this->assignedVehicle();
+        $coDriver = $vehicle?->drivers()->where('drivers.id', '!=', $this->id)->first();
+
+        if (! $vehicle || ! $coDriver) {
+            return null;
+        }
+
+        $from = today();
+        $roster = $vehicle->dutyDays()
+            ->whereBetween('duty_date', [$from->toDateString(), $from->copy()->addDays($days - 1)->toDateString()])
+            ->get()
+            ->keyBy(fn ($day) => $day->duty_date->toDateString());
+
+        $list = [];
+        $mine = $scheduled = 0;
+
+        for ($i = 0; $i < $days; $i++) {
+            $date = $from->copy()->addDays($i);
+            $driverId = $roster->get($date->toDateString())?->driver_id;
+            $owner = $driverId === null ? null : ($driverId === $this->id ? 'me' : 'co');
+
+            $list[] = ['date' => $date, 'owner' => $owner];
+            $scheduled += $owner === null ? 0 : 1;
+            $mine += $owner === 'me' ? 1 : 0;
+        }
+
+        return ['vehicle' => $vehicle, 'co_driver' => $coDriver, 'days' => $list, 'mine' => $mine, 'scheduled' => $scheduled];
+    }
+
+    /**
      * A driver can only go on shift (clock in, or set themselves active) while a
      * vehicle is assigned to them.
      */
@@ -289,8 +327,15 @@ class Driver extends Model
             'status' => 'suspended',
         ])->save();
 
+        // A shift they had open ends now, so it stops accruing hours for someone who can no longer work.
+        $shiftVehicleIds = $this->endOpenShifts();
+
         // Off the vehicle (and its roster), and the seat they held goes out for a replacement.
         $vehicles = $this->releaseFromVehicles();
+
+        // A vehicle nobody else is driving leaves the live map.
+        Vehicle::whereIn('id', $vehicles->pluck('id')->merge($shiftVehicleIds)->unique())->get()
+            ->each(fn (Vehicle $vehicle) => $vehicle->leaveMapIfNotDriven());
 
         foreach ($vehicles as $vehicle) {
             try {
@@ -300,6 +345,49 @@ class Driver extends Model
                 report($e);
             }
         }
+    }
+
+    /**
+     * Clock the driver out at this moment, as a clock-out would: the hours run to now, with overtime past 8.
+     * A shift that has been open longer than the auto-close limit was forgotten long ago, so its end is not
+     * known; it is credited like an auto-closed shift and flagged for the Driver Manager to review.
+     *
+     * @return array<int, int> ids of the vehicles the closed shifts were worked on
+     */
+    public function endOpenShifts(): array
+    {
+        $vehicleIds = [];
+
+        foreach (TimeKeeping::open()->where('driver_id', $this->id)->get() as $entry) {
+            $start = $entry->startedAt();
+
+            if (! $start) {
+                continue;
+            }
+
+            $hours = round($start->diffInMinutes(now()) / 60, 2);
+
+            if ($hours > (float) config('timekeeping.auto_close_after_hours', 14)) {
+                $hours = round(min((float) config('timekeeping.auto_close_credit_hours', 8), $hours), 2);
+                $entry->update([
+                    'time_out' => $start->copy()->addMinutes((int) round($hours * 60))->format('h:i A'),
+                    'hours_worked' => $hours,
+                    'overtime_hours' => 0,
+                    'auto_closed_at' => now(),
+                    'reviewed_at' => null,
+                ]);
+            } else {
+                $entry->update([
+                    'time_out' => now()->timezone('Asia/Manila')->format('h:i A'),
+                    'hours_worked' => $hours,
+                    'overtime_hours' => $hours > 8 ? round($hours - 8, 2) : 0,
+                ]);
+            }
+
+            $vehicleIds[] = (int) ($entry->vehicle_id ?? $this->assignedVehicle()?->id);
+        }
+
+        return array_values(array_filter(array_unique($vehicleIds)));
     }
 
     /**

@@ -525,6 +525,80 @@
                         </div>
                     @endif
 
+                    @if (! empty($dutySchedule))
+                        @php
+                            $cellStyles = [
+                                'me' => 'bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400',
+                                'co' => 'bg-gray-100 dark:bg-[#111] border-gray-200 dark:border-[#1e1e1e] text-gray-400 dark:text-[#555]',
+                                '' => 'border-dashed border-gray-300 dark:border-[#2a2a2a] text-gray-300 dark:text-[#333]',
+                            ];
+                            $weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+                        @endphp
+                        <div id="duty-schedule" class="glass-card p-4 sm:p-6 rounded-[1.25rem] sm:rounded-[1.5rem]">
+                            <div class="flex items-center justify-between gap-2.5 mb-4 sm:mb-5">
+                                <div class="flex items-center gap-2.5">
+                                    <div
+                                        class="w-7 h-7 rounded-lg bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] flex items-center justify-center">
+                                        <i class="fa-solid fa-calendar-check text-[9px] text-gray-400 dark:text-[#555]"></i>
+                                    </div>
+                                    <span
+                                        class="text-[8px] sm:text-[9px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#555]">My Schedule</span>
+                                </div>
+                                <span class="text-[8px] sm:text-[9px] font-mono text-gray-500 dark:text-[#555]">Next
+                                    {{ count($dutySchedule['days']) }} days</span>
+                            </div>
+
+                            @if ($dutySchedule['scheduled'] === 0)
+                                <div class="p-3 sm:p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                                    <p class="text-[10px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400">No roster set yet</p>
+                                    <p class="text-[9px] text-gray-500 dark:text-[#666] mt-1 leading-relaxed">
+                                        {{ $dutySchedule['vehicle']->plate_number }} is shared with
+                                        {{ $dutySchedule['co_driver']->name }}, but no duty days are scheduled. You cannot
+                                        clock in until one is — please contact the Maintenance Manager.</p>
+                                </div>
+                            @else
+                                <div class="grid grid-cols-7 gap-1.5 mb-1.5">
+                                    @foreach (array_slice($dutySchedule['days'], 0, 7) as $d)
+                                        <span
+                                            class="text-center text-[8px] font-bold uppercase text-gray-400 dark:text-[#444]">{{ $weekdays[$d['date']->dayOfWeek] }}</span>
+                                    @endforeach
+                                </div>
+                                <div class="grid grid-cols-7 gap-1.5">
+                                    @foreach ($dutySchedule['days'] as $d)
+                                        @php
+                                            $label = $d['owner'] === 'me' ? 'Your duty day' : ($d['owner'] === 'co' ? $dutySchedule['co_driver']->name.'\'s day' : 'Not scheduled');
+                                        @endphp
+                                        <div title="{{ $d['date']->format('D, M j') }} — {{ $label }}"
+                                            data-date="{{ $d['date']->toDateString() }}" data-owner="{{ $d['owner'] ?? 'none' }}"
+                                            class="aspect-square rounded-lg border flex flex-col items-center justify-center {{ $cellStyles[$d['owner'] ?? ''] }} {{ $d['date']->isToday() ? 'ring-2 ring-blue-500/60' : '' }}">
+                                            <span class="text-[10px] sm:text-[11px] font-bold leading-none">{{ $d['date']->day }}</span>
+                                            <span
+                                                class="text-[6px] sm:text-[7px] uppercase tracking-wider mt-0.5">{{ $d['date']->format('M') }}</span>
+                                            <span class="sr-only">{{ $d['date']->format('l, F j') }}: {{ $label }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3.5">
+                                    <span class="flex items-center gap-1 text-[8px] text-gray-500 dark:text-[#666]"><span
+                                            class="w-2 h-2 rounded-sm bg-emerald-500/40 border border-emerald-500/50"></span>You</span>
+                                    <span class="flex items-center gap-1 text-[8px] text-gray-500 dark:text-[#666]"><span
+                                            class="w-2 h-2 rounded-sm bg-gray-200 dark:bg-[#222] border border-gray-300 dark:border-[#333]"></span>{{ $dutySchedule['co_driver']->name }}</span>
+                                    <span class="flex items-center gap-1 text-[8px] text-gray-500 dark:text-[#666]"><span
+                                            class="w-2 h-2 rounded-sm border border-dashed border-gray-400 dark:border-[#444]"></span>Not
+                                        scheduled</span>
+                                </div>
+
+                                <p class="text-[9px] sm:text-[10px] text-gray-500 dark:text-[#666] mt-3 leading-relaxed">
+                                    You drive <span
+                                        class="font-bold text-gray-700 dark:text-[#ccc]">{{ $dutySchedule['mine'] }}</span>
+                                    of the next {{ count($dutySchedule['days']) }} days on
+                                    <span class="font-mono">{{ $dutySchedule['vehicle']->plate_number }}</span>.
+                                    You can only clock in on your own days.</p>
+                            @endif
+                        </div>
+                    @endif
+
                     <!-- ── License Info ── -->
                     <div class="glass-card p-4 sm:p-6 rounded-[1.25rem] sm:rounded-[1.5rem]">
                         <div class="flex items-center gap-2.5 mb-4 sm:mb-5">

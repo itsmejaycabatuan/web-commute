@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Models\Driver;
 use App\Models\TimeKeeping;
 use App\Models\Vehicle;
-use App\Models\VehicleLocation;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -84,18 +83,10 @@ class AutoCloseShifts extends Command
             return;
         }
 
-        $stillDriven = TimeKeeping::open()->where('vehicle_id', $vehicleId)->exists();
-
-        if ($stillDriven) {
+        // Nobody else has a shift open on it: it leaves the map (see Vehicle::leaveMapIfNotDriven()).
+        if (! Vehicle::where('id', $vehicleId)->first()?->leaveMapIfNotDriven()) {
             return;
         }
-
-        // Age the vehicle's recent position rows past the 5-minute live window so it leaves the map. They are
-        // not deleted: the GPS history (distance driven, analytics) hangs off them.
-        VehicleLocation::where('vehicle_id', $vehicleId)
-            ->where('last_update', '>=', now()->subMinutes(5))
-            ->update(['last_update' => now()->subHour()]);
-        Vehicle::where('id', $vehicleId)->update(['is_active' => false]);
 
         Log::info("Vehicle {$vehicleId} taken off the map: driver {$driver->id}'s shift was auto-closed.");
     }

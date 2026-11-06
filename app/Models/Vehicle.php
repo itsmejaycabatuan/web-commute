@@ -87,6 +87,25 @@ class Vehicle extends Model
         return $this->belongsToMany(Driver::class, 'driver_vehicle')->withTimestamps()->withPivot('id');
     }
 
+    /**
+     * Take the vehicle off the live map unless a driver still has a shift open on it. Its recent position rows
+     * are aged past the 5-minute live window rather than deleted: the GPS history (distance driven, analytics)
+     * hangs off them. Used when a shift is closed for the driver (auto-close) or by the system (suspension).
+     */
+    public function leaveMapIfNotDriven(): bool
+    {
+        if (TimeKeeping::open()->where('vehicle_id', $this->id)->exists()) {
+            return false;
+        }
+
+        VehicleLocation::where('vehicle_id', $this->id)
+            ->where('last_update', '>=', now()->subMinutes(5))
+            ->update(['last_update' => now()->subHour()]);
+        static::where('id', $this->id)->update(['is_active' => false]);
+
+        return true;
+    }
+
     /** The Maintenance Manager's roster: which of the drivers drives it on which date. */
     public function dutyDays()
     {

@@ -391,7 +391,7 @@
                         </div>
 
                         <div @click.away="closeDropdown()" class="relative w-full sm:w-auto">
-                            <div class="flex items-center gap-2 bg-[#111] border border-[#222] rounded-xl px-4 py-2.5 min-w-[280px] cursor-text transition-all"
+                            <div class="flex items-center gap-2 bg-[#111] border border-[#222] rounded-xl px-4 py-2.5 min-w-0 sm:min-w-[280px] cursor-text transition-all"
                                 :class="dropdownOpen ? 'border-blue-500/50 ring-1 ring-blue-500/20' : 'hover:border-[#333]'"
                                 @click="openDropdown()">
                                 <i class="fa-solid fa-magnifying-glass text-[#555] text-[10px] flex-shrink-0"></i>
@@ -478,7 +478,7 @@
                                 Code</span>
                         </div>
                         <span class="text-xl sm:text-2xl font-black tracking-tight"
-                            x-text="selectedDriver.driver_code"></span>
+                            x-text="selectedDriver?.driver_code"></span>
                     </div>
 
                     <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-purple-500">
@@ -491,7 +491,7 @@
                                 No.</span>
                         </div>
                         <span class="text-xl sm:text-2xl font-black tracking-tight"
-                            x-text="selectedDriver.license_number"></span>
+                            x-text="selectedDriver?.license_number"></span>
                     </div>
 
                     <div
@@ -505,7 +505,7 @@
                                 Validity</span>
                         </div>
                         <span class="text-xl sm:text-2xl font-black tracking-tight"
-                            x-text="selectedDriver.expiration_date"></span>
+                            x-text="selectedDriver?.expiration_date"></span>
                     </div>
                 </div>
 

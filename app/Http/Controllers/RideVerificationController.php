@@ -19,7 +19,7 @@ class RideVerificationController extends Controller
 
     public function show(Request $request)
     {
-        if (! config('qr.required')) {
+        if (! QrScan::required()) {
             return redirect()->route('map');
         }
 

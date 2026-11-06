@@ -166,6 +166,89 @@ class DutyRosterTest extends TestCase
         $this->assertEquals(today()->addDays(3)->toDateString(), $response->viewData('nextDuty')->toDateString());
     }
 
+    // ───────────── the driver's own schedule on the dashboard ─────────────
+
+    public function test_a_driver_on_a_shared_vehicle_sees_their_schedule_on_the_dashboard()
+    {
+        [$vehicle, [$userA, $a], [$userB, $b]] = $this->shared();
+        $this->actingAs($this->manager())->post(route('maintenance-manager.duty-roster.generate', $vehicle), [
+            'start_date' => today()->toDateString(), 'first_driver_id' => $a->id, 'days' => 10,
+        ]);
+
+        $html = $this->actingAs($userA)->get(route('dashboard'))->assertOk()->assertSee('My Schedule')->getContent();
+
+        $this->assertStringContainsString('id="duty-schedule"', $html);
+        $this->assertStringContainsString('data-date="'.today()->toDateString().'" data-owner="me"', $html);
+        $this->assertStringContainsString('data-date="'.today()->addDay()->toDateString().'" data-owner="co"', $html);
+        $this->assertStringContainsString('data-date="'.today()->addDays(9)->toDateString().'" data-owner="co"', $html);
+        $this->assertStringContainsString('data-date="'.today()->addDays(10)->toDateString().'" data-owner="none"', $html, 'days past the roster read as not scheduled');
+
+        $schedule = $this->actingAs($userA)->get(route('dashboard'))->viewData('dutySchedule');
+        $this->assertCount(14, $schedule['days']);
+        $this->assertSame(5, $schedule['mine']);        // days 0, 2, 4, 6, 8
+        $this->assertSame(10, $schedule['scheduled']);
+        $this->assertSame($b->id, $schedule['co_driver']->id);
+
+        // The co-driver sees the same roster from their side.
+        $other = $this->actingAs($userB)->get(route('dashboard'))->viewData('dutySchedule');
+        $this->assertSame(5, $other['mine']);
+        $this->assertSame('co', $other['days'][0]['owner']);
+        $this->assertSame('me', $other['days'][1]['owner']);
+    }
+
+    public function test_generating_lands_on_the_days_that_were_generated()
+    {
+        [$vehicle, [, $a]] = $this->shared();
+        $manager = $this->manager();
+        $url = route('maintenance-manager.duty-roster.generate', $vehicle);
+
+        // A start date in the future opens the roster at that date, not at the page's default window.
+        $start = today()->addDays(40)->toDateString();
+        $response = $this->actingAs($manager)->postJson($url, ['start_date' => $start, 'first_driver_id' => $a->id, 'days' => 10]);
+        $response->assertOk();
+        $this->assertSame(route('maintenance-manager.duty-roster', ['vehicle_id' => $vehicle->id, 'from' => $start]), $response->json('redirect'));
+
+        // Starting today needs no `from`: it is the default window.
+        $response = $this->actingAs($manager)->postJson($url, ['start_date' => today()->toDateString(), 'first_driver_id' => $a->id, 'days' => 10]);
+        $this->assertSame(route('maintenance-manager.duty-roster', ['vehicle_id' => $vehicle->id]), $response->json('redirect'));
+    }
+
+    public function test_the_schedule_only_shows_days_from_today_and_never_the_other_vehicles()
+    {
+        [$vehicle, [$userA, $a]] = $this->shared();
+        [$otherVehicle, [, $c]] = $this->shared();
+        $this->roster($vehicle, $a, today()->subDays(2)->toDateString());
+        $this->roster($vehicle, $a, today()->addDays(2)->toDateString());
+        $this->roster($otherVehicle, $c, today()->addDay()->toDateString());
+
+        $schedule = $this->actingAs($userA)->get(route('dashboard'))->viewData('dutySchedule');
+
+        $this->assertSame(today()->toDateString(), $schedule['days'][0]['date']->toDateString());
+        $this->assertSame(1, $schedule['scheduled']);
+        $this->assertSame('me', $schedule['days'][2]['owner']);
+        $this->assertNull($schedule['days'][1]['owner']);
+    }
+
+    public function test_a_shared_vehicle_with_no_roster_tells_the_driver_to_contact_the_manager()
+    {
+        [, [$userA]] = $this->shared();
+
+        $this->actingAs($userA)->get(route('dashboard'))->assertOk()
+            ->assertSee('id="duty-schedule"', false)
+            ->assertSee('No roster set yet')
+            ->assertSee('Maintenance Manager');
+    }
+
+    public function test_a_driver_with_a_vehicle_to_themselves_or_none_has_no_schedule_card()
+    {
+        [$userA, $a] = $this->driver();
+        $this->actingAs($userA)->get(route('dashboard'))->assertOk()->assertDontSee('id="duty-schedule"', false);   // no vehicle
+
+        Vehicle::factory()->withDriver($a->id)->create(['status' => 'active']);
+        $response = $this->actingAs($userA)->get(route('dashboard'))->assertOk()->assertDontSee('id="duty-schedule"', false);
+        $this->assertNull($response->viewData('dutySchedule'));
+    }
+
     // ───────────── assigning two drivers (Vehicles page) ─────────────
 
     protected function payload(array $extra = []): array
@@ -263,19 +346,47 @@ class DutyRosterTest extends TestCase
 
     // ───────────── the roster page ─────────────
 
-    public function test_only_the_maintenance_manager_opens_and_edits_the_roster()
+    public function test_the_maintenance_manager_driver_manager_and_admin_open_and_edit_the_roster_nobody_else_does()
     {
         [$vehicle] = $this->shared();
 
         $this->actingAs($this->manager())->get(route('maintenance-manager.duty-roster'))->assertOk()->assertSee('Duty');
 
-        foreach (['admin', 'driver_manager', 'commuter', 'driver'] as $role) {
+        foreach (['admin' => 'Administrator', 'driver_manager' => 'Driver Manager'] as $role => $label) {
+            $user = User::factory()->create(['email_verified_at' => now()])->assignRole($role);
+            $this->actingAs($user)->get(route('maintenance-manager.duty-roster'))->assertOk()->assertSee('Duty')->assertSee($label);
+            $this->assertContains('maintenance-manager.duty-roster', collect(config("menu.menus.{$role}"))->pluck('route')->filter()->all());
+        }
+
+        foreach (['commuter', 'driver'] as $role) {
             $user = User::factory()->create(['email_verified_at' => now()])->assignRole($role);
             $this->actingAs($user)->get(route('maintenance-manager.duty-roster'))->assertStatus(403);
             $this->actingAs($user)->put(route('maintenance-manager.duty-roster.update', $vehicle), ['days' => []])->assertStatus(403);
             $this->actingAs($user)->post(route('maintenance-manager.duty-roster.generate', $vehicle), [])->assertStatus(403);
         }
         $this->assertContains('maintenance-manager.duty-roster', collect(config('menu.menus.maintenance_manager'))->pluck('route')->filter()->all());
+    }
+
+    public function test_the_admin_and_the_driver_manager_can_generate_and_change_the_roster_too()
+    {
+        foreach (['admin', 'driver_manager'] as $role) {
+            [$vehicle, [, $a], [, $b]] = $this->shared();
+            $user = User::factory()->create(['email_verified_at' => now()])->assignRole($role);
+
+            $this->actingAs($user)->post(route('maintenance-manager.duty-roster.generate', $vehicle), [
+                'start_date' => today()->toDateString(), 'first_driver_id' => $a->id, 'days' => 4,
+            ])->assertSessionHas('success');
+            $this->assertSame($a->id, $vehicle->dutyDriverOn(today())->id, "{$role} generated the roster");
+
+            $this->actingAs($user)->put(route('maintenance-manager.duty-roster.update', $vehicle), ['days' => [
+                today()->toDateString() => $b->id,
+            ]])->assertSessionHas('success');
+            $this->assertSame($b->id, $vehicle->fresh()->dutyDriverOn(today())->id, "{$role} swapped a day");
+
+            $entry = \Spatie\Activitylog\Models\Activity::where('subject_type', Vehicle::class)->where('subject_id', $vehicle->id)
+                ->where('event', 'duty_roster_updated')->latest('id')->first();
+            $this->assertSame($user->id, $entry?->causer_id, "{$role} is named in the audit trail");
+        }
     }
 
     public function test_the_page_lists_only_shared_vehicles_with_todays_driver()

@@ -278,6 +278,44 @@ class QrRideVerificationTest extends TestCase
         $this->actingAs($commuter)->get(route('payment.scan'))->assertRedirect(route('map'));
     }
 
+    public function test_the_dev_switch_lets_a_local_install_pay_without_a_scan_and_can_be_turned_back_off()
+    {
+        $this->app['env'] = 'local';
+        $commuter = $this->commuter();
+
+        $this->actingAs($commuter)->postJson(route('dev.skip-qr'), ['skip' => true])
+            ->assertOk()->assertJson(['skip' => true]);
+
+        // No scan, yet the checkout opens and the fare is taken.
+        $this->actingAs($commuter)->get(route('payment.index', $this->trip()))->assertOk();
+        $this->pay($commuter)->assertSessionHas('success');
+        $this->actingAs($commuter)->get(route('payment.scan'))->assertRedirect(route('map'));
+
+        // Off again: back to the normal rule.
+        $this->actingAs($commuter)->postJson(route('dev.skip-qr'), ['skip' => false])->assertJson(['skip' => false]);
+        $this->pay($commuter, '#SC-QR000002')->assertRedirect(route('payment.scan'));
+    }
+
+    public function test_the_dev_switch_does_nothing_outside_a_local_install()
+    {
+        $commuter = $this->commuter();
+
+        // The route is not there...
+        $this->actingAs($commuter)->postJson(route('dev.skip-qr'), ['skip' => true])->assertNotFound();
+
+        // ...and a flag that somehow sits in the session is ignored when the app is not local.
+        $this->withSession(['dev_skip_qr' => true]);
+        $this->pay($commuter)->assertRedirect(route('payment.scan'));
+        $this->assertSame(0, Payment::where('paid_by', $commuter->id)->count());
+    }
+
+    public function test_the_dev_switch_needs_a_signed_in_user()
+    {
+        $this->app['env'] = 'local';
+
+        $this->postJson(route('dev.skip-qr'), ['skip' => true])->assertUnauthorized();
+    }
+
     public function test_deleting_a_code_keeps_the_scans_and_payments_made_with_it()
     {
         $commuter = $this->commuter();

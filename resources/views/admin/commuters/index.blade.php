@@ -180,8 +180,8 @@
                             <span>Add Commuter</span>
                         </button>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-1.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex flex-wrap items-center gap-1.5">
                             <button @click="filter = 'all'"
                                 :class="filter === 'all' ?
                                     'bg-gray-900 dark:bg-white/10 text-white border-gray-900 dark:border-white/20' :
@@ -376,7 +376,7 @@
             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" style="display:none;">
 
             <div @click.away="showAddModal = false"
-                class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-md w-full max-h-[90vh] overflow-y-auto">
+                class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-md w-full max-h-[calc(90vh/var(--sc-zoom,1))] overflow-y-auto">
 
                 <div class="flex items-center justify-between mb-6">
                     <div>
@@ -453,7 +453,7 @@
             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" style="display:none;">
 
             <div @click.away="showEditModal = false"
-                class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-md w-full max-h-[90vh] overflow-y-auto">
+                class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-md w-full max-h-[calc(90vh/var(--sc-zoom,1))] overflow-y-auto">
 
                 <div class="flex items-center justify-between mb-6">
                     <div>

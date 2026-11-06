@@ -233,7 +233,7 @@
             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 dark:bg-black/80"
             style="display:none;">
             <div @click.away="close()"
-                class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-md w-full max-h-[90vh] overflow-y-auto">
+                class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-md w-full max-h-[calc(90vh/var(--sc-zoom,1))] overflow-y-auto">
                 <div class="flex items-center justify-between mb-6">
                     <div>
                         <h3 class="text-base sm:text-lg font-bold text-gray-900 dark:text-white"

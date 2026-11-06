@@ -32,7 +32,7 @@
 2. System narrows the list to entries whose description, **acting user's email** or — for failed sign-ins — the **email that was tried** contains the text. `%` and `_` are matched literally.
 
 **A2 – Filter by category and event**
-1. Admin picks a **category** (*Sign-in & security, Accounts, Drivers, Fleet & maintenance, Violations, Timekeeping, Payments, Fares, System*) and/or an **event** (e.g. *Failed sign-in, Suspended, Role changed, Fare rates updated*).
+1. Admin picks a **category** (listed alphabetically: *Accounts, Drivers, Fares, Fleet & maintenance, Payments, Sign-in & security, System, Timekeeping, Violations*) and/or an **event** (e.g. *Failed sign-in, Suspended, Role changed, Fare rates updated*).
 2. System applies it at once; the filters survive paging and combine with each other and with A1 / A3.
 
 **A3 – Filter by date range**

@@ -1,4 +1,5 @@
 @include('partials.theme')
+@include('partials.font-scale')
 
 {{-- Theme & Font Size detection MUST run immediately to prevent flash --}}
 <script>
@@ -8,13 +9,7 @@
         localStorage.setItem('color-theme', dbTheme);
         document.documentElement.classList.toggle('dark', dbTheme === 'dark');
 
-        // Font Size (using zoom for proportional scaling)
-        const fontZoomLevels = {
-            small: 0.875,
-            medium: 1,
-            large: 1.125,
-            xlarge: 1.25
-        };
+        // Font size: applied as a (width-limited) zoom, see partials/font-scale
         const intToLabel = {
             10: 'small',
             11: 'medium',
@@ -26,7 +21,8 @@
         const currentSize = intToLabel[dbInt] || localStorage.getItem('font-size') || 'medium';
         localStorage.setItem('font-size', currentSize);
 
-        document.documentElement.style.zoom = fontZoomLevels[currentSize] || 1;
+        // The zoom actually applied is limited on narrow screens (see partials/font-scale).
+        scApplyFontZoom(currentSize);
     })();
 
     function applyFontSize(size, skipSave) {
@@ -96,8 +92,9 @@
     document.addEventListener('alpine:init', () => {
         Alpine.store('sidebar', {
             // Expanded on wide screens; on tablets (768–1099px) it starts as the slim icon rail so the
-            // page keeps enough width for its cards and tables.
-            open: window.innerWidth >= 1100,
+            // page keeps enough width for its cards and tables. Judged by the EFFECTIVE width (screen ÷ text zoom):
+            // at 125 % a 1366 px screen has 1093 px to lay out in, so it starts as the rail too.
+            open: (window.innerWidth / (parseFloat(document.documentElement.style.zoom) || 1)) >= 1100,
             isDark: false,
             fontSize: (function() {
                 const intToLabel = {

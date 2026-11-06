@@ -160,6 +160,12 @@ class DevSeeder extends Seeder
 
             $existing = Driver::where('user_id', $user->id)->first();
 
+            // A driver code already held by someone else (e.g. an account made
+            // by hand) must not abort the run: take a free DRV-9xxxxxx instead.
+            if ($code && Driver::where('driver_code', $code)->where('user_id', '!=', $user->id)->exists()) {
+                $code = $existing?->driver_code ?: 'DRV-9'.substr($code, -6);
+            }
+
             // The pre-existing demo driver keeps the name it already has.
             $attrs = [
                 'name' => $existing?->name ?: $name,

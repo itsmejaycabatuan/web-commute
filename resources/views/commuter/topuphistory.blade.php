@@ -465,7 +465,15 @@
                         results</span>
                 </div>
 
-                <!-- ── Desktop: Table View ── -->
+                @php
+    $statusStyles = [
+        'completed' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+        'pending' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+        'failed' => 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20',
+        'cancelled' => 'bg-slate-500/10 text-slate-500 dark:text-[#888] border-slate-500/20',
+    ];
+@endphp
+<!-- ── Desktop: Table View ── -->
                 <div class="hidden xl:block glass-card rounded-[1.5rem] overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full min-w-[600px] text-left">
@@ -475,6 +483,7 @@
                                     <th class="px-4 2xl:px-6 py-3 font-bold sm:py-3.5">Date & Time</th>
                                     <th class="px-4 2xl:px-6 py-3 font-bold sm:py-3.5">Transaction</th>
                                     <th class="px-4 2xl:px-6 py-3 font-bold sm:py-3.5">Method</th>
+                                    <th class="px-4 2xl:px-6 py-3 font-bold sm:py-3.5">Status</th>
                                     <th class="px-4 2xl:px-6 py-3 font-bold sm:py-3.5 text-right">Amount</th>
                                 </tr>
                             </thead>
@@ -510,14 +519,27 @@
                                                     class="text-[12px] font-bold text-slate-500 dark:text-[#888] capitalize">{{ $tx->payment_method }}</span>
                                             </div>
                                         </td>
-                                        <td class="px-4 2xl:px-6 py-3.5 sm:py-4 text-right">
+                                        <td class="px-4 2xl:px-6 py-3.5 sm:py-4">
                                             <span
-                                                class="text-[13px] font-bold whitespace-nowrap text-emerald-600 dark:text-emerald-400">+₱{{ number_format($tx->amount_added, 2) }}</span>
+                                                class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg border {{ $statusStyles[$tx->status] ?? $statusStyles['cancelled'] }}">{{ $tx->status }}</span>
+                                            @if ($tx->status === 'pending' && $tx->transaction_id)
+                                                <a href="{{ route('payment.topup.returned', ['ref' => $tx->transaction_id]) }}"
+                                                    class="block text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mt-1 hover:underline">Check status</a>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 2xl:px-6 py-3.5 sm:py-4 text-right">
+                                            @if ($tx->status === 'completed')
+                                                <span
+                                                    class="text-[13px] font-bold whitespace-nowrap text-emerald-600 dark:text-emerald-400">+₱{{ number_format($tx->amount_added, 2) }}</span>
+                                            @else
+                                                <span
+                                                    class="text-[13px] font-bold whitespace-nowrap text-slate-400 dark:text-[#555]">₱{{ number_format($tx->amount_added, 2) }}</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="py-16">
+                                        <td colspan="5" class="py-16">
                                             <div class="flex flex-col items-center justify-center">
                                                 <div
                                                     class="w-12 h-12 rounded-xl bg-slate-50 dark:bg-[#111] border border-slate-200 dark:border-[#1e1e1e] flex items-center justify-center mb-3">
@@ -578,8 +600,19 @@
                                     </div>
                                 </div>
                                 <div class="text-right shrink-0">
-                                    <p class="text-[13px] font-bold whitespace-nowrap text-emerald-600 dark:text-emerald-400">
-                                        +₱{{ number_format($tx->amount_added, 2) }}</p>
+                                    @if ($tx->status === 'completed')
+                                        <p class="text-[13px] font-bold whitespace-nowrap text-emerald-600 dark:text-emerald-400">
+                                            +₱{{ number_format($tx->amount_added, 2) }}</p>
+                                    @else
+                                        <p class="text-[13px] font-bold whitespace-nowrap text-slate-400 dark:text-[#555]">
+                                            ₱{{ number_format($tx->amount_added, 2) }}</p>
+                                    @endif
+                                    <span
+                                        class="inline-block mt-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border {{ $statusStyles[$tx->status] ?? $statusStyles['cancelled'] }}">{{ $tx->status }}</span>
+                                    @if ($tx->status === 'pending' && $tx->transaction_id)
+                                        <a href="{{ route('payment.topup.returned', ['ref' => $tx->transaction_id]) }}"
+                                            class="block text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mt-1">Check status</a>
+                                    @endif
                                 </div>
                             </div>
                         </div>

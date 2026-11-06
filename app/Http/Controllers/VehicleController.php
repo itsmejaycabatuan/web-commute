@@ -172,6 +172,40 @@ class VehicleController extends Controller
         return back()->with('success', 'Vehicle successfully updated.');
     }
 
+    /**
+     * The quick "who drives this?" dialog on the Vehicles page: set (replace, add or remove) the
+     * vehicle's drivers without opening the full edit form. Same rules as the form's driver selects.
+     */
+    public function updateDrivers(Request $request, Vehicle $vehicle)
+    {
+        $validated = $request->validate([
+            'driver_id' => ['nullable', 'exists:drivers,id'],
+            'second_driver_id' => ['nullable', 'exists:drivers,id', 'different:driver_id'],
+        ]);
+
+        // A second driver needs a first one; the seat is simply moved up.
+        if (empty($validated['driver_id']) && ! empty($validated['second_driver_id'])) {
+            $validated['driver_id'] = $validated['second_driver_id'];
+            $validated['second_driver_id'] = null;
+        }
+
+        $driverIds = $this->driverIds($validated);
+        $this->assertDriversAssignable($vehicle->status, $driverIds, $vehicle);
+
+        $this->syncDrivers($vehicle, $driverIds);
+
+        $message = $driverIds ? 'Drivers updated.' : 'Drivers removed from '.$vehicle->plate_number.'.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'vehicle' => $this->formatVehicle($vehicle->load('drivers')),
+            ]);
+        }
+
+        return back()->with('success', $message);
+    }
+
     public function destroy(Request $request, Vehicle $vehicle)
     {
 

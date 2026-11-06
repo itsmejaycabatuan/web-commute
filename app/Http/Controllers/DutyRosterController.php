@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * The duty roster (Maintenance Manager): on a vehicle shared by two drivers, which of them drives it on
+ * The duty roster (Maintenance Manager, Driver Manager and Admin): on a vehicle shared by two drivers, which of them drives it on
  * which day. The manager generates an alternating schedule and edits or swaps individual days. A driver
  * can only clock in on a vehicle on a day the roster gives to them (Driver::dutyBlock()).
  */
@@ -108,7 +108,14 @@ class DutyRosterController extends Controller
             'first_driver_id' => $first,
         ]);
 
-        return back()->with('success', 'Alternating schedule generated for '.$validated['days'].' days.');
+        // Land on the days just generated: the page may be showing another four-week window, which would
+        // otherwise look unchanged. (Today is the page's default window, so it needs no `from`.)
+        return redirect()
+            ->route('maintenance-manager.duty-roster', array_filter([
+                'vehicle_id' => $vehicle->id,
+                'from' => $start->isToday() ? null : $start->toDateString(),
+            ]))
+            ->with('success', 'Alternating schedule generated for '.$validated['days'].' days.');
     }
 
     /**

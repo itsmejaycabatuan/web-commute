@@ -14,7 +14,7 @@ class AdminController extends Controller
         $totalFundsAdded = TopupHistory::completed()->sum('amount_added');
         $activeUsersCount = Payment::settled()->distinct()->count('paid_by');
         $recentFares = Payment::settled()->with('user')->latest()->take(5)->get();
-        $recentTopups = TopupHistory::with('user')->latest()->take(5)->get();
+        $recentTopups = TopupHistory::completed()->with('user')->latest()->take(5)->get();
 
         return view('admin.dashboard', [
             'totalRevenue' => $totalRevenue,

@@ -185,7 +185,7 @@
             <!-- ══════════ TOOLBAR ══════════ -->
             <div class="flex flex-col sm:flex-row gap-3 mb-5">
                 <div class="flex-1"></div>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <button @click="editing = !editing" type="button"
                         :class="editing ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' :
                             'bg-gray-50 dark:bg-[#111] text-gray-500 dark:text-[#555] border-gray-200 dark:border-[#1e1e1e] hover:border-gray-300 dark:hover:border-[#333] hover:text-gray-700 dark:hover:text-[#888]'"
@@ -195,7 +195,7 @@
                     </button>
 
                     <form method="POST" action="{{ route('fares.upload') }}" enctype="multipart/form-data"
-                        class="flex items-center gap-2" data-ajax novalidate>
+                        class="flex flex-wrap items-center gap-2" data-ajax novalidate>
                         @csrf
                         @method('PUT')
                         <input type="file" name="fare" id="fare">
@@ -213,7 +213,8 @@
             </div>
 
             <!-- ══════════ RATES TABLE ══════════ -->
-            <form action="{{ route('fares.bulk-update') }}" method="POST" data-ajax novalidate>
+            <form id="fares-bulk-form" action="{{ route('fares.bulk-update') }}" method="POST" data-ajax novalidate
+                :class="editing ? 'pb-28 md:pb-20' : ''">
                 @csrf
                 @method('PUT')
 
@@ -287,36 +288,40 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- Save Bar -->
-                <div x-show="editing" x-cloak x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 translate-y-2"
-                    x-transition:enter-end="opacity-100 translate-y-0"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 translate-y-0"
-                    x-transition:leave-end="opacity-0 translate-y-2"
-                    class="flex items-center justify-between mt-4 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
-
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
-                            <i class="fa-solid fa-pen text-[7px] text-emerald-500 dark:text-emerald-400"></i>
-                        </div>
-                        <div>
-                            <p
-                                class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
-                                Editing Mode</p>
-                            <p class="text-[7px] text-gray-400 dark:text-[#333]">Modify the values above, then save</p>
-                        </div>
-                    </div>
-
-                    <button type="submit"
-                        class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-[9px] font-bold uppercase tracking-widest text-white transition active:scale-[0.98]">
-                        <i class="fa-solid fa-check text-[8px]"></i>
-                        <span>Save Changes</span>
-                    </button>
-                </div>
             </form>
         </main>
+
+        <!-- Save Bar. It lives OUTSIDE <main> on purpose: main keeps a transform from its sidebar animation, which would
+             make `fixed` scroll with the page. It submits the rates form through its button's form attribute.
+             It floats at the bottom of the screen while editing, in line with the content column (the sidebar can be
+             open or collapsed), and on phones sits above the floating nav dock. -->
+        <div id="fare-save-bar" x-show="editing" x-cloak x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-y-2"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 translate-y-2"
+            :class="$store.sidebar.open ? 'md:left-[20rem]' : 'md:left-[7rem]'"
+            class="fixed z-40 left-4 right-4 sm:right-8 bottom-[calc(6rem+env(safe-area-inset-bottom))] md:bottom-6 flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl bg-emerald-50/90 dark:bg-[#0c1a14]/90 backdrop-blur-xl border border-emerald-500/25 shadow-xl shadow-emerald-900/10 dark:shadow-black/50">
+
+            <div class="flex items-center gap-2.5">
+                <div class="w-6 h-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
+                    <i class="fa-solid fa-pen text-[7px] text-emerald-500 dark:text-emerald-400"></i>
+                </div>
+                <div>
+                    <p
+                        class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+                        Editing Mode</p>
+                    <p class="text-[7px] text-gray-400 dark:text-[#333]">Modify the values above, then save</p>
+                </div>
+            </div>
+
+            <button type="submit" form="fares-bulk-form"
+                class="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-[9px] font-bold uppercase tracking-widest text-white transition active:scale-[0.98]">
+                <i class="fa-solid fa-check text-[8px]"></i>
+                <span>Save Changes</span>
+            </button>
+        </div>
     </div>
 </body>
 

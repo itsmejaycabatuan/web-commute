@@ -1,4 +1,5 @@
 @include('partials.theme')
+@include('partials.font-scale')
 
 {{-- commuter-head-scripts.blade.php --}}
 
@@ -18,13 +19,7 @@
         localStorage.setItem('color-theme', theme);
         document.documentElement.classList.toggle('dark', theme === 'dark');
 
-        // Font Size (using zoom for proportional scaling)
-        const fontZoomLevels = {
-            small: 0.875,
-            medium: 1,
-            large: 1.125,
-            xlarge: 1.25
-        };
+        // Font size: applied as a (width-limited) zoom, see partials/font-scale
         const intToLabel = {
             10: 'small',
             11: 'medium',
@@ -36,7 +31,8 @@
         const currentSize = intToLabel[dbInt] || localStorage.getItem('font-size') || 'medium';
         localStorage.setItem('font-size', currentSize);
 
-        document.documentElement.style.zoom = fontZoomLevels[currentSize] || 1;
+        // The zoom actually applied is limited on narrow screens (see partials/font-scale).
+        scApplyFontZoom(currentSize);
     })();
 </script>
 <script src="https://cdn.tailwindcss.com"></script>

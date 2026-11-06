@@ -281,9 +281,12 @@
                                                 </div>
                                             </td>
                                             <td class="px-5 py-3">
-                                                @if ($driver['status'] === 'Active')
+                                                @if ($driver['status'] === 'active')
                                                     <span
                                                         class="text-[8px] bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 rounded-md font-bold uppercase">Active</span>
+                                                @elseif ($driver['status'] === 'suspended')
+                                                    <span
+                                                        class="text-[8px] bg-red-500/10 text-red-600 border border-red-500/20 px-2 py-0.5 rounded-md font-bold uppercase">Suspended</span>
                                                 @else
                                                     <span
                                                         class="text-[8px] bg-gray-500/10 text-gray-600 border border-gray-500/20 px-2 py-0.5 rounded-md font-bold uppercase">Inactive</span>
@@ -336,7 +339,7 @@
                     <div class="glass-card p-5 rounded-[1.25rem] border-l-2 border-l-emerald-500">
                         <span
                             class="text-[8px] font-bold uppercase tracking-widest text-gray-400 dark:text-[#444]">Completed
-                            (This Month)</span>
+                            (Selected Range)</span>
                         <h3 class="text-2xl font-black text-emerald-500 dark:text-emerald-400 mt-1">
                             {{ number_format($maintStats['completed']) }}</h3>
                     </div>
@@ -351,9 +354,6 @@
                 <div class="glass-card rounded-[1.25rem] overflow-hidden">
                     <div class="p-5 border-b border-gray-200 dark:border-[#1e1e1e] flex justify-between items-center">
                         <h3 class="text-xs font-bold text-gray-900 dark:text-white">Upcoming Maintenance Schedule</h3>
-                        <a href="#"
-                            class="text-[8px] font-bold uppercase text-blue-500 dark:text-blue-400 cursor-pointer">View
-                            Calendar</a>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
@@ -374,15 +374,18 @@
                                         <td class="px-5 py-3 text-[11px] text-gray-500 dark:text-[#888]">
                                             {{ $task['task_name'] }}</td>
                                         <td class="px-5 py-3 text-[11px] text-gray-500 dark:text-[#888]">
-                                            {{ \Carbon\Carbon::parse($task['due_date'])->format('M d, Y') }}</td>
+                                            {{ $task['due_at'] ? $task['due_at']->format('M d, Y') : '—' }}</td>
                                         <td class="px-5 py-3">
-                                            @if ($task['is_overdue'])
-                                                <span
-                                                    class="text-[8px] bg-red-500/10 text-red-600 border border-red-500/20 px-2 py-0.5 rounded-md font-bold uppercase">Overdue</span>
-                                            @else
-                                                <span
-                                                    class="text-[8px] bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 rounded-md font-bold uppercase">Scheduled</span>
-                                            @endif
+                                            @php
+                                                $badge = match ($task['status_label']) {
+                                                    'Overdue' => 'bg-red-500/10 text-red-600 border-red-500/20',
+                                                    'Due soon' => 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+                                                    'Scheduled' => 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+                                                    default => 'bg-gray-500/10 text-gray-500 border-gray-500/20',
+                                                };
+                                            @endphp
+                                            <span
+                                                class="text-[8px] border px-2 py-0.5 rounded-md font-bold uppercase {{ $badge }}">{{ $task['status_label'] }}</span>
                                         </td>
                                     </tr>
                                 @empty
@@ -463,7 +466,9 @@
                                     ticks: {
                                         callback: (val) => '₱' + val
                                     },
-                                    beginAtZero: true
+                                    beginAtZero: true,
+                                    // With no revenue at all the axis would read ₱0 … ₱1 in steps of ₱0.1.
+                                    suggestedMax: Math.max(...chartRevenue, 0) > 0 ? undefined : 100
                                 },
                                 x: {
                                     grid: {

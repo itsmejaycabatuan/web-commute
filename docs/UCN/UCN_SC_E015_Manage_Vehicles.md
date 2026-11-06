@@ -71,7 +71,7 @@ Closing the form, pressing *Cancel scan* or starting another scan deletes the ph
 3. The modal offers **"Edit"** to jump straight into A2.
 
 **A6 – Keep the Duty Roster of a Shared Vehicle**
-1. For a vehicle with two drivers, the Maintenance Manager opens **Duty Roster** (`GET /duty-roster`, Maintenance Manager only) and picks the vehicle; the page shows *On duty today* and 28 days at a time (previous / next / today).
+1. For a vehicle with two drivers, the Maintenance Manager — or the Driver Manager or an Admin, who share the page — opens **Duty Roster** (`GET /duty-roster`; Maintenance Manager, Driver Manager and Admin only) and picks the vehicle; the page shows *On duty today* and 28 days at a time (previous / next / today).
 2. **Generate an alternating schedule**: start date (not in the past), *Drives first*, number of days (2–120). The two drivers take turns; it replaces whatever those days held.
 3. **Swap or clear a day**: the *Swap* button hands a day to the other driver, the dropdown sets or clears it by hand; **Save roster** stores the change (past days are history and are ignored). Every change is audited (*Duty roster updated*).
 4. **Effect:** a driver can only clock in, switch to *Active* or broadcast the vehicle's location on a day the roster gives to them. On the co-driver's day the map says *"Today is [name]'s day on this vehicle"*; with no roster line for today: *"No duty roster is set…"*. A vehicle with one driver needs no roster. Removing a driver (or suspending / deleting them) drops them from the roster from today on and leaves the co-driver on the vehicle; each shift records the vehicle it was worked on (`time_keepings.vehicle_id`).

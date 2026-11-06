@@ -115,7 +115,7 @@
             /* Above the canvas, but never over a marker popup (z-index 25). */
             z-index: 18;
             width: max-content;
-            max-width: min(400px, calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+            max-width: min(400px, calc((100vw / var(--sc-zoom, 1)) - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
             /* A long message scrolls inside the banner instead of running off a short screen. */
             max-height: calc(100dvh - var(--map-header-bottom, 96px) - 96px);
             overflow-y: auto;
@@ -187,7 +187,7 @@
             /* Full-width strip on phones so the title and message wrap instead of squeezing
                into a narrow pill, with a 44px tap target for the expand/collapse button. */
             #map-alert {
-                width: calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+                width: calc((100vw / var(--sc-zoom, 1)) - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
                 max-width: none;
             }
 
@@ -305,7 +305,7 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 20;
-            max-width: calc(100vw - 24px);
+            max-width: calc((100vw / var(--sc-zoom, 1)) - 24px);
             background: var(--ov-bg);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
@@ -673,8 +673,12 @@
             color: var(--pp-dim);
         }
 
-        /* ── ETA Marker Badge ── */
-        .custom-vehicle-marker {
+        /* ── ETA Marker Badge ──
+           The marker is positioned by MapLibre (.maplibregl-marker is position:absolute, moved with a
+           transform). Never override that with position:relative: the marker would then sit in the
+           normal flow, below the canvas, and drift whenever the map zooms. An absolutely positioned
+           marker is already the containing block for the badge. */
+        .custom-vehicle-marker:not(.maplibregl-marker) {
             position: relative;
         }
 
@@ -1232,7 +1236,7 @@
             justify-content: center;
             gap: 10px;
             min-height: 52px;
-            max-width: calc(100vw - 32px);
+            max-width: calc((100vw / var(--sc-zoom, 1)) - 32px);
             padding: 0 28px;
             border: 0;
             border-radius: 999px;
@@ -1444,7 +1448,7 @@
             background: #ffffff;
             border-top: 1px solid #e2e8f0;
             border-radius: 1.5rem 1.5rem 0 0;
-            max-height: 88vh;
+            max-height: calc(88vh / var(--sc-zoom, 1));
             overflow: hidden;
             transform: translateY(100%);
             transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1628,7 +1632,7 @@
             position: relative;
             z-index: 1;
             width: 340px;
-            max-width: calc(100vw - 2rem);
+            max-width: calc((100vw / var(--sc-zoom, 1)) - 2rem);
             max-height: calc(100vh - 4rem);
             overflow-y: auto;
             background: #ffffff;
@@ -2315,7 +2319,7 @@
 
     <header
         class="fixed top-4 left-4 right-4 sm:top-5 sm:left-5 sm:right-5 z-50 flex flex-col sm:flex-row justify-between items-center sm:items-center gap-3 pointer-events-none">
-        <div class="glass-panel p-3 sm:p-3.5 rounded-2xl pointer-events-auto flex items-center gap-3">
+        <div class="glass-panel p-3 sm:p-3.5 rounded-2xl pointer-events-auto flex flex-wrap justify-center max-w-full items-center gap-x-3 gap-y-2">
             <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
                 <i class="fa-solid fa-bus text-white text-sm"></i>
             </div>
@@ -3294,6 +3298,166 @@ _updateBadges: function() {
                                 }
 
                     </script>
+
+                    {{-- Local-only switches for the map's location checks, so the QR / pay-on-board
+                         checklist can be walked through without standing on the route. Commuters
+                         need them (the fare calculator is theirs), so they are not admin-only. --}}
+                    @env('local')
+                        @if (Auth::check())
+                            <div id="dev-map-checks"
+                                class="fixed bottom-4 left-4 z-40 w-[260px] max-w-[calc(100vw-2rem)] glass-card rounded-2xl border border-purple-500/20 p-3 text-[10px]">
+                                <button type="button" id="dev-map-checks-head"
+                                    class="w-full flex items-center justify-between gap-2 text-purple-400 font-bold uppercase tracking-[0.15em]">
+                                    <span><i class="fa-solid fa-flask mr-1.5"></i>Dev: map checks</span>
+                                    <i class="fa-solid fa-chevron-up text-[8px]" id="dev-map-checks-chev"></i>
+                                </button>
+                                <div id="dev-map-checks-body" class="mt-3 space-y-3">
+                                    <label class="flex items-start justify-between gap-3 cursor-pointer">
+                                        <span class="text-[#999] leading-snug">
+                                            <b class="text-[#ccc]">Skip "must be on the route"</b><br>
+                                            Pretend your GPS is at the stop below (also works with no GPS).
+                                        </span>
+                                        <input type="checkbox" id="dev-skip-route" class="mt-0.5 accent-purple-500">
+                                    </label>
+                                    {{-- Custom listbox instead of a native <select>: one chevron, stop + area on two
+                                         lines, and the open list matches the panel in both themes. --}}
+                                    <div class="relative" id="dev-stop-picker">
+                                        <button type="button" id="dev-stop-btn" aria-haspopup="listbox" aria-expanded="false"
+                                            class="w-full flex items-center gap-2 rounded-lg border border-gray-200 dark:border-[#222] bg-gray-50 dark:bg-[#111] px-2.5 py-1.5 text-left transition hover:border-purple-400/60 focus:outline-none focus:border-purple-500 disabled:cursor-not-allowed">
+                                            <i class="fa-solid fa-location-dot text-[9px] text-purple-400 shrink-0"></i>
+                                            <span class="min-w-0 flex-1">
+                                                <span id="dev-stop-name" class="block truncate text-[10px] font-semibold text-gray-800 dark:text-[#ddd]"></span>
+                                                <span id="dev-stop-area" class="block truncate text-[8px] text-gray-400 dark:text-[#555]"></span>
+                                            </span>
+                                            <i class="fa-solid fa-chevron-down text-[8px] text-gray-400 dark:text-[#555] shrink-0 transition-transform" id="dev-stop-chev"></i>
+                                        </button>
+                                        <ul id="dev-stop-list" role="listbox" hidden
+                                            class="absolute left-0 right-0 bottom-full mb-1.5 max-h-48 overflow-y-auto rounded-xl border border-gray-200 dark:border-[#222] bg-white dark:bg-[#111] p-1 shadow-2xl z-50">
+                                            @foreach (\App\Support\ServiceCorridor::stops() as $i => $stop)
+                                                <li role="option" data-index="{{ $i }}" tabindex="-1"
+                                                    class="dev-stop-opt flex items-center gap-2 rounded-lg px-2 py-1.5 cursor-pointer hover:bg-purple-500/10 focus:bg-purple-500/10 focus:outline-none">
+                                                    <span class="min-w-0 flex-1">
+                                                        <span class="block truncate text-[10px] font-semibold text-gray-800 dark:text-[#ddd]">{{ $stop['name'] }}</span>
+                                                        <span class="block truncate text-[8px] text-gray-400 dark:text-[#555]">{{ $stop['area'] }}</span>
+                                                    </span>
+                                                    <i class="dev-stop-tick fa-solid fa-check text-[9px] text-purple-400 invisible"></i>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                    <label class="flex items-start justify-between gap-3 cursor-pointer">
+                                        <span class="text-[#999] leading-snug">
+                                            <b class="text-[#ccc]">Skip "tap must be on the road"</b><br>
+                                            Map taps snap to the nearest road point instead of being refused.
+                                        </span>
+                                        <input type="checkbox" id="dev-skip-snap" class="mt-0.5 accent-purple-500">
+                                    </label>
+                                    <label class="flex items-start justify-between gap-3 cursor-pointer">
+                                        <span class="text-[#999] leading-snug">
+                                            <b class="text-[#ccc]">Skip "scan the QR code"</b><br>
+                                            Pay a fare without scanning a ride QR first. Turn it off to scan as usual.
+                                        </span>
+                                        <input type="checkbox" id="dev-skip-qr" class="mt-0.5 accent-purple-500">
+                                    </label>
+                                    <p class="text-[8px] text-[#444] leading-snug">The route and road switches are saved in this browser; the QR switch is saved
+                                        on the server for this login. Other server checks (e.g. <code>QR_REQUIRE_NEARBY_VEHICLE</code>) are in <code>.env</code>.</p>
+                                </div>
+                            </div>
+                            <script>
+                                // State lives on window so the map module can read it; the module defines
+                                // window.devMapChecksApply, which re-evaluates the pickup when a switch flips.
+                                (function() {
+                                    var KEY = 'devMapChecks';
+                                    var st = {skipRoute: false, skipSnap: false, skipQr: false, stop: 0, collapsed: false};
+                                    try { Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+// The QR switch is kept in the server session (the rule is enforced there), so the server's value wins.
+st.skipQr = @json((bool) session('dev_skip_qr'));
+                                    window.devMapChecks = st;
+
+                                    var $ = function(id) { return document.getElementById(id); };
+                                    var btn = $('dev-stop-btn'), list = $('dev-stop-list');
+                                    function setOpen(open) {
+                                        list.hidden = !open;
+                                        btn.setAttribute('aria-expanded', String(open));
+                                        $('dev-stop-chev').style.transform = open ? 'rotate(180deg)' : '';
+                                        if (open) { var cur = list.children[st.stop]; if (cur) cur.scrollIntoView({block: 'nearest'}); }
+                                    }
+                                    function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+                                    function paint() {
+                                        $('dev-skip-route').checked = !!st.skipRoute;
+                                        $('dev-skip-snap').checked = !!st.skipSnap;
+$('dev-skip-qr').checked = !!st.skipQr;
+                                        var opt = list.children[st.stop] || list.children[0];
+                                        $('dev-stop-name').textContent = opt.querySelector('span span:nth-child(1)').textContent;
+                                        $('dev-stop-area').textContent = opt.querySelector('span span:nth-child(2)').textContent;
+                                        Array.prototype.forEach.call(list.children, function(li, i) {
+                                            li.setAttribute('aria-selected', String(i === st.stop));
+                                            li.querySelector('.dev-stop-tick').classList.toggle('invisible', i !== st.stop);
+                                        });
+                                        btn.disabled = !st.skipRoute;
+                                        $('dev-stop-picker').style.opacity = st.skipRoute ? 1 : .4;
+                                        if (!st.skipRoute) setOpen(false);
+                                        $('dev-map-checks-body').style.display = st.collapsed ? 'none' : '';
+                                        $('dev-map-checks-chev').className = 'fa-solid text-[8px] fa-chevron-' + (st.collapsed ? 'down' : 'up');
+                                    }
+                                    function changed() {
+                                        save(); paint();
+                                        if (typeof window.devMapChecksApply === 'function') window.devMapChecksApply();
+                                    }
+                                    $('dev-skip-route').addEventListener('change', function() { st.skipRoute = this.checked; changed(); });
+                                    $('dev-skip-snap').addEventListener('change', function() { st.skipSnap = this.checked; changed(); });
+$('dev-skip-qr').addEventListener('change', function() {
+    var box = this, want = box.checked;
+    box.disabled = true;
+    fetch(@json(route('dev.skip-qr')), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/json', 'Accept': 'application/json',
+            'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') || {}).content || ''
+        },
+        body: JSON.stringify({skip: want})
+    }).then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(d) { st.skipQr = !!d.skip; })
+      .catch(function() {
+          // Not saved on the server, so don't pretend it is.
+          st.skipQr = !want;
+      })
+      .then(function() { box.disabled = false; save(); paint(); });
+});
+                                    btn.addEventListener('click', function() { setOpen(list.hidden); });
+                                    list.addEventListener('click', function(e) {
+                                        var li = e.target.closest('li[data-index]');
+                                        if (!li) return;
+                                        st.stop = parseInt(li.dataset.index, 10) || 0;
+                                        setOpen(false); changed(); btn.focus();
+                                    });
+                                    document.addEventListener('click', function(e) {
+                                        if (!e.target.closest('#dev-stop-picker')) setOpen(false);
+                                    });
+                                    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') setOpen(false); });
+                                    $('dev-map-checks-head').addEventListener('click', function() { st.collapsed = !st.collapsed; save(); paint(); });
+
+                                    // An admin has no sidebar button on a phone, and the collapsed sidebar fades
+                                    // its children out, so on narrow screens the panel is lifted out to the page.
+                                    if (window.userRole === 'admin' && window.matchMedia) {
+                                        var panel = $('dev-map-checks'), home = panel.parentNode;
+                                        var slot = document.createComment('dev-map-checks');
+                                        home.insertBefore(slot, panel);
+                                        var mq = window.matchMedia('(max-width: 767px)');
+                                        var place = function() {
+                                            if (mq.matches) document.body.appendChild(panel);
+                                            else home.insertBefore(panel, slot);
+                                        };
+                                        place();
+                                        if (mq.addEventListener) mq.addEventListener('change', place);
+                                    }
+                                    paint();
+                                })();
+                            </script>
+                        @endif
+                    @endenv
+
 
                     {{-- Dev tools are an admin-only, local-only aid; commuters never see them. --}}
                     @if (Auth::check() && Auth::user()->roles[0]->name === 'admin')
@@ -5055,7 +5219,7 @@ sim._lastEtaUpdate = null;
             /* On-road position for the point, or null (and a short alert) when it is off the road. */
             window.snapToCorridor = function(lng, lat) {
                 var n = window.nearestOnCorridor(lng, lat);
-                if (n.distance <= window.CORRIDOR_TOLERANCE_M) {
+                if (n.distance <= window.CORRIDOR_TOLERANCE_M || (window.devMapChecks && window.devMapChecks.skipSnap)) {
                     window.clearMapAlert('off-corridor');
                     return n;
                 }
@@ -5640,6 +5804,12 @@ sim._lastEtaUpdate = null;
 
             /* Called with every GPS fix (see ETA._receivePosition). */
             window.onUserLocationFix = function(lat, lng) {
+                // Dev switch (local env only): pretend the fix is at a chosen stop.
+                const dev = window.devMapChecks;
+                if (dev && dev.skipRoute && window.CORRIDOR_STOPS[dev.stop]) {
+                    lat = window.CORRIDOR_STOPS[dev.stop].lat;
+                    lng = window.CORRIDOR_STOPS[dev.stop].lng;
+                }
                 userGps = {lat: lat, lng: lng};
                 const near = window.nearestOnCorridor(lng, lat);
                 userNearRoute = near.distance <= window.CORRIDOR_USER_TOLERANCE_M;
@@ -5682,6 +5852,10 @@ sim._lastEtaUpdate = null;
 
             /* The pickup button: re-read the GPS position (asking again if needed). */
             window.useMyLocation = function() {
+                if (window.devMapChecks && window.devMapChecks.skipRoute) {
+                    window.devMapChecksApply();
+                    return;
+                }
                 const done = function() {
                     if (!userNearRoute) window.flashMapAlert('user-off-route', 8000);
                     applyPickupFromGps(vehicleLat !== null);
@@ -5711,6 +5885,24 @@ sim._lastEtaUpdate = null;
                 }
                 if (!pickupFromGps) applyPickupFromGps(false);
                 return true;
+            };
+
+            /* Dev switches changed: re-read the position so the pickup follows. */
+            window.devMapChecksApply = function() {
+                pickupFromGps = false;
+                const real = window.ETA && window.ETA.userLat != null
+                    ? {lat: window.ETA.userLat, lng: window.ETA.userLng} : null;
+                const dev = window.devMapChecks;
+                if (real || (dev && dev.skipRoute)) {
+                    window.onUserLocationFix(real ? real.lat : 0, real ? real.lng : 0);
+                } else {
+                    userGps = null;
+                    userNearRoute = false;
+                    userLat = userLng = null;
+                }
+                window.clearMapAlert('user-no-fix');
+                if (userNearRoute) window.clearMapAlert('user-off-route');
+                applyPickupFromGps(vehicleLat !== null);
             };
 
             function renderStops() {
@@ -5774,6 +5966,8 @@ sim._lastEtaUpdate = null;
             // The first GPS fix usually lands before the map exists: pick it up now.
             if (window.ETA && window.ETA.userLat !== null && window.ETA.userLat !== undefined) {
                 window.onUserLocationFix(window.ETA.userLat, window.ETA.userLng);
+            } else if (window.devMapChecks && window.devMapChecks.skipRoute) {
+                window.devMapChecksApply();
             }
 
             document.addEventListener('click', function(e) {

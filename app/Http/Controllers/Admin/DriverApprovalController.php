@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Driver;
 use App\Models\TimeKeeping;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Models\ViolationLog;
 use App\Notifications\DriverApplicationDecided;
 use App\Support\Audit;
@@ -349,7 +350,8 @@ class DriverApprovalController extends Controller
                 ->with('success', 'Driver reactivated.');
         }
 
-        $hadVehicle = $driver->vehicle()->exists();
+        $vehicles = $driver->vehicle()->get();
+        $hadVehicle = $vehicles->isNotEmpty();
         $driver->suspend($validated['suspension_reason'] ?? null);
 
         Audit::log(Audit::DRIVER, 'suspended', 'Suspended driver '.($driver->driver_code ?: '#'.$driver->id), $driver, [
@@ -360,7 +362,36 @@ class DriverApprovalController extends Controller
 
         return redirect()
             ->route('drivers.index')
-            ->with('success', 'Driver suspended. They can no longer sign in.');
+            ->with('success', $this->suspensionSummary($driver, $vehicles));
+    }
+
+    /**
+     * What a suspension did, in words: the admin should not have to open the Vehicles page to learn whether the
+     * vehicle was freed, a replacement joined, and the duty roster was rebuilt.
+     */
+    private function suspensionSummary(Driver $driver, \Illuminate\Support\Collection $vehicles): string
+    {
+        $message = 'Driver suspended. They can no longer sign in.';
+
+        foreach ($vehicles as $vehicle) {
+            $vehicle = $vehicle->fresh(['drivers']);
+            $vacancy = \App\Models\DriverVacancy::where('vehicle_id', $vehicle->id)
+                ->where('former_driver_id', $driver->id)->latest('id')->first();
+
+            $message .= " They were taken off {$vehicle->plate_number}";
+
+            if ($vacancy?->replacementDriver) {
+                $message .= " and {$vacancy->replacementDriver->name} was assigned in their place";
+                $message .= $vehicle->drivers->count() >= Vehicle::MAX_DRIVERS ? '; the duty roster was rebuilt for the two drivers.' : '.';
+            } elseif ($vacancy) {
+                $message .= '; no free driver was available, so the seat is open and the Maintenance Managers were told.';
+                $message .= $vehicle->drivers->count() === 1 ? " {$vehicle->drivers->first()->name} now has the vehicle to themselves and may drive any day." : '';
+            } else {
+                $message .= '.';
+            }
+        }
+
+        return $message;
     }
 
     public function approve(Request $request, string $user)

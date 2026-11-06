@@ -450,8 +450,8 @@
                             <span>Add Driver</span>
                         </button>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-1.5">
+                    <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                        <div class="flex flex-wrap items-center gap-1.5">
                             <button @click="filter = 'all'"
                                 :class="filter === 'all' ?
                                     'bg-gray-900 dark:bg-white/10 text-white border-gray-900 dark:border-white/20' :
@@ -734,7 +734,7 @@
                     </button>
                 </div>
 
-                <div class="px-6 sm:px-8 pb-6 sm:pb-8 modal-scroll overflow-y-auto" style="max-height: 75vh;">
+                <div class="px-6 sm:px-8 pb-6 sm:pb-8 modal-scroll overflow-y-auto" style="max-height: calc(75vh / var(--sc-zoom, 1));">
                     <form action="{{ route('drivers.store') }}" method="POST" enctype="multipart/form-data"
                         class="space-y-4" data-ajax novalidate>
                         @csrf
@@ -920,7 +920,7 @@
                     </button>
                 </div>
 
-                <div class="px-6 sm:px-8 pb-6 sm:pb-8 modal-scroll overflow-y-auto" style="max-height: 75vh;">
+                <div class="px-6 sm:px-8 pb-6 sm:pb-8 modal-scroll overflow-y-auto" style="max-height: calc(75vh / var(--sc-zoom, 1));">
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
 
                         <!-- Left: License Image -->
@@ -1284,7 +1284,7 @@
                     </button>
                 </div>
 
-                <div class="px-6 sm:px-8 pb-6 sm:pb-8 modal-scroll overflow-y-auto" style="max-height: 75vh;">
+                <div class="px-6 sm:px-8 pb-6 sm:pb-8 modal-scroll overflow-y-auto" style="max-height: calc(75vh / var(--sc-zoom, 1));">
                     <form :action="editUpdateUrl" method="POST" enctype="multipart/form-data" class="space-y-4"
                         data-ajax novalidate>
                         @csrf
@@ -1433,7 +1433,7 @@
             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0">
 
-            <div class="glass-panel w-full max-w-4xl rounded-[2rem] overflow-hidden flex flex-col max-h-[90vh]"
+            <div class="glass-panel w-full max-w-4xl rounded-[2rem] overflow-hidden flex flex-col max-h-[calc(90vh/var(--sc-zoom,1))]"
                 @click.stop x-show="reviewModal" x-transition:enter="transition ease-out duration-200"
                 x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"

@@ -104,14 +104,19 @@ Satisfied when:
 
 **Source:** [UCN_SC_E005](UCN/UCN_SC_E005_Topup_Balance.md) · **Actor:** Commuter (Admin monitors) · **Priority:** Must
 
-**The system shall let a Commuter add money to their wallet.**
+**The system shall let a Commuter add money to their wallet by paying through GCash or Maya.**
 
 Satisfied when:
 - the amount is a preset (₱50 / 100 / 200 / 500) or a custom ₱10 – ₱100,000, paid by a self-service method (GCash or Maya);
-- success credits exactly that amount and writes a top-up history record; a repeat of the same top-up within 2 minutes is credited only once;
-- a Commuter can search and filter their own top-up history and see the total added;
+- submitting the form opens a **PayMongo hosted checkout** (test mode in development) and records the top-up as `pending` with a unique transaction id; **the wallet is not touched** until the gateway confirms the payment;
+- a confirmed payment — by a signed webhook, by looking the payment up on the commuter's return, or by the scheduled reconciliation that catches a missed webhook — marks the top-up `completed` and credits exactly the recorded amount, **once**, however many of those paths report it; a late confirmation still credits a top-up that was cancelled or had expired;
+- a declined payment ends `failed` (the Commuter is emailed), backing out ends `cancelled`, and one still open after 12 hours is closed as `cancelled`; none of them changes the wallet;
+- an unsigned or forged webhook is refused with 401 and changes nothing;
+- a repeat of a **completed** top-up (same amount and method) within 2 minutes is refused; a pending, failed or cancelled one does not block a retry;
+- when the gateway is unavailable, or refuses to run, no top-up is recorded and the wallet is unchanged; with the gateway deliberately off the top-up is simulated and credited at once in a development or test environment only — in production it is refused, so a wallet is never funded without a payment;
+- a Commuter can search and filter their own top-up history, see each top-up's status and the total added (completed top-ups only);
 - an Admin can list every top-up with its status and filter by search, status, method, date and amount, with the "funds added" total counting completed top-ups only;
-- the Commuter is emailed a receipt for each completed top-up (amount, method, new balance); a failed email never fails the top-up. Top-ups are credited at once and are not gateway payments, so none is left pending.
+- the Commuter is emailed a receipt for each completed top-up (amount, method, new balance) and a notice for a failed one; a failed email never fails the top-up.
 
 ## FR-E006 — Pay Fare
 
@@ -197,7 +202,7 @@ Satisfied when:
 Satisfied when:
 - the list searches and filters by status (all, pending, approved, rejected, suspended) and licence state (expiring, expired), 10 per page, and shows each driver's licence validity;
 - an added driver (name, email, password, licence number / code / expiry, Philippine mobile number, licence image) gets a generated driver code and is approved at once; duplicate emails and licence numbers are refused; a **pending** registration can only be approved or rejected, not edited;
-- an approved driver can be **suspended** (optional reason) and reactivated — suspension blocks sign-in, clock-in and broadcasting, takes effect on an open session, and detaches the driver's vehicle;
+- an approved driver can be **suspended** (optional reason) and reactivated — suspension blocks sign-in, clock-in and broadcasting, takes effect on an open session, ends any shift the driver had open, detaches the driver's vehicle and its roster days, takes a vehicle nobody else is driving off the live map, and tells the Admin what happened to the vehicle, the replacement and the roster;
 - a driver can be deleted unless a vehicle is still assigned; one who also has payments or top-ups is anonymised instead (see FR-E026);
 - every change is recorded in the audit trail;
 - an Admin and every Driver Manager are **emailed when a driver applies**, and the driver is emailed when the application is approved or rejected;
@@ -238,7 +243,7 @@ Satisfied when:
 Satisfied when:
 - the fleet lists, searches, filters (status, fuel type, assigned / unassigned) and sorts, 10 per page, and each vehicle can be viewed in full;
 - a vehicle has a unique plate number, a year from 1990 to 2030, a status of `active`, `inactive`, `maintenance` or `disposed`, and an expected disposal date after its acquisition date;
-- a driver may be assigned only to an `active` vehicle, only if approved and not suspended, and only one vehicle each; **up to two drivers may share** a vehicle and take turns on a duty roster the Maintenance Manager generates (alternating, 2–120 days) and swaps by day, and a driver can only clock in, go active or broadcast on their own duty day; moving a vehicle to any other status detaches its drivers and, for `maintenance` / `disposed`, removes it from the live map;
+- a driver may be assigned only to an `active` vehicle, only if approved and not suspended, and only one vehicle each; **up to two drivers may share** a vehicle and take turns on a duty roster that the Maintenance Manager, the Driver Manager or an Admin generates (alternating, 2–120 days) and swaps by day, and a driver can only clock in, go active or broadcast on their own duty day; moving a vehicle to any other status detaches its drivers and, for `maintenance` / `disposed`, removes it from the live map;
 - a vehicle cannot be disposed of while its driver is clocked in, and one with maintenance history or a driver cannot be deleted (it is marked `disposed` instead);
 - a vehicle can be **added by scanning its papers with a phone**: the form shows a QR code, the phone photographs the Certificate of Registration (and the Official Receipt), the server reads them locally and fills in plate, chassis/VIN, make, model, year and fuel, marking each value *read clearly* or *check carefully* and flagging disagreement between the two papers; **the vehicle cannot be saved until the manager confirms they checked the details against the document**, the server enforces it, and the photos are deleted when the vehicle is saved, the form is closed or 15 minutes pass;
 - a vehicle with an overdue or due-soon service is flagged on the list and the dashboard and, when switched on, cannot be set back to `active` while a service is overdue (FR-E016);
@@ -296,7 +301,8 @@ Satisfied when:
 **The system shall let an Admin generate a report for a date range and export it.**
 
 Satisfied when:
-- a **Financial Overview**, **Driver Performance** or **Maintenance & Fleet** report can be generated for a chosen range;
+- a **Financial Overview**, **Driver Performance** or **Maintenance & Fleet** report can be generated for a chosen range; the range covers whole days (a payment made today counts in a report that ends today) and opening the page with no dates reports the last 7 days;
+- the Driver Performance chart and badges count and show each driver's real status (active, inactive, suspended), and the Maintenance report judges each service by its real due date and odometer reading (overdue, due soon, scheduled), most urgent first, disposed vehicles excluded;
 - a start date after the end date is refused; an empty result says so with zeroed figures; a ledger whose newest transaction is over a day old shows a staleness warning;
 - the report can be exported as a CSV named by type and date, and the export is recorded in the audit trail;
 - the Admin is **emailed a weekly and a monthly report** (revenue by method, top-ups, failed payments, violations and fines, hours and overtime, distance, maintenance spend, overdue services, repeat violators, unpaid scans) with the figures — and optionally the period's audit trail — as CSV attachments, and each send is audited;
@@ -338,7 +344,8 @@ Satisfied when:
 - the weekly timekeeping view shows hours, overtime and each day's status, and moves between weeks;
 - the violations view shows the driver's own violations, read-only, with totals and the latest violation, 10 per page;
 - the Driver can switch availability between `active` and `inactive`; any other value is rejected;
-- a day whose shift was closed automatically is tagged as such, and the dashboard's distance today shows the kilometres recorded from the driver's broadcasts.
+- a day whose shift was closed automatically is tagged as such, and the dashboard's distance today shows the kilometres recorded from the driver's broadcasts;
+- a Driver who **shares a vehicle** sees their **schedule on the dashboard**: the next 14 days of the duty roster marked as theirs, the co-driver's or not scheduled, with a notice when no roster is set; a Driver with no vehicle or a vehicle to themselves has no schedule card, and the card is read-only.
 
 ## FR-E024 — Admin Violation Code Management
 
@@ -360,7 +367,7 @@ Satisfied when:
 
 Satisfied when:
 - a Commuter's profile shows their fare payments, top-ups and wallet balance;
-- an **Admin** dashboard shows total revenue, funds added, active users, the five latest fares and top-ups and 7-day series; a **Driver** dashboard shows their details, today's record, weekly hours and overtime, assigned vehicle and recent violations; a **Driver Manager** dashboard lists drivers, timekeeping and violation logs; a **Maintenance Manager** dashboard shows fleet information, a cost summary and service history;
+- an **Admin** dashboard shows total revenue, funds added, active users, the five latest fares and top-ups and 7-day series; a **Driver** dashboard shows their details, today's record, weekly hours and overtime, assigned vehicle, their duty schedule when the vehicle is shared, and recent violations; a **Driver Manager** dashboard lists drivers, timekeeping and violation logs; a **Maintenance Manager** dashboard shows fleet information, a cost summary and service history;
 - a user who opens a page not meant for their role is returned to the map with a message;
 - the **Maintenance Manager** dashboard also lists vehicles waiting for a driver and vehicles with overdue or due-soon services, each panel shown only when it has something to show.
 
@@ -415,9 +422,9 @@ and **reviewing**:
 | **Guest** | FR-E001 sign in · FR-E002 register · FR-E003 track PUJs · FR-E004 plan a trip · FR-E011 reset a password · FR-E022 apply as a driver |
 | **Commuter** | FR-E003, FR-E004 as a Guest, plus FR-E005 top up · FR-E006 pay a fare · FR-E007 payment history · FR-E008 change password · FR-E025 profile · FR-E026 delete account |
 | **Driver** | FR-E008 · FR-E009 clock in · FR-E010 clock out · FR-E021 share location · FR-E023 timekeeping, violations, availability · FR-E025 dashboard · FR-E026 |
-| **Driver Manager** | FR-E008 · FR-E012 drivers · FR-E013 timekeeping · FR-E014 violations · FR-E024 violation codes · FR-E025 dashboard |
+| **Driver Manager** | FR-E008 · FR-E012 drivers · FR-E015 duty roster (shared page) · FR-E013 timekeeping · FR-E014 violations · FR-E024 violation codes · FR-E025 dashboard |
 | **Maintenance Manager** | FR-E008 · FR-E015 vehicles, duty roster and phone scan · FR-E016 maintenance schedule and due alerts · FR-E017 maintenance tasks · FR-E025 dashboard |
-| **Admin** | FR-E008 · FR-E012 and FR-E015 (shared pages) · FR-E018 commuters · FR-E019 fare rates · FR-E020 reports, scheduled reports and Fleet Analytics · FR-E027 staff · FR-E028 activity log · FR-E005 / FR-E007 ledgers · FR-E006 gateway alerts and QR codes · FR-E025 dashboard |
+| **Admin** | FR-E008 · FR-E012 and FR-E015 (shared pages, including the duty roster) · FR-E018 commuters · FR-E019 fare rates · FR-E020 reports, scheduled reports and Fleet Analytics · FR-E027 staff · FR-E028 activity log · FR-E005 / FR-E007 ledgers · FR-E006 gateway alerts and QR codes · FR-E025 dashboard |
 | **System (scheduler)** | Runs with no user: FR-E010 closes forgotten shifts · FR-E012 warns and suspends inactive drivers and replaces drivers who leave a vehicle · FR-E006 reconciles payments · FR-E016 emails due services · FR-E014 flags repeat violators · FR-E020 sends the weekly and monthly reports · all listed in [AUTOMATED_FEATURES.md](AUTOMATED_FEATURES.md) |
 
 ---
@@ -432,7 +439,7 @@ one (it then becomes part of the matching `FR-Exxx`), defer it or drop it.
 | GAP-01 | Paying a fare shall issue a boarding permission (ticket / one-time ride token) that a driver or vehicle can verify. | A fare is now attributed to a vehicle and driver and unpaid scans are flagged, but a driver still has no screen that shows who has paid. | FR-E006 |
 | GAP-02 | The system shall price the trip's **distance** on the server instead of trusting the browser's routing call. | The fare can no longer be tampered with but the distance still can. | FR-E006 |
 | GAP-04 | A Commuter shall be able to request a refund or dispute a fare; an Admin shall be able to settle it (and a wallet balance could be refunded on account deletion). | Paid payments are immutable and there is no recourse; deletion is refused while the wallet holds money. | FR-E006, FR-E026 |
-| GAP-05 | A top-up shall go through the payment gateway (with a pending → settled state) rather than crediting the wallet on form submit. | No gateway, transaction id or signature check on top-ups. | FR-E005 |
+| GAP-05 | A top-up shall go through the payment gateway (with a pending → settled state) rather than crediting the wallet on form submit. | **Done**: top-ups open a PayMongo checkout, start `pending` with a transaction id and are credited only on a signed webhook, a return-URL lookup or the scheduled reconciliation (see UCN_SC_E005). | FR-E005 |
 | GAP-06 | An Admin shall be able to record a cash / admin-settlement top-up. | The commuter option was removed and no admin UI replaced it. | FR-E005 |
 | GAP-07 | Receipts and top-up confirmations shall be sent by email. | **Done**: fare receipts and top-up receipts are emailed (see UCN_SC_E005 and E006). | FR-E005, FR-E006 |
 | GAP-08 | The owner of an account shall be notified by email when their password is changed or reset. | Only the audit trail records it. | FR-E008, FR-E011 |

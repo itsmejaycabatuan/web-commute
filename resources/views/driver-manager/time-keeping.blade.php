@@ -235,8 +235,8 @@
                             <span>New Entry</span>
                         </button>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-1.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex flex-wrap items-center gap-1.5">
                             <button @click="setFilter('all')"
                                 :class="filter === 'all' ?
                                     'bg-gray-900 dark:bg-white/10 text-white border-gray-900 dark:border-white/20' :
@@ -506,7 +506,7 @@
                 x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click.self="closeModal()"
                 style="display:none;">
 
-                <div class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-xl w-full max-h-[90vh] overflow-y-auto"
+                <div class="glass-panel p-6 sm:p-8 rounded-[2rem] max-w-xl w-full max-h-[calc(90vh/var(--sc-zoom,1))] overflow-y-auto"
                     @click.stop x-show="showModal" x-transition:enter="transition ease-out duration-200"
                     x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                     x-transition:leave="transition ease-in duration-150"

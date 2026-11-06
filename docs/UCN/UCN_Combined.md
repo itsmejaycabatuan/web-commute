@@ -504,13 +504,13 @@ Guest has used all 3 daily fare calculations. The System displays the limit moda
 | **Use_Case_ID**       | UCN SC E005                                                                                                                                                           |
 | **Use Case Name**     | Topup Balance                                                                                                                                                         |
 | **Primary Actor**     | Commuter                                                                                                                                                              |
-| **Secondary Actor**   | System / Admin                                                                                                                                                        |
-| **Goal**              | Allow commuters to have digital currency for easier commuting payments.                                                                                               |
+| **Secondary Actor**   | System / Admin / PayMongo Gateway                                                                                                                                     |
+| **Goal**              | Allow commuters to have digital currency for easier commuting payments, funded by a real GCash or Maya payment.                                                       |
 | **Trigger**           | Commuter presses the "+" button on the payment page and selects an amount and payment method.                                                                         |
-| **Preconditions**     | 1. Commuter is successfully authenticated and logged in.<br>2. The digital wallet exists for the commuter (created at registration).<br>3. The System is operational. |
-| **Supporting Actors** | Wallet, Top-up history ledger                                                                                                                                         |
+| **Preconditions**     | 1. Commuter is successfully authenticated and logged in.<br>2. The digital wallet exists for the commuter (created at registration).<br>3. The System is operational.<br>4. The payment gateway is enabled (`PAYMONGO_ENABLED=true` with valid keys — PayMongo **test mode** keys in development; see `docs/PAYMONGO_SETUP.md`). |
+| **Supporting Actors** | Wallet, Top-up history ledger, PayMongo (hosted checkout, signed webhook, payment-intent lookup)                                                                      |
 
-> **Scope note:** the current implementation **does not integrate an external payment gateway**. The top-up is credited directly by the System after the commuter confirms the method. Steps relating to gateway redirects, callback signature validation and gateway cancellation are therefore **not implemented** — see *Known Gaps*.
+> **Scope note:** a top-up is a **gateway payment**. The wallet is **never** credited when the form is submitted; it is credited only when PayMongo confirms that the money arrived. Until then the top-up exists as a `pending` record. In development the gateway runs against PayMongo's **test mode** (free, no real money); production uses live keys — the configuration safety rail in `docs/PAYMONGO_SETUP.md` refuses a live key outside `production`.
 
 ---
 
@@ -521,9 +521,13 @@ Guest has used all 3 daily fare calculations. The System displays the limit moda
 | 1   | Commuter clicks the "+" button.                                                               | System displays the Topup page with the current wallet balance, a custom-amount input, and predefined amount options.                                                  |
 | 2   | Commuter selects a predefined amount (₱50 / ₱100 / ₱200 / ₱500) **or** types a custom amount. | System highlights the selected preset (and clears the highlight when a non-preset value is typed).                                                                     |
 | 3   | Commuter selects a payment method (**GCash** or **Maya**) and clicks **"Confirm Payment"**.           | System validates the request server-side: `amount` required, numeric, **min ₱10**, max ₱100,000; `payment-method` required and restricted to the self-service methods. |
-| 4   |                                                                                               | System adds the amount to the commuter's wallet balance.                                                                                                               |
-| 5   |                                                                                               | System creates a **top-up history record** (user, wallet, amount added, payment method) for auditing.                                                                  |
-| 6   |                                                                                               | System displays the success message *"Successfully topped up!"* and returns to the top-up page showing the new balance.                                                |
+| 4   |                                                                                               | System opens a **PayMongo checkout session** for that amount (sent in centavos) and the chosen channel (`gcash` / `paymaya`), with SmartCommute's own return and cancel URLs. |
+| 5   |                                                                                               | System creates a **top-up record** with status `pending`, a unique transaction id (`TOPUP-XXXXXXXXXXXX`) and the gateway's payment-intent and checkout-session ids. The wallet is **not** touched. |
+| 6   |                                                                                               | System redirects the commuter to PayMongo's hosted checkout page.                                                                                                      |
+| 7   | Commuter authorizes the payment in GCash / Maya.                                              | PayMongo confirms the payment to the System by a **signed webhook** (`payment.paid`).                                                                                  |
+| 8   |                                                                                               | System verifies the webhook's HMAC signature, finds the top-up by payment intent (or transaction id), and — in one locked database transaction — marks it `completed`, stamps `paid_at` and **adds the amount to the wallet balance**. |
+| 9   |                                                                                               | System emails the commuter a **top-up receipt** (amount, method, new balance).                                                                                         |
+| 10  | Commuter is returned to SmartCommute.                                                         | System shows *"Top-up successful! ₱X was added to your wallet."* on the top-up page with the new balance. If the webhook has not arrived yet, the System asks PayMongo directly (see A6) before answering. |
 
 ---
 
@@ -535,57 +539,91 @@ Guest has used all 3 daily fare calculations. The System displays the limit moda
 
 **A2 – Commuter changes the payment method**
 1. Commuter selects a different payment method card before pressing "Confirm Payment".
-2. System uses the newly selected method for the transaction record.
+2. System opens the checkout for the newly selected channel and records that method on the top-up.
 
 **A3 – Commuter reviews past top-ups**
 1. Commuter opens **Top-up History** (`/payment/topup/history`).
-2. System lists the records with search (ID) and filters (method, date range), plus total amount added.
+2. System lists the records — **with their status** (completed, pending, failed, cancelled) — with search (ID) and filters (method, date range). Only completed top-ups are shown as money added; a pending one offers a *Check status* link.
 
 **A4 – Admin monitors top-ups**
 1. Admin opens `/topups`.
 2. System lists **every** top-up — completed, pending, failed and cancelled — with a **Status** column, and filters by *search, payment status, payment method, date range and amount range*. The "funds added" total counts **completed** top-ups only. The list shows 10 per page.
 
+**A5 – Commuter cancels at checkout**
+1. At step 6/7 the commuter backs out of the hosted checkout; PayMongo sends them to SmartCommute's cancel URL.
+2. System marks the still-pending top-up `cancelled` ("Cancelled at checkout."), shows *"Top-up cancelled. Nothing was charged."* and leaves the wallet unchanged. No email is sent.
+3. If the commuter later pays the still-open checkout session anyway, the confirmed payment still credits the wallet (steps 7–9) — money that arrived is never lost.
+
+**A6 – The webhook is late or never arrives**
+1. The commuter is sent to the return URL and the top-up is still `pending`. System shows *"Confirming your top-up"* (auto-refreshing) and, at most every 4 seconds, asks PayMongo for the payment intent.
+2. When the intent is `succeeded` the System settles the top-up exactly as in step 8 and returns the commuter to the top-up page.
+3. A commuter who never returns is covered by the scheduled `payments:reconcile` job (every 10 minutes): it asks PayMongo about every top-up still pending after 5 minutes and settles or fails it through the same code.
+4. The webhook, the return URL and the reconciliation share **one** settlement (`TopupSettlement`), so whichever arrives first wins and the others find it done: the wallet is credited, and the receipt emailed, once.
+
+**A7 – Gateway switched off in a development / test environment**
+1. With `PAYMONGO_ENABLED=false` and a non-production environment, there is no money to wait for.
+2. System simulates the payment: the same top-up record is created and settled at once (steps 5, 8, 9), and the commuter sees *"Successfully topped up!"*. No external call is made. This path does not exist in production (see E7).
+
 ---
 
 ### Postconditions
 
-1. The commuter's wallet balance has been increased by the exact (2-decimal rounded) top-up amount.
-2. A digital top-up / transaction record has been generated and saved (`TopupHistory`).
+1. After a **confirmed** payment the commuter's wallet balance has been increased by the exact (2-decimal rounded) top-up amount, once.
+2. A top-up record (`TopupHistory`) exists with status `completed`, its transaction id, gateway ids and `paid_at`. A top-up that was not paid ends `failed` or `cancelled` and the wallet is unchanged.
 3. The commuter sees a success confirmation and the updated balance.
+4. The commuter is emailed a **top-up receipt** (amount, method, new balance), or — for a declined payment — a notice that it *did not go through*. A mail failure is logged and never fails the top-up (`Notifier`).
+5. Every state change of a top-up (created, completed, failed, cancelled) is written to the audit trail.
 
-4. The commuter is emailed a **top-up receipt** (amount, method, new balance). A mail failure is logged and never fails the top-up (`Notifier`).
 ---
 
 ### Exceptions
 
 **E1 – Payment Method Unavailable**
-The commuter submits a method that is not available for self-service (anything other than **GCash** or **Maya**). System responds with *"The selected payment-method is invalid."* and performs **no** wallet change.
+The commuter submits a method that is not available for self-service (anything other than **GCash** or **Maya**). System responds with *"The selected payment-method is invalid."* and performs **no** wallet change and **no** gateway call.
 > Cash / "Admin Settlement" is intentionally **not** self-service; it can only be recorded by an admin.
 
 **E2 – Invalid Custom Amount**
-The amount is missing, non-numeric, negative, zero, or below the ₱10 minimum. System responds with the corresponding validation message (e.g. *"The amount must be at least 10."*) and performs **no** wallet change. Amounts above ₱100,000 are rejected as well.
+The amount is missing, non-numeric, negative, zero, or below the ₱10 minimum. System responds with the corresponding validation message (e.g. *"The amount must be at least 10."*) and performs **no** wallet change and **no** gateway call. Amounts above ₱100,000 are rejected as well.
 
 **E3 – Already Paid / Duplicate Submission**
-The commuter (double-clicks, refreshes, or replays the request) submits an identical top-up (same user, amount and method) within **2 minutes** of a previous successful one. System detects the duplicate, cancels the transaction and displays *"This top-up was already processed. Please wait a moment before retrying."* — the balance is credited only once.
+The commuter (double-clicks, refreshes, or replays the request) submits an identical top-up (same user, amount and method) within **2 minutes** of a previous **completed** one. System detects the duplicate, cancels the transaction and displays *"This top-up was already processed. Please wait a moment before retrying."* — the balance is credited only once. A top-up that is merely pending, failed or cancelled does not count, so a commuter who backed out of checkout can try again at once.
 
-**E4 – Database / System Error**
-The wallet update fails. System displays *"Top-up failed. Please try again later."* and performs **no** wallet change.
-> **Known gap:** the top-up history row is written *after* the wallet update and outside its error handling. If that insert fails, the wallet has already been credited, no history row exists and the commuter sees the default 500 page.
+**E4 – Gateway Unavailable**
+PayMongo cannot be reached, rejects the checkout request, or answers without a checkout link or payment intent. System displays *"The payment service is unavailable right now. Please try again."*, creates **no** top-up record, performs **no** wallet change, and counts the error toward the gateway failure alert (3 errors in 15 minutes email the Admins once — `GatewayMonitor`).
 
-**E5 – Too Many Attempts (Rate Limiting)**
-The commuter submits more than **5 top-up requests per minute**. System blocks the request (HTTP 429) and performs **no** wallet change.
+**E5 – Database / System Error**
+The top-up record cannot be written after the checkout was opened. System displays *"Top-up failed. Please try again later."* and does **not** redirect to the gateway, so nothing can be paid for it; the wallet is unchanged.
 
-**E6 – Suspected Fraud / Rate Limiting**
-Covered by E5 (request-level) and E3 (duplicate-level). Automated credential-stuffing is additionally mitigated by the login throttle (see UCN_SC_E001 E5).
+**E6 – Payment Declined or Failed at the Gateway**
+PayMongo reports the payment `failed` (webhook `payment.failed`, or the intent is `failed` / `canceled` / `expired` on a lookup). System marks the top-up `failed`, leaves the wallet unchanged and emails the commuter *"Your top-up did not go through"*. A `checkout_session.expired` event marks it `cancelled` without an email.
+
+**E7 – No Working Gateway**
+If the gateway is enabled but refuses to run (bad keys, mismatched host, live key outside production), or the environment is `production` with the gateway off, System displays *"Top-ups are unavailable right now. Please try again later."*, logs the reason, and credits **nothing** — a wallet is never funded without a payment. (A7 applies only to a development / test environment with the gateway deliberately off.)
+
+**E8 – Forged or Unsigned Webhook**
+A call to `/webhooks/paymongo` without a valid HMAC signature gets **HTTP 401** and changes nothing.
+
+**E9 – Never Completed**
+A top-up still `pending` 12 hours after it was started is closed as `cancelled` ("Expired: not completed within 12 hours.") by the hourly `payments:expire-pending` job, and whenever a top-up list or page is opened. The wallet is unchanged. A confirmed payment that arrives afterwards (a webhook for a genuinely paid session) still credits the wallet.
+
+**E10 – Too Many Attempts (Rate Limiting)**
+The commuter submits more than **5 top-up requests per minute**. System blocks the request (HTTP 429) and performs **no** wallet change and **no** gateway call.
+
+**E11 – Suspected Fraud / Rate Limiting**
+Covered by E10 (request-level) and E3 (duplicate-level). Automated credential-stuffing is additionally mitigated by the login throttle (see UCN_SC_E001 E5). The amount credited is always the amount stored on the server-created top-up record, never a figure sent by the browser or the webhook.
 
 ---
 
 ### Known Gaps / Notes
 
-- **No external payment gateway.** There is no transaction ID, no redirect, no callback and **no signature verification**; the wallet is credited directly on form submission. Integrating GCash/Maya (e.g. PayMongo) would require re-adding the original steps 3–5, a webhook/callback endpoint, signature validation, and a pending→settled top-up state.
-- **Duplicate detection is heuristic** (amount + method within 2 minutes), not a true idempotency key. Legitimate repeat top-ups of the same amount within 2 minutes are blocked by design.
+- **Duplicate detection is heuristic** (amount + method within 2 minutes of a *completed* top-up), not a true idempotency key. Legitimate repeat top-ups of the same amount within 2 minutes are blocked by design. Double-clicking *Confirm Payment* can open two checkouts; each must be paid separately and only a paid one credits the wallet.
 - **Admin settlement recording has no UI.** Admins can *view* top-ups, but there is no admin action to record a cash/admin settlement, since the commuter-facing option was removed.
-- **A top-up receipt is emailed** (amount, method, new balance) once the top-up is completed, in addition to the in-app history. There is still no gateway for top-ups, so nothing can be left pending and there is nothing to reconcile.
+- **Sandbox checkout page.** PayMongo's **test-mode** hosted page shows *Authorize / Fail / Expire test payment* buttons and does not always send the browser back to SmartCommute after *Fail* or *Expire*. The outcome still reaches the System by webhook, reconciliation or expiry (E6, A6, E9). See `docs/PAYMONGO_SETUP.md`.
+- **Webhook needs a public URL.** Locally PayMongo cannot call `/webhooks/paymongo` without a tunnel (ngrok); the return URL lookup and the scheduled reconciliation settle the top-up meanwhile.
+- **Test mode only moves test money.** The PayMongo test keys never move real money; production needs live keys, a live webhook and a PayMongo account activated for GCash / Maya.
+- **Maya's channel is `paymaya` in the PayMongo API** (`maya` is rejected). The code maps it; this was verified against the sandbox for opening a checkout, not for completing a Maya payment.
+- **A top-up receipt is emailed** (amount, method, new balance) once the top-up is completed, and a failure notice when it fails.
+- Top-ups share the gateway pipeline with fare payments (UCN_SC_E006): the same PayMongo client, webhook endpoint, signature check, reconciliation job, expiry job and failure alert.
 
 ---
 
@@ -593,13 +631,17 @@ Covered by E5 (request-level) and E3 (duplicate-level). Automated credential-stu
 
 | Element | Location |
 |---|---|
-| Routes | `routes/web.php` — `payment.topup`, `payment.topup.process` (`throttle:5,1`), `payment.topup.history`, `admin.topups` |
-| Controller | `app/Http/Controllers/PaymentController.php::topup()`, `topupProcess()`, `topupHistory()`, `showTopupsAdmin()` |
-| Allowed methods | `PaymentController::SELF_SERVICE_TOPUP_METHODS = ['gcash', 'maya']` |
-| View | `resources/views/commuter/topup.blade.php`, `topuphistory.blade.php` |
-| Models | `app/Models/Wallet.php`, `app/Models/TopupHistory.php` |
-| Receipt email | `app/Notifications/TopupReceipt.php`, sent through `app/Support/Notifier.php`; the channels are `config/alerts.php` (`NOTIFICATION_CHANNELS`, default `mail`) |
-| Tests (automation) | `tests/Feature/AutomationPhase2Test.php` (`test_topup_emails_a_receipt_with_the_new_balance`, `test_notifier_never_lets_a_failing_send_break_the_caller`) |
+| Routes | `routes/web.php` — `payment.topup`, `payment.topup.process` (`throttle:5,1,topup-process`), `payment.topup.returned`, `payment.topup.cancelled`, `payment.topup.history`, `admin.topups`, `paymongo.webhook` |
+| Controller | `app/Http/Controllers/PaymentController.php::topup()`, `topupProcess()`, `startGatewayTopup()`, `simulatedTopup()`, `topupReturned()`, `topupCancelled()`, `webhook()` / `applyTopupEvent()`, `topupHistory()`, `showTopupsAdmin()` |
+| Allowed methods | `PaymentController::SELF_SERVICE_TOPUP_METHODS = ['gcash', 'maya']`; channel map `PayMongoService::channelFor()` (`gcash`, `paymaya`) |
+| Gateway client | `app/Services/PayMongoService.php` (`createCheckoutSession`, `retrievePaymentIntent`, `verifySignature`, `parseWebhook`, safety rail `configProblems()`), `config/paymongo.php` |
+| Settlement | `app/Services/TopupSettlement.php` (`settle`, `fail`, `cancel` — row- and wallet-locked, idempotent) |
+| Reconciliation / expiry | `app/Console/Commands/ReconcilePayments.php` (`payments:reconcile`), `ExpirePendingPayments.php` (`payments:expire-pending`), `TopupHistory::expireStale()` |
+| Schema | `database/migrations/2026_10_31_090000_add_gateway_lifecycle_to_topup_histories_table.php` — `transaction_id` (unique), `paymongo_payment_intent_id`, `paymongo_checkout_session_id`, `paid_at`, `failed_at`, `failure_message` |
+| View | `resources/views/commuter/topup.blade.php`, `topuppending.blade.php`, `topuphistory.blade.php` |
+| Models | `app/Models/Wallet.php`, `app/Models/TopupHistory.php` (`STATUS_*`, `completed()` scope) |
+| Emails | `app/Notifications/TopupReceipt.php`, `TopupFailed.php`, sent through `app/Support/Notifier.php`; the channels are `config/alerts.php` (`NOTIFICATION_CHANNELS`, default `mail`) |
+| Tests (automation) | `tests/Feature/TopupGatewayTest.php` (checkout, webhook, return URL, cancel, reconcile, expiry, no-gateway behaviour, history); `tests/Feature/AutomationPhase2Test.php` (`test_topup_emails_a_receipt_with_the_new_balance`) |
 
 ---
 
@@ -1365,7 +1407,7 @@ The mail transport fails (SMTP down, rejected envelope). The exception is not sw
 1. In the list, the actor clicks the suspend icon (or *reactivate* when the driver is already suspended). Only an **approved** driver can be suspended — the icon is not shown for a pending or rejected registration and the server refuses it. A suspension also takes effect on a session that is already open: the driver's next request signs them out.
 2. System displays a confirmation dialog: suspending states that the driver *"will not be able to sign in, clock in or broadcast a location, and is detached from any assigned vehicle"*; an optional **Reason** field is provided.
 3. Driver Manager confirms.
-4. System sets `is_suspended`, records `suspended_at` and the reason, moves the driver `status` to **suspended**, **detaches any assigned vehicle** (and removes them from its duty roster from today on), writes a `suspended` audit-trail entry (with the reason) and confirms *"Driver suspended. They can no longer sign in."* The seat they held is then offered to a replacement (A8).
+4. System sets `is_suspended`, records `suspended_at` and the reason, moves the driver `status` to **suspended**, **ends any shift they have open** (a normal clock-out at that moment, overtime past 8 hours; a shift forgotten for longer than the auto-close limit is credited and flagged for review instead), **detaches any assigned vehicle** (and removes them from its duty roster from today on), takes a vehicle that nobody else is driving **off the live map**, and writes a `suspended` audit-trail entry (with the reason). The seat they held is then offered to a replacement (A8), and the confirmation says what happened: *"Driver suspended. They can no longer sign in. They were taken off ABC 123 and Ana Cruz was assigned in their place; the duty roster was rebuilt for the two drivers."* — or, when nobody was free, that the seat is open and the Maintenance Managers were told (and that a remaining co-driver now has the vehicle to themselves).
 5. Reactivating reverses all of it (`status` back to **inactive**), starts a fresh inactivity clock (`reactivated_at`, A7) and confirms *"Driver reactivated."* The driver is not put back on the vehicle they left.
 
 **A6 – Approve or Reject a Driver Application**
@@ -1811,7 +1853,7 @@ Closing the form, pressing *Cancel scan* or starting another scan deletes the ph
 3. The modal offers **"Edit"** to jump straight into A2.
 
 **A6 – Keep the Duty Roster of a Shared Vehicle**
-1. For a vehicle with two drivers, the Maintenance Manager opens **Duty Roster** (`GET /duty-roster`, Maintenance Manager only) and picks the vehicle; the page shows *On duty today* and 28 days at a time (previous / next / today).
+1. For a vehicle with two drivers, the Maintenance Manager — or the Driver Manager or an Admin, who share the page — opens **Duty Roster** (`GET /duty-roster`; Maintenance Manager, Driver Manager and Admin only) and picks the vehicle; the page shows *On duty today* and 28 days at a time (previous / next / today).
 2. **Generate an alternating schedule**: start date (not in the past), *Drives first*, number of days (2–120). The two drivers take turns; it replaces whatever those days held.
 3. **Swap or clear a day**: the *Swap* button hands a day to the other driver, the dropdown sets or clears it by hand; **Save roster** stores the change (past days are history and are ignored). Every change is audited (*Duty roster updated*).
 4. **Effect:** a driver can only clock in, switch to *Active* or broadcast the vehicle's location on a day the roster gives to them. On the co-driver's day the map says *"Today is [name]'s day on this vehicle"*; with no roster line for today: *"No duty roster is set…"*. A vehicle with one driver needs no roster. Removing a driver (or suspending / deleting them) drops them from the roster from today on and leaves the co-driver on the vehicle; each shift records the vehicle it was worked on (`time_keepings.vehicle_id`).
@@ -2387,7 +2429,7 @@ No file was selected, or the selected file is not a PDF. System rejects the uplo
 | --- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | 1   | Admin opens up the dashboard on the map.                                     | System displays the dashboard with the admin analytics.                                                                   |
 | 2   | Admin clicks the **"Reports & Analytics"** item on the sidebar.               | System redirects to the System Reports page (`reports.generate`), displaying the list of available reports, the report-type selector, the *from* / *to* date inputs, the **"Generate Report"** button and the **"Export CSV"** button. |
-| 3   | Admin selects a report type & date range and clicks **"Generate Report"**.   | System aggregates the data for the selected type and range and renders the report: **Financial Overview** (revenue, top-ups, transaction count, daily revenue chart), **Driver Performance** (total/active drivers, top 5 performers by hours, status distribution) or **Maintenance & Fleet** (pending/overdue/completed counts, upcoming schedule table; *completed* counts the preventive-maintenance records saved in the selected range). Top-up totals count **completed** top-ups only. |
+| 3   | Admin selects a report type & date range and clicks **"Generate Report"**.   | System aggregates the data for the selected type and range and renders the report: **Financial Overview** (revenue, top-ups, transaction count, daily revenue chart), **Driver Performance** (total/active drivers, top 5 performers by hours with their status — *Active*, *Inactive* or *Suspended* — and a status-distribution doughnut with one slice per status) or **Maintenance & Fleet** (pending/overdue/completed counts, schedule table; *completed* counts the preventive-maintenance records saved in the selected range). Top-up totals count **completed** top-ups only. **The range covers whole days:** it runs from 00:00 on the start date to 23:59:59 on the end date, so a payment made today counts in a report that ends today. **Opening the page with no dates reports the last 7 days up to today** — the same dates the page shows in its date boxes. |
 
 ---
 
@@ -2447,7 +2489,8 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 ### Known Gaps / Notes
 
 - **The export is CSV only.** There is no `.xlsx` writer; opening the file in Excel works but loses column formatting, and a multi-sheet workbook is not produced.
-- **Only the financial report is date-filtered end to end** — the driver report uses all-time totals for the driver cards and the maintenance report ignores the range for the pending/overdue buckets (they are computed against *now*, not against *end date*).
+- **Only the financial report is date-filtered end to end** — the driver report uses all-time totals for the driver cards and the maintenance report's pending/overdue buckets are computed against *today*, not against the *end date*.
+- **Maintenance statuses use the real due date.** Each service's due date is its last service date plus the task's month interval (`PreventiveMaintenance::nextDueDate()`), and it is *Overdue* when that date has passed or the vehicle's latest logged odometer is past the service's due reading, *Due soon* inside the warning window (7 days / 500 km), *Scheduled* otherwise and *No interval* when the task has neither interval. This is the same rule as the Maintenance Manager's pages and the due-alert email; disposed vehicles are left out, and the table lists the most urgent first. The CSV export uses the same rows.
 - **E2 is a catch-all**: any exception during aggregation (including a genuine bug) is reported to the log and shown to the Admin as an aggregation timeout, so a real error can be mistaken for slowness.
 - **E4 is derived from the payments ledger only**; a system with no payments never raises the warning even if other data is stale.
 - On-screen reports are generated on every page load from live queries — there is no caching or snapshotting; the weekly and monthly emails (A3) and Fleet Analytics (A4) are computed the same way, at the moment they run or are opened.
@@ -2460,9 +2503,10 @@ The *from* date is later than the *to* date. System rejects the request with *"T
 | Element | Location |
 |---|---|
 | Routes | `routes/web.php` — `reports.generate` (`GET /reports`), `reports.export` (`GET /reports/export`), both inside `role:admin` |
-| Controller | `app/Http/Controllers/ReportController.php::generate()`, `buildReport()`, `assertValidRange()`, `reportIsEmpty()`, `syncLagMinutes()`, `export()` |
+| Controller | `app/Http/Controllers/ReportController.php::generate()`, `dates()`, `window()`, `buildReport()`, `maintenanceRows()`, `assertValidRange()`, `reportIsEmpty()`, `syncLagMinutes()`, `export()` |
 | Models | `app/Models/Payment.php`, `app/Models/TopupHistory.php`, `app/Models/Driver.php`, `app/Models/PreventiveMaintenance.php` |
 | View | `resources/views/admin/reports.blade.php` (E2 / E3 / E4 notice banners) |
+| Tests | `tests/Feature/ReportsPageTest.php` (driver chart and badges, whole-day range and default week, real maintenance due dates, CSV), `tests/Feature/UcnStaffRegressionTest.php` (E020 empty window, inverted range) |
 | Menu | `config/menu.php` — *Reports & Analytics* (admin) |
 | Middleware | `auth`, `verified`, `role:admin` |
 | Tests | `tests/Feature/UcnStaffRegressionTest.php` (`test_a_report_over_an_empty_window_reports_no_data`, `test_an_inverted_date_range_is_rejected`) |
@@ -2783,6 +2827,12 @@ The guest submits more than **6 registration attempts per minute** (same throttl
 1. Despite being authenticated, the related `Driver` record is absent (e.g., manually deleted).
 2. The controller methods (`timekeeping`, `violations`, `updateStatus`) return an error view or flash *“Driver profile not found.”* and stop further processing.
 
+**A5 – Driver on a shared vehicle views their schedule (dashboard)**
+1. A driver who shares a vehicle with a co-driver opens the **Dashboard**.
+2. System shows a **My Schedule** card built from the duty roster the Maintenance Manager, Driver Manager or Admin created (UCN_SC_E015 A6): the next **14 days** from today, a week per row, each day marked **yours** (green), **the co-driver's** (grey, named in the legend) or **not scheduled** (dashed). Today is outlined. Beneath it: *"You drive N of the next 14 days on PLATE. You can only clock in on your own days."*
+3. If the vehicle is shared but **no day in that window is scheduled**, the card instead says *"No roster set yet"* and to contact the Maintenance Manager — the driver cannot clock in until a day is given to them.
+4. A driver with **no vehicle**, or a vehicle **to themselves**, has no roster and no schedule card (they may drive any day). The card is read-only: the driver cannot change the roster.
+
 ---
 
 ### Postconditions
@@ -2790,6 +2840,7 @@ The guest submits more than **6 registration attempts per minute** (same throttl
 - For **Timekeeping** view: the driver’s weekly time‑in/time‑out, hours, overtime, and daily status are correctly displayed; week navigation updates the shown week.
 - For **Violations** view: the driver’s violation logs are listed with accurate totals and details; summary cards reflect counts and sums.
 - For **Status update**: the driver’s `status` column in the `drivers` table is set to `active` or `inactive`; a success message is shown; subsequent checks (e.g., clock‑in/out) respect the new status.
+- For the **schedule card**: a shared-vehicle driver sees exactly the days the roster gives them, from today for 14 days, and the same roster from the co-driver's side is the mirror image; nothing is written.
 - No side‑effects on other tables (e.g., `TimeKeeping` or `ViolationLog` are read‑only in these flows).
 
 ---
@@ -2831,8 +2882,9 @@ Any other unhandled exception results in a 500 error page (or the Laravel defaul
 |---|---|
 | Routes | `routes/web.php` — `GET /timekeeping` (`driver.timekeeping`), `GET /violations` (`driver.violations`), `POST /status` (`driver.status.update`) (all inside `role:driver` middleware group) |
 | Controller | `app/Http/Controllers/DriverController.php::timekeeping()`, `violations()`, `updateStatus()` |
-| Views | `resources/views/driver/time-keeping.blade.php`, `resources/views/driver/violations.blade.php` |
-| Models | `App\Models\TimeKeeping`, `App\Models\ViolationLog`, `App\Models\Driver` |
+| Views | `resources/views/driver/time-keeping.blade.php`, `resources/views/driver/violations.blade.php`, `resources/views/driver/dashboard.blade.php` (the *My Schedule* card, `#duty-schedule`) |
+| Models | `App\Models\TimeKeeping`, `App\Models\ViolationLog`, `App\Models\Driver` (`dutySchedule()`), `App\Models\VehicleDutyDay` |
+| Tests (schedule card) | `tests/Feature/DutyRosterTest.php` — `test_a_driver_on_a_shared_vehicle_sees_their_schedule_on_the_dashboard` and three siblings |
 | Related UCNs | UCN_SC_E009 (Clock In), UCN_SC_E010 (Clock Out), UCN_SC_E012 (Manage Drivers – approval), UCN_SC_E014 (Manage Violations – admin view) |
 
 ---
@@ -3330,7 +3382,7 @@ Any other role (or a guest) is refused (403 / redirect to login).
 2. System narrows the list to entries whose description, **acting user's email** or — for failed sign-ins — the **email that was tried** contains the text. `%` and `_` are matched literally.
 
 **A2 – Filter by category and event**
-1. Admin picks a **category** (*Sign-in & security, Accounts, Drivers, Fleet & maintenance, Violations, Timekeeping, Payments, Fares, System*) and/or an **event** (e.g. *Failed sign-in, Suspended, Role changed, Fare rates updated*).
+1. Admin picks a **category** (listed alphabetically: *Accounts, Drivers, Fares, Fleet & maintenance, Payments, Sign-in & security, System, Timekeeping, Violations*) and/or an **event** (e.g. *Failed sign-in, Suspended, Role changed, Fare rates updated*).
 2. System applies it at once; the filters survive paging and combine with each other and with A1 / A3.
 
 **A3 – Filter by date range**

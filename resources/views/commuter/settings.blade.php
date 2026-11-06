@@ -648,6 +648,7 @@
                                         <p class="text-[12px] font-bold text-gray-900 dark:text-white">Font Size</p>
                                         <p class="text-[9px] text-gray-400 dark:text-[#444]">Adjust text for
                                             readability</p>
+                                        <p id="font-scale-note" hidden class="text-[9px] text-amber-600 dark:text-amber-400 mt-0.5"></p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-0.5 p-0.5 rounded-lg bg-gray-100 dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e]"
@@ -923,13 +924,6 @@
         });
 
         // ═══ FONT SIZE ═══
-        const fontZoomLevels = {
-            small: 0.875, // ~14/16
-            medium: 1, // default
-            large: 1.125, // ~18/16
-            xlarge: 1.25 // ~20/16
-        };
-
         const intToLabel = {
             10: 'small',
             11: 'medium',
@@ -937,9 +931,19 @@
             13: 'xlarge'
         };
 
+        // When the chosen size had to be limited for this screen's width, say so (see partials/font-scale).
+        window.addEventListener('sc:fontzoom', function(e) {
+            var el = document.getElementById('font-scale-note');
+            if (!el) return;
+            var d = e.detail;
+            el.hidden = !d.limited;
+            el.textContent = d.limited ? 'Shown at ' + Math.round(d.applied * 100) + '% on this screen so the page keeps fitting. The full size applies on a wider screen.' : '';
+        });
+        if (window.scApplyFontZoom) { scApplyFontZoom(); }
+
         function applyFontSize(size) {
-            const zoom = fontZoomLevels[size] || 1;
-            document.documentElement.style.zoom = zoom;
+            // Limited on narrow screens so the layout is never squeezed (partials/font-scale).
+            scApplyFontZoom(size);
             return {
                 size: size,
                 db: Object.keys(intToLabel).find(k => intToLabel[k] === size) || 11

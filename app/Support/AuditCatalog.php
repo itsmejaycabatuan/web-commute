@@ -90,10 +90,15 @@ class AuditCatalog
         return self::TONE_CLASSES[self::EVENTS[$event][1] ?? 'neutral'];
     }
 
-    /** @return array<string,string> value => label, for the filter drop-downs */
+    /** @return array<string,string> value => label, alphabetical by label, for the category filter */
     public static function categoryOptions(): array
     {
-        return array_map(fn ($c) => $c[0], self::CATEGORIES);
+        $options = array_map(fn ($c) => $c[0], self::CATEGORIES);
+
+        // By what the admin reads (the label), not by the internal key, and ignoring case.
+        asort($options, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return $options;
     }
 
     /** @return array<string,string> */
