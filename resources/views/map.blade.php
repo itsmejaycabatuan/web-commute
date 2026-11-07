@@ -2452,6 +2452,33 @@
         </div>
     </div>
 
+    @if (Auth::check() && Auth::user()->roles[0]->name === 'driver')
+        <div id="clock-out-modal"
+            class="modal-backdrop fixed inset-0 z-[100] flex items-center justify-center bg-black/70 opacity-0 pointer-events-none"
+            onclick="if (event.target === this) toggleClockOutModal(false)">
+            <div
+                class="modal-content bg-[#111] border border-[#222] p-7 sm:p-8 rounded-[2rem] w-full max-w-[360px] mx-4 text-center transform scale-95 opacity-0 shadow-2xl shadow-black/50">
+                <div
+                    class="w-14 h-14 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-amber-500/20">
+                    <i class="fa-solid fa-right-from-bracket text-amber-400 text-lg"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white mb-1.5">Clock Out?</h3>
+                <p class="text-xs text-[#666] mb-7 leading-relaxed">This ends your shift for today. You won't be able
+                    to clock in again until your next scheduled day.</p>
+                <div class="grid gap-2.5">
+                    <button type="button" onclick="toggleClockOutModal(false)"
+                        class="px-5 py-3 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#222] transition">Cancel</button>
+                    <form action="{{ route('driver.timekeeping.clock-out') }}" method="POST">
+                        @csrf
+                        <button type="submit"
+                            class="w-full px-5 py-3 rounded-xl bg-amber-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-amber-500 transition active:scale-[0.98]">Clock
+                            Out</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- ══════════ MOBILE FAB BUTTONS (stacked on bottom-left) ══════════ -->
     {{-- The LEFT FAB opens the mobile sheet that holds #left-sidebar-form.
          That panel exists for guests, commuters AND drivers (driver duty
@@ -2763,15 +2790,14 @@
                                         </button>
                                     </form>
                                 @elseif(!$todayRecord->time_out)
-                                    <form action="{{ route('driver.timekeeping.clock-out') }}" method="POST">
-                                        @csrf
-                                        <button type="submit"
+                                    <div>
+                                        <button type="button" onclick="toggleClockOutModal(true)"
                                             class="w-full p-3.5 rounded-2xl text-white bg-amber-600 hover:bg-amber-500 flex items-center justify-center gap-2.5 transition active:scale-[0.98] btn-glow-amber">
                                             <i class="fa-solid fa-right-from-bracket text-sm"></i>
                                             <span class="text-[10px] font-black uppercase tracking-widest">Clock
                                                 Out</span>
                                         </button>
-                                    </form>
+                                    </div>
                                 @else
                                     <div
                                         class="w-full py-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center gap-2.5">
@@ -5316,6 +5342,15 @@ sim._lastEtaUpdate = null;
                     modal.querySelector('.modal-content').style.transform = 'scale(0.95)';
                     modal.querySelector('.modal-content').style.opacity = '0';
                 }
+            };
+
+            window.toggleClockOutModal = function(show) {
+                const modal = document.getElementById('clock-out-modal');
+                if (!modal) return;
+                modal.classList.toggle('active', show);
+                const content = modal.querySelector('.modal-content');
+                content.style.transform = show ? 'scale(1)' : 'scale(0.95)';
+                content.style.opacity = show ? '1' : '0';
             };
 
             // Tutorial: uses the new centered .tutorial-backdrop

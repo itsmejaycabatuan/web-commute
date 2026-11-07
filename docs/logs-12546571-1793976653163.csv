@@ -1,0 +1,41 @@
+st_text,ts,sub,frm,email,tag,mid,link
+Sent,06-11-2026 22:17:29,Verify Email Address,markjayvincentcortes@gmail.com,ahldegeonzon30@gmail.com,NA,<10ecc75a7b6a5b6d2fd2909945bbe325@gmail.com>,NA
+Error,06-11-2026 22:17:29,Verify Email Address,markjayvincentcortes@gmail.com,ahldegeonzon30@gmail.com,NA,<10ecc75a7b6a5b6d2fd2909945bbe325@gmail.com>,NA
+Sent,05-11-2026 14:00:05,You were taken off ABC-1234: your licence expired,markjayvincentcortes@gmail.com,dante.cruz@example.com,NA,<761a9cea6eec5964f20c63d2eec96690@gmail.com>,NA
+Error,05-11-2026 14:00:05,You were taken off ABC-1234: your licence expired,markjayvincentcortes@gmail.com,dante.cruz@example.com,NA,<761a9cea6eec5964f20c63d2eec96690@gmail.com>,NA
+Error,04-11-2026 00:24:38,Payment gateway problem: 3 failures in 15 minutes,markjayvincentcortes@gmail.com,markjay.dev@proton.me,NA,<588a31001102cb499cb11afc48f43a73@gmail.com>,NA
+Sent,04-11-2026 00:24:38,Payment gateway problem: 3 failures in 15 minutes,markjayvincentcortes@gmail.com,markjay.dev@proton.me,NA,<588a31001102cb499cb11afc48f43a73@gmail.com>,NA
+Sent,02-11-2026 00:51:53,Your fine was marked as paid,markjayvincentcortes@gmail.com,driver1@gmail.com,NA,<ddd28822ef0e40ed19587c03bf836c2f@gmail.com>,NA
+Error,02-11-2026 00:51:53,Your fine was marked as paid,markjayvincentcortes@gmail.com,driver1@gmail.com,NA,<ddd28822ef0e40ed19587c03bf836c2f@gmail.com>,NA
+Delivered,02-11-2026 00:51:37,A violation was recorded: Unregistered or Expired Vehicle Registration,markjayvincentcortes@12546571.brevosend.com,driver1@gmail.com,NA,<b31007cbacae6e9eb3afa8a97f02960a@gmail.com>,NA
+Sent,02-11-2026 00:51:36,A violation was recorded: Unregistered or Expired Vehicle Registration,markjayvincentcortes@12546571.brevosend.com,driver1@gmail.com,NA,<b31007cbacae6e9eb3afa8a97f02960a@gmail.com>,NA
+Delivered,02-11-2026 00:51:36,A violation was recorded: Reckless Driving,markjayvincentcortes@12546571.brevosend.com,driver1@gmail.com,NA,<e8cc1ad67b1d7879b14e7181b9c843b1@gmail.com>,NA
+Sent,02-11-2026 00:51:35,A violation was recorded: Reckless Driving,markjayvincentcortes@12546571.brevosend.com,driver1@gmail.com,NA,<e8cc1ad67b1d7879b14e7181b9c843b1@gmail.com>,NA
+Clicked,01-11-2026 23:17:42,Verify Email Address,markjayvincentcortes@12546571.brevosend.com,sceptic.maku@gmail.com,NA,<490f60fb4cfe226189f0d905b435f8d1@gmail.com>,https://trevally-perinephral-octavio.ngrok-free.dev/email/verify/20361/f1aa7053291f6337c8bd627a681713ced6efcd61?expires=1793549793&signature=90a092bdaa449deb6e7f7d62ee033ca78dc09b55edc81c1380e970fae214bfc9
+Delivered,01-11-2026 23:16:38,Verify Email Address,markjayvincentcortes@12546571.brevosend.com,sceptic.maku@gmail.com,NA,<490f60fb4cfe226189f0d905b435f8d1@gmail.com>,NA
+Sent,01-11-2026 23:16:36,Verify Email Address,markjayvincentcortes@12546571.brevosend.com,sceptic.maku@gmail.com,NA,<490f60fb4cfe226189f0d905b435f8d1@gmail.com>,NA
+Delivered,01-11-2026 01:01:18,JKL-7890 has a new driver: new driver,markjayvincentcortes@12546571.brevosend.com,maintenancemanager@gmail.com,NA,<5782a3af917ca03ade0196e9a2942650@gmail.com>,NA
+Sent,01-11-2026 01:01:17,JKL-7890 has a new driver: new driver,markjayvincentcortes@12546571.brevosend.com,maintenancemanager@gmail.com,NA,<5782a3af917ca03ade0196e9a2942650@gmail.com>,NA
+Delivered,01-11-2026 01:01:17,You have been assigned to JKL-7890,markjayvincentcortes@12546571.brevosend.com,newdriver@gmail.com,NA,<575eb78698c8262befc94e39d0b98a43@gmail.com>,NA
+Sent,01-11-2026 01:01:16,You have been assigned to JKL-7890,markjayvincentcortes@12546571.brevosend.com,newdriver@gmail.com,NA,<575eb78698c8262befc94e39d0b98a43@gmail.com>,NA
+Delivered,01-11-2026 01:00:28,Your driver account was approved,markjayvincentcortes@12546571.brevosend.com,newdriver@gmail.com,NA,<d1986c8bc1a88fd460d249f39d7d735e@gmail.com>,NA
+Sent,01-11-2026 01:00:22,Your driver account was approved,markjayvincentcortes@12546571.brevosend.com,newdriver@gmail.com,NA,<d1986c8bc1a88fd460d249f39d7d735e@gmail.com>,NA
+First opening,01-11-2026 00:59:48,New driver application: new driver,markjayvincentcortes@12546571.brevosend.com,markjay.dev@proton.me,NA,<830441efa00cf8a99c47eef6dcc2745c@gmail.com>,NA
+Delivered,01-11-2026 00:59:48,New driver application: new driver,markjayvincentcortes@12546571.brevosend.com,markjay.dev@proton.me,NA,<830441efa00cf8a99c47eef6dcc2745c@gmail.com>,NA
+Soft bounce,01-11-2026 00:59:47,New driver application: new driver,markjayvincentcortes@12546571.brevosend.com,admin@smartcommute.local,NA,<2b586eb3f08dcd7722b663263452da14@gmail.com>,NA
+Sent,01-11-2026 00:59:46,New driver application: new driver,markjayvincentcortes@12546571.brevosend.com,admin@smartcommute.local,NA,<2b586eb3f08dcd7722b663263452da14@gmail.com>,NA
+Hard bounce,01-11-2026 00:59:46,New driver application: new driver,markjayvincentcortes@12546571.brevosend.com,admin@gmail.com,NA,<ebc55d2f06edec2db14fcde5f2f8bd94@gmail.com>,NA
+Sent,01-11-2026 00:59:45,New driver application: new driver,markjayvincentcortes@12546571.brevosend.com,admin@gmail.com,NA,<ebc55d2f06edec2db14fcde5f2f8bd94@gmail.com>,NA
+Sent,01-11-2026 00:59:45,New driver application: new driver,markjayvincentcortes@12546571.brevosend.com,markjay.dev@proton.me,NA,<830441efa00cf8a99c47eef6dcc2745c@gmail.com>,NA
+Hard bounce,01-11-2026 00:59:45,New driver application: new driver,markjayvincentcortes@12546571.brevosend.com,drivermanager@gmail.com,NA,<c75e2442996b53fc0d36b9ee571dd1f0@gmail.com>,NA
+Sent,01-11-2026 00:59:44,New driver application: new driver,markjayvincentcortes@12546571.brevosend.com,drivermanager@gmail.com,NA,<c75e2442996b53fc0d36b9ee571dd1f0@gmail.com>,NA
+Delivered,01-11-2026 00:42:24,Your wallet was topped up: ₱50.00,markjayvincentcortes@12546571.brevosend.com,commuter@gmail.com,NA,<bf058e623436cb673d54e7adb2a803d7@gmail.com>,NA
+Sent,01-11-2026 00:42:23,Your wallet was topped up: ₱50.00,markjayvincentcortes@12546571.brevosend.com,commuter@gmail.com,NA,<bf058e623436cb673d54e7adb2a803d7@gmail.com>,NA
+Delivered,01-11-2026 00:19:12,Your wallet was topped up: ₱100.00,markjayvincentcortes@12546571.brevosend.com,sceptic.maku@gmail.com,NA,<06067a29dc55cacf15d490ebb1c47ac8@gmail.com>,NA
+Sent,01-11-2026 00:19:11,Your wallet was topped up: ₱100.00,markjayvincentcortes@12546571.brevosend.com,sceptic.maku@gmail.com,NA,<06067a29dc55cacf15d490ebb1c47ac8@gmail.com>,NA
+Delivered,01-11-2026 00:02:27,Your wallet was topped up: ₱100.00,markjayvincentcortes@12546571.brevosend.com,sceptic.maku@gmail.com,NA,<b9d21c1102361b9c2e81befae3249b0d@gmail.com>,NA
+Sent,01-11-2026 00:02:26,Your wallet was topped up: ₱100.00,markjayvincentcortes@12546571.brevosend.com,sceptic.maku@gmail.com,NA,<b9d21c1102361b9c2e81befae3249b0d@gmail.com>,NA
+Delivered,31-10-2026 23:43:21,Your wallet was topped up: ₱50.00,markjayvincentcortes@12546571.brevosend.com,sceptic.maku@gmail.com,NA,<7e346af76365188e82d7beaef4bca0c9@gmail.com>,NA
+Sent,31-10-2026 23:43:20,Your wallet was topped up: ₱50.00,markjayvincentcortes@12546571.brevosend.com,sceptic.maku@gmail.com,NA,<7e346af76365188e82d7beaef4bca0c9@gmail.com>,NA
+Delivered,31-10-2026 23:42:21,Verify Email Address,markjayvincentcortes@12546571.brevosend.com,sceptic.maku@gmail.com,NA,<8db7c02e5924afe107560b4ae74bda52@gmail.com>,NA
+Sent,31-10-2026 23:42:20,Verify Email Address,markjayvincentcortes@12546571.brevosend.com,sceptic.maku@gmail.com,NA,<8db7c02e5924afe107560b4ae74bda52@gmail.com>,NA

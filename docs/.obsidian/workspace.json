@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "UCN/UCN_SC_E027_Manage_Staff_Accounts.md",
+                "file": "Entity_Relationship_Diagram.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "UCN_SC_E027_Manage_Staff_Accounts"
+              "title": "Entity_Relationship_Diagram"
             }
           },
           {
@@ -202,10 +202,14 @@
   },
   "active": "9f89179a0caa52b5",
   "lastOpenFiles": [
+    "AUTOMATED_FEATURES.md",
+    "logs-12546571-1793976653163.csv",
+    "RATE_LIMITING.md",
+    "RATE_LIMITING.md.tmp.16667.4aae1e5f0f71",
+    "UCN/UCN_SC_E027_Manage_Staff_Accounts.md",
     "UCN/UCN_SC_E028_View_Activity_Log.md",
     "AUDIT_TRAIL.md",
     "UI_DESIGN_SYSTEM.md",
-    "AUTOMATED_FEATURES.md",
     "MANUAL_TEST_CHECKLIST.md",
     "sedb9xC8k",
     "sedC8aNWC",
@@ -216,11 +220,8 @@
     "UCN/UCN_SC_E005_Topup_Balance.md.tmp.67903.cfc6725637a8",
     "diagrams/use_case_diagram.png",
     "UCN/build_combined.py",
-    "Entity_Relationship_Diagram.md.tmp.5492.0208f2ec4a7b",
-    "diagrams/erd_summary.dot",
     "Non_Functional_Requirements.md",
     "Functional_Requirements.md",
-    "UCN/UCN_SC_E027_Manage_Staff_Accounts.md",
     "UCN/UCN_SC_E026_Account_Deletion.md",
     "UCN/UCN_SC_E025_Profile_and_Dashboard.md",
     "UCN/UCN_SC_E001_Login.md",
@@ -242,8 +243,6 @@
     "UCN/UCN_SC_E020_View_System_Reports.md",
     "UCN/UCN_SC_E019_Manage_Fare_Rates.md",
     "UCN/UCN_SC_E018_Manage_Commuters.md",
-    "UCN/UCN_SC_E017_Manage_Maintenance_Tasks.md",
-    "UCN/UCN_SC_E016_Manage_Maintenance_Schedule.md",
-    "UCN/UCN_SC_E015_Manage_Vehicles.md"
+    "UCN/UCN_SC_E017_Manage_Maintenance_Tasks.md"
   ]
 }
