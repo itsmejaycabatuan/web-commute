@@ -51,21 +51,15 @@
             grid-template-columns: minmax(0, 1fr);
         }
 
-        @media (min-width: 1024px) {
-            .au-grid {
-                grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-            }
-        }
-
         /* ── Brand panel ── */
         .au-aside {
             position: relative;
             display: none;
             flex-direction: column;
             justify-content: space-between;
-            margin: 14px 0 14px 14px;
-            padding: 44px 48px;
-            border-radius: 40px;
+            min-height: 560px;
+            padding: 36px;
+            border-radius: 32px;
             overflow: hidden;
             color: #fff;
             background:
@@ -119,23 +113,23 @@
         }
 
         .au-h {
-            font-size: clamp(2.2rem, 3.4vw, 3.3rem);
+            font-size: clamp(1.9rem, 2.6vw, 2.4rem);
             font-weight: 800;
-            line-height: 1.06;
+            line-height: 1.1;
             letter-spacing: -.04em;
         }
 
         .au-benefit {
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 14px 18px 14px 14px;
-            border-radius: 20px;
+            gap: 12px;
+            padding: 10px 16px 10px 10px;
+            border-radius: 18px;
             background: rgba(255, 255, 255, .1);
             border: 1px solid rgba(255, 255, 255, .16);
             -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
-            font-size: 15.5px;
+            font-size: 14.5px;
             font-weight: 600;
         }
 
@@ -143,18 +137,18 @@
             display: grid;
             place-items: center;
             flex: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 13px;
-            font-size: 16px;
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            font-size: 15px;
             background: rgba(255, 255, 255, .18);
         }
 
         .au-route {
             position: absolute;
-            right: -40px;
-            bottom: 90px;
-            width: 360px;
+            right: -30px;
+            bottom: 70px;
+            width: 280px;
             opacity: .22;
             pointer-events: none;
         }
@@ -452,6 +446,66 @@
             border-radius: 22px;
             font-size: 26px;
         }
+
+        /*
+         * Desktop: the brand panel and the form card are two items of ONE grid row, so they are always the
+         * same height (the taller one sets it) and the same width class, centred on the page. The wrappers
+         * .au-main / .au-card-wrap use display: contents so the card is a direct grid item; the top bar
+         * (back / theme buttons) is lifted out of the flow.
+         */
+        @media (min-width: 1024px) {
+            .au-grid {
+                position: relative;
+                grid-template-columns: minmax(0, 480px) minmax(0, 480px);
+                grid-template-rows: 1fr auto 1fr;
+                justify-content: center;
+                column-gap: 0;
+                padding: 88px 32px;
+            }
+
+            .au-grid.wide {
+                grid-template-columns: minmax(0, 480px) minmax(0, 720px);
+            }
+
+            .au-main,
+            .au-card-wrap {
+                display: contents;
+            }
+
+            .au-top {
+                position: absolute;
+                top: 24px;
+                left: 32px;
+                right: 32px;
+            }
+
+            .au-aside {
+                grid-area: 2 / 1;
+            }
+
+            .au-card {
+                grid-area: 2 / 2;
+                display: flex;
+                flex-direction: column;
+            }
+
+            /* Joined into one block: no gap, and the corners that meet in the middle are square. */
+            .au-aside {
+                border-top-right-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+
+            .au-card,
+            .au-card.wide {
+                max-width: none;
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
+            }
+
+            .au-card-body {
+                margin-block: auto;
+            }
+        }
     </style>
     @include('partials.global-loading')
     {{ $head ?? '' }}
@@ -460,7 +514,7 @@
 <body class="font-sans antialiased">
     {{ $modals ?? '' }}
 
-    <div class="au-grid">
+    <div class="au-grid {{ $wide ? 'wide' : '' }}">
 
         <!-- Brand panel -->
         <aside class="au-aside" aria-hidden="true">
@@ -478,10 +532,10 @@
 
             <div>
                 <h2 class="au-h">{{ $heading }}</h2>
-                <p class="mt-5 text-lg leading-relaxed" style="color: rgba(255,255,255,.82); max-width: 460px">
+                <p class="mt-4 text-base leading-relaxed" style="color: rgba(255,255,255,.82); max-width: 420px">
                     {{ $blurb }}</p>
 
-                <div class="mt-9 space-y-3" style="max-width: 440px">
+                <div class="mt-7 space-y-2.5" style="max-width: 420px">
                     <div class="au-benefit"><i class="fa-solid fa-location-dot"></i> Live PUJ positions and arrival
                         estimates</div>
                     <div class="au-benefit"><i class="fa-solid fa-receipt"></i> Official fares, calculated for you
@@ -509,7 +563,7 @@
 
             <div class="au-card-wrap">
                 <div class="au-card {{ $wide ? 'wide' : '' }}">
-                    {{ $slot }}
+                    <div class="au-card-body">{{ $slot }}</div>
                 </div>
             </div>
         </div>

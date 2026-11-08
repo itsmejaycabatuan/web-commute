@@ -10,6 +10,7 @@
     Exposes:
       scFontZoom(size)       the zoom that would be applied for 'small' | 'medium' | 'large' | 'xlarge'
       scApplyFontZoom(size)  applies it (size defaults to the saved choice) and returns { requested, applied, limited }
+                             (also toggles html.sc-zoomed when the applied zoom is above 1.05)
     and re-applies on resize. A page can listen for the `sc:fontzoom` event to explain a limited size.
 --}}
 <script>
@@ -44,6 +45,8 @@
             document.documentElement.style.setProperty('--sc-zoom', applied);
             // Usable height = screen height ÷ zoom. Under ~780px the sidebar switches to tighter rows (html.sc-short).
             document.documentElement.classList.toggle('sc-short', window.innerHeight / applied < 780);
+            // Enlarged text: lets pages drop non-essential chrome on phones (see html.sc-zoomed in map.blade.php).
+            document.documentElement.classList.toggle('sc-zoomed', applied > 1.05);
             window.dispatchEvent(new CustomEvent('sc:fontzoom', {
                 detail: { size: size, requested: requested, applied: applied, limited: applied < requested - 0.001 }
             }));

@@ -1539,6 +1539,60 @@
             transform: scale(0.92);
         }
 
+        /* Enlarged text on a phone: the header's controls no longer fit on one row, which left the
+           last button (Log in / Logout) stranded and the header covering a third of the map. The
+           date is the one non-essential item (the phone shows it already), so it makes way. */
+        @media (max-width: 639px) {
+            html.sc-zoomed .map-date-chip {
+                display: none;
+            }
+        }
+
+        /* Driver-only chip, top centre on phones: shows whether the screen wake lock is held,
+           since the full GPS card lives inside the "details" sheet. Not interactive.
+           --map-toast-top is just under the header, or under the status banner when one is
+           showing, so the chip never sits on top of it. */
+        #wake-lock-chip {
+            position: fixed;
+            top: var(--map-toast-top, calc(var(--map-header-bottom, 96px) + 8px));
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 18;
+            white-space: nowrap;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 11px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            pointer-events: none;
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.16);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+        }
+
+        .dark #wake-lock-chip {
+            background: rgba(17, 17, 17, 0.92);
+            border-color: #222222;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        }
+
+        #wake-lock-chip[data-state="on"] { color: #15803d; }
+        #wake-lock-chip[data-state="warn"] { color: #b45309; }
+        .dark #wake-lock-chip[data-state="on"] { color: #4ade80; }
+        .dark #wake-lock-chip[data-state="warn"] { color: #fbbf24; }
+
+        @media (max-width: 767px) {
+            #wake-lock-chip[data-state="on"],
+            #wake-lock-chip[data-state="warn"] {
+                display: inline-flex;
+            }
+        }
+
         .mobile-fab-left {
             background: #4f46e5;
             box-shadow: 0 4px 20px rgba(79, 70, 229, 0.35);
@@ -2349,14 +2403,14 @@
                 </a>
             @endif
         </div>
-        <div class="flex items-center gap-2 pointer-events-auto z-50 flex-wrap">
+        <div class="flex items-center justify-center gap-2 pointer-events-auto z-50 flex-wrap">
 
             <button class="theme-toggle-btn glass-panel" onclick="toggleMapTheme()" title="Toggle theme">
                 <i class="fa-solid fa-sun text-amber-500 text-[11px] icon-sun"></i>
                 <i class="fa-solid fa-moon text-blue-400 text-[11px] icon-moon"></i>
             </button>
 
-            <div class="glass-panel px-3.5 py-2 rounded-xl md:flex items-center gap-2 text-[11px] font-medium">
+            <div class="map-date-chip glass-panel px-3.5 py-2 rounded-xl md:flex items-center gap-2 text-[11px] font-medium">
                 <i class="fa-regular fa-calendar text-[10px] text-[#555]"></i>
                 <span id="current-date" class="text-[#888]">Loading...</span>
             </div>
@@ -2508,6 +2562,13 @@
                 class="mobile-fab mobile-fab-right">
                 <i class="fa-solid fa-ellipsis-vertical text-base"></i>
             </button>
+        </div>
+    @endif
+
+    @if ($mapRole === 'driver')
+        <div id="wake-lock-chip" data-state="off" role="status" aria-live="polite">
+            <i class="fa-solid fa-mobile-screen text-[10px]"></i>
+            <span id="wake-lock-chip-text">Screen awake</span>
         </div>
     @endif
 
@@ -4422,6 +4483,9 @@ sim._lastEtaUpdate = null;
                                     <div class="flex justify-between"><span><i
                                                 class="fa-regular fa-clock text-yellow-400 mr-1 text-[8px]"></i>
                                             Updated</span><span id="update-time">--:--:--</span></div>
+                                    <div class="flex justify-between"><span><i
+                                                class="fa-solid fa-mobile-screen text-purple-400 mr-1 text-[8px]"></i>
+                                            Screen</span><span id="wake-lock-status">--</span></div>
                                 </div>
                             </div>
                             <p class="mt-4 text-[8px] text-[#333] text-center"><i
@@ -6330,8 +6394,74 @@ sim._lastEtaUpdate = null;
                     });
             }
 
+            // ── Screen wake lock: a locked/sleeping phone suspends the page and the
+            // broadcast with it, so a driver on shift keeps the screen awake. The
+            // browser drops the lock whenever the tab is hidden, so it is re-requested
+            // on return. Needs HTTPS (or localhost); unsupported browsers just skip it.
+            let screenWakeLock = null;
+            const wakeLockStatus = document.getElementById('wake-lock-status');
+
+            // Phone chip, top centre (the GPS card is tucked away in the details sheet there).
+            const wakeLockChip = document.getElementById('wake-lock-chip');
+            const wakeLockChipText = document.getElementById('wake-lock-chip-text');
+
+            function setWakeLockChip(state) {
+                if (!wakeLockChip) return;
+                const chip = {
+                    on:          ['on',   'Screen awake'],
+                    unsupported: ['warn', 'Screen may sleep'],
+                    blocked:     ['warn', 'Screen may sleep']
+                }[state] || ['off', ''];
+                wakeLockChip.dataset.state = chip[0];
+                if (wakeLockChipText) wakeLockChipText.textContent = chip[1];
+            }
+
+            function setWakeLockStatus(state) {
+                setWakeLockChip(state);
+                if (!wakeLockStatus) return;
+                const states = {
+                    on:          ['Kept awake', 'text-green-400'],
+                    off:         ['--', ''],
+                    unsupported: ['Can sleep (use HTTPS)', 'text-amber-400'],
+                    blocked:     ['Can sleep', 'text-amber-400']
+                };
+                const entry = states[state] || states.off;
+                wakeLockStatus.textContent = entry[0];
+                wakeLockStatus.className = entry[1];
+            }
+
+            async function acquireWakeLock() {
+                if (!isBroadcastingDriver || screenWakeLock || document.hidden) return;
+                if (!('wakeLock' in navigator)) {
+                    setWakeLockStatus('unsupported');
+                    return;
+                }
+                try {
+                    const lock = await navigator.wakeLock.request('screen');
+                    screenWakeLock = lock;
+                    setWakeLockStatus('on');
+                    lock.addEventListener('release', function() {
+                        if (screenWakeLock === lock) {
+                            screenWakeLock = null;
+                            setWakeLockStatus('off');
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Screen wake lock unavailable:', e && e.message);
+                    setWakeLockStatus('blocked');
+                }
+            }
+
+            function releaseWakeLock() {
+                const lock = screenWakeLock;
+                screenWakeLock = null;
+                setWakeLockStatus('off');
+                if (lock) lock.release().catch(function() {});
+            }
+
             function stopGPSTracking(silent) {
                 if (gpsWatchId === null) return;
+                releaseWakeLock();
                 gpsWatchToken++;
                 navigator.geolocation.clearWatch(gpsWatchId);
                 gpsWatchId = null;
@@ -6358,6 +6488,7 @@ sim._lastEtaUpdate = null;
                 // Guards against late callbacks from a watch we already replaced.
                 const watchToken = ++gpsWatchToken;
                 hasLiveFix = false;
+                acquireWakeLock();
 
                 if (gpsIndicator) gpsIndicator.className = 'w-2 h-2 bg-green-500 rounded-full dot-pulse';
                 if (gpsStatusText) {
@@ -6440,7 +6571,10 @@ sim._lastEtaUpdate = null;
                 }, 30000);
 
                 document.addEventListener('visibilitychange', function() {
-                    if (!document.hidden) startGPSTracking();
+                    if (!document.hidden) {
+                        startGPSTracking();
+                        acquireWakeLock();
+                    }
                 });
             }
 

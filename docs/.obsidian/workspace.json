@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Entity_Relationship_Diagram.md",
+                "file": "MANUAL_TEST_CHECKLIST.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Entity_Relationship_Diagram"
+              "title": "MANUAL_TEST_CHECKLIST"
             }
           },
           {
@@ -202,6 +202,8 @@
   },
   "active": "9f89179a0caa52b5",
   "lastOpenFiles": [
+    "logs-12546571-1794153525116.csv",
+    "Entity_Relationship_Diagram.md",
     "AUTOMATED_FEATURES.md",
     "logs-12546571-1793976653163.csv",
     "RATE_LIMITING.md",
@@ -235,7 +237,6 @@
     "Use_Case_Diagram.md",
     "diagrams/use-case-parts/01_overview.png",
     "diagrams/use_case_diagram.svg",
-    "Entity_Relationship_Diagram.md",
     "diagrams/erd_summary.svg",
     "UCN/UCN_SC_E028_Manage_Staff_Accounts.md",
     "UCN/UCN_SC_E025_Vehicle_Maintenance_Log_CRUD.md",

@@ -48,181 +48,181 @@ Fare payments **and wallet top-ups** by GCash/Maya go to PayMongo's hosted check
 - [x] `/map/guest` shows the map and fare calculator while logged out.
 - [x] Visiting `/dashboard`, `/map` or `/payment/history` while logged out redirects to login.
 - [x] **Register commuter:** valid data creates the account, lands on "verify your email", and creates a wallet.
-- [x] Register rejects: duplicate email, password under 8 characters, mismatched confirmation, terms unchecked.
-- [x] **Register driver** (`/register/driver`): valid data plus a JPG/PNG under 2 MB shows "wait for admin approval". Rejects a missing image, a PDF or GIF, and a file over 2 MB.
-- [x] **Login** with a wrong password and with an unknown email shows the same generic message ("credentials do not match").
-- [x] `pedro.lim@` and `carlos.bautista@` are refused with "This account has been suspended".
-- [x] `lara.gomez@` is sent to the verify-email page, not the map.
-- [x] `elena.torres@` shows the "pending approval" message and is logged out.
-- [x] `nico.tan@` shows the "rejected" message and is logged out.
-- [x] Each role lands on `/map` after login. The sidebar menu differs per role.
-- [x] Forgot password: submitting a known email shows a status message; an invalid email shows a validation error.
-- [x] Logout returns to login, and the Back button doesn't reveal protected pages.
+- [ ] Register rejects: duplicate email, password under 8 characters, mismatched confirmation, terms unchecked.
+- [ ] **Register driver** (`/register/driver`): valid data plus a JPG/PNG under 2 MB shows "wait for admin approval". Rejects a missing image, a PDF or GIF, and a file over 2 MB.
+- [ ] **Login** with a wrong password and with an unknown email shows the same generic message ("credentials do not match").
+- [ ] `pedro.lim@` and `carlos.bautista@` are refused with "This account has been suspended".
+- [ ] `lara.gomez@` is sent to the verify-email page, not the map.
+- [ ] `elena.torres@` shows the "pending approval" message and is logged out.
+- [ ] `nico.tan@` shows the "rejected" message and is logged out.
+- [ ] Each role lands on `/map` after login. The sidebar menu differs per role.
+- [ ] Forgot password: submitting a known email shows a status message; an invalid email shows a validation error.
+- [ ] Logout returns to login, and the Back button doesn't reveal protected pages.
 
 ## 2. Commuter
 
 Log in as `commuter@gmail.com` unless noted.
 
 **Map and fare**
-- [x] Map loads, and a pickup and destination give a distance and a fare.
-- [x] "Buy a Ride" without both a pickup and a destination shows "Pick-up point and destination is required."
-- [x] Recent receipts (last 3) show on the map side panel.
-- [x] Active drivers appear on the map. The seeded pings last only 5 minutes, so re-run the seeder or broadcast from a driver (§3).
+- [ ] Map loads, and a pickup and destination give a distance and a fare.
+- [ ] "Buy a Ride" without both a pickup and a destination shows "Pick-up point and destination is required."
+- [ ] Recent receipts (last 3) show on the map side panel.
+- [ ] Active drivers appear on the map. The seeded pings last only 5 minutes, so re-run the seeder or broadcast from a driver (§3).
 
 **Pay a fare**
-- [x] Wallet payment succeeds, the balance drops by exactly the fare, and the receipt opens.
-- [x] Refreshing the receipt does **not** charge again.
-- [x] Double-clicking Pay sends one request. Re-submitting a payment that already went through opens its receipt with "This fare has already been paid"; re-submitting a pending GCash/Maya payment opens the "Confirming your payment" screen with a warning; going Back from the PayMongo checkout shows a "payment already in progress" notice with a *Check payment status* link.
-- [x] As `juan.delacruz@` (₱0), a Wallet payment shows "You don't have enough balance" and nothing is charged.
-- [x] GCash or Maya redirects to the PayMongo sandbox checkout. Complete it and you get a receipt. Cancel it and you get "Payment cancelled. Nothing was charged."
-- [x] As `juan.delacruz@`, history shows paid, **pending**, **failed** and **cancelled** rows with distinct labels. Opening the pending one shows the "processing" screen and does not claim success.
+- [ ] Wallet payment succeeds, the balance drops by exactly the fare, and the receipt opens.
+- [ ] Refreshing the receipt does **not** charge again.
+- [ ] Double-clicking Pay sends one request. Re-submitting a payment that already went through opens its receipt with "This fare has already been paid"; re-submitting a pending GCash/Maya payment opens the "Confirming your payment" screen with a warning; going Back from the PayMongo checkout shows a "payment already in progress" notice with a *Check payment status* link.
+- [ ] As `juan.delacruz@` (₱0), a Wallet payment shows "You don't have enough balance" and nothing is charged.
+- [ ] GCash or Maya redirects to the PayMongo sandbox checkout. Complete it and you get a receipt. Cancel it and you get "Payment cancelled. Nothing was charged."
+- [ ] As `juan.delacruz@`, history shows paid, **pending**, **failed** and **cancelled** rows with distinct labels. Opening the pending one shows the "processing" screen and does not claim success.
 
 **History and receipts**
-- [x] `/payment/history` lists payments, newest first.
-- [x] Search by transaction ID (`SEED-…`) works. The from/to date filters work, as does the method filter.
-- [x] As `ana.reyes@`, the 14 payments paginate and the filters survive page changes.
-- [x] A receipt shows the correct route, distance, price and method.
-- [x] You cannot open another user's receipt by changing the id in the URL.
+- [ ] `/payment/history` lists payments, newest first.
+- [ ] Search by transaction ID (`SEED-…`) works. The from/to date filters work, as does the method filter.
+- [ ] As `ana.reyes@`, the 14 payments paginate and the filters survive page changes.
+- [ ] A receipt shows the correct route, distance, price and method.
+- [ ] You cannot open another user's receipt by changing the id in the URL.
 
 **Wallet top-up**
-- [x] Top up ₱100 by GCash (gateway on, test keys): you are sent to PayMongo's checkout and the balance is **still unchanged**; the new row in `/payment/topup/history` is **pending**. Press *Authorize test payment*: you land on the top-up page with "Top-up successful! ₱100.00 was added to your wallet.", the balance is up by ₱100 and the row is **completed**.
-- [x] Same with **Maya**: the checkout opens (channel `paymaya`).
-- [x] Back out at the checkout (cancel / browser back): "Top-up cancelled. Nothing was charged.", the balance is unchanged, the row is **cancelled** and you can try again at once.
-- [x] Press *Fail test payment* (sandbox page): the row ends **failed** (webhook, *Check status* link, or `php artisan payments:reconcile`), the balance is unchanged and the *did not go through* email arrives.
-- [x] Pay, then close the tab before returning, with no webhook configured: within 10 minutes (or `php artisan payments:reconcile`) the row becomes **completed** and the balance is credited **once**.
+- [ ] Top up ₱100 by GCash (gateway on, test keys): you are sent to PayMongo's checkout and the balance is **still unchanged**; the new row in `/payment/topup/history` is **pending**. Press *Authorize test payment*: you land on the top-up page with "Top-up successful! ₱100.00 was added to your wallet.", the balance is up by ₱100 and the row is **completed**.
+- [ ] Same with **Maya**: the checkout opens (channel `paymaya`).
+- [ ] Back out at the checkout (cancel / browser back): "Top-up cancelled. Nothing was charged.", the balance is unchanged, the row is **cancelled** and you can try again at once.
+- [ ] Press *Fail test payment* (sandbox page): the row ends **failed** (webhook, *Check status* link, or `php artisan payments:reconcile`), the balance is unchanged and the *did not go through* email arrives.
+- [ ] Pay, then close the tab before returning, with no webhook configured: within 10 minutes (or `php artisan payments:reconcile`) the row becomes **completed** and the balance is credited **once**.
 - [ ] With `PAYMONGO_ENABLED=false` in a dev environment: a top-up is credited at once ("Successfully topped up!"). With `APP_ENV=production` and no gateway: "Top-ups are unavailable right now." and nothing is recorded.
-- [x] Rejects ₱5 (min 10), ₱100001 (max 100000), non-numeric input, and a missing method.
-- [x] Repeating the same amount and method within 2 minutes shows "already processed".
-- [x] `/payment/topup/history` lists top-ups. As `ana.reyes@`, the 12 rows paginate. Filter by method and date.
+- [ ] Rejects ₱5 (min 10), ₱100001 (max 100000), non-numeric input, and a missing method.
+- [ ] Repeating the same amount and method within 2 minutes shows "already processed".
+- [ ] `/payment/topup/history` lists top-ups. As `ana.reyes@`, the 12 rows paginate. Filter by method and date.
 
 **Profile and settings**
-- [x] `/profile` shows balance, payments and top-ups.
-- [x] Change password: wrong current password is rejected; a new password under 8 characters or with a mismatched confirmation is rejected; a valid change succeeds, and you can log in with the new password. Reset it to `admin123` afterwards.
-- [x] Settings: change email, change theme (light/dark), change font size. The choice persists after a reload and across logins (`ana.reyes@` starts in dark, size 14).
-- [x] Settings → Security → **Sign out of other devices**: needs the current password (wrong one is rejected under the field); on success every other session of the account is ended and this one stays.
-- [x] Changing the password to the **same** password is rejected ("must be different from your current password").
-- [x] Delete account: logs you out, the account is gone, and login fails. Test this on a throwaway account you registered. With payments or top-ups behind it the account is *anonymised* rather than removed, and a wallet balance blocks it — see section 11.
+- [ ] `/profile` shows balance, payments and top-ups.
+- [ ] Change password: wrong current password is rejected; a new password under 8 characters or with a mismatched confirmation is rejected; a valid change succeeds, and you can log in with the new password. Reset it to `admin123` afterwards.
+- [ ] Settings: change email, change theme (light/dark), change font size. The choice persists after a reload and across logins (`ana.reyes@` starts in dark, size 14).
+- [ ] Settings → Security → **Sign out of other devices**: needs the current password (wrong one is rejected under the field); on success every other session of the account is ended and this one stays.
+- [ ] Changing the password to the **same** password is rejected ("must be different from your current password").
+- [ ] Delete account: logs you out, the account is gone, and login fails. Test this on a throwaway account you registered. With payments or top-ups behind it the account is *anonymised* rather than removed, and a wallet balance blocks it — see section 11.
 
 ## 3. Driver
 
 **Shift**
-- [x] As `driver@gmail.com`: dashboard shows the vehicle, this week's hours, and recent violations.
-- [x] Clock in records the time and sets status to active; the status badge updates.
-- [x] Clocking in a second time shows "You have already clocked in today."
-- [x] Clock out computes hours, and overtime appears only beyond 8 hours. Status returns to inactive.
-- [x] Clocking out with no open shift shows "No active shift found to clock out."
-- [x] As `ramon.delacruz@`: an open shift is already in progress. Clock out works.
-- [x] `/timekeeping`: week navigation (prev/next) works. Seeded rows include an overtime day, a sick day and a vacation day, and the week totals add up.
-- [x] Manual status toggle (active/inactive) works and rejects any other value.
+- [ ] As `driver@gmail.com`: dashboard shows the vehicle, this week's hours, and recent violations.
+- [ ] Clock in records the time and sets status to active; the status badge updates.
+- [ ] Clocking in a second time shows "You have already clocked in today."
+- [ ] Clock out computes hours, and overtime appears only beyond 8 hours. Status returns to inactive.
+- [ ] Clocking out with no open shift shows "No active shift found to clock out."
+- [ ] As `ramon.delacruz@`: an open shift is already in progress. Clock out works.
+- [ ] `/timekeeping`: week navigation (prev/next) works. Seeded rows include an overtime day, a sick day and a vacation day, and the week totals add up.
+- [ ] Manual status toggle (active/inactive) works and rejects any other value.
 
 **Broadcasting**
-- [x] On the map, as an assigned driver, allow location access and confirm your vehicle appears for a commuter in a second browser.
-- [x] A driver with no vehicle, with an inactive / maintenance vehicle, or a pending or suspended driver, cannot broadcast (403) and the map shows *GPS: Not broadcasting*.
+- [ ] On the map, as an assigned driver, allow location access and confirm your vehicle appears for a commuter in a second browser.
+- [ ] A driver with no vehicle, with an inactive / maintenance vehicle, or a pending or suspended driver, cannot broadcast (403) and the map shows *GPS: Not broadcasting*.
 
 **Violations**
-- [x] `/violations` lists violations with code, fine, date, place and penalty, and a correct total.
+- [ ] `/violations` lists violations with code, fine, date, place and penalty, and a correct total.
 
 **Access control**
-- [x] A driver cannot open `/commuters`, `/vehicles` or `/reports` (403).
-- [x] Suspend `ramon.delacruz@` (see §4) while he is logged in: his next click signs him out and the login page says the account is suspended.
-- [x] Settings shows the driver's email read-only (drivers cannot change it).
-- [x] A licence that expires within 30 days (or has expired) shows a warning on the driver dashboard.
+- [ ] A driver cannot open `/commuters`, `/vehicles` or `/reports` (403).
+- [ ] Suspend `ramon.delacruz@` (see §4) while he is logged in: his next click signs him out and the login page says the account is suspended.
+- [ ] Settings shows the driver's email read-only (drivers cannot change it).
+- [ ] A licence that expires within 30 days (or has expired) shows a warning on the driver dashboard.
 
 ## 4. Admin
 
 Log in as `admin@gmail.com`.
 
 **Dashboard**
-- [x] Revenue, funds added, active users, recent fares and recent top-ups show; the 7-day chart renders.
-- [x] Total Revenue counts **paid** payments only. The seeded data has ₱634 paid and ₱83 pending/failed/cancelled, so the card should read ₱634.
-- [x] "Active users" counts commuters with at least one paid fare, and the 7-day chart plots paid fares by the day they were paid.
+- [ ] Revenue, funds added, active users, recent fares and recent top-ups show; the 7-day chart renders.
+- [ ] Total Revenue counts **paid** payments only. The seeded data has ₱634 paid and ₱83 pending/failed/cancelled, so the card should read ₱634.
+- [ ] "Active users" counts commuters with at least one paid fare, and the 7-day chart plots paid fares by the day they were paid.
 
 **Commuters** (`/commuters`)
-- [x] The list shows all 6 commuters with correct status (pedro = suspended, lara = unverified).
-- [x] Create a commuter: valid works; duplicate email, password under 8 characters and unconfirmed password are rejected.
-- [x] Edit email, and edit with the password left blank (password unchanged).
-- [x] The commuter detail page shows wallet, payments and top-ups.
-- [x] Suspend then reactivate `maria.santos@`; while suspended she cannot log in.
-- [x] Suspending or deleting **your own** account is refused.
-- [x] Deleting `pedro.lim@` (₱85) is refused: "Cannot delete commuter with a balance…".
-- [x] Deleting `lara.gomez@` (₱0) succeeds. Re-run the seeder to restore her.
+- [ ] The list shows all 6 commuters with correct status (pedro = suspended, lara = unverified).
+- [ ] Create a commuter: valid works; duplicate email, password under 8 characters and unconfirmed password are rejected.
+- [ ] Edit email, and edit with the password left blank (password unchanged).
+- [ ] The commuter detail page shows wallet, payments and top-ups.
+- [ ] Suspend then reactivate `maria.santos@`; while suspended she cannot log in.
+- [ ] Suspending or deleting **your own** account is refused.
+- [ ] Deleting `pedro.lim@` (₱85) is refused: "Cannot delete commuter with a balance…".
+- [ ] Deleting `lara.gomez@` (₱0) succeeds. Re-run the seeder to restore her.
 
 **Drivers** (`/drivers`)
-- [x] Pending drivers are listed first. The licence image opens for each (needs `storage:link`, already done).
-- [x] Approve `elena.torres@`: the licence number, licence code, expiry and driver code are required. A licence number already used by another driver (e.g. `N01-23-000001`) is rejected. A valid approval then lets her log in.
-- [x] Reject `mark.ocampo@`: she can't log in and sees the rejected message. Rejecting twice shows "already rejected"; approving twice shows "already approved".
-- [x] Suspend and reactivate `liza.mercado@`: a suspended driver can't log in or clock in.
-- [x] Create a driver manually, and edit one (including replacing the licence image). There is **no driver-code field**: the code is generated (`DRV-######`).
-- [x] A **pending** driver (`mark.ocampo@`) offers only *Review* and delete: no edit, no suspend. Forcing the request is refused.
-- [x] A driver who has a vehicle (`ramon.delacruz@`) shows a lock instead of the delete icon (and the server refuses "still assigned to a vehicle"). Delete one without a vehicle (`dante.cruz@`) and it works.
-- [x] Expired and expiring licences (dante, liza) carry a red *Expired* / amber *Expires in N days* badge in the **License** column, and the *License Expiring* / *License Expired* chips filter the list.
+- [ ] Pending drivers are listed first. The licence image opens for each (needs `storage:link`, already done).
+- [ ] Approve `elena.torres@`: the licence number, licence code, expiry and driver code are required. A licence number already used by another driver (e.g. `N01-23-000001`) is rejected. A valid approval then lets her log in.
+- [ ] Reject `mark.ocampo@`: she can't log in and sees the rejected message. Rejecting twice shows "already rejected"; approving twice shows "already approved".
+- [ ] Suspend and reactivate `liza.mercado@`: a suspended driver can't log in or clock in.
+- [ ] Create a driver manually, and edit one (including replacing the licence image). There is **no driver-code field**: the code is generated (`DRV-######`).
+- [ ] A **pending** driver (`mark.ocampo@`) offers only *Review* and delete: no edit, no suspend. Forcing the request is refused.
+- [ ] A driver who has a vehicle (`ramon.delacruz@`) shows a lock instead of the delete icon (and the server refuses "still assigned to a vehicle"). Delete one without a vehicle (`dante.cruz@`) and it works.
+- [ ] Expired and expiring licences (dante, liza) carry a red *Expired* / amber *Expires in N days* badge in the **License** column, and the *License Expiring* / *License Expired* chips filter the list.
 
 **Fares** (`/fares`)
-- [x] The current rate table shows 50 tiers.
-- [x] Bulk edit: save valid changes, then check the commuter's fare changes. Rates of `0` or below are rejected.
-- [x] Upload a non-PDF and get "must be a PDF". Upload without a file and get "A fare document file is required."
+- [ ] The current rate table shows 50 tiers.
+- [ ] Bulk edit: save valid changes, then check the commuter's fare changes. Rates of `0` or below are rejected.
+- [ ] Upload a non-PDF and get "must be a PDF". Upload without a file and get "A fare document file is required."
 
 **Reports** (`/reports`)
-- [x] Financial, Driver and Maintenance reports each render for a range covering the last 30 days.
-- [x] A range with no data shows the "no data" state, not an error.
-- [x] End date before start date shows a validation error.
-- [x] Export downloads a CSV with the right filename and the same rows as the screen.
+- [ ] Financial, Driver and Maintenance reports each render for a range covering the last 30 days.
+- [ ] A range with no data shows the "no data" state, not an error.
+- [ ] End date before start date shows a validation error.
+- [ ] Export downloads a CSV with the right filename and the same rows as the screen.
 
 **Top-ups and transactions**
-- [x] `/topups` lists all top-ups of every status with a Status column; the filter bar narrows by search, payment status, method, date range and amount range; 10 per page.
-- [x] `/transactions` lists every payment attempt (all statuses) with the same filters, and receipts open from there.
-- [x] On `/transactions`, Total Revenue is ₱634 (paid only), and the average fare is that revenue divided by the 28 paid fares, not by all 31 attempts.
+- [ ] `/topups` lists all top-ups of every status with a Status column; the filter bar narrows by search, payment status, method, date range and amount range; 10 per page.
+- [ ] `/transactions` lists every payment attempt (all statuses) with the same filters, and receipts open from there.
+- [ ] On `/transactions`, Total Revenue is ₱634 (paid only), and the average fare is that revenue divided by the 28 paid fares, not by all 31 attempts.
 
 **Map tools (local env)**
-- [x] The seeded Dev Jeep markers show for admin. Add, toggle and remove a marker. Commuters see only the active ones, with obfuscated positions.
+- [ ] The seeded Dev Jeep markers show for admin. Add, toggle and remove a marker. Commuters see only the active ones, with obfuscated positions.
 
 ## 5. Driver manager
 
 Log in as `drivermanager@gmail.com`.
 
-- [x] Dashboard shows the driver list, time-keeping and violation counts.
-- [x] **Time keeping:** save a normal shift (in 06:00, out 14:00) and check hours and overtime.
-- [x] Rejects: out earlier than in; only one of in/out; a shift that overlaps an existing one that day.
-- [x] Marking sick or vacation saves a zero-hours row without times.
-- [x] **Violation codes:** 14 codes are listed on a freshly seeded database (`UV01`–`UV14`, the PUJ schedule; the dev seeder loads them only when the count differs). Add a code. A duplicate code is rejected. A negative fine and a blank tier are rejected. Edit a code, then delete one.
-- [x] **Violations log:** log a single violation and a bulk set (2+ rows, remarks left empty on some). The modal closes as soon as it is saved; a future date or a missing field shows its message under that field.
-- [x] A driver manager can't open admin pages (`/commuters`, `/reports`) or maintenance pages (403).
+- [ ] Dashboard shows the driver list, time-keeping and violation counts.
+- [ ] **Time keeping:** save a normal shift (in 06:00, out 14:00) and check hours and overtime.
+- [ ] Rejects: out earlier than in; only one of in/out; a shift that overlaps an existing one that day.
+- [ ] Marking sick or vacation saves a zero-hours row without times.
+- [ ] **Violation codes:** 14 codes are listed on a freshly seeded database (`UV01`–`UV14`, the PUJ schedule; the dev seeder loads them only when the count differs). Add a code. A duplicate code is rejected. A negative fine and a blank tier are rejected. Edit a code, then delete one.
+- [ ] **Violations log:** log a single violation and a bulk set (2+ rows, remarks left empty on some). The modal closes as soon as it is saved; a future date or a missing field shows its message under that field.
+- [ ] A driver manager can't open admin pages (`/commuters`, `/reports`) or maintenance pages (403).
 
 **Staff** (`/staff`)
-- [x] The list shows the driver manager and the maintenance manager, 10 per page; search, role and status filters work.
-- [x] Create a staff account (valid works; duplicate e-mail, short password, mismatched confirmation, wrong role are rejected under their fields), edit its e-mail/role, suspend and reactivate it, delete it.
-- [x] A suspended staff member who is signed in is signed out on the next click.
-- [x] You cannot suspend or delete your own account.
+- [ ] The list shows the driver manager and the maintenance manager, 10 per page; search, role and status filters work.
+- [ ] Create a staff account (valid works; duplicate e-mail, short password, mismatched confirmation, wrong role are rejected under their fields), edit its e-mail/role, suspend and reactivate it, delete it.
+- [ ] A suspended staff member who is signed in is signed out on the next click.
+- [ ] You cannot suspend or delete your own account.
 
 **Vehicles (admin)**
-- [x] The admin menu has *Vehicles*; the admin can add, edit and delete vehicles with the same rules as the maintenance manager.
+- [ ] The admin menu has *Vehicles*; the admin can add, edit and delete vehicles with the same rules as the maintenance manager.
 
 ## 6. Maintenance manager
 
 Log in as `maintenancemanager@gmail.com`.
 
-- [x] Dashboard: choose each vehicle; cost summary, monthly totals, cost-per-km and the *Service History* tab update. A vehicle with no history (STU-1122) shows zeros, not an error.
-- [x] **Vehicles:** add a vehicle. Rejected: duplicate plate, year outside 1990–2030, disposal date before acquisition date.
-- [x] Assigning a driver to an inactive, maintenance or disposed vehicle is refused (the driver select is disabled unless the status is *Active*).
-- [x] Set ABC-1234 to *disposed* while Ramon is clocked in: refused until he clocks out.
-- [x] Deleting a vehicle that is assigned to a driver is refused (the delete icon is locked). Deleting one with maintenance records is refused ("mark it Disposed instead"). Deleting an empty, unassigned one (STU-1122, or one you just added) works.
-- [x] **Preventive maintenance:** the schedule shows a mix of *On Track*, *Due Soon* and *Past Due* items (a task with only a distance interval is not overdue just for lacking a time interval). Log a service with an odometer **lower** than the last reading and get an error naming that reading.
-- [x] A valid entry updates the schedule, the dashboard's cost summary and its *Service History* tab.
-- [x] **Maintenance tasks:** add, edit and delete a task. A blank name is rejected, and miles/months may be blank.
-- [x] There is no *Maintenance Logs* menu item and `/vehicle-maintenance-log` answers 404. **Maintenance Logs** is a Maintenance Manager menu item (`/maintenance-logs`; any other role gets 403). Log the same task twice on Preventive Maintenance: the schedule row shows the latest service, the Maintenance Logs page lists both.
-- [x] A driver with no vehicle (Elena Torres) sees the amber *no vehicle assigned* notice on the map; **Clock In** is disabled and the Availability toggle can only be switched off.
-- [x] Violation Log → **Mark Paid** turns the badge green and the row to ₱0.00 (original struck through); the driver's *Outstanding* totals drop. **Mark Unpaid** restores them.
-- [x] Two drivers on one vehicle (Vehicles → edit → second driver select): **Duty Roster** (in the sidebar of the Maintenance Manager, the Driver Manager and the Admin; a driver or commuter gets a 403) → Generate, swap a day, Save. The rostered driver can clock in; each driver's **Dashboard → My Schedule** card shows the next 14 days (green = theirs, grey = the co-driver's, dashed = not scheduled) and matches the roster, or says *No roster set yet* before one is generated; the co-driver sees *"Today is …'s day"* and a disabled Clock In. A one-driver vehicle needs no roster.
-- [x] Drivers → ID-card icon: the modal lists the driver's timekeeping and violations.
+- [ ] Dashboard: choose each vehicle; cost summary, monthly totals, cost-per-km and the *Service History* tab update. A vehicle with no history (STU-1122) shows zeros, not an error.
+- [ ] **Vehicles:** add a vehicle. Rejected: duplicate plate, year outside 1990–2030, disposal date before acquisition date.
+- [ ] Assigning a driver to an inactive, maintenance or disposed vehicle is refused (the driver select is disabled unless the status is *Active*).
+- [ ] Set ABC-1234 to *disposed* while Ramon is clocked in: refused until he clocks out.
+- [ ] Deleting a vehicle that is assigned to a driver is refused (the delete icon is locked). Deleting one with maintenance records is refused ("mark it Disposed instead"). Deleting an empty, unassigned one (STU-1122, or one you just added) works.
+- [ ] **Preventive maintenance:** the schedule shows a mix of *On Track*, *Due Soon* and *Past Due* items (a task with only a distance interval is not overdue just for lacking a time interval). Log a service with an odometer **lower** than the last reading and get an error naming that reading.
+- [ ] A valid entry updates the schedule, the dashboard's cost summary and its *Service History* tab.
+- [ ] **Maintenance tasks:** add, edit and delete a task. A blank name is rejected, and miles/months may be blank.
+- [ ] There is no *Maintenance Logs* menu item and `/vehicle-maintenance-log` answers 404. **Maintenance Logs** is a Maintenance Manager menu item (`/maintenance-logs`; any other role gets 403). Log the same task twice on Preventive Maintenance: the schedule row shows the latest service, the Maintenance Logs page lists both.
+- [ ] A driver with no vehicle (Elena Torres) sees the amber *no vehicle assigned* notice on the map; **Clock In** is disabled and the Availability toggle can only be switched off.
+- [ ] Violation Log → **Mark Paid** turns the badge green and the row to ₱0.00 (original struck through); the driver's *Outstanding* totals drop. **Mark Unpaid** restores them.
+- [ ] Two drivers on one vehicle (Vehicles → edit → second driver select): **Duty Roster** (in the sidebar of the Maintenance Manager, the Driver Manager and the Admin; a driver or commuter gets a 403) → Generate, swap a day, Save. The rostered driver can clock in; each driver's **Dashboard → My Schedule** card shows the next 14 days (green = theirs, grey = the co-driver's, dashed = not scheduled) and matches the roster, or says *No roster set yet* before one is generated; the co-driver sees *"Today is …'s day"* and a disabled Clock In. A one-driver vehicle needs no roster.
+- [ ] Drivers → ID-card icon: the modal lists the driver's timekeeping and violations.
 
 ## 7. Cross-cutting
 
 - [ ] Every role is refused (403) on the other roles' URLs.
-- [x] Dark theme and the font-size setting apply on every role's pages.
+- [ ] Dark theme and the font-size setting apply on every role's pages.
 - [ ] **Largest text, every role.** Settings → Font size → the biggest step, then open each page of the role at a wide window (1366 px), a laptop (1100 px), a tablet (820 px) and a phone (390 px, 360 px): nothing runs off the screen edge, no button or heading is cut off, search boxes keep a usable width, tables scroll sideways inside their own card instead of widening the page. On a narrow window Settings says *Shown at NN% on this screen so the page keeps fitting*; widening the window brings the full size back.
-- [x] Layout works at phone width (about 375 px): sidebar, tables, map and payment screens.
-- [x] Success and error **toasts** (bottom-right) appear and clear correctly on every page. Nothing shows a raw stack trace.
-- [x] In every add/edit/delete modal a validation error keeps the modal open and shows the message **under its own input**; success closes the modal and shows a toast. Pressing a submit button twice sends one request.
+- [ ] Layout works at phone width (about 375 px): sidebar, tables, map and payment screens.
+- [ ] Success and error **toasts** (bottom-right) appear and clear correctly on every page. Nothing shows a raw stack trace.
+- [ ] In every add/edit/delete modal a validation error keeps the modal open and shows the message **under its own input**; success closes the modal and shows a toast. Pressing a submit button twice sends one request.
 
 ---
 
@@ -248,22 +248,22 @@ Still worth a look: users have no `name` column, so commuters are identified by 
 
 ## 8. Second test round (Oct 2026)
 
-- [x] Through an ngrok URL: add / edit / delete in any modal works (no "Network error"), settings theme and font size save.
-- [x] Driver toggles *Available / Unavailable* on their map: within a few seconds the live marker turns green / red for a commuter and its popup reads *Available* / *Unavailable*.
-- [x] Admin Add / Edit **Commuter**, **Driver** and **Staff** modals check input while typing: bad e-mail, password under 8 characters, mismatched confirmation, a non-Philippine phone number and a PDF / oversized licence image each show a message under the field, and nothing is sent.
-- [x] The contact field in the driver modals shows a `+63` prefix and formats as `917 123 4567`.
-- [x] The **View** driver modal marks an expired licence (red date, *Expired*) and an expiring one (amber, *Expires in N days*).
-- [x] Sign in as a driver with an expiring or expired licence (`liza.mercado@`, `dante.cruz@`): a warning toast appears at **every** sign-in. A driver with a valid licence and a commuter see none.
-- [x] Lists show 10 per page with a pager: PUJ Drivers, PUJ Commuters, Vehicles, Violation Codes (in the browser) and Violations Log, Maintenance Tasks, a driver's own Violations, a commuter's trips and top-ups on the admin detail page (from the server).
-- [x] Admin: Fare Transactions → a row → *View Full Receipt* opens `payment/receipt/{id}` with the commuter e-mail, status and *Back to Transactions*; `/transactions/receipt/…` is 404.
-- [x] Toasts look the same (light card) in light and dark mode.
+- [ ] Through an ngrok URL: add / edit / delete in any modal works (no "Network error"), settings theme and font size save.
+- [ ] Driver toggles *Available / Unavailable* on their map: within a few seconds the live marker turns green / red for a commuter and its popup reads *Available* / *Unavailable*.
+- [ ] Admin Add / Edit **Commuter**, **Driver** and **Staff** modals check input while typing: bad e-mail, password under 8 characters, mismatched confirmation, a non-Philippine phone number and a PDF / oversized licence image each show a message under the field, and nothing is sent.
+- [ ] The contact field in the driver modals shows a `+63` prefix and formats as `917 123 4567`.
+- [ ] The **View** driver modal marks an expired licence (red date, *Expired*) and an expiring one (amber, *Expires in N days*).
+- [ ] Sign in as a driver with an expiring or expired licence (`liza.mercado@`, `dante.cruz@`): a warning toast appears at **every** sign-in. A driver with a valid licence and a commuter see none.
+- [ ] Lists show 10 per page with a pager: PUJ Drivers, PUJ Commuters, Vehicles, Violation Codes (in the browser) and Violations Log, Maintenance Tasks, a driver's own Violations, a commuter's trips and top-ups on the admin detail page (from the server).
+- [ ] Admin: Fare Transactions → a row → *View Full Receipt* opens `payment/receipt/{id}` with the commuter e-mail, status and *Back to Transactions*; `/transactions/receipt/…` is 404.
+- [ ] Toasts look the same (light card) in light and dark mode.
 
 ## 9. Third test round
 
-- [x] A pending GCash/Maya payment older than 12 hours turns *cancelled* the next time payment history, the admin ledger or its checkout page is opened (`php artisan payments:expire-pending` does the same).
-- [x] Vehicles → Add / Edit: the *Assigned Driver* list shows only approved, non-suspended drivers who hold no other vehicle; editing a vehicle keeps its own driver selectable.
-- [x] Select boxes look the same everywhere (same chevron, padding, readable option list in dark mode): staff, vehicles, violations, filters.
-- [x] Every add/edit modal (including *Add Staff*) shows a spinner on its button and a "Saving…" overlay when the request takes more than a moment.
+- [ ] A pending GCash/Maya payment older than 12 hours turns *cancelled* the next time payment history, the admin ledger or its checkout page is opened (`php artisan payments:expire-pending` does the same).
+- [ ] Vehicles → Add / Edit: the *Assigned Driver* list shows only approved, non-suspended drivers who hold no other vehicle; editing a vehicle keeps its own driver selectable.
+- [ ] Select boxes look the same everywhere (same chevron, padding, readable option list in dark mode): staff, vehicles, violations, filters.
+- [ ] Every add/edit modal (including *Add Staff*) shows a spinner on its button and a "Saving…" overlay when the request takes more than a moment.
 
 ## 10. Audit trail and Activity Log (Oct 2026)
 
@@ -271,102 +271,102 @@ Not yet clicked through in a browser — the automated suites (`AuditTrailTest`,
 server the IP address will read `127.0.0.1`. Do the actions first, then read them back as the admin.
 
 **Access**
-- [x] As `admin@gmail.com` the sidebar shows **Activity Log** (clipboard icon, after *Staff*). As `drivermanager@gmail.com`, `maintenancemanager@gmail.com`, a driver and a commuter it does **not**, and typing `/activity-log` gives 403. Signed out, it redirects to the login page.
+- [ ] As `admin@gmail.com` the sidebar shows **Activity Log** (clipboard icon, after *Staff*). As `drivermanager@gmail.com`, `maintenancemanager@gmail.com`, a driver and a commuter it does **not**, and typing `/activity-log` gives 403. Signed out, it redirects to the login page.
 
 **Things that must leave an entry** (open Activity Log afterwards; newest is first)
-- [x] Sign in as `commuter@gmail.com` → *Signed in*, with the email, role, IP and a device such as "Chrome on Windows".
-- [x] Try the wrong password for that account → *Failed sign-in for commuter@gmail.com*, no password anywhere in the entry; the page header now shows "1 failed sign-in in the last 24 h" and the link filters to it.
-- [x] Sign out → *Signed out*. Change a password in Settings → *Password changed*, with no 2password in the detail.
-- [x] Admin suspends then reactivates a commuter who is not already suspended (not `pedro`) → *Suspended*, *Reactivated*, both naming the admin.
-- [x] Vehicles → change a vehicle's status to *Maintenance* → *Updated vehicle …* and, expanded, a Before / After row for **Status** only.
-- [x] Drivers → approve a pending driver → *Approved driver DRV-…*; suspend a driver with a reason → *Suspended*, with the reason and whether a vehicle was released.
-- [x] Fare Rates → edit two rates and save → one *Fare rates updated* entry, expanded to a per-distance table (₱13.00 → ₱15.00 …). Save again without changing anything → no new entry.
-- [x] Staff → add, change the role of, then delete a staff account → *Created*, *Role changed* (old → new), *Deleted*.
-- [x] Reports → Export CSV → a *Report exported* entry (report type and dates).
+- [ ] Sign in as `commuter@gmail.com` → *Signed in*, with the email, role, IP and a device such as "Chrome on Windows".
+- [ ] Try the wrong password for that account → *Failed sign-in for commuter@gmail.com*, no password anywhere in the entry; the page header now shows "1 failed sign-in in the last 24 h" and the link filters to it.
+- [ ] Sign out → *Signed out*. Change a password in Settings → *Password changed*, with no 2password in the detail.
+- [ ] Admin suspends then reactivates a commuter who is not already suspended (not `pedro`) → *Suspended*, *Reactivated*, both naming the admin.
+- [ ] Vehicles → change a vehicle's status to *Maintenance* → *Updated vehicle …* and, expanded, a Before / After row for **Status** only.
+- [ ] Drivers → approve a pending driver → *Approved driver DRV-…*; suspend a driver with a reason → *Suspended*, with the reason and whether a vehicle was released.
+- [ ] Fare Rates → edit two rates and save → one *Fare rates updated* entry, expanded to a per-distance table (₱13.00 → ₱15.00 …). Save again without changing anything → no new entry.
+- [ ] Staff → add, change the role of, then delete a staff account → *Created*, *Role changed* (old → new), *Deleted*.
+- [ ] Reports → Export CSV → a *Report exported* entry (report type and dates).
 
 **Things that must NOT leave an entry**
-- [x] Open the live map as a guest and as a commuter for a minute, then check Activity Log: no new rows.
-- [x] A driver on the map broadcasting, toggling Available / Unavailable, clocking in and out: no entries except the *Created / Updated time entry* rows for the clock-in and clock-out.
-- [x] Opening Activity Log, filtering and paging adds nothing. Settings theme / font size changes add nothing.
+- [ ] Open the live map as a guest and as a commuter for a minute, then check Activity Log: no new rows.
+- [ ] A driver on the map broadcasting, toggling Available / Unavailable, clocking in and out: no entries except the *Created / Updated time entry* rows for the clock-in and clock-out.
+- [ ] Opening Activity Log, filtering and paging adds nothing. Settings theme / font size changes add nothing.
 
 **The page**
-- [x] Search by an email, by a word from a description, and by the email a failed sign-in tried; each finds the right rows.
-- [x] Category, Event and the from / to dates work alone and together; they survive going to page 2; **Clear** resets them. An end date before the start date shows an error toast.
-- [x] Click a row: *What changed* and *Where it came from* open; click again to close. Entries from before the rebuild show *Legacy* with "No field values were recorded".
-- [x] **Export CSV** downloads a file that Excel opens with `₱` and arrows intact, honours the filters, and leaves an *Activity log exported* entry.
-- [x] Light and dark mode both read well; on a phone-width window the filters stack and the table scrolls sideways.
+- [ ] Search by an email, by a word from a description, and by the email a failed sign-in tried; each finds the right rows.
+- [ ] Category, Event and the from / to dates work alone and together; they survive going to page 2; **Clear** resets them. An end date before the start date shows an error toast.
+- [ ] Click a row: *What changed* and *Where it came from* open; click again to close. Entries from before the rebuild show *Legacy* with "No field values were recorded".
+- [ ] **Export CSV** downloads a file that Excel opens with `₱` and arrows intact, honours the filters, and leaves an *Activity log exported* entry.
+- [ ] Light and dark mode both read well; on a phone-width window the filters stack and the table scrolls sideways.
 
 ## 11. Account removal keeps the ledger (Oct 2026)
 
 Destructive: use throwaway accounts you registered, not the seeded ones. Automated cover: `AccountErasureTest`.
 
-- [x] **Balance blocks it.** Register a commuter, top up ₱50, then Settings → *Delete account* → refused with "Your wallet still holds PHP 50.00…", still signed in, nothing changed.
-- [x] **History is kept.** Spend the balance on a fare (wallet payment of ₱50 or more, so it reaches ₱0), delete the account → signed out. Logging in with the old email and password fails. As admin: *Fare Transactions* still lists that payment, now under `deleted-<id>@deleted.invalid`; *Top Ups* still lists the top-up; *PUJ Commuters* no longer lists the account.
-- [x] **Audit.** *Activity Log* shows *Deleted own account* with `outcome: anonymised` and the original email in its details, and nothing else for that deletion.
-- [x] **The email is free again.** Register a new account with the same email address: it works and starts with an empty history.
-- [x] **No history → really deleted.** Register a commuter that never paid or topped up, delete it: it is gone (admin *PUJ Commuters* never lists it, *Activity Log* says `outcome: deleted`).
-- [x] **Admin removes a commuter.** *PUJ Commuters* → delete a commuter with a payment and zero balance → toast "Commuter removed. Their payments and top-ups were kept for the records." and an *Anonymised* entry in the Activity Log naming you. A commuter with a balance is still refused ("Cannot delete commuter with a balance of PHP…").
-- [x] **Staff.** Add then delete a staff account: still *Deleted* (no payments), unchanged.
+- [ ] **Balance blocks it.** Register a commuter, top up ₱50, then Settings → *Delete account* → refused with "Your wallet still holds PHP 50.00…", still signed in, nothing changed.
+- [ ] **History is kept.** Spend the balance on a fare (wallet payment of ₱50 or more, so it reaches ₱0), delete the account → signed out. Logging in with the old email and password fails. As admin: *Fare Transactions* still lists that payment, now under `deleted-<id>@deleted.invalid`; *Top Ups* still lists the top-up; *PUJ Commuters* no longer lists the account.
+- [ ] **Audit.** *Activity Log* shows *Deleted own account* with `outcome: anonymised` and the original email in its details, and nothing else for that deletion.
+- [ ] **The email is free again.** Register a new account with the same email address: it works and starts with an empty history.
+- [ ] **No history → really deleted.** Register a commuter that never paid or topped up, delete it: it is gone (admin *PUJ Commuters* never lists it, *Activity Log* says `outcome: deleted`).
+- [ ] **Admin removes a commuter.** *PUJ Commuters* → delete a commuter with a payment and zero balance → toast "Commuter removed. Their payments and top-ups were kept for the records." and an *Anonymised* entry in the Activity Log naming you. A commuter with a balance is still refused ("Cannot delete commuter with a balance of PHP…").
+- [ ] **Staff.** Add then delete a staff account: still *Deleted* (no payments), unchanged.
 
 ## 12. Pay on board (QR codes)
 
-- [x] Admin → **QR Codes**: press **Generate QR Code** (no form: a new *Code #n* appears), see its QR, **Print** opens a printable sheet, **Switch off** / **Switch on**, **Delete**. Other roles get 403.
-- [x] Commuter: map → **Buy a Ride** with no valid scan lands on **Scan the QR code**; after scanning (camera, typed token, or opening the link with the phone camera) the checkout opens for the same trip and shows *Verified on board*.
-- [x] A random QR code, a switched-off code and a deleted code are all refused.
-- [x] After paying, the next fare needs a new scan; a scan older than 15 minutes is refused. A replayed payment still shows its receipt.
-- [x] **On board check.** With a driver broadcasting (a second browser signed in as a driver, or a Dev marker's position) and the commuter within ~150 m, the checkout shows *"Checking that you are on a PUJ…"* and then *"On board ABC-1234."*. The Admin's **Fleet Analytics** later counts that fare under that driver and vehicle.
-- [x] With nobody near (default settings) the checkout stays quiet and the fare still pays, unattributed. With `QR_REQUIRE_NEARBY_VEHICLE=true` the same checkout warns *"We couldn't find a SmartCommute PUJ near you…"* and **Confirm Payment** is refused with nothing charged and the scan kept. Refusing the browser's location prompt gives the *"Allow location access…"* message.
+- [ ] Admin → **QR Codes**: press **Generate QR Code** (no form: a new *Code #n* appears), see its QR, **Print** opens a printable sheet, **Switch off** / **Switch on**, **Delete**. Other roles get 403.
+- [ ] Commuter: map → **Buy a Ride** with no valid scan lands on **Scan the QR code**; after scanning (camera, typed token, or opening the link with the phone camera) the checkout opens for the same trip and shows *Verified on board*.
+- [ ] A random QR code, a switched-off code and a deleted code are all refused.
+- [ ] After paying, the next fare needs a new scan; a scan older than 15 minutes is refused. A replayed payment still shows its receipt.
+- [ ] **On board check.** With a driver broadcasting (a second browser signed in as a driver, or a Dev marker's position) and the commuter within ~150 m, the checkout shows *"Checking that you are on a PUJ…"* and then *"On board ABC-1234."*. The Admin's **Fleet Analytics** later counts that fare under that driver and vehicle.
+- [ ] With nobody near (default settings) the checkout stays quiet and the fare still pays, unattributed. With `QR_REQUIRE_NEARBY_VEHICLE=true` the same checkout warns *"We couldn't find a SmartCommute PUJ near you…"* and **Confirm Payment** is refused with nothing charged and the scan kept. Refusing the browser's location prompt gives the *"Allow location access…"* message.
 
 ## 13. Automatic jobs (run by hand; no scheduler needed)
 
 `php artisan schedule:list` shows every job and when it next runs. Most commands below have `--dry-run` (not `shifts:auto-close` or `vehicle-scans:purge`); the *scheduler* itself (`php artisan schedule:run` from cron) is a deployment check (NFR-OPS-01).
 
-- [x] **Forgotten clock-out.** Make Ramon's open shift old (set its `time_keepings.date` to yesterday), then `php artisan shifts:auto-close`. The shift gets 8 hours and no overtime; **Time Keeping** (Driver Manager) shows an amber *Auto-closed* badge and a *Needs review* count; **Mark reviewed** clears it. Ramon is inactive, his vehicle leaves the map, and his phone's broadcast is refused (*"Your shift was closed automatically…"*). His own **Timekeeping** page tags the day *auto*. Clocking in again the same day is refused.
-- [x] **Missed webhook** (gateway on): leave a GCash payment pending for 6+ minutes, then `php artisan payments:reconcile --dry-run` names it and what it would do; without `--dry-run` it settles or fails it, and the commuter is emailed the receipt (or the *did not go through* notice) once.
-- [x] **Maintenance alerts.** `php artisan maintenance:due-alerts --dry-run` lists vehicles with overdue and due-soon services; without it every Maintenance Manager is emailed. The same vehicles carry a badge on **Vehicles** and a *Maintenance needs attention* panel on the dashboard. With `MAINTENANCE_BLOCK_ACTIVE_WHEN_OVERDUE=true`, setting an overdue maintenance vehicle back to *Active* is refused.
-- [x] **Inactive driver.** `php artisan drivers:inactivity-check --dry-run`: a driver who has not clocked in for 3 days is listed for a warning (and is emailed without `--dry-run`, once); after 7 days **and** a day after the warning they are suspended automatically and replaced (§15). A driver is never suspended without the warning first.
-- [x] **Flags.** `t` lists drivers with 3+ violations in 30 days (log three for `driver@gmail.com` to see it); `php artisan fares:flag-evasion --dry-run` lists commuters with 3+ unpaid scans in 7 days. A real run emails once and writes an Activity Log entry; a second run does not repeat it.
-- [x] **Clean-up.** `54` deletes expired scan photos and old session rows.
+- [ ] **Forgotten clock-out.** Make Ramon's open shift old (set its `time_keepings.date` to yesterday), then `php artisan shifts:auto-close`. The shift gets 8 hours and no overtime; **Time Keeping** (Driver Manager) shows an amber *Auto-closed* badge and a *Needs review* count; **Mark reviewed** clears it. Ramon is inactive, his vehicle leaves the map, and his phone's broadcast is refused (*"Your shift was closed automatically…"*). His own **Timekeeping** page tags the day *auto*. Clocking in again the same day is refused.
+- [ ] **Missed webhook** (gateway on): leave a GCash payment pending for 6+ minutes, then `php artisan payments:reconcile --dry-run` names it and what it would do; without `--dry-run` it settles or fails it, and the commuter is emailed the receipt (or the *did not go through* notice) once.
+- [ ] **Maintenance alerts.** `php artisan maintenance:due-alerts --dry-run` lists vehicles with overdue and due-soon services; without it every Maintenance Manager is emailed. The same vehicles carry a badge on **Vehicles** and a *Maintenance needs attention* panel on the dashboard. With `MAINTENANCE_BLOCK_ACTIVE_WHEN_OVERDUE=true`, setting an overdue maintenance vehicle back to *Active* is refused.
+- [ ] **Inactive driver.** `php artisan drivers:inactivity-check --dry-run`: a driver who has not clocked in for 3 days is listed for a warning (and is emailed without `--dry-run`, once); after 7 days **and** a day after the warning they are suspended automatically and replaced (§15). A driver is never suspended without the warning first.
+- [ ] **Flags.** `t` lists drivers with 3+ violations in 30 days (log three for `driver@gmail.com` to see it); `php artisan fares:flag-evasion --dry-run` lists commuters with 3+ unpaid scans in 7 days. A real run emails once and writes an Activity Log entry; a second run does not repeat it.
+- [ ] **Clean-up.** `54` deletes expired scan photos and old session rows.
 
 ## 14. Scan a vehicle's papers with a phone
 
 Needs the `tesseract-ocr` package (`tesseract --version`). Specimen papers with invented data: `python3 tests/Fixtures/ocr/generate_samples.py`, then use `tests/Fixtures/ocr/samples/*.jpg` (for example `cr_01_photo.jpg` and `or_01_scan.jpg`). Without Tesseract the button is simply not shown.
 
-- [x] **Vehicles → Add Vehicle** shows *"Have the registration papers?"* with a **Scan with phone** button. *(Checked in the browser, 2026-10-25.)*
-- [x] Pressing it shows a QR code, three short steps and a 15:00 countdown. *(Checked.)*
-- [x] The QR link opens a phone-sized page (*Photograph the papers*) with a CR slot and an optional OR slot. Sending a photo makes the desktop form fill itself with plate, VIN, brand, model, year and fuel, show thumbnails and the *Check these against the papers* panel, and the **Add Vehicle** button stays **disabled** until *"I have checked these details against the document"* is ticked. *(Checked by sending specimen photos to the link; not yet done with a real phone camera.)*
-- [x] A CR and an OR of two different vehicles produce *"…differs between the papers"* warnings and *"or …"* alternatives. *(Checked.)*
-- [x] Closing the form, or **Cancel scan**, ends the session and deletes the photos (`storage/app/vehicle-scans/` is empty). *(Checked.)*
-- [x] A photo of something else (a shopping list) is refused on the phone with *"…does not look like an LTO Official Receipt or Certificate of Registration"*, and the page offers the form again. *(Checked.)*
-- [x] **On a real phone** (iOS and Android): the camera and the photo library both work; a portrait and a landscape photo both read; the page is readable at 375 px (NFR-USE-08).
-- [x] Waiting 15 minutes with no photo: the desktop says *"The scan code expired"* and **Try again** starts a fresh one; the old link answers *expired*.
-- [x] Tick the box and save: the vehicle appears in the list, and the Activity Log shows *Vehicle added from scanned papers* listing the fields read, the fields you corrected and those that needed a second look, with **no values**. A value you changed before saving appears under *corrected*.
-- [x] Add a vehicle by hand with no scan: unchanged, no scan entry in the log.
-- [x] Try the same phone link after saving: it answers *expired*.
+- [ ] **Vehicles → Add Vehicle** shows *"Have the registration papers?"* with a **Scan with phone** button. *(Checked in the browser, 2026-10-25.)*
+- [ ] Pressing it shows a QR code, three short steps and a 15:00 countdown. *(Checked.)*
+- [ ] The QR link opens a phone-sized page (*Photograph the papers*) with a CR slot and an optional OR slot. Sending a photo makes the desktop form fill itself with plate, VIN, brand, model, year and fuel, show thumbnails and the *Check these against the papers* panel, and the **Add Vehicle** button stays **disabled** until *"I have checked these details against the document"* is ticked. *(Checked by sending specimen photos to the link; not yet done with a real phone camera.)*
+- [ ] A CR and an OR of two different vehicles produce *"…differs between the papers"* warnings and *"or …"* alternatives. *(Checked.)*
+- [ ] Closing the form, or **Cancel scan**, ends the session and deletes the photos (`storage/app/vehicle-scans/` is empty). *(Checked.)*
+- [ ] A photo of something else (a shopping list) is refused on the phone with *"…does not look like an LTO Official Receipt or Certificate of Registration"*, and the page offers the form again. *(Checked.)*
+- [ ] **On a real phone** (iOS and Android): the camera and the photo library both work; a portrait and a landscape photo both read; the page is readable at 375 px (NFR-USE-08).
+- [ ] Waiting 15 minutes with no photo: the desktop says *"The scan code expired"* and **Try again** starts a fresh one; the old link answers *expired*.
+- [ ] Tick the box and save: the vehicle appears in the list, and the Activity Log shows *Vehicle added from scanned papers* listing the fields read, the fields you corrected and those that needed a second look, with **no values**. A value you changed before saving appears under *corrected*.
+- [ ] Add a vehicle by hand with no scan: unchanged, no scan entry in the log.
+- [ ] Try the same phone link after saving: it answers *expired*.
 
 ## 15. Replacement drivers
 
 Use throwaway data: suspending a seeded driver takes them off their vehicle (re-assign afterwards on **Vehicles**). `php artisan vehicles:cover-vacancies --dry-run` shows what is open and who is free.
 
-- [x] Approve a spare driver (for example `elena.torres@` with a future licence expiry). **Suspend `liza.mercado@`** (DEF-5678): the vehicle gets Elena automatically; Elena and the Maintenance Manager are emailed; the Activity Log shows *Vehicle lost a driver* and *Replacement driver assigned*.
-- [x] **Shared vehicle:** put two drivers on a vehicle, suspend one: the replacement joins, and **Duty Roster** shows a fresh alternating roster from today with the remaining driver first.
-- [x] **Nobody free:** suspend a driver while no spare exists. The Maintenance Manager's dashboard shows *Vehicles waiting for a driver*; approve a spare, run `php artisan vehicles:cover-vacancies`, and the panel empties.
-- [x] **Expired licence:** give a driver with a vehicle a past licence expiry date and run `php artisan vehicles:cover-vacancies`: they are taken off the vehicle (not suspended), emailed, and replaced.
+- [ ] Approve a spare driver (for example `elena.torres@` with a future licence expiry). **Suspend `liza.mercado@`** (DEF-5678): the vehicle gets Elena automatically; Elena and the Maintenance Manager are emailed; the Activity Log shows *Vehicle lost a driver* and *Replacement driver assigned*.
+- [ ] **Shared vehicle:** put two drivers on a vehicle, suspend one: the replacement joins, and **Duty Roster** shows a fresh alternating roster from today with the remaining driver first.
+- [ ] **Nobody free:** suspend a driver while no spare exists. The Maintenance Manager's dashboard shows *Vehicles waiting for a driver*; approve a spare, run `php artisan vehicles:cover-vacancies`, and the panel empties.
+- [ ] **Expired licence:** give a driver with a vehicle a past licence expiry date and run `php artisan vehicles:cover-vacancies`: they are taken off the vehicle (not suspended), emailed, and replaced.
 - [ ] With `AUTO_REPLACE_DRIVERS=false` nothing is assigned; the managers' email names the best free drivers instead.
-- [x] Manually removing a driver on the **Vehicles** page opens no vacancy.
+- [ ] Manually removing a driver on the **Vehicles** page opens no vacancy.
 - [ ] **Quick driver dialog:** on **Vehicles**, click the driver name (or *Unassigned*) in a row. The dialog replaces, adds (Driver 2) and removes drivers without opening Edit; it lists only approved, unsuspended drivers who have no other vehicle; a non-active vehicle can only lose drivers. The row updates without a reload, and the Activity Log shows the assignment.
 
 ## 16. Emails
 
 Set `MAIL_MAILER=log` and read `storage/logs/laravel.log`, or use a real mailbox. A failing mail server must never break the action.
 
-- [x] Register a driver: every Admin and Driver Manager gets *New driver application*. Approve or reject: the driver gets the decision.
-- [x] Log a violation (and a bulk of two): the driver gets one email per entry; **Mark Paid** gives *Your fine was marked as paid*; **Mark Unpaid** sends nothing.
-- [x] Top up (paid at the checkout): *Your wallet was topped up*; a failed top-up: *Your top-up did not go through*. Pay a fare by wallet: *Receipt for your fare #SC-…*. A GCash payment that fails: *did not go through*. A payment cancelled at checkout sends nothing.
-- [x] Stop the mail server (or give a wrong `MAIL_HOST`): the actions above still complete, and the failure is in `storage/logs/laravel.log`.
+- [ ] Register a driver: every Admin and Driver Manager gets *New driver application*. Approve or reject: the driver gets the decision.
+- [ ] Log a violation (and a bulk of two): the driver gets one email per entry; **Mark Paid** gives *Your fine was marked as paid*; **Mark Unpaid** sends nothing.
+- [ ] Top up (paid at the checkout): *Your wallet was topped up*; a failed top-up: *Your top-up did not go through*. Pay a fare by wallet: *Receipt for your fare #SC-…*. A GCash payment that fails: *did not go through*. A payment cancelled at checkout sends nothing.
+- [ ] Stop the mail server (or give a wrong `MAIL_HOST`): the actions above still complete, and the failure is in `storage/logs/laravel.log`.
 
 ## 17. Reports and analytics
 
-- [x] **Fleet Analytics** (Admin sidebar) loads with the 7 / 30 / 90-day buttons, six totals, the 8-week chart, the repeat-violator and unpaid-scan lists and the driver and vehicle tables. *(Checked in the browser.)*
-- [x] Other roles get 403 on `/analytics`. Kilometres read 0 for dates before the distance was recorded.
+- [ ] **Fleet Analytics** (Admin sidebar) loads with the 7 / 30 / 90-day buttons, six totals, the 8-week chart, the repeat-violator and unpaid-scan lists and the driver and vehicle tables. *(Checked in the browser.)*
+- [ ] Other roles get 403 on `/analytics`. Kilometres read 0 for dates before the distance was recorded.
 - [ ] `php artisan reports:send weekly --dry-run` prints last week's figures; `php artisan reports:send weekly --to=you@example.com` emails them with a CSV (and the activity log) attached. The revenue and top-up totals equal the **Reports** page for the same dates.
