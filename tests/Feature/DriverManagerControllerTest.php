@@ -147,6 +147,24 @@ class DriverManagerControllerTest extends TestCase
         $response->assertRedirect();
     }
 
+    public function test_violation_code_is_stored_capitalised_and_trimmed()
+    {
+        $manager = User::factory()->create()->assignRole('driver_manager');
+
+        $this->actingAs($manager)
+            ->withoutMiddleware(VerifyCsrfToken::class)
+            ->post(route('violation-codes.store'), $this->violationCodeInput(['code' => ' uv06 ']));
+
+        $this->assertDatabaseHas('violation_codes', ['code' => 'UV06']);
+        $this->assertDatabaseMissing('violation_codes', ['code' => ' uv06 ']);
+
+        // The duplicate check sees the capitalised form, so "uv06" cannot sneak in beside "UV06".
+        $this->actingAs($manager)
+            ->withoutMiddleware(VerifyCsrfToken::class)
+            ->post(route('violation-codes.store'), $this->violationCodeInput(['code' => 'uv06', 'name' => 'Again']))
+            ->assertSessionHasErrors('code');
+    }
+
     public function test_driver_manager_cannot_store_duplicate_violation_code()
     {
         ViolationCode::factory()->create(['code' => 'DUP-01']);

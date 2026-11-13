@@ -87,9 +87,11 @@
                 const matchSearch = c.email.toLowerCase().includes(this.search.toLowerCase());
                 if (this.filter === 'all') return matchSearch;
                 if (this.filter === 'verified') return matchSearch && c.email_verified_at;
-                if (this.filter === 'pending') return matchSearch && !c.email_verified_at;
+                // Same precedence as the row badge: Suspended > Verified > Pending, so every
+                // commuter falls in exactly one of Active / Pending / Suspended.
+                if (this.filter === 'pending') return matchSearch && !c.is_suspended && !c.email_verified_at;
                 if (this.filter === 'suspended') return matchSearch && c.is_suspended;
-                if (this.filter === 'active') return matchSearch && !c.is_suspended;
+                if (this.filter === 'active') return matchSearch && !c.is_suspended && !!c.email_verified_at;
                 return matchSearch;
             });
         },

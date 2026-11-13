@@ -637,7 +637,7 @@
            The same checks the registration screens make, applied to the admin
            modals: <input data-rules="required|email|min:8|same:password|phone|image:2048">
            Each rule except `required` is skipped while the field is empty, so an
-           optional field only fails when something invalid was typed. The server
+           optional field only fails when something invalid was typed (also `intrange:MIN:MAX` for whole numbers). The server
            still validates everything; this just answers sooner.
         */
         var PH_MOBILE = /^(?:\+?63|0)?\s?9\d{2}\s?\d{3}\s?\d{4}$/;
@@ -681,6 +681,16 @@
                 }
                 if (rule === 'max' && value.length > parseInt(arg, 10)) {
                     return 'The ' + label + ' may not be greater than ' + arg + ' characters.';
+                }
+                if (rule === 'intrange') {
+                    // intrange:MIN:MAX - a whole number within the range (an optional field is skipped while empty).
+                    var lim = arg.split(':');
+                    var num = Number(String(value).trim());
+                    if (!/^-?\d+$/.test(String(value).trim()) || !Number.isInteger(num)) return 'The ' + label + ' must be a whole number (no decimals).';
+                    if (num < parseInt(lim[0], 10)) return 'The ' + label + ' must be at least ' + lim[0] + '.';
+                    if (lim[1] && num > parseInt(lim[1], 10)) {
+                        return 'The ' + label + ' may not be more than ' + Number(lim[1]).toLocaleString('en-US') + '.';
+                    }
                 }
                 if (rule === 'same') {
                     var other = field.form && field.form.querySelector('[name="' + cssEscape(arg) + '"]');

@@ -56,4 +56,25 @@ class ServiceCorridorTest extends TestCase
             $this->assertLessThan(1, ServiceCorridor::nearest($stop['lat'], $stop['lng'])['distance'], $stop['name']);
         }
     }
+
+    public function test_every_landmark_is_near_the_road_and_snapped_onto_it()
+    {
+        $landmarks = ServiceCorridor::landmarks();
+        $this->assertNotEmpty($landmarks);
+
+        foreach ($landmarks as $place) {
+            $this->assertLessThanOrEqual(
+                ServiceCorridor::USER_TOLERANCE_METERS * 1.5,
+                ServiceCorridor::nearest($place['place_lat'], $place['place_lng'])['distance'],
+                $place['name'] . ' is too far from the route to be a "near the route" landmark'
+            );
+            $this->assertLessThan(1, ServiceCorridor::nearest($place['lat'], $place['lng'])['distance'], $place['name']);
+        }
+    }
+
+    public function test_landmark_names_are_unique()
+    {
+        $names = array_map('strtolower', array_column(ServiceCorridor::landmarks(), 'name'));
+        $this->assertSame($names, array_values(array_unique($names)));
+    }
 }

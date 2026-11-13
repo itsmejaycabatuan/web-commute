@@ -958,6 +958,15 @@
             color: #555;
         }
 
+        /* "My location" accuracy circle (MapLibre GeolocateControl). It is a DOM marker sized to the
+           reported GPS accuracy, which on a desktop (Wi-Fi/IP positioning) can be kilometres wide.
+           Left interactive it sits over the vehicle markers and swallows their clicks (and map drags),
+           so it must be purely visual. The dot itself needs no pointer events either. */
+        .maplibregl-user-location-accuracy-circle,
+        .maplibregl-user-location-dot {
+            pointer-events: none;
+        }
+
         /* ═══ VEHICLE MARKER ═══ */
         .custom-vehicle-marker {
             width: 34px;
@@ -1592,6 +1601,73 @@
                 display: inline-flex;
             }
         }
+
+        /* Geofence accuracy disclaimer, bottom centre. Informational only, so it never
+           intercepts map gestures. Sits below the mobile FABs (bottom-left, >= 4.5rem up)
+           and is width-capped so it stays clear of the MapLibre attribution on the right. */
+        #geofence-disclaimer {
+            position: fixed;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 18;
+            display: flex;
+            align-items: flex-start;
+            gap: 7px;
+            width: max-content;
+            max-width: min(520px, calc(100vw - 150px));
+            padding: 7px 12px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 500;
+            line-height: 1.4;
+            color: #475569;
+            pointer-events: none;
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.16);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+        }
+
+        #geofence-disclaimer i { color: #d97706; margin-top: 2px; }
+
+        /* On phones the MapLibre attribution expands to two lines along the whole bottom edge
+           (~44px), so the default position has to clear it. The rules below still lift the
+           disclaimer higher when the recenter pill / Nearest PUJ chip are showing. */
+        @media (max-width: 767px) {
+            #geofence-disclaimer {
+                bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+                /* Centred, so this leaves ~12px clear of the FABs (left) and zoom buttons (right). */
+                max-width: calc(100vw - 176px);
+            }
+        }
+
+        /* The "Back to my location" pill (#recenter-btn) is centred on the same bottom edge
+           (16px up, 52px tall). While it is showing, lift the disclaimer clear of it. */
+        #geofence-disclaimer {
+            transition: bottom 0.2s ease;
+        }
+
+        body:has(#recenter-btn.visible) #geofence-disclaimer {
+            bottom: calc(16px + 52px + 10px + env(safe-area-inset-bottom, 0px));
+        }
+
+        /* The floating "Nearest PUJ" chip (#nearest-vehicle-indicator) is centred too, at
+           bottom: 80px and ~58px tall. Whenever it is showing, stack the disclaimer above it
+           (this also clears the recenter pill, which sits below the chip). */
+        body:has(#nearest-vehicle-indicator:not(.hidden)) #geofence-disclaimer {
+            bottom: calc(80px + 60px + 8px + env(safe-area-inset-bottom, 0px));
+        }
+
+        .dark #geofence-disclaimer {
+            color: #a1a1aa;
+            background: rgba(17, 17, 17, 0.92);
+            border-color: #222222;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        }
+
+        .dark #geofence-disclaimer i { color: #fbbf24; }
 
         .mobile-fab-left {
             background: #4f46e5;
@@ -2618,6 +2694,11 @@
         <div id="mobile-right-body" class="mobile-sheet-body custom-scroll"></div>
     </div>
 
+    <div id="geofence-disclaimer" role="note">
+        <i class="fa-solid fa-circle-info text-[10px]"></i>
+        <span>Vehicle markers may not be accurate because tracking is geofenced.</span>
+    </div>
+
     <div id="map">
 
         <!-- LEFT SIDEBAR -->
@@ -2678,10 +2759,12 @@
                                                     class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
                                                     <i class="fa-solid fa-chevron-down text-[9px] text-[#444]"></i>
                                                 </div>
-                                                <input type="text" placeholder="Set destination" readonly
+                                                <input type="text" placeholder="Type or pick a destination"
                                                     name="destination" id="destination" autocomplete="off"
-                                                    aria-haspopup="listbox"
-                                                    class="map-input w-full rounded-xl pl-9 pr-8 py-2.5 text-xs text-white cursor-pointer">
+                                                    role="combobox" aria-autocomplete="list"
+                                                    aria-haspopup="listbox" aria-expanded="false"
+                                                    aria-controls="destination-dropdown"
+                                                    class="map-input w-full rounded-xl pl-9 pr-8 py-2.5 text-xs text-white">
                                                 <div id="destination-dropdown" class="search-dropdown"></div>
                                             </div>
                                         </div>
@@ -3525,16 +3608,26 @@ $('dev-skip-qr').addEventListener('change', function() {
                                     document.addEventListener('keydown', function(e) { if (e.key === 'Escape') setOpen(false); });
                                     $('dev-map-checks-head').addEventListener('click', function() { st.collapsed = !st.collapsed; save(); paint(); });
 
-                                    // An admin has no sidebar button on a phone, and the collapsed sidebar fades
-                                    // its children out, so on narrow screens the panel is lifted out to the page.
-                                    if (window.userRole === 'admin' && window.matchMedia) {
+                                    // The collapsed sidebar fades its children out, and on a phone it is only reachable
+                                    // through the FAB sheet (which holds the fare form, not this panel; an admin has no
+                                    // sheet at all), so on narrow screens the panel is lifted out to the page for every role.
+                                    if (window.matchMedia) {
                                         var panel = $('dev-map-checks'), home = panel.parentNode;
                                         var slot = document.createComment('dev-map-checks');
                                         home.insertBefore(slot, panel);
                                         var mq = window.matchMedia('(max-width: 767px)');
                                         var place = function() {
-                                            if (mq.matches) document.body.appendChild(panel);
-                                            else home.insertBefore(panel, slot);
+                                            if (mq.matches) {
+                                                document.body.appendChild(panel);
+                                                // Commuters/drivers have two FABs bottom-left (8.5rem is the higher one's
+                                                // offset, ~56px tall); sit above them. Admins have none, so keep the default.
+                                                var fab = document.querySelector('.mobile-fab-wrap-left');
+                                                var hasFab = fab && fab.getBoundingClientRect().height > 0;
+                                                panel.style.bottom = hasFab ? 'calc(8.5rem + 56px + 12px + env(safe-area-inset-bottom, 0px))' : '';
+                                            } else {
+                                                home.insertBefore(panel, slot);
+                                                panel.style.bottom = '';
+                                            }
                                         };
                                         place();
                                         if (mq.addEventListener) mq.addEventListener('change', place);
@@ -5869,6 +5962,14 @@ sim._lastEtaUpdate = null;
             // when they are on or near the Minglanilla -> IT Park road. The
             // destination is then picked from the fixed stops (or by tapping the road).
             window.CORRIDOR_STOPS = @json(\App\Support\ServiceCorridor::stops());
+            // Everything the destination box can search: the general stops first, then the
+            // specific places near the route (already snapped onto the road). CORRIDOR_STOPS
+            // stays stops-only because the "Near <stop>" label for road taps relies on it.
+            window.CORRIDOR_PLACES = window.CORRIDOR_STOPS.map(function(s) {
+                return Object.assign({kind: 'stop'}, s);
+            }).concat(@json(\App\Support\ServiceCorridor::landmarks()).map(function(l) {
+                return Object.assign({kind: 'landmark'}, l);
+            }));
             let selectedStopIdx = null;
             let userGps = null;          // last raw GPS fix {lat, lng}
             let userNearRoute = false;   // fix is within CORRIDOR_USER_TOLERANCE_M of the road
@@ -6004,30 +6105,40 @@ sim._lastEtaUpdate = null;
                 applyPickupFromGps(vehicleLat !== null);
             };
 
-            function renderStops() {
+            function renderStops(filter) {
                 const dropdown = document.getElementById('destination-dropdown');
                 if (!dropdown) return;
 
-                dropdown.innerHTML = window.CORRIDOR_STOPS.map((s, i) => {
+                // The destination box is typeable: narrow the stop list to what was typed
+                // (matches the stop name or its area, any order of words).
+                const words = (filter || '').toLowerCase().split(/\s+/).filter(Boolean);
+                const rows = [];
+                window.CORRIDOR_PLACES.forEach((s, i) => {
+                    const hay = (s.name + ' ' + s.area).toLowerCase();
+                    if (!words.every(w => hay.indexOf(w) !== -1)) return;
                     // The stop you're standing at can't also be where you're going.
                     const here = userLat !== null && metersBetween(userLat, userLng, s.lat, s.lng) < 150;
-                    return '<button type="button" class="search-item" role="option" data-index="' + i + '"' +
+                    rows.push('<button type="button" class="search-item" role="option" data-index="' + i + '"' +
                         (here ? ' disabled title="This is where you are"' : '') + '>' +
                         '<div class="result-name">' + s.name + '</div>' +
-                        '<div class="result-detail">' + s.area + '</div></button>';
-                }).join('');
+                        '<div class="result-detail">' + (s.kind === 'landmark' ? 'Landmark · ' : '') + s.area + '</div></button>');
+                });
+                dropdown.innerHTML = rows.length
+                    ? rows.join('')
+                    : '<div class="result-detail" style="padding:10px 14px">No matching stops or places</div>';
 
                 dropdown.querySelectorAll('.search-item:not(:disabled)').forEach(item => {
                     item.addEventListener('click', function() {
                         chooseDestination(parseInt(this.dataset.index));
-                        dropdown.classList.remove('active');
+                        closeStopList(false);
                     });
                 });
             }
 
             function chooseDestination(idx) {
-                const stop = window.CORRIDOR_STOPS[idx];
+                const stop = window.CORRIDOR_PLACES[idx];
                 selectedStopIdx = idx;
+                destinationDirty = false;
                 vehicleLat = stop.lat;
                 vehicleLng = stop.lng;
                 document.getElementById('destination').value = stop.name + ', ' + stop.area;
@@ -6035,30 +6146,73 @@ sim._lastEtaUpdate = null;
                 calculateRoute();
             }
 
-            function toggleStopList() {
-                const dropdown = document.getElementById('destination-dropdown');
-                if (!dropdown) return;
-                if (dropdown.classList.contains('active')) {
-                    dropdown.classList.remove('active');
-                    return;
+            // Typing support. `destinationDirty` = the text was edited but no stop was chosen
+            // yet; in that case closing the list puts the previous value back, so the box can
+            // never show a destination that the fare/route doesn't actually use.
+            let destinationDirty = false;
+            let destinationBeforeEdit = '';
+
+            function closeStopList(revert) {
+                const dd = document.getElementById('destination-dropdown');
+                const input = document.getElementById('destination');
+                if (dd) dd.classList.remove('active');
+                if (input) input.setAttribute('aria-expanded', 'false');
+                if (revert && destinationDirty && input) {
+                    input.value = destinationBeforeEdit;
                 }
-                if (!window.canSetDestination()) return;
-                renderStops();
+                destinationDirty = false;
+            }
+
+            function openStopList(filter) {
+                const dropdown = document.getElementById('destination-dropdown');
+                const input = document.getElementById('destination');
+                if (!dropdown || !input) return;
+                if (!dropdown.classList.contains('active')) {
+                    if (!window.canSetDestination()) return;
+                    destinationBeforeEdit = input.value;
+                }
+                renderStops(filter);
                 dropdown.classList.add('active');
+                input.setAttribute('aria-expanded', 'true');
+            }
+
+            function firstEnabledStop() {
+                const first = document.querySelector('#destination-dropdown .search-item:not(:disabled)');
+                return first ? parseInt(first.dataset.index) : null;
             }
 
             // The fare-calculator inputs only exist for guests/commuters. Never let a
             // missing element throw here — that would abort the whole module (Echo
             // subscriptions, GPS broadcasting, live vehicle markers) for other roles.
             const destinationInput = document.getElementById('destination');
-            destinationInput?.addEventListener('click', toggleStopList);
+            destinationInput?.addEventListener('click', function() {
+                const dd = document.getElementById('destination-dropdown');
+                if (dd && dd.classList.contains('active')) return; // keep it open while typing
+                openStopList('');
+                // Select the old text so the first keystroke replaces it.
+                if (dd && dd.classList.contains('active')) this.select();
+            });
+            destinationInput?.addEventListener('input', function() {
+                destinationDirty = true;
+                openStopList(this.value);
+            });
             destinationInput?.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+                const dd = document.getElementById('destination-dropdown');
+                const open = dd && dd.classList.contains('active');
+                if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    const dd = document.getElementById('destination-dropdown');
-                    if (!dd.classList.contains('active')) toggleStopList();
+                    if (!open) openStopList('');
+                    document.querySelector('#destination-dropdown .search-item:not(:disabled)')?.focus();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!open) { openStopList(''); return; }
+                    const idx = firstEnabledStop();
+                    if (idx !== null) {
+                        chooseDestination(idx);
+                        closeStopList(false);
+                    }
                 } else if (e.key === 'Escape') {
-                    document.getElementById('destination-dropdown')?.classList.remove('active');
+                    closeStopList(true);
                 }
             });
 
@@ -6071,8 +6225,7 @@ sim._lastEtaUpdate = null;
 
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('#destination') && !e.target.closest('#destination-dropdown')) {
-                    const dd = document.getElementById('destination-dropdown');
-                    if (dd) dd.classList.remove('active');
+                    closeStopList(true);
                 }
             });
 
@@ -6808,6 +6961,69 @@ window.dummyMapPopups[d.id] = { popup: popup, data: d };
     </div>
 
     <script>
+        /* Keep the geofence disclaimer clear of the floating bottom chips. The CSS already
+           lifts it by fixed offsets, but those can be wrong (enlarged text, wrapped lines,
+           browsers without :has()), so this measures the real boxes and raises the
+           disclaimer until it no longer touches the Nearest-PUJ chip or the recenter pill. */
+        (function() {
+            var note = document.getElementById('geofence-disclaimer');
+            if (!note) return;
+            var queued = false;
+
+            function visible(el) {
+                if (!el || el.classList.contains('hidden')) return false;
+                if (el.id === 'recenter-btn' && !el.classList.contains('visible')) return false;
+                var r = el.getBoundingClientRect();
+                return r.width > 0 && r.height > 0;
+            }
+
+            function place() {
+                queued = false;
+                // Measure from the stylesheet position, with no transition in the way.
+                note.style.transition = 'none';
+                note.style.bottom = '';
+                var blockers = [document.getElementById('nearest-vehicle-indicator'),
+                                document.getElementById('recenter-btn')].filter(visible);
+                // Screen px per CSS px (differs from 1 when the large-text zoom is applied).
+                var scale = note.offsetHeight ? note.getBoundingClientRect().height / note.offsetHeight : 1;
+                for (var pass = 0; pass < 3; pass++) {
+                    var n = note.getBoundingClientRect();
+                    var shift = 0;
+                    blockers.forEach(function(b) {
+                        var r = b.getBoundingClientRect();
+                        var overlapsX = n.left < r.right && n.right > r.left;
+                        var overlapsY = n.top < r.bottom && n.bottom > r.top;
+                        if (overlapsX && overlapsY) shift = Math.max(shift, n.bottom - r.top + 8);
+                    });
+                    if (!shift) break;
+                    note.style.bottom = (parseFloat(getComputedStyle(note).bottom) + shift / scale) + 'px';
+                }
+                void note.offsetHeight;
+                note.style.transition = '';
+            }
+
+            function queue() {
+                if (queued) return;
+                queued = true;
+                requestAnimationFrame(place);
+            }
+
+            window.addEventListener('resize', queue);
+            window.addEventListener('load', queue);
+            if (window.ResizeObserver) {
+                var ro = new ResizeObserver(queue);
+                ro.observe(note);
+                ro.observe(document.getElementById('nearest-vehicle-indicator'));
+            }
+            // The chip and the pill show/hide by toggling a class (the pill is created later).
+            new MutationObserver(queue).observe(document.getElementById('map'), {
+                subtree: true, childList: true, attributes: true, attributeFilter: ['class']
+            });
+            queue();
+        })();
+    </script>
+
+    <script>
         /* ══════════════════════════════════════════════════════════
          * THEME
          * - `dark` class on <html> drives every CSS token (including the
@@ -6846,7 +7062,8 @@ window.dummyMapPopups[d.id] = { popup: popup, data: d };
         function applyTheme(theme) {
             const isDark = theme === 'dark';
             document.documentElement.classList.toggle('dark', isDark);
-            localStorage.setItem('color-theme', theme);
+            // Guests keep their choice under their own key so a signed-in theme never leaks into guest pages.
+            try { localStorage.setItem(IS_AUTHENTICATED ? 'color-theme' : 'guest-theme', theme); } catch (e) {}
             window.currentMapTheme = theme;
             window.updateMapStyle(isDark);
             // The popup / banner / nearest-indicator colours come from CSS

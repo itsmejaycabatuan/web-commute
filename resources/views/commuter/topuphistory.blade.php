@@ -521,7 +521,7 @@
                                         </td>
                                         <td class="px-4 2xl:px-6 py-3.5 sm:py-4">
                                             <span
-                                                class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg border {{ $statusStyles[$tx->status] ?? $statusStyles['cancelled'] }}">{{ $tx->status }}</span>
+                                                class="text-[10px] font-bold tracking-wide px-2 py-1 rounded-lg border {{ $statusStyles[$tx->status] ?? $statusStyles['cancelled'] }}">{{ ucfirst($tx->status) }}</span>
                                             @if ($tx->status === 'pending' && $tx->transaction_id)
                                                 <a href="{{ route('payment.topup.returned', ['ref' => $tx->transaction_id]) }}"
                                                     class="block text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mt-1 hover:underline">Check status</a>
@@ -608,7 +608,7 @@
                                             ₱{{ number_format($tx->amount_added, 2) }}</p>
                                     @endif
                                     <span
-                                        class="inline-block mt-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border {{ $statusStyles[$tx->status] ?? $statusStyles['cancelled'] }}">{{ $tx->status }}</span>
+                                        class="inline-block mt-1 text-[9px] font-bold tracking-wide px-1.5 py-0.5 rounded border {{ $statusStyles[$tx->status] ?? $statusStyles['cancelled'] }}">{{ ucfirst($tx->status) }}</span>
                                     @if ($tx->status === 'pending' && $tx->transaction_id)
                                         <a href="{{ route('payment.topup.returned', ['ref' => $tx->transaction_id]) }}"
                                             class="block text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 mt-1">Check status</a>

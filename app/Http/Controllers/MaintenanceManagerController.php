@@ -165,13 +165,28 @@ class MaintenanceManagerController extends Controller
         return view('maintenance-manager.maintenance-tasks', compact('tasks', 'stats'));
     }
 
-    public function maintenanceTasksStore(Request $request)
+    /** Service intervals are optional, but when given they must be sensible whole numbers. */
+    private function validateMaintenanceTask(Request $request): void
     {
         $request->validate([
             'tasks_performed' => 'required|string|max:255',
-            'miles_between_service' => 'nullable|integer',
-            'months_between_service' => 'nullable|integer',
+            'miles_between_service' => 'nullable|integer|min:1|max:1000000',
+            'months_between_service' => 'nullable|integer|min:1|max:600',
+        ], [
+            'tasks_performed.required' => 'Enter the task performed.',
+            'tasks_performed.max' => 'The task name may not be longer than 255 characters.',
+            'miles_between_service.integer' => 'The km interval must be a whole number (no decimals).',
+            'miles_between_service.min' => 'The km interval must be at least 1 km.',
+            'miles_between_service.max' => 'The km interval may not be more than 1,000,000 km.',
+            'months_between_service.integer' => 'The month interval must be a whole number (no decimals).',
+            'months_between_service.min' => 'The month interval must be at least 1 month.',
+            'months_between_service.max' => 'The month interval may not be more than 600 months.',
         ]);
+    }
+
+    public function maintenanceTasksStore(Request $request)
+    {
+        $this->validateMaintenanceTask($request);
 
         // E3 — Database error: nothing is stored and the Maintenance Manager is told.
         try {
@@ -193,11 +208,7 @@ class MaintenanceManagerController extends Controller
 
     public function maintenanceTasksUpdate(Request $request, MaintenanceTask $task)
     {
-        $request->validate([
-            'tasks_performed' => 'required|string|max:255',
-            'miles_between_service' => 'nullable|integer',
-            'months_between_service' => 'nullable|integer',
-        ]);
+        $this->validateMaintenanceTask($request);
 
         try {
             $task->update([

@@ -1,4 +1,4 @@
-<x-auth.shell title="Verify Email - SmartCommute" heading="One quick step before you ride."
+<x-auth.shell title="Verify Email - SmartCommute" :show-back="false" heading="One quick step before you ride."
     blurb="Confirming your email keeps your wallet, receipts and ride history safe.">
 
     <div class="au-modal-ico" style="margin: 0 0 20px; background: var(--sc-brand-soft); color: var(--sc-brand-text)"><i

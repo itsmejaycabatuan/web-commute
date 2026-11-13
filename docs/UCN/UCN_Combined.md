@@ -2098,7 +2098,7 @@ The insert or update fails at the database level. System cancels the operation a
 1. In the list, the Maintenance Manager clicks **"Add Task"**.
 2. System displays the task modal: *Task Performed*, *Km Interval*, *Month Interval*.
 3. Maintenance Manager inputs the required fields and clicks **"Create Task"**.
-4. System validates `tasks_performed` **required, string, max 255**; `miles_between_service` and `months_between_service` **nullable, integer**.
+4. System validates `tasks_performed` **required, string, max 255**; `miles_between_service` **nullable, integer, 1–1,000,000** and `months_between_service` **nullable, integer, 1–600**. Each failure is shown under its own field, both in the modal as you type and from the server.
 5. System stores the task and confirms *"Task successfully added!"*
 
 **A2 – Edit a Maintenance Task**

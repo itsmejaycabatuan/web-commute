@@ -650,4 +650,125 @@ class PayMongoPaymentTest extends TestCase
         $this->assertEquals(15.0, $calculator->regularFare(0.4));   // below first tier
         $this->assertEquals(29.0, $calculator->regularFare(99.0));  // above top tier
     }
+
+    /** A pending gateway top-up for the user, as left behind when they are sent to hosted checkout. */
+    protected function pendingTopup(User $user, string $intentId = 'pi_topup_1'): \App\Models\TopupHistory
+    {
+        return \App\Models\TopupHistory::create([
+            'user_id' => $user->id,
+            'wallet_id' => $user->wallet->id,
+            'transaction_id' => 'TOPUP-TEST'.strtoupper(substr($intentId, -4)),
+            'amount_added' => 100,
+            'payment_method' => 'gcash',
+            'status' => \App\Models\TopupHistory::STATUS_PENDING,
+            'paymongo_payment_intent_id' => $intentId,
+            'paymongo_checkout_session_id' => 'cs_topup_1',
+        ]);
+    }
+
+    protected function fakeIntent(string $intentId, string $intentStatus, array $payments = []): void
+    {
+        Http::fake([
+            'https://api.paymongo.com/v1/payment_intents/'.$intentId => Http::response([
+                'data' => [
+                    'id' => $intentId,
+                    'type' => 'payment_intent',
+                    'attributes' => [
+                        'status' => $intentStatus,
+                        'payments' => array_map(fn ($p) => ['id' => 'pay_1', 'type' => 'payment', 'attributes' => $p], $payments),
+                    ],
+                ],
+            ]),
+        ]);
+    }
+
+    /**
+     * "Fail test payment" / "Expire test payment" on PayMongo's hosted checkout: the attempt is a failed
+     * payment but the intent itself drops back to awaiting_payment_method. The history page must show it failed.
+     */
+    public function test_topup_history_closes_a_top_up_whose_checkout_attempt_failed()
+    {
+        $this->enableGateway();
+        $user = $this->commuter();
+        $topup = $this->pendingTopup($user);
+        $this->fakeIntent('pi_topup_1', 'awaiting_payment_method', [
+            ['status' => 'failed', 'failed_code' => 'CLOSED', 'failed_message' => 'Payment checkout has expired.'],
+        ]);
+
+        $this->actingAs($user)->get(route('payment.topup.history'))->assertOk();
+
+        $topup->refresh();
+        $this->assertSame('failed', $topup->status);
+        $this->assertSame('Payment checkout has expired.', $topup->failure_message);
+        $this->assertEquals(500, $user->wallet->fresh()->balance, 'A failed top-up must not touch the wallet');
+    }
+
+    public function test_topup_history_leaves_an_untouched_checkout_pending()
+    {
+        $this->enableGateway();
+        $user = $this->commuter();
+        $topup = $this->pendingTopup($user);
+        $this->fakeIntent('pi_topup_1', 'awaiting_payment_method');
+
+        $this->actingAs($user)->get(route('payment.topup.history'))->assertOk();
+
+        $this->assertSame('pending', $topup->fresh()->status);
+    }
+
+    public function test_a_settled_intent_beats_an_earlier_failed_attempt()
+    {
+        $this->enableGateway();
+        $user = $this->commuter();
+        $topup = $this->pendingTopup($user);
+        $this->fakeIntent('pi_topup_1', 'succeeded', [
+            ['status' => 'failed', 'failed_code' => 'CLOSED', 'failed_message' => 'Payment checkout has expired.'],
+            ['status' => 'paid'],
+        ]);
+
+        $this->actingAs($user)->get(route('payment.topup.history'))->assertOk();
+
+        $this->assertSame('completed', $topup->fresh()->status);
+        $this->assertEquals(600, $user->wallet->fresh()->balance);
+    }
+
+    /** A completed gateway top-up that was opened $openedAgo minutes ago and paid $paidAgo minutes ago. */
+    protected function completedTopup(User $user, int $openedAgo, int $paidAgo): \App\Models\TopupHistory
+    {
+        $topup = $this->pendingTopup($user, 'pi_done_'.$openedAgo.$paidAgo);
+        $topup->forceFill([
+            'status' => 'completed',
+            'created_at' => now()->subMinutes($openedAgo),
+            'paid_at' => now()->subMinutes($paidAgo),
+        ])->save();
+
+        return $topup;
+    }
+
+    /** The 2-minute "already processed" window runs from when the money arrived, not from when checkout opened. */
+    public function test_repeat_topup_is_blocked_for_two_minutes_after_it_was_paid_even_if_checkout_was_opened_earlier()
+    {
+        $this->enableGateway();
+        $user = $this->commuter();
+        $this->completedTopup($user, openedAgo: 3, paidAgo: 1); // opened 3 min ago, paid 1 min ago
+
+        $this->actingAs($user)->withoutMiddleware(VerifyCsrfToken::class)
+            ->post(route('payment.topup.process'), ['amount' => 100, 'payment-method' => 'gcash'])
+            ->assertSessionHas('error', 'This top-up was already processed. Please wait a moment before retrying.');
+
+        $this->assertSame(1, \App\Models\TopupHistory::where('user_id', $user->id)->count(), 'No second checkout may be opened');
+    }
+
+    public function test_repeat_topup_is_allowed_once_two_minutes_have_passed_since_it_was_paid()
+    {
+        $this->enableGateway();
+        $user = $this->commuter();
+        $this->completedTopup($user, openedAgo: 4, paidAgo: 3);
+        $this->fakeHappyPathGateway('pi_next', 'cs_next');
+
+        $this->actingAs($user)->withoutMiddleware(VerifyCsrfToken::class)
+            ->post(route('payment.topup.process'), ['amount' => 100, 'payment-method' => 'gcash'])
+            ->assertSessionMissing('error');
+
+        $this->assertSame(2, \App\Models\TopupHistory::where('user_id', $user->id)->count());
+    }
 }

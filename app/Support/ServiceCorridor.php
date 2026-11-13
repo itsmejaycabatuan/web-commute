@@ -63,6 +63,92 @@ class ServiceCorridor
     }
 
     /**
+     * Notable places within walking distance of the corridor (malls, markets,
+     * hospitals, schools, terminals, parishes), in travel order. These are
+     * search aids for the destination box: riders know "Pardo Public Market",
+     * not necessarily which stop it is nearest to.
+     *
+     * Coordinates are the place itself (from OpenStreetMap), NOT a point on
+     * the road - use landmarks() to get them snapped for routing.
+     *
+     * @return list<array{name: string, area: string, lat: float, lng: float}>
+     */
+    public static function rawLandmarks(): array
+    {
+        return [
+            // Minglanilla
+            ['name' => 'Gaisano Grand Mall Minglanilla', 'area' => 'Minglanilla', 'lat' => 10.24408, 'lng' => 123.79292],
+            ['name' => "St. Cecilia's College - Cebu", 'area' => 'Minglanilla', 'lat' => 10.24467, 'lng' => 123.79432],
+            ['name' => 'Novo Minglanilla', 'area' => 'Minglanilla', 'lat' => 10.24465, 'lng' => 123.79583],
+            ['name' => 'Minglanilla Municipal Hall', 'area' => 'Minglanilla', 'lat' => 10.24603, 'lng' => 123.79552],
+            ['name' => 'Shrine of the Immaculate Heart of Mary', 'area' => 'Minglanilla', 'lat' => 10.24682, 'lng' => 123.79562],
+            ['name' => 'University of the Visayas - Minglanilla', 'area' => 'Minglanilla', 'lat' => 10.24594, 'lng' => 123.79909],
+            ['name' => 'Robinsons Supermarket Minglanilla', 'area' => 'Minglanilla', 'lat' => 10.24760, 'lng' => 123.80033],
+            ['name' => 'Minglanilla District Hospital', 'area' => 'Minglanilla', 'lat' => 10.24902, 'lng' => 123.80412],
+            ['name' => 'Baking Medical Center', 'area' => 'Linao-Lipata, Minglanilla', 'lat' => 10.25577, 'lng' => 123.81193],
+            ['name' => 'Noy Tilano Market', 'area' => 'Linao-Lipata, Minglanilla', 'lat' => 10.25606, 'lng' => 123.81321],
+            // Talisay City
+            ['name' => 'South Coast Centre', 'area' => 'Lawaan, Talisay City', 'lat' => 10.25853, 'lng' => 123.81770],
+            ['name' => 'Puregold Lawaan', 'area' => 'Lawaan, Talisay City', 'lat' => 10.25862, 'lng' => 123.81761],
+            ['name' => 'Starmall Talisay', 'area' => 'Lawaan, Talisay City', 'lat' => 10.25910, 'lng' => 123.82342],
+            ['name' => 'Cebu Sacred Heart College', 'area' => 'Lawaan, Talisay City', 'lat' => 10.25919, 'lng' => 123.82586],
+            ['name' => 'Saint Joseph Parish', 'area' => 'Tabunok, Talisay City', 'lat' => 10.26209, 'lng' => 123.83817],
+            ['name' => 'Talisay City Public Market', 'area' => 'Tabunok, Talisay City', 'lat' => 10.26334, 'lng' => 123.83860],
+            ['name' => 'Tabunok Alturas Terminal', 'area' => 'Tabunok, Talisay City', 'lat' => 10.26298, 'lng' => 123.83987],
+            ['name' => 'Gaisano Grand Fiesta Mall', 'area' => 'Tabunok, Talisay City', 'lat' => 10.26541, 'lng' => 123.84233],
+            ['name' => 'South Town Centre', 'area' => 'Tabunok, Talisay City', 'lat' => 10.26694, 'lng' => 123.84359],
+            ['name' => 'University of Cebu - Pardo & Talisay', 'area' => 'Bulacao, Talisay City', 'lat' => 10.27202, 'lng' => 123.84817],
+            // Cebu City
+            ['name' => 'Santo Tomas de Villanueva Parish', 'area' => 'Pardo, Cebu City', 'lat' => 10.27965, 'lng' => 123.85442],
+            ['name' => 'Pardo Public Market', 'area' => 'Pardo, Cebu City', 'lat' => 10.27952, 'lng' => 123.85573],
+            ['name' => 'ACE Medical Center - Cebu', 'area' => 'Basak Pardo, Cebu City', 'lat' => 10.28712, 'lng' => 123.86319],
+            ['name' => 'Holy Cross Parish', 'area' => 'Basak Pardo, Cebu City', 'lat' => 10.28889, 'lng' => 123.86456],
+            ['name' => 'Tabada Public Market', 'area' => 'Mambaling, Cebu City', 'lat' => 10.28971, 'lng' => 123.87408],
+            ['name' => 'Shrine of San Roque', 'area' => 'Mambaling, Cebu City', 'lat' => 10.29010, 'lng' => 123.87714],
+            ['name' => 'Gaisano Grand Jai-alai', 'area' => 'Mambaling, Cebu City', 'lat' => 10.29190, 'lng' => 123.87991],
+            ['name' => 'Salazar Colleges of Science and Institute of Technology', 'area' => 'Calamba, Cebu City', 'lat' => 10.29617, 'lng' => 123.88363],
+            ['name' => 'Adventist Hospital - Cebu', 'area' => 'Calamba, Cebu City', 'lat' => 10.29605, 'lng' => 123.88767],
+            ['name' => 'Cebu City Medical Center', 'area' => 'Carreta, Cebu City', 'lat' => 10.29742, 'lng' => 123.89151],
+            ['name' => 'Cebu South Bus Terminal (CSBT)', 'area' => 'Carreta, Cebu City', 'lat' => 10.29790, 'lng' => 123.89346],
+            ['name' => 'CityMall Bacalso', 'area' => 'Carreta, Cebu City', 'lat' => 10.29803, 'lng' => 123.89442],
+            ['name' => 'Asian College of Technology', 'area' => 'Carreta, Cebu City', 'lat' => 10.29879, 'lng' => 123.89596],
+            ['name' => 'Cebu City Sports Complex', 'area' => 'Carreta, Cebu City', 'lat' => 10.30054, 'lng' => 123.89504],
+            ['name' => 'University of Cebu - Main Campus', 'area' => 'Sanciangko, Cebu City', 'lat' => 10.29839, 'lng' => 123.89778],
+            ['name' => 'University of San Carlos - Downtown Campus', 'area' => 'Cebu City', 'lat' => 10.29948, 'lng' => 123.89890],
+            ['name' => 'V-hire South Terminal', 'area' => 'Cebu City', 'lat' => 10.29950, 'lng' => 123.90008],
+            ['name' => 'Lorega San Miguel Public Market', 'area' => 'Lorega, Cebu City', 'lat' => 10.30766, 'lng' => 123.90436],
+            ['name' => 'Sacred Heart School - Jesuit', 'area' => 'Cebu City', 'lat' => 10.30931, 'lng' => 123.90472],
+            ['name' => 'Colegio de la Inmaculada Concepcion', 'area' => 'Camputhaw, Cebu City', 'lat' => 10.31169, 'lng' => 123.90404],
+            ['name' => 'Cebu City Police Office', 'area' => 'Camputhaw, Cebu City', 'lat' => 10.31254, 'lng' => 123.90378],
+            ['name' => 'Barangay Luz Public Market', 'area' => 'Luz, Cebu City', 'lat' => 10.32200, 'lng' => 123.90603],
+            ['name' => 'The Walk', 'area' => 'Cebu IT Park, Lahug, Cebu City', 'lat' => 10.32841, 'lng' => 123.90582],
+        ];
+    }
+
+    /**
+     * rawLandmarks() with lat/lng moved onto the road, ready to use as a
+     * destination (the route, fare and "nearest stop" logic all work from
+     * on-road points). The landmark's own position is kept as place_lat/place_lng.
+     *
+     * @return list<array{name: string, area: string, lat: float, lng: float, place_lat: float, place_lng: float}>
+     */
+    public static function landmarks(): array
+    {
+        return array_map(function (array $place) {
+            $road = self::nearest($place['lat'], $place['lng']);
+
+            return [
+                'name' => $place['name'],
+                'area' => $place['area'],
+                'lat' => round($road['lat'], 6),
+                'lng' => round($road['lng'], 6),
+                'place_lat' => $place['lat'],
+                'place_lng' => $place['lng'],
+            ];
+        }, self::rawLandmarks());
+    }
+
+    /**
      * Closest point on the corridor to the given position.
      *
      * @return array{lat: float, lng: float, distance: float} distance in metres

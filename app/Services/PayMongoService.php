@@ -263,6 +263,13 @@ class PayMongoService
             'checkout_url' => $attributes['checkout_url'] ?? null,
             'metadata' => $attributes['metadata'] ?? [],
             'amount' => $attributes['amount'] ?? null,
+            // The payment attempts made against this intent (empty for other resources).
+            'payments' => array_map(fn ($p) => [
+                'id' => $p['id'] ?? null,
+                'status' => $p['attributes']['status'] ?? null,
+                'failed_code' => $p['attributes']['failed_code'] ?? null,
+                'failed_message' => $p['attributes']['failed_message'] ?? null,
+            ], (array) ($attributes['payments'] ?? [])),
         ];
     }
 
@@ -276,6 +283,36 @@ class PayMongoService
     public function isSettled(?string $status): bool
     {
         return in_array(strtolower((string) $status), ['succeeded', 'paid', 'charged', 'complete', 'completed'], true);
+    }
+
+    /**
+     * Why a payment intent has failed, or null when it has not.
+     *
+     * A checkout-session intent never reports a "failed" status itself: when the commuter hits "Fail test
+     * payment" / "Expire test payment" (or a real payment is declined) the *attempt* is recorded as a failed
+     * payment while the intent drops back to `awaiting_payment_method` so they could try again. So besides the
+     * intent status, look for a failed attempt. A settled intent always wins: a retry may have succeeded.
+     *
+     * Treating that as failed is safe: if the commuter does go back and pay the still-open checkout, the
+     * settlement credits it anyway (see TopupSettlement::settle / PaymentSettlement::settle).
+     */
+    public function failureReason(array $intent): ?string
+    {
+        if ($this->isSettled($intent['status'] ?? null)) {
+            return null;
+        }
+
+        if ($this->isFailed($intent['status'] ?? null)) {
+            return 'The payment was not completed at the gateway.';
+        }
+
+        foreach (array_reverse($intent['payments'] ?? []) as $attempt) {
+            if (strtolower((string) ($attempt['status'] ?? '')) === 'failed') {
+                return $attempt['failed_message'] ?: 'The payment was not completed at the gateway.';
+            }
+        }
+
+        return null;
     }
 
     /** Terminal-failure statuses. */

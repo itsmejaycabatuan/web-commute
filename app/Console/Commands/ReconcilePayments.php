@@ -54,7 +54,7 @@ class ReconcilePayments extends Command
                 'record' => $payment,
                 'label' => $payment->transaction_id,
                 'settle' => fn () => $settlement->settle($payment),
-                'fail' => fn () => $settlement->fail($payment, 'The payment was not completed at the gateway.'),
+                'fail' => fn (string $reason) => $settlement->fail($payment, $reason),
             ]);
         }
         foreach ($topups as $topup) {
@@ -62,7 +62,7 @@ class ReconcilePayments extends Command
                 'record' => $topup,
                 'label' => $topup->transaction_id,
                 'settle' => fn () => $topupSettlement->settle($topup),
-                'fail' => fn () => $topupSettlement->fail($topup, 'The payment was not completed at the gateway.'),
+                'fail' => fn (string $reason) => $topupSettlement->fail($topup, $reason),
             ]);
         }
 
@@ -94,11 +94,11 @@ class ReconcilePayments extends Command
                 if (! $dry) {
                     ($item['settle'])();
                 }
-            } elseif ($paymongo->isFailed($intent['status'] ?? null)) {
+            } elseif (($reason = $paymongo->failureReason($intent)) !== null) {
                 $this->line("{$item['label']}: failed at the gateway — close");
                 $failed++;
                 if (! $dry) {
-                    ($item['fail'])();
+                    ($item['fail'])($reason);
                 }
             } else {
                 $still++;

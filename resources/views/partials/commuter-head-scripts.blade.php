@@ -8,15 +8,16 @@
     (function() {
         // Theme
         const isGuest = {{ Auth::guest() ? 'true' : 'false' }};
-        const storedTheme = localStorage.getItem('color-theme');
         // Signed-in users are authoritative from their profile.
-        // Guests (no profile) keep whatever they last chose on this device,
-        // falling back to their OS preference.
+        // Guests (no profile) keep whatever they last chose as a guest on this device
+        // (own 'guest-theme' key, so a signed-in theme never leaks in), falling back to their OS preference.
+        let storedTheme = null;
+        try { storedTheme = localStorage.getItem('guest-theme'); } catch (e) {}
         const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
         const dbTheme = '{{ Auth::check() ? ($userTheme ?? 'light') : 'light' }}';
         const theme = isGuest ? (storedTheme || (prefersDark ? 'dark' : 'light')) : dbTheme;
 
-        localStorage.setItem('color-theme', theme);
+        if (!isGuest) { try { localStorage.setItem('color-theme', theme); } catch (e) {} }
         document.documentElement.classList.toggle('dark', theme === 'dark');
 
         // Font size: applied as a (width-limited) zoom, see partials/font-scale

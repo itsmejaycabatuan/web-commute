@@ -29,7 +29,7 @@
             display: none;
         }
 
-        input[type="file"]+label {
+        input[type="file"] ~ label {
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -46,18 +46,18 @@
             transition: all 0.2s;
         }
 
-        input[type="file"]+label:hover {
+        input[type="file"] ~ label:hover {
             background: #f1f5f9;
             color: #334155;
         }
 
-        .dark input[type="file"]+label {
+        .dark input[type="file"] ~ label {
             background: #111;
             border-color: #1e1e1e;
             color: #a3a3a3;
         }
 
-        .dark input[type="file"]+label:hover {
+        .dark input[type="file"] ~ label:hover {
             background: #1a1a1a;
             color: #888;
             border-color: #333;

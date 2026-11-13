@@ -338,8 +338,8 @@ class PaymentController extends Controller
                 }
 
                 // The gateway gave up on this payment — stop showing a spinner.
-                if ($this->paymongo->isFailed($intent['status'] ?? null)) {
-                    $this->settlement->fail($payment, 'The payment was not completed at the gateway.');
+                if (($reason = $this->paymongo->failureReason($intent)) !== null) {
+                    $this->settlement->fail($payment, $reason);
 
                     return redirect()->route('payment.history')
                         ->with('error', 'That payment could not be completed. Nothing was charged.');
@@ -605,11 +605,17 @@ class PaymentController extends Controller
 
         // E3 - Already Paid / duplicate submission guard (idempotency window). Only a COMPLETED top-up counts:
         // one still waiting at the gateway, or abandoned, must not stop the commuter trying again.
+        // The window runs from when the money ARRIVED (paid_at), not from when checkout was opened: a gateway
+        // top-up spends a while on PayMongo's page first, which would otherwise eat into the 2 minutes.
+        $since = now()->subMinutes(2);
         $duplicate = TopupHistory::where('user_id', $userId)
             ->where('amount_added', $amount)
             ->where('payment_method', $method)
             ->where('status', TopupHistory::STATUS_COMPLETED)
-            ->where('created_at', '>=', now()->subMinutes(2))
+            ->where(function ($q) use ($since) {
+                $q->where('paid_at', '>=', $since)
+                    ->orWhere(fn ($q) => $q->whereNull('paid_at')->where('created_at', '>=', $since));
+            })
             ->exists();
 
         if ($duplicate) {
@@ -755,8 +761,8 @@ class PaymentController extends Controller
                     return $this->topupDone($topup->refresh());
                 }
 
-                if ($this->paymongo->isFailed($intent['status'] ?? null)) {
-                    $this->topups->fail($topup, 'The payment was not completed at the gateway.');
+                if (($reason = $this->paymongo->failureReason($intent)) !== null) {
+                    $this->topups->fail($topup, $reason);
 
                     return redirect()->route('payment.topup')
                         ->with('error', 'That top-up could not be completed. Nothing was charged.');
@@ -792,6 +798,7 @@ class PaymentController extends Controller
     {
         TopupHistory::expireStale();
         $userId = Auth::user()->id;
+        $this->reconcilePendingTopups($request, (int) $userId);
         $query = TopupHistory::where('user_id', $userId)->with('user', 'wallet');
 
         // Search by transaction ID
@@ -818,6 +825,52 @@ class PaymentController extends Controller
         return view('commuter.topuphistory', [
             'transactions' => $transactions,
         ]);
+    }
+
+    /**
+     * Bring this commuter's still-pending top-ups up to date before the history is shown.
+     *
+     * Backing out of PayMongo's hosted checkout with "Fail" / "Expire" does not send the commuter back to
+     * the app, and a webhook can't reach a dev machine, so without this a failed top-up would sit on
+     * "pending" until the scheduled reconciliation. Cheap: at most a few lookups, at most every few seconds.
+     */
+    protected function reconcilePendingTopups(Request $request, int $userId): void
+    {
+        if (! $this->paymongo->enabled()) {
+            return;
+        }
+
+        $lastRun = (int) $request->session()->get('paymongo_topup_history_polled_at', 0);
+
+        if ((time() - $lastRun) < 4) {
+            return;
+        }
+
+        $request->session()->put('paymongo_topup_history_polled_at', time());
+
+        $pending = TopupHistory::where('user_id', $userId)
+            ->where('status', TopupHistory::STATUS_PENDING)
+            ->whereNotNull('paymongo_payment_intent_id')
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        foreach ($pending as $topup) {
+            try {
+                $intent = $this->paymongo->retrievePaymentIntent($topup->paymongo_payment_intent_id);
+            } catch (RuntimeException $e) {
+                Log::warning('PayMongo lookup failed.', ['area' => 'TopupHistory', 'exception' => $e->getMessage()]);
+                $this->gateway->recordFailure('A top-up could not be looked up: '.$e->getMessage());
+
+                return; // the gateway is struggling: don't hammer it for the rest
+            }
+
+            if ($this->paymongo->isSettled($intent['status'] ?? null)) {
+                $this->topups->settle($topup);
+            } elseif (($reason = $this->paymongo->failureReason($intent)) !== null) {
+                $this->topups->fail($topup, $reason);
+            }
+        }
     }
 
     /**

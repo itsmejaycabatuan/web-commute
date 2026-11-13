@@ -457,8 +457,17 @@ class DriverManagerController extends Controller
         ]);
     }
 
+    /** Violation codes are stored capitalised and trimmed, whatever the client sent. */
+    private function normalizeViolationCode(Request $request): void
+    {
+        if (is_string($request->input('code'))) {
+            $request->merge(['code' => strtoupper(trim($request->input('code')))]);
+        }
+    }
+
     public function storeViolationCode(Request $request)
     {
+        $this->normalizeViolationCode($request);
         $request->validate([
             'code' => 'required|string|max:255|unique:violation_codes,code',
             'name' => 'required|string|max:255',
@@ -490,6 +499,7 @@ class DriverManagerController extends Controller
 
     public function updateViolationCode(Request $request, string $id)
     {
+        $this->normalizeViolationCode($request);
 
         $request->validate([
             'code' => 'required|string|max:255|unique:violation_codes,code,' . $id,

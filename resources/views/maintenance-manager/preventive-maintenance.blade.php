@@ -289,9 +289,47 @@
                     }
                 }
                 $healthyCount = $loggedCount - $overdueCount;
+
+                // Where the latest reading came from: the highest odometer logged for this vehicle
+                // (readings can never go down), newest service date first if two share a value.
+                $latestOdoEntry = $loggedTasks
+                    ->sortByDesc(fn ($pm) => [(int) $pm->last_service_odo, $pm->last_service_date?->timestamp ?? 0])
+                    ->first();
             @endphp
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6">
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-5 sm:mb-6">
+                <!-- Latest odometer: what every "due in X km" below is measured from, and the floor for
+                     the next reading that can be logged. -->
+                <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-indigo-500 col-span-2 lg:col-span-1"
+                    id="latest-odometer-card">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-6 h-6 rounded-md bg-indigo-500/10 flex items-center justify-center"><i
+                                class="fa-solid fa-gauge-high text-[8px] text-indigo-500 dark:text-indigo-400"></i></div>
+                        <span
+                            class="text-[7px] sm:text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-[#444]">Latest
+                            Odometer</span>
+                    </div>
+                    @if ($currentOdo !== null)
+                        <div class="flex items-baseline gap-1.5"><span
+                                class="text-xl sm:text-2xl font-black tracking-tight text-gray-900 dark:text-white font-mono">{{ number_format($currentOdo) }}</span><span
+                                class="text-xs font-bold text-gray-400 dark:text-[#555]">km</span></div>
+                        @if ($latestOdoEntry)
+                            <p class="text-[7px] sm:text-[8px] text-gray-400 dark:text-[#555] font-bold uppercase tracking-wide mt-1.5 truncate"
+                                title="{{ $latestOdoEntry->maintenanceTask?->tasks_performed }}">
+                                {{ $latestOdoEntry->last_service_date?->format('M d, Y') ?? '—' }}
+                                @if ($latestOdoEntry->maintenanceTask)
+                                    · {{ $latestOdoEntry->maintenanceTask->tasks_performed }}
+                                @endif
+                            </p>
+                        @endif
+                    @else
+                        <div class="flex items-baseline gap-1.5"><span
+                                class="text-xl sm:text-2xl font-black tracking-tight text-gray-400 dark:text-[#555]">—</span>
+                        </div>
+                        <p class="text-[7px] sm:text-[8px] text-gray-400 dark:text-[#555] font-bold uppercase tracking-wide mt-1.5">
+                            No reading logged yet</p>
+                    @endif
+                </div>
                 <div class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-blue-500">
                     <div class="flex items-center gap-2 mb-2">
                         <div class="w-6 h-6 rounded-md bg-blue-500/10 flex items-center justify-center"><i
@@ -328,7 +366,7 @@
                     </div>
                 </div>
                 <div
-                    class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-amber-500 col-span-2 sm:col-span-1">
+                    class="glass-card p-4 sm:p-5 rounded-[1.25rem] border-l-2 border-l-amber-500">
                     <div class="flex items-center gap-2 mb-2">
                         <div class="w-6 h-6 rounded-md bg-amber-500/10 flex items-center justify-center"><i
                                 class="fa-solid fa-clock text-[8px] text-amber-500 dark:text-amber-400"></i></div><span

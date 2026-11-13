@@ -6,6 +6,7 @@ use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\ForceRootUrlFromRequest;
 use App\Http\Middleware\LocalEnvOnly;
+use App\Http\Middleware\NoStoreForSignedInUsers;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\TrimStrings;
@@ -65,6 +66,7 @@ class Kernel extends HttpKernel
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
             SubstituteBindings::class,
+            NoStoreForSignedInUsers::class,
         ],
 
         'api' => [

@@ -14,7 +14,7 @@
         (function() {
             var isGuest = {{ Auth::guest() ? 'true' : 'false' }};
             var stored = null;
-            try { stored = localStorage.getItem('color-theme'); } catch (e) {}
+            try { stored = localStorage.getItem('guest-theme'); } catch (e) {}
             var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             var theme = isGuest ? (stored || (prefersDark ? 'dark' : 'light')) : '{{ $userTheme ?? 'light' }}';
             document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -1455,7 +1455,7 @@
         function toggleLandingTheme() {
             var dark = !document.documentElement.classList.contains('dark');
             document.documentElement.classList.toggle('dark', dark);
-            try { localStorage.setItem('color-theme', dark ? 'dark' : 'light'); } catch (e) {}
+            try { localStorage.setItem('guest-theme', dark ? 'dark' : 'light'); } catch (e) {}
         }
 
         // Scroll reveal

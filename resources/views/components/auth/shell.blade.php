@@ -1,6 +1,7 @@
 @props([
     'title' => 'SmartCommute',
     'wide' => false,
+    'showBack' => true,
     'heading' => 'Your commute, made smarter.',
     'blurb' => 'Live PUJ tracking, transparent fares and cash-free payments — all in one place.',
 ])
@@ -12,11 +13,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title }}</title>
 
-    {{-- Theme before first paint: guests follow their last choice on this device, then the OS. --}}
+    {{-- Theme before first paint: a choice made on these pages (own 'guest-theme' key, so the signed-in app's
+         theme never leaks in after logout), otherwise the OS preference. --}}
     <script>
         (function() {
             var stored = null;
-            try { stored = localStorage.getItem('color-theme'); } catch (e) {}
+            try { stored = localStorage.getItem('guest-theme'); } catch (e) {}
             var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             document.documentElement.classList.toggle('dark', (stored || (prefersDark ? 'dark' : 'light')) === 'dark');
         })();
@@ -551,8 +553,12 @@
         <!-- Form side -->
         <div class="au-main">
             <div class="au-top">
-                <a href="{{ url('/') }}" class="au-back" aria-label="Back to home" title="Back to home"><i
-                        class="fa-solid fa-arrow-left"></i></a>
+                @if ($showBack)
+                    <a href="{{ url('/') }}" class="au-back" aria-label="Back to home" title="Back to home"><i
+                            class="fa-solid fa-arrow-left"></i></a>
+                @else
+                    <span style="flex: none; width: 42px; height: 42px" aria-hidden="true"></span>
+                @endif
                 <a href="{{ url('/') }}" class="au-mobile-logo"><span class="mk"><i
                             class="fa-solid fa-bus"></i></span><span>Smart<b>Commute</b></span></a>
                 <button type="button" class="au-theme" aria-label="Toggle dark mode" onclick="toggleAuthTheme()">
@@ -573,7 +579,7 @@
         function toggleAuthTheme() {
             var dark = !document.documentElement.classList.contains('dark');
             document.documentElement.classList.toggle('dark', dark);
-            try { localStorage.setItem('color-theme', dark ? 'dark' : 'light'); } catch (e) {}
+            try { localStorage.setItem('guest-theme', dark ? 'dark' : 'light'); } catch (e) {}
         }
     </script>
 </body>

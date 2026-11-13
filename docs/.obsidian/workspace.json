@@ -20,18 +20,6 @@
               "icon": "lucide-file",
               "title": "MANUAL_TEST_CHECKLIST"
             }
-          },
-          {
-            "id": "9775a4c1ef5cc4cc",
-            "type": "leaf",
-            "state": {
-              "type": "release-notes",
-              "state": {
-                "currentVersion": "1.15.0"
-              },
-              "icon": "lucide-book-up",
-              "title": "Release Notes 1.15.0"
-            }
           }
         ]
       }
@@ -95,7 +83,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "right": {
     "id": "585314b6635d2cd2",

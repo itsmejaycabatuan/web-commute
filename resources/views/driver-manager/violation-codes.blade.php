@@ -538,7 +538,9 @@
                                     class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Code</label>
                                 <!-- FIXED: Input background -->
                                 <input type="text" name="code" x-model="form.code" maxlength="10"
-                                    class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white font-mono font-bold focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition"
+                                    autocapitalize="characters" autocomplete="off" spellcheck="false"
+                                    @input="upperCode($event); form.code = $event.target.value"
+                                    class="uppercase w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#1e1e1e] text-[11px] text-gray-900 dark:text-white font-mono font-bold focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition"
                                     placeholder="UV06">
                             </div>
                             <div>
@@ -692,9 +694,11 @@
 
                                     <!-- FIXED: Bulk Inputs -->
                                     <input type="text" x-model="row.code" maxlength="10"
-                                        class="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[9px] text-gray-900 dark:text-white font-mono font-bold focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition"
+                                        autocapitalize="characters" autocomplete="off" spellcheck="false"
+                                        class="uppercase w-full px-2.5 py-2 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[9px] text-gray-900 dark:text-white font-mono font-bold focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition"
                                         :class="row._error && !row.code.trim() ? '!border-red-500/50 !bg-red-500/5' : ''"
-                                        placeholder="UV06" @input="row._error = false">
+                                        placeholder="UV06"
+                                        @input="upperCode($event); row.code = $event.target.value; row._error = false">
                                     <input type="text" x-model="row.name"
                                         class="w-full px-2.5 py-2 rounded-lg bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[#1e1e1e] text-[9px] text-gray-900 dark:text-white font-semibold focus:outline-none focus:border-gray-400 dark:focus:border-[#333] transition"
                                         :class="row._error && !row.name.trim() ? '!border-red-500/50 !bg-red-500/5' : ''"
@@ -824,6 +828,19 @@
                 bulkSubmitting: false,
                 bulkSubmittedCount: 0,
                 bulkTotalCount: 0,
+
+                // Codes are always capitalised. Done on the input itself (not just via CSS) so the
+                // value that is submitted is uppercase too, and the caret is put back so editing in
+                // the middle of a code does not jump to the end.
+                upperCode(event) {
+                    const el = event.target;
+                    const start = el.selectionStart, end = el.selectionEnd;
+                    const upper = el.value.toUpperCase();
+                    if (el.value !== upper) {
+                        el.value = upper;
+                        try { el.setSelectionRange(start, end); } catch (e) { /* not supported */ }
+                    }
+                },
 
                 get bulkFilledCount() {
                     return this.bulkRows.filter(r => r.code.trim() && r.name.trim()).length;

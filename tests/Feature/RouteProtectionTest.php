@@ -101,6 +101,34 @@ class RouteProtectionTest extends TestCase
         $this->assertSame([], $open, "Routes reachable without signing in:\n".implode("\n", $open));
     }
 
+    /**
+     * Back after logging out redraws the old page from the browser's history unless the page said `no-store`,
+     * so a signed-in user's pages must say it. Guest pages and pages with their own caching stay as they were.
+     */
+    public function test_pages_served_to_a_signed_in_user_are_never_stored_by_the_browser()
+    {
+        $user = $this->userWithRole('commuter');
+
+        foreach (['/map', '/payment/history', '/profile'] as $uri) {
+            $response = $this->actingAs($user)->get($uri)->assertOk();
+
+            $this->assertTrue($response->headers->hasCacheControlDirective('no-store'), "{$uri} is cacheable by the browser");
+        }
+    }
+
+    public function test_logged_out_pages_and_responses_with_their_own_caching_are_left_alone()
+    {
+        $this->get('/login')->assertOk()->assertHeaderMissing('Pragma');
+        $this->assertFalse($this->get('/login')->headers->hasCacheControlDirective('no-store'));
+
+        Route::middleware('web')->get('/_cache-probe', fn () => response('x')->header('Cache-Control', 'private, max-age=3600'));
+
+        $response = $this->actingAs($this->userWithRole('commuter'))->get('/_cache-probe')->assertOk();
+
+        $this->assertTrue($response->headers->hasCacheControlDirective('max-age'));
+        $this->assertFalse($response->headers->hasCacheControlDirective('no-store'));
+    }
+
     /** @dataProvider adminOnlyRoutes */
     public function test_admin_only_pages_refuse_every_other_role(string $method, string $uri)
     {

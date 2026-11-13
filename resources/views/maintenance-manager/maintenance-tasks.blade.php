@@ -144,7 +144,16 @@
     editId: null,
     deleteTarget: null,
     deleteUrl: '',
+    // Validation messages belong to one opening of the modal: drop them on open/close.
+    clearFieldErrors() {
+        document.querySelectorAll('#field_task, #field_miles, #field_months').forEach(f => {
+            f.classList.remove('app-field-invalid');
+            f.removeAttribute('aria-invalid');
+            if (f.__errorEl) { f.__errorEl.remove(); f.__errorEl = null; }
+        });
+    },
     openModal() {
+        this.clearFieldErrors();
         this.editMode = false;
         this.editId = null;
         this.showModal = true;
@@ -152,6 +161,7 @@
         setTimeout(() => this.animating = false, 300);
     },
     openEditModal(id, name, miles, months) {
+        this.clearFieldErrors();
         this.editMode = true;
         this.editId = id;
         document.getElementById('field_task').value = name;
@@ -174,6 +184,7 @@
             document.getElementById('field_task').value = '';
             document.getElementById('field_miles').value = '';
             document.getElementById('field_months').value = '';
+            this.clearFieldErrors();
         }, 200);
     }
 }"
@@ -458,7 +469,7 @@
                     <div>
                         <label class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Task
                             Performed <span class="text-red-400">*</span></label>
-                        <input type="text" id="field_task"
+                        <input type="text" id="field_task" data-rules="required|max:255" data-label="task performed"
                             class="form-input w-full rounded-xl px-4 py-3 text-[11px]"
                             placeholder="e.g. Transmission Fluid Change" name="tasks_performed">
                     </div>
@@ -468,7 +479,8 @@
                             <label class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Km
                                 Interval</label>
                             <div class="relative">
-                                <input type="number" id="field_miles" min="0"
+                                <input type="number" id="field_miles" min="1" max="1000000" step="1"
+                                    data-rules="intrange:1:1000000" data-label="km interval"
                                     class="form-input w-full rounded-xl px-4 py-3 text-[11px] font-mono pr-12"
                                     placeholder="5,000" name="miles_between_service">
                                 <span
@@ -480,7 +492,8 @@
                                 class="block mb-1.5 text-[8px] font-bold uppercase tracking-[0.15em] text-[#444]">Month
                                 Interval</label>
                             <div class="relative">
-                                <input type="number" id="field_months" min="0"
+                                <input type="number" id="field_months" min="1" max="600" step="1"
+                                    data-rules="intrange:1:600" data-label="month interval"
                                     class="form-input w-full rounded-xl px-4 py-3 text-[11px] font-mono pr-14"
                                     placeholder="6" name="months_between_service">
                                 <span

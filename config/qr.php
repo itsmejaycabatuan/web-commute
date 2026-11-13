@@ -38,5 +38,5 @@ return [
 
     'broadcast_fresh_minutes' => (int) env('QR_BROADCAST_FRESH_MINUTES', 5),
 
-    'require_nearby_vehicle' => (bool) env('QR_REQUIRE_NEARBY_VEHICLE', false),
+    'require_nearby_vehicle' => (bool) env('QR_REQUIRE_NEARBY_VEHICLE', true),
 ];
